@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.env
+.DS_Store
+outputs/
+node_modules/
+*.tmp
+.ruff_cache/
+.pytest_cache/
+
+# legacy / intermediate Prithvi artifacts (not shipped)
+data/hls_stack_*.tif
+data/prithvi_runs/
+data/*.legacy_*

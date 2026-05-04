@@ -1,0 +1,34 @@
+# Riprap runtime dependencies (deployment).
+# Offline-only deps (py3dep, terratorch, whitebox-workflows) are NOT here
+# — they only run for the one-time fixture pre-compute in scripts/.
+
+# Web + streaming
+fastapi>=0.115
+uvicorn>=0.32
+httpx>=0.27
+pydantic>=2.9
+
+# Geo
+geopandas>=1.0
+shapely>=2.0
+pyproj>=3.6
+fiona>=1.10
+rasterio>=1.4
+
+# Data
+pandas>=2.2
+pyarrow>=18.0
+numpy>=1.26
+
+# RAG: Granite Embedding 278M (CPU torch is sufficient on HF Spaces)
+sentence-transformers>=3.3
+pypdf>=5.0
+
+# Granite 4.1 reconciliation via Ollama
+ollama>=0.4
+
+# Burr FSM
+burr>=0.40
+
+# Misc
+tqdm>=4.66
