@@ -9,7 +9,9 @@
   import SkeletonBriefing from '$lib/components/states/SkeletonBriefing.svelte';
   import RerollBanner from '$lib/components/states/RerollBanner.svelte';
   import ErrorCard from '$lib/components/states/ErrorCard.svelte';
-  import RegisterCard from '$lib/components/evidence/RegisterCard.svelte';
+  import FindingsRegion from '$lib/components/findings/FindingsRegion.svelte';
+  import { adaptFinalToFindings } from '$lib/client/cardAdapter';
+  import type { Density, ProvenanceMode, FindingsData } from '$lib/types/card';
   import type { ErrorKey, RegisterData } from '$lib/types/states';
   import { extractRegisters } from '$lib/client/registerAdapter';
   // Mellea rejection sampling is Riprap's sole grounding mechanism.
@@ -60,6 +62,37 @@
   let traceRoot = $state<TraceNode>({
     id: 'root', name: 'briefing.run', status: 'ok', ms: 0, tier: null, children: []
   });
+
+  /** Findings region state — lifted to the page so the briefing's map
+   *  can read the linked card's mapLayer on hover. */
+  let linkedKey = $state<string | null>(null);
+  let density = $state<Density>('comfortable');
+  let provenanceMode = $state<ProvenanceMode>('smart');
+  // ?grammar=1 surfaces the dev-only card-grammar catalog. Read only on
+  // the client — adapter-static forbids url.searchParams at prerender time.
+  let showGrammar = $state(false);
+  $effect(() => {
+    if (typeof window !== 'undefined') {
+      showGrammar = new URL(window.location.href).searchParams.get('grammar') === '1';
+    }
+  });
+  let runStartedAt = $state<number | null>(null);
+  let runWallSeconds = $state<number | undefined>(undefined);
+
+  /** Compose the FindingsData payload from the live FSM final-state +
+   *  trace tree. Re-derives as new specialists land. */
+  let findingsData = $derived<FindingsData>(
+    finalResult
+      ? adaptFinalToFindings(finalResult, traceRoot, runWallSeconds)
+      : { cards: [], stones: [], wallSeconds: runWallSeconds }
+  );
+
+  function handleFindingsLink(key: string | null) { linkedKey = key; }
+  function handleFindingsCite(citeId: string) {
+    const el = document.getElementById('region-cites');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    void citeId;
+  }
 
   /** Steps that share the Granite TTM r2 foundation model — grouped
    *  under a synthetic parent in the trace UI so the architectural
@@ -329,6 +362,7 @@
   onMount(() => {
     briefingState.reset();
     if (!queryText()) return;
+    runStartedAt = Date.now();
     const stream = openAgentStream(queryText(), {
       onPlanToken: (d) => (planTokens += d),
       onPlan: (p) => (plan = p),
@@ -471,6 +505,9 @@
       },
       onDone: () => {
         streamDone = true;
+        if (runStartedAt != null) {
+          runWallSeconds = (Date.now() - runStartedAt) / 1000;
+        }
         // v0.4.2 §12 all-silent: stream finished but no briefing emerged.
         if (!firstTokenSeen && !errorState && geocodeSucceeded) {
           errorState = 'all-silent';
@@ -592,45 +629,29 @@
           {/if}
         </aside>
 
-        <aside class="app-region app-region-cites" aria-label="Citations">
+        <aside id="region-cites" class="app-region app-region-cites" aria-label="Citations">
           <CitationDrawer {citations} />
         </aside>
       </div>
     </div>
 
     <div class="app-shell-bottom">
-      {#if registers.length}
-        <section class="app-region app-region-evidence" aria-label="Asset registers">
-          <header class="region-head">
-            <span class="section-label">Registers · {registers.length}</span>
-            <span class="region-head-meta">subway · NYCHA · schools · hospitals (only those with hits)</span>
-          </header>
-          <div class="register-grid">
-            {#each registers as r, i (i)}
-              <RegisterCard data={r} />
-            {/each}
-          </div>
-        </section>
-      {/if}
-
-      <section id="region-trace" class="app-region app-region-trace" aria-label="Trace">
-        <TraceUI root={traceRoot} />
+      <section class="app-region app-region-findings" aria-label="Findings">
+        <FindingsRegion
+          data={findingsData}
+          {density}
+          {provenanceMode}
+          {showGrammar}
+          {linkedKey}
+          onLink={handleFindingsLink}
+          onCite={handleFindingsCite}
+        />
       </section>
     </div>
   </div>
 </section>
 
 <style>
-  .register-grid {
-    display: grid;
-    gap: 16px;
-    grid-template-columns: 1fr;
-  }
-  @media (min-width: 1100px) {
-    .register-grid {
-      grid-template-columns: 1fr 1fr;
-    }
-  }
   .plan-details {
     border: 1px solid var(--rule-soft);
     background: var(--paper-deep);
