@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Riprap — agent</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<link rel="stylesheet" href="/static/style.css">
+<style>
+.agent-topbar-bar {
+  max-width: 1640px; margin: 14px auto 8px; padding: 0 20px;
+  display: flex; gap: 8px; align-items: center;
+}
+.agent-input-form {
+  flex: 1; display: flex; gap: 8px;
+  border: 1px solid var(--line); border-radius: 4px;
+  background: var(--panel); padding: 6px;
+}
+.agent-input-form input {
+  flex: 1; border: 0; outline: 0; padding: 10px 12px;
+  font-size: 14.5px; background: transparent; color: var(--text);
+  font-family: inherit;
+}
+.agent-input-form button {
+  padding: 8px 18px; border: 0; border-radius: 3px;
+  background: var(--nyc-blue); color: #fff; font-weight: 600;
+  cursor: pointer; font-size: 13px; font-family: inherit;
+}
+.agent-input-form button:disabled { opacity: 0.6; cursor: wait; }
+
+/* Mellea compliance badge in the briefing header */
+.mellea-badge {
+  display: inline-block; margin-left: 8px;
+  padding: 2px 9px; border-radius: 999px;
+  font-size: 10.5px; font-weight: 700;
+  font-family: var(--mono); letter-spacing: 0.03em;
+  vertical-align: middle;
+  color: white;
+  /* Bloom in once when the badge is rendered. transform-origin keeps the
+     scale anchored at the left edge so it doesn't push neighbors. */
+  animation: mellea-bloom 380ms cubic-bezier(.2,.7,.3,1.4);
+  transform-origin: left center;
+}
+@keyframes mellea-bloom {
+  0%   { transform: scale(0.5); opacity: 0; }
+  60%  { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+/* Inline banner that appears between the briefing header and the prose
+   when Mellea is about to reroll (or when it confirms first-try pass). */
+.mellea-banner {
+  margin: 0 16px 8px; padding: 8px 12px;
+  border-radius: 4px; font-size: 11.5px;
+  font-family: var(--mono);
+  border: 1px solid transparent;
+  animation: mellea-bloom 280ms cubic-bezier(.2,.7,.3,1.1);
+  transform-origin: left center;
+}
+.mellea-banner.reroll {
+  background: rgba(217, 119, 6, 0.10);
+  border-color: rgba(217, 119, 6, 0.35);
+  color: #92400e;
+}
+.mellea-banner.pass {
+  background: rgba(26, 135, 84, 0.10);
+  border-color: rgba(26, 135, 84, 0.35);
+  color: #1a5e3a;
+}
+.mellea-banner code {
+  background: rgba(0,0,0,0.06); padding: 1px 5px; border-radius: 3px;
+  font-size: 10.5px;
+}
+.mellea-badge.full { background: #1a8754; }    /* 4/4 */
+.mellea-badge.partial { background: #d97706; } /* 1-3/4 */
+.mellea-badge.none { background: var(--nyc-scarlet); } /* 0/4 */
+.mellea-badge .ico { font-size: 9px; margin-right: 3px; }
+.agent-samples {
+  max-width: 1640px; margin: 4px auto 12px; padding: 0 20px;
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.agent-samples .label {
+  font-size: 11px; color: var(--text-muted);
+  letter-spacing: 0.05em; text-transform: uppercase;
+  align-self: center; margin-right: 4px;
+}
+.sample-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 11px; border: 1px solid var(--line);
+  background: var(--panel); border-radius: 999px;
+  font-size: 12px; color: var(--text); cursor: pointer;
+  font-family: inherit;
+  transition: background 0.12s, border-color 0.12s;
+}
+.sample-btn:hover { background: var(--bg-soft); border-color: var(--nyc-blue); }
+.sample-btn .pill {
+  padding: 1px 7px; border-radius: 999px;
+  font-size: 9.5px; font-weight: 700;
+  letter-spacing: 0.05em; text-transform: uppercase;
+}
+.sample-btn .pill.live { background: #1a8754;     color: white; }
+.sample-btn .pill.addr { background: #6b7280;     color: white; }
+.sample-btn .pill.nbhd { background: #1642DF;     color: white; }
+.sample-btn .pill.dev  { background: #af3a03;     color: white; }
+.sample-btn .qtxt {
+  white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; max-width: 280px;
+}
+
+/* ---- planner box (full-width above the 3 panels) ---- */
+.planner-row {
+  max-width: 1640px; margin: 0 auto 12px; padding: 0 20px;
+}
+.planner-box {
+  background: var(--bg-soft); border: 1px solid var(--line);
+  border-radius: 4px; padding: 10px 14px;
+  display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px;
+  font-size: 12px;
+}
+.planner-key {
+  color: var(--text-muted); font-weight: 700;
+  text-transform: uppercase; font-size: 10px; letter-spacing: 0.06em;
+}
+.planner-val { font-family: var(--mono); font-size: 11.5px; }
+.planner-rationale {
+  grid-column: 1 / -1;
+  color: var(--text-muted); font-style: italic; margin-top: 4px; font-size: 11.5px;
+}
+.intent-pill {
+  display: inline-block; padding: 1px 9px; border-radius: 999px;
+  background: var(--nyc-blue); color: white; font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.05em;
+}
+.intent-pill.dev   { background: #af3a03; }
+.intent-pill.live  { background: #1a8754; }
+.intent-pill.nbhd  { background: #1642DF; }
+.intent-pill.addr  { background: #6b7280; }
+
+/* ---- loading skeletons ---- */
+@keyframes pulse {
+  0%, 100% { background-color: var(--bg-soft); }
+  50%      { background-color: rgba(22, 66, 223, 0.08); }
+}
+.skel {
+  background: var(--bg-soft); border-radius: 3px;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+.skel-line { height: 12px; margin: 6px 0; }
+.skel-line.w-100 { width: 100%; }
+.skel-line.w-80  { width: 80%; }
+.skel-line.w-60  { width: 60%; }
+.skel-line.w-40  { width: 40%; }
+.skel-pad { padding: 14px 16px; }
+
+.loading-overlay {
+  position: relative;
+  pointer-events: none;
+}
+.loading-overlay::after {
+  content: ""; position: absolute; inset: 0;
+  background: rgba(255,255,255,0.55);
+  backdrop-filter: blur(0.5px);
+}
+
+.map-loading {
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 4px; padding: 8px 14px;
+  font-size: 11.5px; color: var(--text-muted);
+  z-index: 10; pointer-events: none;
+  display: flex; align-items: center; gap: 8px;
+}
+.map-loading .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--nyc-blue);
+  animation: dotpulse 1.2s ease-in-out infinite;
+}
+@keyframes dotpulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.85); }
+  50%      { opacity: 1;   transform: scale(1.1); }
+}
+
+/* ---- map legend (intent-aware) ---- */
+.map-legend {
+  position: absolute; left: 10px; bottom: 10px;
+  background: rgba(255,255,255,0.95);
+  border: 1px solid var(--line); border-radius: 4px;
+  padding: 8px 12px; font-size: 11px; color: var(--text);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  pointer-events: none;
+  z-index: 5;
+}
+.map-legend .legend-row { display: flex; align-items: center; gap: 6px; margin: 2px 0; }
+.legend-swatch {
+  width: 12px; height: 12px; border-radius: 50%;
+  border: 1.5px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
+}
+.legend-swatch.fill {
+  width: 14px; height: 10px; border-radius: 2px; box-shadow: none; border: 0;
+}
+
+/* ---- briefing header (matches the report-head idiom from /) ---- */
+.brief-head {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(180deg, var(--bg-soft) 0%, #fff 100%);
+}
+.brief-eyebrow {
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.10em; text-transform: uppercase;
+  color: var(--nyc-blue);
+}
+.brief-title {
+  margin-top: 4px;
+  font-size: 16px; font-weight: 600;
+  line-height: 1.25; color: var(--text);
+}
+.brief-meta {
+  margin-top: 6px;
+  font-family: var(--mono); font-size: 11px;
+  color: var(--text-muted);
+  display: flex; flex-wrap: wrap; gap: 4px 10px;
+}
+.brief-meta-k {
+  text-transform: uppercase; font-size: 9.5px;
+  letter-spacing: 0.05em; color: var(--text-faint);
+}
+.brief-meta-v { color: var(--text); }
+
+.report-btn {
+  display: none;  /* shown by JS once a query completes */
+  margin-top: 10px; padding: 6px 12px;
+  border: 1px solid var(--nyc-blue);
+  background: var(--panel); color: var(--nyc-blue);
+  border-radius: 3px; cursor: pointer; font-size: 12px;
+  font-weight: 600; font-family: inherit;
+  transition: background 0.12s, color 0.12s;
+}
+.report-btn:hover { background: var(--nyc-blue); color: white; }
+.report-btn.ready { display: inline-block; }
+
+/* tier badge inline with the title — single_address intent only.
+   Mirrors the colour idiom from the legacy /single page tier-badge. */
+.tier-chip {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 11px; font-weight: 700;
+  font-family: var(--mono); letter-spacing: 0.04em;
+  vertical-align: middle;
+  color: white;
+}
+.tier-chip.t-0 { background: var(--good); }
+.tier-chip.t-1 { background: var(--nyc-scarlet); }
+.tier-chip.t-2 { background: #d97706; }
+.tier-chip.t-3 { background: #ca8a04; }
+.tier-chip.t-4 { background: var(--nyc-blue); }
+.tier-floor {
+  font-size: 9.5px; font-weight: 600;
+  background: rgba(255,255,255,0.22);
+  padding: 1px 5px; border-radius: 6px; margin-left: 4px;
+}
+
+/* ---- streaming caret on the briefing while tokens flow ---- */
+.streaming::after {
+  content: "▋";
+  display: inline-block; color: var(--nyc-blue);
+  margin-left: 2px;
+  animation: caret 0.9s steps(1) infinite;
+}
+
+/* ---- citation chips + Sources footer ---- */
+.report-pane #paragraph .cite {
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.report-pane #paragraph .cite:hover,
+.report-pane #paragraph .cite.hl {
+  background: var(--nyc-blue) !important;
+  color: white !important;
+}
+#sourcesSection {
+  border-top: 1px solid var(--line);
+  background: var(--bg-soft);
+  padding: 12px 16px 14px;
+}
+#sourcesSection .src-h {
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.10em;
+  color: var(--text-muted);
+  margin: 0 0 8px;
+}
+#sourcesSection ol {
+  margin: 0; padding: 0; list-style: none;
+  display: grid; gap: 6px;
+  font-size: 11.5px; line-height: 1.45;
+}
+#sourcesSection ol li {
+  display: grid; grid-template-columns: 22px 1fr;
+  gap: 8px; align-items: baseline;
+  padding: 4px 6px; border-radius: 3px;
+  transition: background 0.15s;
+}
+#sourcesSection ol li.hl { background: rgba(22, 66, 223, 0.10); }
+#sourcesSection .src-num {
+  font-family: var(--mono); font-size: 10.5px;
+  font-weight: 700; color: var(--nyc-blue);
+  text-align: right;
+}
+#sourcesSection .src-label { color: var(--text); }
+#sourcesSection .src-link {
+  color: var(--text); text-decoration: none;
+  border-bottom: 1px dotted var(--text-muted);
+  transition: color 0.12s, border-color 0.12s;
+}
+#sourcesSection .src-link:hover {
+  color: var(--nyc-blue);
+  border-bottom-color: var(--nyc-blue);
+}
+#sourcesSection .src-ext {
+  font-size: 9.5px; color: var(--text-faint);
+  margin-left: 2px; vertical-align: super;
+}
+#sourcesSection .src-id {
+  font-family: var(--mono); font-size: 10px;
+  color: var(--text-faint); margin-left: 6px;
+}
+
+/* live-streaming planner output (raw JSON forming character-by-character) */
+.planner-streaming {
+  background: var(--bg-soft); border: 1px solid var(--line);
+  border-radius: 4px; padding: 10px 14px;
+  font-family: var(--mono); font-size: 11px; color: var(--text-muted);
+  line-height: 1.5; white-space: pre-wrap; word-break: break-word;
+  max-height: 160px; overflow: auto;
+  position: relative;
+}
+.planner-streaming::before {
+  content: "Planner thinking…";
+  position: absolute; top: 6px; right: 10px;
+  font-family: inherit; font-size: 9.5px;
+  color: var(--text-faint); letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.planner-streaming::after {
+  content: "▋";
+  display: inline-block; color: var(--nyc-blue);
+  animation: caret 0.9s steps(1) infinite;
+}
+@keyframes caret { 50% { opacity: 0; } }
+
+#map { width: 100%; height: 600px; border: 1px solid var(--line); border-radius: 4px; }
+
+/* ---- structured report ---- */
+.report-pane #paragraph .rsum-h {
+  margin: 12px 0 6px; font-size: 10.5px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted);
+}
+.report-pane #paragraph .rsum-h:first-child { margin-top: 0; }
+.report-pane #paragraph .rsum-p { margin: 0 0 6px; line-height: 1.55; font-size: 13px; }
+.report-pane #paragraph .rsum-list { margin: 4px 0 8px 0; padding: 0; list-style: none; }
+.report-pane #paragraph .rsum-list li {
+  display: block; padding: 8px 10px; margin: 4px 0;
+  background: var(--bg-soft); border-left: 3px solid var(--nyc-blue);
+  border-radius: 0 3px 3px 0; font-size: 12.5px; line-height: 1.5;
+}
+.report-pane #paragraph strong {
+  font-weight: 600;
+  background: linear-gradient(transparent 60%, var(--nyc-blue-soft) 60%);
+  padding: 0 2px;
+}
+.report-pane #paragraph .cite {
+  display: inline-block; vertical-align: super; font-size: 9.5px;
+  font-family: var(--mono); padding: 0 5px; margin-left: 2px;
+  background: var(--bg-soft); border-radius: 8px;
+  color: var(--text-muted);
+}
+
+/* ---- intent-specific facts panel ---- */
+.facts-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px;
+  margin: 8px 0; font-size: 12px;
+}
+.facts-grid dt {
+  color: var(--text-muted); font-size: 10.5px;
+  text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;
+}
+.facts-grid dd { margin: 0; font-family: var(--mono); }
+.headline-stat {
+  font-size: 26px; font-weight: 700; color: var(--text);
+  margin: 6px 0 2px; line-height: 1.1;
+}
+.headline-sub {
+  color: var(--text-muted); font-size: 12px; margin-bottom: 8px;
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="brand-name">Riprap</span>
+      <span class="brand-sep">·</span>
+      <span class="brand-tag">citation-grounded flood-exposure briefings for NYC</span>
+    </div>
+    <div class="topbar-right">
+      <span id="backendPill" class="local-pill" data-state="loading"
+            title="Granite 4.1 inference. No vendor LLM is contacted.">
+        <span class="dot"></span><span id="backendPillText">checking…</span>
+      </span>
+    </div>
+  </div>
+</header>
+
+<div class="agent-topbar-bar">
+  <form id="agentForm" class="agent-input-form" autocomplete="off">
+    <input id="q" type="text" placeholder="Ask anything: an address, a neighborhood, 'what are they building in Gowanus', 'is there flooding right now'…" autofocus />
+    <button type="submit" id="goBtn">Ask</button>
+  </form>
+</div>
+
+<div class="agent-samples">
+  <span class="label">Try:</span>
+  <!-- Defaults chosen by a 16-query sweep across NYC; ranked by
+       (map-layers populated, unique-citations, latency).
+       See /tmp/sweep-out.log for the full ranking. -->
+  <button class="sample-btn" data-q="2940 Brighton 3rd St, Brooklyn"
+          title="single_address — 5 map layers + 8 cites; coastal Sandy + DEP + 311 + FloodNet + Ida HWMs + NOAA gauge + TerraMind LULC">
+    <span class="pill addr">address</span><span class="qtxt">2940 Brighton 3rd St (coastal)</span>
+  </button>
+  <button class="sample-btn" data-q="180-08 Hillside Ave, Jamaica, NY"
+          title="single_address — 5 layers + 7 cites; Jamaica/Hollis pluvial-inland pattern">
+    <span class="pill addr">address</span><span class="qtxt">Hillside Ave, Jamaica (pluvial)</span>
+  </button>
+  <button class="sample-btn" data-q="100 Gold St Manhattan"
+          title="single_address — 4 layers + 7 cites; Lower Manhattan dense urban">
+    <span class="pill addr">address</span><span class="qtxt">100 Gold St (Manhattan)</span>
+  </button>
+  <button class="sample-btn" data-q="Far Rockaway"
+          title="neighborhood — 7 unique cites; coastal Queens NTA polygon scope">
+    <span class="pill nbhd">neighborhood</span><span class="qtxt">Far Rockaway</span>
+  </button>
+  <button class="sample-btn" data-q="Gowanus"
+          title="neighborhood — 6 cites; combined-sewer / pluvial Brooklyn">
+    <span class="pill nbhd">neighborhood</span><span class="qtxt">Gowanus</span>
+  </button>
+  <button class="sample-btn" data-q="is there flooding right now in NYC"
+          title="live_now — fast (~13 s); NWS alerts + NOAA tides + TTM surge nowcast">
+    <span class="pill live">live</span><span class="qtxt">flooding right now in NYC</span>
+  </button>
+</div>
+
+<div class="planner-row" id="plannerRow"></div>
+
+<div class="workbench">
+  <aside class="col-left">
+    <section class="panel">
+      <h2>Specialist trace <span class="hint" id="traceMeta"></span></h2>
+      <r-trace id="steps"></r-trace>
+      <div id="traceSkel" class="skel-pad" style="display:none">
+        <div class="skel skel-line w-80"></div>
+        <div class="skel skel-line w-60"></div>
+        <div class="skel skel-line w-100"></div>
+        <div class="skel skel-line w-40"></div>
+      </div>
+    </section>
+  </aside>
+
+  <main class="col-mid">
+    <div id="map-card" class="panel panel-map" style="position:relative">
+      <div id="map"></div>
+      <div id="mapLoading" class="map-loading" style="display:none">
+        <span class="dot"></span><span id="mapLoadingText">Resolving location…</span>
+      </div>
+      <div id="mapLegend" class="map-legend" style="display:none"></div>
+    </div>
+    <section class="panel" id="factsPanel" style="display:none">
+      <h2 id="factsTitle">Findings</h2>
+      <div id="factsBody" style="padding: 12px 16px;"></div>
+    </section>
+  </main>
+
+  <aside class="col-right">
+    <section class="panel report-pane" id="reportPanel" style="display:none">
+      <header class="brief-head" id="briefHead">
+        <div class="brief-eyebrow" id="briefEyebrow">Briefing</div>
+        <div class="brief-title" id="briefTitle">—</div>
+        <div class="brief-meta" id="briefMeta"></div>
+        <button id="reportBtn" class="report-btn" title="Open a print-ready PDF-formatted report of this query in a new tab">
+          ↗ Generate auditable report
+        </button>
+      </header>
+      <div id="melleaBanner" class="mellea-banner" style="display:none"></div>
+      <r-briefing id="paragraph" style="display:block; padding: 14px 16px 18px;"></r-briefing>
+      <r-sources-footer id="sourcesFooter" hidden></r-sources-footer>
+    </section>
+    <section class="panel" id="reportSkel" style="display:none">
+      <header class="brief-head">
+        <div class="brief-eyebrow">Mellea is validating the briefing</div>
+        <div class="brief-title" style="color:var(--text-muted)">Granite drafts → 4 grounding requirements → reroll if any fail…</div>
+      </header>
+      <div class="skel-pad">
+        <div class="skel skel-line w-40" style="height:10px"></div>
+        <div class="skel skel-line w-100"></div>
+        <div class="skel skel-line w-100"></div>
+        <div class="skel skel-line w-80"></div>
+        <div class="skel skel-line w-40" style="height:10px; margin-top:14px"></div>
+        <div class="skel skel-line w-100"></div>
+        <div class="skel skel-line w-60"></div>
+      </div>
+    </section>
+  </aside>
+</div>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<!-- Svelte custom-element bundle — registers <r-briefing>, <r-trace>,
+     <r-sources-footer>. agent.js sets properties on these tags exactly
+     as before; Svelte just owns the implementation now. -->
+<script type="module" src="/static/dist/riprap.js"></script>
+<script src="/static/agent.js"></script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+/* v0.4.2 §18 — browser print stylesheet (Cmd-P → Save as PDF).
+   Letter, 1in margins (1.25in left for tier glyphs), Plex Serif body.
+   Hides app chrome; appends the citation drawer as a final-page appendix
+   when the caller adds the .print-appendix class to the drawer.
+   Distinct from the WeasyPrint export (federal-grant-submission artifact);
+   this is "I need this on paper now."
+*/
+
+@media print {
+  /* Hide app chrome — paper version is briefing + citations only. */
+  .app-header,
+  .app-footer,
+  .tweaks-panel,
+  .skip-link,
+  .map-frame,
+  .app-region-map,
+  .trace-ui,
+  .app-region-trace,
+  .citation-drawer,
+  .region-action,
+  .map-legend,
+  .generating-status,
+  .plan-details,
+  .plan-stream,
+  .app-header-query-edit,
+  .reroll-banner,
+  .reroll-prev,
+  .skeleton-brief {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 11pt;
+  }
+  .hero-band,
+  .hero-band-inner {
+    background: white !important;
+    padding: 0 !important;
+    max-width: none !important;
+  }
+  .app-shell,
+  .app-shell-desktop,
+  .app-shell-tablet,
+  .app-shell-mobile {
+    display: block !important;
+    grid-template-columns: 1fr !important;
+    grid-template-areas: none !important;
+  }
+
+  .briefing-prose {
+    font-family: var(--font-serif), Georgia, serif !important;
+    max-width: 100%;
+    font-size: 11pt;
+    line-height: 1.5;
+  }
+  .brief-h1 {
+    font-size: 22pt !important;
+    page-break-after: avoid;
+  }
+  .briefing-section-head {
+    break-after: avoid-page;
+    border-top: 1pt solid black;
+    margin-top: 14pt !important;
+  }
+  .briefing-para {
+    orphans: 3;
+    widows: 3;
+  }
+
+  /* Citation appendix appears at end of print when drawer carries
+     .print-appendix (caller adds it before window.print()). */
+  .citation-drawer.print-appendix {
+    display: block !important;
+    page-break-before: always;
+  }
+  .citation-list {
+    gap: 6pt !important;
+  }
+  .citation-item {
+    break-inside: avoid;
+  }
+
+  /* Force tier glyphs + citation marks to print in color. */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  a {
+    color: inherit !important;
+    text-decoration: none;
+  }
+  .inline-cite {
+    color: #0B5394 !important;
+  }
+
+  @page {
+    size: letter;
+    margin: 1in 1in 1in 1.25in;          /* extra left margin for tier glyphs */
+    @top-left {
+      content: "riprap · " var(--print-address, "flood-exposure briefing");
+      font: 9pt "IBM Plex Mono";
+      color: #4A4A4A;
+    }
+    @top-right {
+      content: "Generated " var(--print-date, "today") " · v0.4.2";
+      font: 9pt "IBM Plex Mono";
+      color: #4A4A4A;
+    }
+    @bottom-left {
+      content: var(--print-url, "riprap.nyc");
+      font: 9pt "IBM Plex Mono";
+      color: #6B6B6B;
+    }
+    @bottom-right {
+      content: "page " counter(page) " of " counter(pages);
+      font: 9pt "IBM Plex Mono";
+    }
+  }
+}

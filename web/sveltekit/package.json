@@ -1,0 +1,39 @@
+{
+  "name": "riprap-sveltekit",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --output human-verbose --fail-on-warnings false",
+    "check:types": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check:lint": "eslint .",
+    "test:e2e": "playwright test --grep-invert @demo",
+    "test:demo": "playwright test demo-queries.spec.ts",
+    "check:all": "npm run check:types && npm run check:lint && npm run test:e2e"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.59.1",
+    "@sveltejs/adapter-static": "^3.0.6",
+    "@sveltejs/kit": "^2.8.0",
+    "@sveltejs/vite-plugin-svelte": "^5.0.0",
+    "@types/node": "^25.6.0",
+    "eslint": "^10.3.0",
+    "eslint-plugin-svelte": "^3.17.1",
+    "globals": "^17.6.0",
+    "svelte": "^5.16.0",
+    "svelte-check": "^4.1.0",
+    "typescript": "^5.6.0",
+    "typescript-eslint": "^8.59.1",
+    "vite": "^6.0.0"
+  },
+  "dependencies": {
+    "@fontsource/ibm-plex-mono": "^5.1.0",
+    "@fontsource/ibm-plex-sans": "^5.1.0",
+    "@fontsource/ibm-plex-serif": "^5.1.0",
+    "maplibre-gl": "^4.7.0"
+  }
+}

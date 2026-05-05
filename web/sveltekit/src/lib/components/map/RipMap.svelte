@@ -1,0 +1,316 @@
+<script lang="ts">
+  import { onMount, onDestroy } from 'svelte';
+  import type { Map as MapLibreMap, GeoJSONSource } from 'maplibre-gl';
+  import { POSITRON_NO_LABELS } from './baseStyle';
+  import { registerSynStripe } from './synStripe';
+
+  interface QueriedAddress {
+    label: string;
+    lat: number;
+    lon: number;
+  }
+
+  interface Props {
+    address: QueriedAddress;
+    /**
+     * GeoJSON FeatureCollections per tier-layer.
+     * Caller wires these from FastAPI /api/layers/* or static fixtures.
+     */
+    sandyEmpirical?: GeoJSON.FeatureCollection;
+    depModeled?: GeoJSON.FeatureCollection;
+    syntheticPrior?: GeoJSON.FeatureCollection;
+    proxy311?: GeoJSON.FeatureCollection;
+    /** Asset-register pins: subway entrances, schools, hospitals
+     *  (Points) plus NYCHA developments (Polygons). Each feature
+     *  carries `kind`, `name`, `doc_id`, `inside_sandy_2012`,
+     *  optional `pct_inside_sandy` (NYCHA only). Always rendered;
+     *  not gated by `activeLayers`. */
+    registerPoints?: GeoJSON.FeatureCollection;
+    registerPolygons?: GeoJSON.FeatureCollection;
+    activeLayers?: { empirical: boolean; modeled: boolean; synthetic: boolean; proxy: boolean };
+  }
+
+  let {
+    address,
+    sandyEmpirical,
+    depModeled,
+    syntheticPrior,
+    proxy311,
+    registerPoints,
+    registerPolygons,
+    activeLayers = { empirical: true, modeled: true, synthetic: true, proxy: true }
+  }: Props = $props();
+
+  let container: HTMLDivElement | null = $state(null);
+  let map: MapLibreMap | null = null;
+  let ready = $state(false);
+
+  const EMPTY: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] };
+
+  function setSourceData(id: string, fc: GeoJSON.FeatureCollection | undefined) {
+    if (!map || !ready) return;
+    const src = map.getSource(id) as GeoJSONSource | undefined;
+    if (src) src.setData(fc ?? EMPTY);
+  }
+
+  function setLayerVisibility(id: string, visible: boolean) {
+    if (!map || !ready) return;
+    if (!map.getLayer(id)) return;
+    map.setLayoutProperty(id, 'visibility', visible ? 'visible' : 'none');
+  }
+
+  $effect(() => { setSourceData('sandy-empirical', sandyEmpirical); });
+  $effect(() => { setSourceData('dep-modeled', depModeled); });
+  $effect(() => { setSourceData('syn-prior', syntheticPrior); });
+  $effect(() => { setSourceData('proxy-311', proxy311); });
+  $effect(() => { setSourceData('register-points', registerPoints); });
+  $effect(() => { setSourceData('register-polygons', registerPolygons); });
+
+  $effect(() => {
+    setLayerVisibility('tier-empirical-fill', activeLayers.empirical);
+    setLayerVisibility('tier-empirical-line', activeLayers.empirical);
+    setLayerVisibility('tier-modeled-fill', activeLayers.modeled);
+    setLayerVisibility('tier-modeled-line', activeLayers.modeled);
+    setLayerVisibility('tier-synthetic-fill', activeLayers.synthetic);
+    setLayerVisibility('tier-synthetic-line', activeLayers.synthetic);
+    setLayerVisibility('tier-proxy-dots', activeLayers.proxy);
+  });
+
+  $effect(() => {
+    if (!map || !ready) return;
+    map.flyTo({ center: [address.lon, address.lat], zoom: 15, essential: true });
+  });
+
+  onMount(async () => {
+    if (!container) return;
+    const maplibre = await import('maplibre-gl');
+    map = new maplibre.Map({
+      container,
+      style: POSITRON_NO_LABELS,
+      center: [address.lon, address.lat],
+      zoom: 15,
+      attributionControl: { compact: true }
+    });
+
+    map.addControl(new maplibre.NavigationControl({ visualizePitch: false }), 'top-right');
+    map.addControl(new maplibre.ScaleControl({ maxWidth: 100, unit: 'imperial' }), 'bottom-left');
+
+    map.on('load', () => {
+      if (!map) return;
+
+      // Expose for E2E tests. Harmless in production — just a global
+      // ref to the live map instance, which Playwright reads to assert
+      // on syn-stripe-45 image registration, layer wiring, etc.
+      (window as unknown as { __riprapMap?: typeof map }).__riprapMap = map;
+
+      // v0.4.2 §14 — synthetic-prior fill pattern (SVG source, 2 densities)
+      registerSynStripe(map);
+
+      // sources
+      const fcEmpty = (): GeoJSON.FeatureCollection => ({ type: 'FeatureCollection', features: [] });
+      map.addSource('sandy-empirical', { type: 'geojson', data: sandyEmpirical ?? fcEmpty() });
+      map.addSource('dep-modeled', { type: 'geojson', data: depModeled ?? fcEmpty() });
+      map.addSource('syn-prior', { type: 'geojson', data: syntheticPrior ?? fcEmpty() });
+      map.addSource('proxy-311', { type: 'geojson', data: proxy311 ?? fcEmpty() });
+      map.addSource('register-points', { type: 'geojson', data: registerPoints ?? fcEmpty() });
+      map.addSource('register-polygons', { type: 'geojson', data: registerPolygons ?? fcEmpty() });
+      map.addSource('queried-address', {
+        type: 'geojson',
+        data: {
+          type: 'FeatureCollection',
+          features: [{
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: [address.lon, address.lat] },
+            properties: { label: address.label }
+          }]
+        }
+      });
+
+      // empirical fill + line
+      map.addLayer({
+        id: 'tier-empirical-fill', type: 'fill', source: 'sandy-empirical',
+        paint: { 'fill-color': '#0B5394', 'fill-opacity': 0.40 }
+      });
+      map.addLayer({
+        id: 'tier-empirical-line', type: 'line', source: 'sandy-empirical',
+        paint: { 'line-color': '#0B5394', 'line-width': 1.5 }
+      });
+
+      // modeled fill + line
+      map.addLayer({
+        id: 'tier-modeled-fill', type: 'fill', source: 'dep-modeled',
+        paint: { 'fill-color': '#2A6FA8', 'fill-opacity': 0.25 }
+      });
+      map.addLayer({
+        id: 'tier-modeled-line', type: 'line', source: 'dep-modeled',
+        paint: { 'line-color': '#2A6FA8', 'line-width': 1.5 }
+      });
+
+      // synthetic fill (pattern) + dashed line
+      map.addLayer({
+        id: 'tier-synthetic-fill', type: 'fill', source: 'syn-prior',
+        paint: { 'fill-pattern': 'syn-stripe-45', 'fill-opacity': 0.65 }
+      });
+      map.addLayer({
+        id: 'tier-synthetic-line', type: 'line', source: 'syn-prior',
+        paint: { 'line-color': '#2A6FA8', 'line-width': 1.5, 'line-dasharray': [4, 3] }
+      });
+
+      // proxy graduated dots (no fill, stroked circle, radius interpolated by `count`)
+      map.addLayer({
+        id: 'tier-proxy-dots', type: 'circle', source: 'proxy-311',
+        paint: {
+          'circle-color': 'transparent',
+          'circle-stroke-color': '#6B6B6B',
+          'circle-stroke-width': 1.25,
+          'circle-radius': [
+            'interpolate', ['linear'], ['coalesce', ['get', 'count'], 1],
+            1, 3, 5, 6, 15, 9, 30, 12
+          ]
+        }
+      });
+
+      // Register-asset polygons (NYCHA developments only). Fill graded
+      // by pct_inside_sandy_2012 — denser if more of the development is
+      // in the 2012 zone. Outline always-on so the boundary is legible.
+      map.addLayer({
+        id: 'register-polygons-fill', type: 'fill', source: 'register-polygons',
+        paint: {
+          'fill-color': '#0B5394',
+          'fill-opacity': [
+            'interpolate', ['linear'],
+            ['coalesce', ['get', 'pct_inside_sandy'], 0],
+            0, 0.10, 25, 0.20, 50, 0.32, 75, 0.45
+          ]
+        }
+      });
+      map.addLayer({
+        id: 'register-polygons-line', type: 'line', source: 'register-polygons',
+        paint: { 'line-color': '#0B5394', 'line-width': 1.0, 'line-opacity': 0.85 }
+      });
+
+      // Register-asset points (subway entrances, schools, hospitals).
+      // Color: empirical-blue if inside_sandy_2012, ink-tertiary grey
+      // otherwise. Radius by kind (subway 4, school 5, hospital 6) so
+      // they're distinguishable at a glance.
+      map.addLayer({
+        id: 'register-points-circle', type: 'circle', source: 'register-points',
+        paint: {
+          'circle-color': [
+            'case',
+            ['==', ['get', 'inside_sandy_2012'], true], '#0B5394',
+            '#6B6B6B'
+          ],
+          'circle-stroke-color': '#FAFAF7',
+          'circle-stroke-width': 1.25,
+          'circle-radius': [
+            'match', ['get', 'kind'],
+            'subway', 4,
+            'school', 5,
+            'hospital', 6,
+            'nycha', 7,
+            4
+          ],
+          'circle-opacity': 0.9
+        }
+      });
+
+      // Hover/click affordance: cursor change.
+      map.on('mouseenter', 'register-points-circle', () => {
+        if (map) map.getCanvas().style.cursor = 'pointer';
+      });
+      map.on('mouseleave', 'register-points-circle', () => {
+        if (map) map.getCanvas().style.cursor = '';
+      });
+      // Click popup for register-asset auditability — surface name +
+      // doc_id so the citation in the briefing can be cross-referenced
+      // back to the asset on the map.
+      map.on('click', 'register-points-circle', (e) => {
+        if (!map || !e.features?.length) return;
+        const f = e.features[0];
+        const p = (f.properties ?? {}) as Record<string, unknown>;
+        const name = String(p.name ?? '?');
+        const kind = String(p.kind ?? '?');
+        const inside = p.inside_sandy_2012 === true || p.inside_sandy_2012 === 'true';
+        const docId = String(p.doc_id ?? '');
+        const html = `
+          <div style="font-family: 'IBM Plex Sans', system-ui; font-size: 12px;">
+            <div style="font-weight: 600; color: #1A1A1A;">${name}</div>
+            <div style="color: #6B6B6B; font-size: 11px; margin-top: 2px;">${kind}</div>
+            <div style="margin-top: 6px;">
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: ${inside ? '#0B5394' : '#6B6B6B'};">
+                inside_sandy_2012=${inside}
+              </span>
+            </div>
+            ${docId ? `<div style="margin-top: 4px; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: #B8620A;">[${docId}]</div>` : ''}
+          </div>`;
+        // @ts-expect-error: maplibre captured in outer onMount scope
+        const popup = new maplibre.Popup({ closeButton: true, offset: 12 });
+        const coords = (f.geometry as GeoJSON.Point).coordinates as [number, number];
+        popup.setLngLat(coords).setHTML(html).addTo(map);
+      });
+
+      // queried-address pin: warm orange halo + dot, dominant
+      map.addLayer({
+        id: 'queried-halo', type: 'circle', source: 'queried-address',
+        paint: {
+          'circle-color': 'rgba(209, 124, 0, 0.20)',
+          'circle-radius': 16
+        }
+      });
+      map.addLayer({
+        id: 'queried-pin', type: 'circle', source: 'queried-address',
+        paint: {
+          'circle-color': '#D17C00',
+          'circle-stroke-color': '#FAFAF7',
+          'circle-stroke-width': 2,
+          'circle-radius': 7
+        }
+      });
+      map.addLayer({
+        id: 'queried-label', type: 'symbol', source: 'queried-address',
+        layout: {
+          'text-field': ['get', 'label'],
+          'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
+          'text-size': 12,
+          'text-offset': [0, -1.6],
+          'text-anchor': 'bottom'
+        },
+        paint: {
+          'text-color': '#1A1A1A',
+          'text-halo-color': '#FAFAF7',
+          'text-halo-width': 1.5
+        }
+      });
+
+      ready = true;
+    });
+  });
+
+  onDestroy(() => {
+    map?.remove();
+    map = null;
+  });
+</script>
+
+<div class="map-frame">
+  <div
+    bind:this={container}
+    role="application"
+    aria-label="Flood-exposure map for {address.label}"
+    class="rip-map-container"
+  ></div>
+</div>
+
+<style>
+  .rip-map-container {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .map-frame {
+    aspect-ratio: 8 / 5.6;
+    position: relative;
+  }
+</style>

@@ -116,6 +116,32 @@ a:hover { text-decoration: underline; }
 
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.45} }
 
+/* Backend pill state colors. Green = primary reachable; amber =
+   running on the configured fallback; gray = checking; red = nothing
+   reachable. */
+.local-pill[data-state="loading"] {
+  color: #6c757d;
+  background: rgba(108, 117, 125, 0.08);
+  border-color: rgba(108, 117, 125, 0.30);
+}
+.local-pill[data-state="loading"] .dot { background: #6c757d; box-shadow: none; }
+.local-pill[data-state="fallback"] {
+  color: #b06b00;
+  background: rgba(176, 107, 0, 0.10);
+  border-color: rgba(176, 107, 0, 0.35);
+}
+.local-pill[data-state="fallback"] .dot {
+  background: #b06b00; box-shadow: 0 0 6px rgba(176, 107, 0, 0.7);
+}
+.local-pill[data-state="down"] {
+  color: #b00020;
+  background: rgba(176, 0, 32, 0.08);
+  border-color: rgba(176, 0, 32, 0.35);
+}
+.local-pill[data-state="down"] .dot {
+  background: #b00020; box-shadow: 0 0 6px rgba(176, 0, 32, 0.7);
+}
+
 /* ----- Form bar ----- */
 
 .form-bar {
@@ -218,9 +244,10 @@ button.chip:hover {
 }
 .col-right {
   display: flex; flex-direction: column; gap: 12px;
-  position: sticky; top: calc(var(--topbar-h) + 14px);
-  max-height: calc(100vh - var(--topbar-h) - 28px);
-  overflow: auto;
+  /* No viewport clamp: report flows to its natural height. The page
+     scrolls vertically when content exceeds viewport — with an internal
+     scrollbar (the previous behavior) the bottom citations were
+     unreachable for users who didn't notice the thin inner scrollbar. */
 }
 
 /* ----- Panels ----- */
@@ -500,6 +527,26 @@ button.chip:hover {
   font-size: 13.5px;
   line-height: 1.55;
   color: var(--text);
+}
+/* Section structure inside the summary (Status / Empirical / Modeled / Policy).
+   The reconciler emits markdown headers like `**Status.**` on their own line;
+   renderMarkdown() converts them to <h4 class="rsum-h">. */
+.summary-box #paragraph .rsum-h {
+  margin: 12px 0 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+.summary-box #paragraph .rsum-h:first-child { margin-top: 0; }
+.summary-box #paragraph .rsum-p {
+  margin: 0 0 4px;
+}
+.summary-box #paragraph .rsum-p strong {
+  font-weight: 600;
+  background: linear-gradient(transparent 60%, var(--nyc-blue-soft) 60%);
+  padding: 0 2px;
 }
 .summary-box #paragraph .cite {
   display: inline-block;

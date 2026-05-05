@@ -1,4 +1,4 @@
-// HeliOS-NYC web client. Subscribes to SSE, lights up FSM steps.
+// Riprap web client — subscribes to SSE, lights up FSM steps, renders the report.
 
 const STEP_LABELS = {
   geocode:                ["Geocode (DCP Geosearch)",          "address → lat/lon, BBL"],
@@ -6,6 +6,10 @@ const STEP_LABELS = {
   dep_stormwater:         ["DEP Stormwater Maps",              "pluvial scenarios + 2080 SLR"],
   floodnet:               ["FloodNet sensor network",          "live ultrasonic depth sensors"],
   nyc311:                 ["NYC 311 archive",                  "flood complaints in buffer"],
+  noaa_tides:             ["NOAA Tides & Currents (live)",     "Battery / Kings Pt / Sandy Hook water level"],
+  nws_alerts:             ["NWS Public Alerts (live)",         "active flood-relevant alerts at point"],
+  nws_obs:                ["NWS METAR observation (live)",     "nearest ASOS recent precipitation"],
+  ttm_forecast:           ["Granite TTM r2 (TimeSeries)",      "9.6h surge-residual nowcast at the Battery"],
   microtopo_lidar:        ["LiDAR terrain (DEM + TWI + HAND)", "USGS 3DEP DEM + whitebox-workflows hydrology"],
   ida_hwm_2021:           ["Ida 2021 high-water marks",        "USGS empirical post-event extent"],
   prithvi_eo_v2:          ["Prithvi-EO 2.0 (300M, NASA/IBM)",  "Sen1Floods11 satellite water segmentation"],
@@ -15,6 +19,7 @@ const STEP_LABELS = {
 
 const STEPS_ORDER = [
   "geocode", "sandy_inundation", "dep_stormwater", "floodnet", "nyc311",
+  "noaa_tides", "nws_alerts", "nws_obs", "ttm_forecast",
   "microtopo_lidar", "ida_hwm_2021", "prithvi_eo_v2",
   "rag_granite_embedding", "reconcile_granite41",
 ];
@@ -255,8 +260,45 @@ function rewriteCitations(text) {
   });
 }
 
+function escapeHtml(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function renderMarkdown(text) {
+  // Tiny safe markdown subset:
+  //   **Header.**          (on its own line) -> <h4 class="rsum-h">Header</h4>
+  //   **inline bold**       (mid-sentence)  -> <strong>...</strong>
+  // We escape HTML first to defang any injection in model output.
+  const lines = text.split("\n");
+  const out = [];
+  let bodyBuf = [];
+  const flushBody = () => {
+    if (!bodyBuf.length) return;
+    const body = bodyBuf.join(" ").trim();
+    bodyBuf = [];
+    if (!body) return;
+    const safe = escapeHtml(body)
+      .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+    out.push(`<p class="rsum-p">${safe}</p>`);
+  };
+  const headerRe = /^\s*\*\*([A-Z][A-Za-z\s/]+)\.\*\*\s*$/;
+  for (const line of lines) {
+    const m = line.match(headerRe);
+    if (m) {
+      flushBody();
+      out.push(`<h4 class="rsum-h">${escapeHtml(m[1])}</h4>`);
+    } else {
+      bodyBuf.push(line);
+    }
+  }
+  flushBody();
+  return out.join("");
+}
+
 function renderParagraph(text) {
-  $("#paragraph").innerHTML = rewriteCitations(text);
+  // Build markdown structure FIRST, then rewrite citations inside. Citations
+  // are bracketed tokens like [sandy] which don't conflict with our markdown.
+  $("#paragraph").innerHTML = rewriteCitations(renderMarkdown(text));
 }
 
 const SOURCE_LABELS = {
@@ -275,6 +317,10 @@ const SOURCE_LABELS = {
   rag_coned:              "Con Edison Climate Change Resilience Plan (Case 22-E-0222)",
   rag_mta:                "MTA Climate Resilience Roadmap (Oct 2025)",
   rag_comptroller:        "NYC Comptroller — \"Is NYC Ready for Rain?\" (2024)",
+  noaa_tides:             "NOAA CO-OPS Tides & Currents — live water level (6-min)",
+  nws_alerts:             "NWS Public Alerts API — active flood-relevant alerts",
+  nws_obs:                "NWS Station Observations — nearest ASOS hourly METAR",
+  ttm_forecast:           "Granite TimeSeries TTM r2 — surge-residual nowcast (Ekambaram et al. 2024, NeurIPS)",
 };
 
 // ----------------------------------------------------------------------
@@ -282,28 +328,128 @@ const SOURCE_LABELS = {
 // evidence cards, policy quotes, methodology footer.
 // ----------------------------------------------------------------------
 
-function tierMeta(score) {
-  // Mirror app/score.py rubric: ≥6 = T1, 4-5 = T2, 2-3 = T3, 1 = T4, 0 = T0.
-  if (score >= 6)  return {tier: 1, label: "High exposure",       help: "Multiple positive flood signals — historical inundation and modeled scenarios both indicate substantial risk."};
-  if (score >= 4)  return {tier: 2, label: "Elevated exposure",   help: "Significant overlap with at least one empirical or modeled scenario."};
-  if (score >= 2)  return {tier: 3, label: "Moderate exposure",   help: "One or two positive signals; localised or scenario-specific risk."};
-  if (score >= 1)  return {tier: 4, label: "Limited exposure",    help: "A single contextual signal; no positive scenario hits."};
-  return            {tier: 0, label: "No flagged exposure",        help: "No positive flood signal across the assessed sources."};
+// Tier meta — uses the new composite breakpoints, mirrors app/score.py.
+// Tooltip copy explicitly states scope: exposure, not damage probability.
+function tierMeta(tier) {
+  if (tier === 1) return {tier: 1, label: "High exposure",
+    help: "Multiple sub-indices saturated; empirical and/or modeled scenarios both indicate substantial exposure. Not a damage probability."};
+  if (tier === 2) return {tier: 2, label: "Elevated exposure",
+    help: "At least one sub-index near saturation; significant overlap with empirical or modeled scenarios. Not a damage probability."};
+  if (tier === 3) return {tier: 3, label: "Moderate exposure",
+    help: "Partial signals across categories; scenario- or neighborhood-specific exposure. Not a damage probability."};
+  if (tier === 4) return {tier: 4, label: "Limited exposure",
+    help: "A single contextual signal; no positive scenario hits."};
+  return {tier: 0, label: "No flagged exposure",
+    help: "No positive flood signal across the assessed sources."};
 }
 
-function computeScore(ev) {
-  // Mirror server-side rubric so we render consistently.
-  let s = 0;
-  if (ev.sandy) s += 3;
+// ---- Score computation: mirrors app/score.py.composite() exactly ---------
+// Three thematic sub-indices, equal weights within each, max-empirical
+// floor. Live signals (NWS alerts, surge, precip) are NOT in this score
+// per IPCC AR6 WG II's distinction between exposure (static) and event
+// occurrence (live).
+const REG_W = {
+  fema_1pct: 1.0, fema_02pct: 0.5,
+  dep_moderate_2050: 0.75, dep_extreme_2080: 0.50, dep_tidal_2050: 0.75,
+};
+const HYD_W = {
+  hand_band: 1.0, twi_quartile: 0.5,
+  elev_pct_200m_inv: 0.5, elev_pct_750m_inv: 0.5, basin_relief_band: 0.25,
+};
+const EMP_W = {
+  sandy: 1.0,
+  ida_hwm_within_100m: 1.0, ida_hwm_within_800m: 0.5,
+  prithvi_polygon: 0.75, complaints_band: 0.75, floodnet_trigger: 0.75,
+};
+
+const handBand   = (h)   => h == null ? 0 : (h < 1 ? 1 : h < 3 ? 0.66 : h < 10 ? 0.33 : 0);
+const pctInvBand = (p)   => p == null ? 0 : (p < 10 ? 1 : p < 25 ? 0.66 : p < 50 ? 0.33 : 0);
+const twiBand    = (t)   => t == null ? 0 : (t >= 12 ? 1 : t >= 10 ? 0.66 : t >= 8 ? 0.33 : 0);
+const reliefBand = (r)   => r == null ? 0 : (r >= 8 ? 1 : r >= 4 ? 0.66 : r >= 2 ? 0.33 : 0);
+const complBand  = (n)   => !n ? 0 : (n >= 10 ? 1 : n >= 3 ? 0.66 : 0.33);
+const sumW = (w) => Object.values(w).reduce((a, b) => a + b, 0);
+
+function computeComposite(ev) {
   const dep = ev.dep || {};
-  if ((dep.dep_extreme_2080?.depth_class || 0) > 0) s += 2;
-  if ((dep.dep_moderate_2050?.depth_class || 0) > 0) s += 2;
-  if ((dep.dep_moderate_current?.depth_class || 0) > 0) s += 1;
-  if ((ev.nyc311?.n || 0) >= 3) s += 1;
-  if ((ev.floodnet?.n_flood_events_3y || 0) > 0) s += 1;
-  if ((ev.rag || []).length) s += 1;
-  return s;
+  const mt  = ev.microtopo || {};
+  const ida = ev.ida_hwm || {};
+  const pw  = ev.prithvi_water || {};
+
+  // Build the signal dict in the shape app/score.py expects.
+  const s = {
+    // Regulatory
+    fema_1pct:           false,            // not yet wired in this build
+    fema_02pct:          false,
+    dep_moderate_2050:   (dep.dep_moderate_2050?.depth_class || 0) > 0,
+    dep_extreme_2080:    (dep.dep_extreme_2080?.depth_class || 0) > 0,
+    dep_tidal_2050:      false,            // tidal scenario not in current FSM
+    // Hydrological
+    hand_m:              mt.hand_m,
+    twi:                 mt.twi,
+    rel_elev_pct_200m:   mt.rel_elev_pct_200m,
+    rel_elev_pct_750m:   mt.rel_elev_pct_750m,
+    basin_relief_m:      mt.basin_relief_m,
+    // Empirical
+    sandy:               !!ev.sandy,
+    ida_hwm_within_100m: (ida.nearest_dist_m != null && ida.nearest_dist_m < 100) ||
+                         (ida.n_within_radius || 0) > 0 && (ida.nearest_dist_m || 9999) < 100,
+    ida_hwm_within_800m: (ida.n_within_radius || 0) > 0,
+    prithvi_polygon:     !!pw.inside_water_polygon,
+    complaints_count:    ev.nyc311?.n || 0,
+    floodnet_trigger:    (ev.floodnet?.n_flood_events_3y || 0) > 0,
+  };
+
+  // Regulatory sub-index (binary signals)
+  let regRaw = 0;
+  for (const [k, w] of Object.entries(REG_W)) regRaw += s[k] ? w : 0;
+  const reg = regRaw / sumW(REG_W);
+
+  // Hydrological sub-index (banded continuous)
+  const hydBands = {
+    hand_band:         handBand(s.hand_m),
+    twi_quartile:      twiBand(s.twi),
+    elev_pct_200m_inv: pctInvBand(s.rel_elev_pct_200m),
+    elev_pct_750m_inv: pctInvBand(s.rel_elev_pct_750m),
+    basin_relief_band: reliefBand(s.basin_relief_m),
+  };
+  let hydRaw = 0;
+  for (const [k, w] of Object.entries(HYD_W)) hydRaw += w * hydBands[k];
+  const hyd = hydRaw / sumW(HYD_W);
+
+  // Empirical sub-index
+  const empVals = {
+    sandy:               s.sandy ? 1 : 0,
+    ida_hwm_within_100m: s.ida_hwm_within_100m ? 1 : 0,
+    ida_hwm_within_800m: s.ida_hwm_within_800m ? 1 : 0,
+    prithvi_polygon:     s.prithvi_polygon ? 1 : 0,
+    complaints_band:     complBand(s.complaints_count),
+    floodnet_trigger:    s.floodnet_trigger ? 1 : 0,
+  };
+  let empRaw = 0;
+  for (const [k, w] of Object.entries(EMP_W)) empRaw += w * empVals[k];
+  const emp = empRaw / sumW(EMP_W);
+
+  const composite = reg + hyd + emp;
+
+  // Tier breakpoints (mirror score.py)
+  let tier = 0;
+  if      (composite >= 1.50) tier = 1;
+  else if (composite >= 1.00) tier = 2;
+  else if (composite >= 0.50) tier = 3;
+  else if (composite >= 0.01) tier = 4;
+
+  // Max-empirical floor: Sandy or HWM-within-100m → tier ≤ 2
+  const floorApplied = !!(s.sandy || s.ida_hwm_within_100m);
+  if (floorApplied && (tier === 0 || tier > 2)) tier = 2;
+
+  return {
+    subindices: {regulatory: reg, hydrological: hyd, empirical: emp},
+    composite, tier, floorApplied,
+  };
 }
+
+// Backward-compat shim: places that called computeScore() now read .tier.
+function computeScore(ev) { return computeComposite(ev).tier; }
 
 function renderHeader(ev) {
   const geo = ev.geocode || {};
@@ -314,12 +460,13 @@ function renderHeader(ev) {
 }
 
 function renderTier(ev) {
-  const score = computeScore(ev);
-  const m = tierMeta(score);
+  const c = computeComposite(ev);
+  const m = tierMeta(c.tier);
   const badge = $("#tierBadge");
   badge.className = "tier-badge t-" + m.tier;
   $("#tierNum").textContent = m.tier;
-  $("#tierLabel").textContent = `Tier ${m.tier} — ${m.label}`;
+  const floor = c.floorApplied ? " · empirical floor" : "";
+  $("#tierLabel").textContent = `Tier ${m.tier} — ${m.label}${floor}`;
   $("#tierHelp").textContent  = m.help;
 }
 
@@ -554,6 +701,106 @@ function renderEvidence(ev) {
       sourceUrl: "https://data.cityofnewyork.us/Social-Services/311-Service-Requests-from-2010-to-Present/erm2-nwe9",
       vintage: "live, last 5 years",
       collapsed: false,
+    }));
+  }
+
+  // Live signals — refresh every query, may produce nothing on a calm day.
+  const tides = ev.noaa_tides;
+  if (tides && tides.observed_ft_mllw != null) {
+    const rows = [
+      ["Gauge", `${tides.station_name} (${tides.station_id})`],
+      ["Distance to gauge", `${tides.distance_km} km`],
+      ["Observed", `${tides.observed_ft_mllw} ft above MLLW`],
+    ];
+    if (tides.predicted_ft_mllw != null)
+      rows.push(["Predicted (astro tide)", `${tides.predicted_ft_mllw} ft`]);
+    if (tides.residual_ft != null)
+      rows.push(["Residual (obs − pred)", `${tides.residual_ft >= 0 ? "+" : ""}${tides.residual_ft} ft`]);
+    if (tides.obs_time)
+      rows.push(["Observation time", tides.obs_time]);
+    const flag = (tides.residual_ft != null && tides.residual_ft >= 1.0) ? "hit" : "note";
+    cards.push(evCard({
+      key: "noaa_tides",
+      title: "NOAA Tides & Currents — live coastal water level",
+      flag, rows,
+      sourceText: "NOAA CO-OPS API (api.tidesandcurrents.noaa.gov)",
+      sourceUrl: `https://tidesandcurrents.noaa.gov/stationhome.html?id=${tides.station_id}`,
+      vintage: "live, 6-min cadence; residual ≈ surge",
+      collapsed: false,
+    }));
+  }
+
+  const al = ev.nws_alerts;
+  if (al && al.n_active > 0) {
+    const rows = [["Active flood-relevant alerts", String(al.n_active)]];
+    (al.alerts || []).slice(0, 3).forEach((a, i) => {
+      rows.push([
+        `Alert ${i + 1}`,
+        `${a.event} (${a.severity || "?"} / ${a.urgency || "?"}) — expires ${
+          (a.expires || "").slice(0, 16)
+        }`,
+      ]);
+    });
+    cards.push(evCard({
+      key: "nws_alerts",
+      title: "NWS — active flood alerts at this point",
+      flag: "hit", rows,
+      sourceText: "NWS Public Alerts API (api.weather.gov)",
+      sourceUrl: "https://www.weather.gov/documentation/services-web-api",
+      vintage: "live, push-cadence (refresh on event)",
+      collapsed: false,
+    }));
+  }
+
+  const obs = ev.nws_obs;
+  if (obs && obs.station_id && !obs.error && (
+        obs.precip_last_hour_mm != null ||
+        obs.precip_last_6h_mm != null)) {
+    const rows = [
+      ["Nearest ASOS station", `${obs.station_name} (${obs.station_id})`],
+      ["Distance", `${obs.distance_km} km`],
+    ];
+    if (obs.precip_last_hour_mm != null)
+      rows.push(["Precip last 1 h", `${obs.precip_last_hour_mm} mm`]);
+    if (obs.precip_last_3h_mm != null)
+      rows.push(["Precip last 3 h", `${obs.precip_last_3h_mm} mm`]);
+    if (obs.precip_last_6h_mm != null)
+      rows.push(["Precip last 6 h", `${obs.precip_last_6h_mm} mm`]);
+    if (obs.obs_time)
+      rows.push(["Observation time", obs.obs_time]);
+    const heavy = (obs.precip_last_hour_mm || 0) >= 10 ||
+                  (obs.precip_last_6h_mm || 0) >= 25;
+    cards.push(evCard({
+      key: "nws_obs",
+      title: "NWS hourly METAR — recent precipitation",
+      flag: heavy ? "hit" : "note", rows,
+      sourceText: "NWS station observations API",
+      sourceUrl: `https://www.weather.gov/wrh/timeseries?site=${obs.station_id}`,
+      vintage: "live, ~hourly",
+      collapsed: false,
+    }));
+  }
+
+  const ttm = ev.ttm_forecast;
+  if (ttm && ttm.available) {
+    const peak = ttm.forecast_peak_ft;
+    const rows = [
+      ["Gauge", `${ttm.station_name} (NOAA ${ttm.station_id})`],
+      ["Recent residual", `${ttm.history_recent_ft} ft`],
+      ["Recent peak |residual|", `${ttm.history_peak_abs_ft} ft (last ~51 h)`],
+      ["Forecast peak residual", `${peak >= 0 ? "+" : ""}${peak} ft`],
+      ["Forecast peak time", `~${ttm.forecast_peak_minutes_ahead} min ahead (${(ttm.forecast_peak_time_utc || "").slice(11, 16)} UTC)`],
+      ["Threshold", `±${ttm.threshold_ft} ft (gate for emission)`],
+    ];
+    const flag = ttm.interesting ? (Math.abs(peak) >= 0.5 ? "hit" : "note") : "miss";
+    cards.push(evCard({
+      key: "ttm_forecast",
+      title: "Granite TimeSeries TTM r2 — surge nowcast",
+      flag, rows,
+      sourceText: "IBM Granite TimeSeries TTM r2 (Ekambaram et al. 2024, NeurIPS)",
+      sourceUrl: "https://huggingface.co/ibm-granite/granite-timeseries-ttm-r2",
+      vintage: "zero-shot multivariate forecaster, ~1.5M params; runs on CPU",
+      collapsed: !ttm.interesting,
     }));
   }
 

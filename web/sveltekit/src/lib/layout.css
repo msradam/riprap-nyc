@@ -1,0 +1,57 @@
+/* App shell layout — overrides the single-grid `.app-shell` from
+   styles.css with a split structure that fixes the sticky-map-overlapping-
+   trace bug.
+
+   The handoff styles.css makes `.app-shell` one big grid covering
+   brief + map + cites + evidence + trace. With `position: sticky` on
+   `.app-region-map`, the map's containing block is that whole grid —
+   so the map keeps sticking through the evidence and trace rows and
+   visually overlaps them.
+
+   Fix: split into two siblings.
+
+     .app-shell-top    — 2-column grid: brief | (map + cites stacked).
+                         The map's sticky parent IS this container, so
+                         it releases when the user scrolls past the
+                         brief column's bottom.
+     .app-shell-bottom — block of evidence + trace, sibling AFTER the
+                         sticky parent. Sticky never reaches here.
+
+   Tablet / mobile: collapse to a single column, map non-sticky
+   (already handled by the @media rule below).
+*/
+
+.app-shell-top {
+  display: grid;
+  gap: 24px;
+  /* Ensure the sticky right-rail has at least one viewport's worth of
+     scroll range before its parent ends. Short briefings would otherwise
+     make the rail "stick" for only a few pixels. */
+  min-height: calc(100vh - 96px);
+}
+.app-shell-top.is-desktop {
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  grid-template-areas: "brief side";
+}
+.app-shell-top.is-tablet {
+  grid-template-columns: 1fr;
+  grid-template-areas: "side" "brief";
+}
+.app-shell-top.is-mobile {
+  grid-template-columns: 1fr;
+  grid-template-areas: "brief" "side";
+}
+.app-shell-bottom {
+  margin-top: 24px;
+  display: grid;
+  gap: 24px;
+}
+
+@media (max-width: 1099px) {
+  .app-shell-top.is-desktop {
+    grid-template-columns: 1fr;
+    grid-template-areas: "side" "brief";
+  }
+  /* Below desktop the side rail collapses out of sticky behaviour
+     (handled in styles.css's @media block). */
+}

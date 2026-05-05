@@ -1,10 +1,11 @@
-"""HeliOS-NYC web UI — FastAPI + SSE streaming of the Burr FSM trace.
+"""Riprap web UI — FastAPI + SSE streaming of the Burr FSM trace.
 
 Run: uvicorn web.main:app --reload --port 8000
 """
 from __future__ import annotations
 
 import json
+import os
 import warnings
 from pathlib import Path
 
@@ -20,14 +21,21 @@ from app.fsm import iter_steps  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent
 STATIC = ROOT / "static"
+SVELTEKIT_BUILD = ROOT / "sveltekit" / "build"
 
 app = FastAPI(title="Riprap")
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
+# SvelteKit static build (adapter-static). Serves the new design-system UI
+# from /, /q/sample, /q/<query>. The legacy custom-element pages remain at
+# /legacy, /single, /compare, /register/* for as long as they're useful.
+if SVELTEKIT_BUILD.exists():
+    app.mount("/_app", StaticFiles(directory=SVELTEKIT_BUILD / "_app"), name="sveltekit_assets")
+
 import json as _json  # noqa: E402
 
 import geopandas as _gpd  # noqa: E402
-from fastapi.responses import JSONResponse, Response  # noqa: E402
+from fastapi.responses import JSONResponse  # noqa: E402
 
 _LAYER_CACHE: dict = {}
 
@@ -74,19 +82,239 @@ def _warm_caches():
         dep_stormwater.load(scen)
     print("[startup] flood layers ready", flush=True)
     print("[startup] warming RAG (Granite Embedding 278M + 5 PDFs)...", flush=True)
-    from app import rag
-    rag.warm()
-    print("[startup] RAG ready", flush=True)
+    # RAG warm loads sentence-transformers, which on some HF Space rebuilds
+    # has hit transformers-lazy-import edge cases (CodeCarbonCallback). The
+    # Space *must* start even if RAG fails — the FSM still works without
+    # RAG citations (specialists deliver their own grounded data, and the
+    # rag step in fsm.py already handles `rag=[]` gracefully). Surface the
+    # failure loudly in logs but don't kill the app.
+    try:
+        from app import rag
+        rag.warm()
+        print("[startup] RAG ready", flush=True)
+    except Exception as e:  # noqa: BLE001
+        print(f"[startup] RAG warm FAILED — continuing without RAG: "
+              f"{type(e).__name__}: {e}", flush=True)
+        import traceback
+        traceback.print_exc()
+    # Pre-import the heavy EO/ML stacks on the main thread so the
+    # parallel-fanout workers don't race each other on first
+    # import (sklearn's "partially initialized module" surfaces as a
+    # spurious ImportError when terratorch / tsfm_public both pull
+    # sklearn concurrently from worker threads).
+    # Warm the Ollama LLM models so the first user query doesn't pay a
+    # cold-load penalty (~70 s for the 3B planner, ~12 s for the 8B
+    # reconciler at Q4_K_M). Sets keep_alive to 24 h so they stay
+    # resident across queries. Both calls use num_ctx that matches the
+    # production call sites (Mellea's 4096), so Ollama's KV cache is
+    # pre-allocated at the right size and the first reconcile doesn't
+    # pay an extra grow-and-reinit cost.
+    if os.environ.get("RIPRAP_SKIP_LLM_WARM", "").lower() not in ("1", "true", "yes"):
+        print("[startup] warming Ollama models (granite4.1:3b + 8b)...",
+              flush=True)
+        try:
+            import httpx as _httpx
+            base = os.environ.get(
+                "OLLAMA_BASE_URL",
+                os.environ.get("OLLAMA_HOST", "http://localhost:11434"),
+            )
+            if not base.startswith("http"):
+                base = "http://" + base
+            keep_alive = os.environ.get("OLLAMA_KEEP_ALIVE", "24h")
+            num_ctx = int(os.environ.get("RIPRAP_MELLEA_NUM_CTX", "4096"))
+            for tag in (os.environ.get("RIPRAP_OLLAMA_3B_TAG", "granite4.1:3b"),
+                        os.environ.get("RIPRAP_OLLAMA_8B_TAG", "granite4.1:8b")):
+                try:
+                    r = _httpx.post(
+                        base.rstrip("/") + "/api/generate",
+                        json={
+                            "model": tag,
+                            "prompt": "hi",
+                            "stream": False,
+                            "keep_alive": keep_alive,
+                            "options": {"num_ctx": num_ctx, "num_predict": 1},
+                        },
+                        timeout=180,
+                    )
+                    if r.status_code == 200:
+                        load_s = r.json().get("load_duration", 0) / 1e9
+                        print(f"[startup]   {tag} loaded "
+                              f"(load_duration={load_s:.1f}s, "
+                              f"keep_alive={keep_alive}, num_ctx={num_ctx})",
+                              flush=True)
+                    else:
+                        print(f"[startup]   {tag} warm failed "
+                              f"({r.status_code})", flush=True)
+                except Exception as warm_err:
+                    print(f"[startup]   {tag} warm failed: {warm_err}",
+                          flush=True)
+        except Exception as e:
+            print(f"[startup] LLM warm skipped: {e}", flush=True)
+    print("[startup] pre-importing terratorch + tsfm_public...", flush=True)
+    try:
+        import sklearn  # noqa: F401  prime sklearn first
+        import terratorch  # noqa: F401
+        import tsfm_public  # noqa: F401
+    except Exception as e:
+        print(f"[startup] heavy-EO pre-import skipped: {e}", flush=True)
+    # Warm the TerraMind specialist so first per-query call is just
+    # the diffusion (~3 s), not model load (~30 s). No-ops if deps
+    # are missing on this deployment.
+    try:
+        from app.context import terramind_synthesis
+        terramind_synthesis.warm()
+        print("[startup] TerraMind ready", flush=True)
+    except Exception as e:
+        print(f"[startup] TerraMind warm skipped: {e}", flush=True)
+
+
+@app.get("/api/debug/eo")
+def api_debug_eo():
+    """Diagnostic for the EO toolchain (Phase 1 + Phase 4) on HF Spaces.
+
+    Surfaces sys.path, PYTHONPATH, and per-module import status so we
+    can tell whether terratorch is actually findable from inside the
+    uvicorn process. Used to debug why the runtime --target install
+    appears to succeed in the entrypoint but isn't visible to the
+    FSM specialists at request time.
+    """
+    import os
+    import sys
+    import traceback
+    from pathlib import Path
+
+    out = {
+        "python_executable": sys.executable,
+        "python_version": sys.version,
+        "PYTHONPATH": os.environ.get("PYTHONPATH"),
+        "PYTHONNOUSERSITE": os.environ.get("PYTHONNOUSERSITE"),
+        "HOME": os.environ.get("HOME"),
+        "sys.path": sys.path,
+    }
+    eo_dir = Path(os.environ.get("HOME", "/home/user")) / ".eo-pkgs"
+    out["eo_dir"] = str(eo_dir)
+    out["eo_dir_exists"] = eo_dir.exists()
+    if eo_dir.exists():
+        out["eo_dir_contents"] = sorted(p.name for p in eo_dir.iterdir())[:50]
+    out["modules"] = {}
+    for name in ("terratorch", "einops", "diffusers", "timm",
+                 "rasterio", "planetary_computer", "pystac_client"):
+        try:
+            mod = __import__(name)
+            out["modules"][name] = {"ok": True,
+                                     "file": getattr(mod, "__file__", "?")}
+        except Exception as e:
+            out["modules"][name] = {"ok": False,
+                                     "err": f"{type(e).__name__}: {e}",
+                                     "tb": traceback.format_exc().splitlines()[-3:]}
+    return JSONResponse(out)
+
+
+@app.get("/api/backend")
+async def api_backend():
+    """Live LLM-backend descriptor for the UI's hardware badge.
+
+    Returns the configured primary (vLLM/AMD or Ollama/local), plus a
+    quick reachability ping so the badge can show whether the primary is
+    actually answering or whether the Router is on the fallback path.
+    """
+    import httpx
+
+    from app import llm
+    info = llm.backend_info()
+    reachable = None
+    try:
+        if info["primary"] in ("vllm", "mlx") and info["vllm_base_url"]:
+            url = info["vllm_base_url"].rstrip("/") + "/models"
+            async with httpx.AsyncClient(timeout=2.5) as client:
+                r = await client.get(url, headers={"Authorization": "Bearer ping"})
+            # vLLM and mlx_lm.server both return 200 on /v1/models when
+            # reachable; vLLM may return 401 with --api-key set. Either
+            # proves the server is up. Anything else = unreachable.
+            reachable = r.status_code in (200, 401)
+        else:
+            url = info["ollama_base_url"].rstrip("/") + "/api/tags"
+            async with httpx.AsyncClient(timeout=2.5) as client:
+                r = await client.get(url)
+            reachable = r.status_code == 200
+    except Exception:
+        reachable = False
+    info["reachable"] = reachable
+    info["effective_engine"] = (
+        info["engine"] if reachable
+        else (info.get("fallback_engine") or "offline")
+    )
+    return JSONResponse(info)
 
 
 @app.get("/")
 def index():
+    """SvelteKit cold-start page (the new design-system UI). Falls back to
+    the legacy custom-element agent.html if the SvelteKit build hasn't been
+    compiled yet — that lets `uvicorn` boot in a fresh checkout without a
+    Node toolchain present."""
+    sk = SVELTEKIT_BUILD / "index.html"
+    if sk.exists():
+        return FileResponse(sk)
+    return FileResponse(STATIC / "agent.html")
+
+
+@app.get("/q/sample")
+def q_sample_page():
+    """The prerendered Red Hook demo briefing (no SSE)."""
+    sk = SVELTEKIT_BUILD / "q" / "sample.html"
+    if sk.exists():
+        return FileResponse(sk)
+    return JSONResponse({"error": "sveltekit build not present"}, status_code=503)
+
+
+@app.get("/q/{query_id}")
+def q_query_page(query_id: str):  # noqa: ARG001 — captured for the SPA router
+    """Live briefing route. Served by the SvelteKit SPA fallback (200.html);
+    the client opens an EventSource to /api/agent/stream."""
+    sk = SVELTEKIT_BUILD / "200.html"
+    if sk.exists():
+        return FileResponse(sk)
+    return JSONResponse({"error": "sveltekit build not present"}, status_code=503)
+
+
+@app.get("/print/{query_id}")
+def print_page(query_id: str):  # noqa: ARG001 — captured by the SPA router
+    """Curated print artifact for a completed briefing. The client
+    hydrates from localStorage (key riprap:print:<query_id>) and
+    auto-fires window.print() — no backend round-trip."""
+    sk = SVELTEKIT_BUILD / "200.html"
+    if sk.exists():
+        return FileResponse(sk)
+    return JSONResponse({"error": "sveltekit build not present"}, status_code=503)
+
+
+@app.get("/legacy")
+def legacy_index():
+    """Original custom-element agent page, preserved for fallback / debugging."""
+    return FileResponse(STATIC / "agent.html")
+
+
+@app.get("/single")
+def single_address_page():
     return FileResponse(STATIC / "index.html")
 
 
 @app.get("/compare")
 def compare_page():
     return FileResponse(STATIC / "compare.html")
+
+
+@app.get("/agent")
+def agent_page():
+    return FileResponse(STATIC / "agent.html")
+
+
+@app.get("/report")
+def report_page():
+    """Print-ready auditable report. Reads the prior agent run from
+    the browser's sessionStorage; fully client-side render."""
+    return FileResponse(STATIC / "report.html")
 
 
 @app.get("/register/{asset_class}")
@@ -121,6 +349,7 @@ async def compare_stream(a: str, b: str, request: Request):
     route updates to the correct panel."""
     import asyncio
     import queue
+
     from app.fsm import iter_steps
 
     def gen_for_side(side: str, q_text: str, out_q):
@@ -132,7 +361,7 @@ async def compare_stream(a: str, b: str, request: Request):
             out_q.put({"side": side, "kind": "error", "err": str(e)})
         out_q.put({"side": side, "kind": "_done"})
 
-    out_q: "queue.Queue[dict]" = queue.Queue()
+    out_q: queue.Queue[dict] = queue.Queue()
 
     def kick():
         # run both sides in parallel threads — each Burr Application owns
@@ -185,6 +414,153 @@ async def stream(q: str, request: Request):
     return StreamingResponse(gen(), media_type="text/event-stream",
                              headers={"Cache-Control": "no-cache",
                                       "X-Accel-Buffering": "no"})
+
+
+@app.get("/api/agent")
+def api_agent(q: str):
+    """Agentic endpoint: take a natural-language query, plan it via
+    Granite 4.1, dispatch to the appropriate intent module, return the
+    full result as JSON. The Plan is included so callers can see the
+    agent's routing decision.
+
+    All non-trivial reconciliation (single_address / neighborhood /
+    development_check) routes through Mellea-validated rejection
+    sampling against four grounding requirements. live_now stays on
+    streaming reconcile because outputs are short and the live signals
+    have low hallucination surface."""
+    from app.intents import development_check as i_dev
+    from app.intents import live_now as i_live
+    from app.intents import neighborhood as i_nbhd
+    from app.intents import single_address as i_addr
+    from app.planner import plan as run_planner
+    p = run_planner(q)
+    if p.intent == "development_check":
+        out = i_dev.run(p, q, strict=True)
+    elif p.intent == "neighborhood":
+        out = i_nbhd.run(p, q, strict=True)
+    elif p.intent == "live_now":
+        out = i_live.run(p, q)
+    else:
+        out = i_addr.run(p, q, strict=True)
+    return JSONResponse(out)
+
+
+@app.get("/api/agent/stream")
+async def api_agent_stream(q: str):
+    """SSE: emit `plan` once the planner finishes, then a `step` event per
+    finalized specialist, then `final` with the full result. The intent
+    runs in a thread; we marshal events through a queue."""
+    import asyncio
+    import queue
+    out_q: queue.Queue[dict] = queue.Queue()
+
+    def runner():
+        try:
+            from app.intents import development_check as i_dev
+            from app.intents import live_now as i_live
+            from app.intents import neighborhood as i_nbhd
+            from app.intents import single_address as i_addr
+            from app.planner import plan as run_planner
+
+            def _on_plan_token(delta: str):
+                out_q.put({"kind": "plan_token", "delta": delta})
+            p = run_planner(q, on_token=_on_plan_token)
+            out_q.put({"kind": "plan",
+                       "intent": p.intent,
+                       "targets": p.targets,
+                       "specialists": p.specialists,
+                       "rationale": p.rationale})
+            if p.intent == "development_check":
+                final = i_dev.run(p, q, progress_q=out_q, strict=True)
+            elif p.intent == "neighborhood":
+                final = i_nbhd.run(p, q, progress_q=out_q, strict=True)
+            elif p.intent == "live_now":
+                final = i_live.run(p, q, progress_q=out_q)
+            else:
+                final = i_addr.run(p, q, progress_q=out_q, strict=True)
+            out_q.put({"kind": "final", **final})
+        except Exception as e:
+            out_q.put({"kind": "error", "err": str(e)})
+        finally:
+            out_q.put({"kind": "_done"})
+
+    async def event_stream():
+        loop = asyncio.get_event_loop()
+        loop.run_in_executor(None, runner)
+        yield f"event: hello\ndata: {json.dumps({'query': q})}\n\n"
+        while True:
+            try:
+                ev = await asyncio.to_thread(out_q.get, True, 1.0)
+            except Exception:
+                continue
+            kind = ev.get("kind")
+            if kind == "_done":
+                break
+            yield f"event: {kind}\ndata: {json.dumps(ev, default=str)}\n\n"
+        yield "event: done\ndata: {}\n\n"
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache",
+                                      "X-Accel-Buffering": "no"})
+
+
+@app.get("/api/agent/plan")
+def api_agent_plan(q: str):
+    """Just the plan, no execution. Useful for showing the agent's routing
+    decision before running specialists."""
+    from app.planner import plan as run_planner
+    p = run_planner(q)
+    return JSONResponse({
+        "intent":      p.intent,
+        "targets":     p.targets,
+        "specialists": p.specialists,
+        "rationale":   p.rationale,
+    })
+
+
+@app.get("/api/layers/nta")
+def layer_nta(code: str):
+    """Return the NTA polygon for a given NTA code as GeoJSON (EPSG:4326)."""
+    from app.areas import nta as nta_mod
+    g = nta_mod.load()
+    sub = g[g["nta2020"] == code][["nta2020", "ntaname", "boroname", "geometry"]]
+    if sub.empty:
+        return JSONResponse({"type": "FeatureCollection", "features": []}, status_code=404)
+    return JSONResponse(_json.loads(sub.to_json()),
+                        headers={"Cache-Control": "public, max-age=3600"})
+
+
+@app.get("/api/layers/sandy_clipped")
+def layer_sandy_clipped(code: str):
+    """Sandy inundation polygons clipped to an NTA bbox + simplified.
+    Used by the agent map for neighborhood / development_check intents."""
+    from app.areas import nta as nta_mod
+    from app.flood_layers import sandy_inundation
+    poly = nta_mod.polygon_for(code)
+    if poly is None:
+        return JSONResponse({"type": "FeatureCollection", "features": []})
+    bounds = poly.bounds
+    cx, cy = (bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2
+    # bbox half-extent in metres ~ half the polygon span × 111 km/deg
+    half_m = max((bounds[2] - bounds[0]), (bounds[3] - bounds[1])) / 2 * 111_000
+    return JSONResponse(_clip_simplify(sandy_inundation.load(), cy, cx, half_m * 1.2),
+                        headers={"Cache-Control": "public, max-age=600"})
+
+
+@app.get("/api/layers/dep_clipped")
+def layer_dep_clipped(code: str, scenario: str = "dep_extreme_2080"):
+    """DEP scenario polygons clipped to an NTA bbox + simplified."""
+    from app.areas import nta as nta_mod
+    from app.flood_layers import dep_stormwater
+    poly = nta_mod.polygon_for(code)
+    if poly is None:
+        return JSONResponse({"type": "FeatureCollection", "features": []})
+    bounds = poly.bounds
+    cx, cy = (bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2
+    half_m = max((bounds[2] - bounds[0]), (bounds[3] - bounds[1])) / 2 * 111_000
+    return JSONResponse(_clip_simplify(dep_stormwater.load(scenario), cy, cx, half_m * 1.2,
+                                        props_keep={"Flooding_Category"}),
+                        headers={"Cache-Control": "public, max-age=600"})
 
 
 @app.get("/api/layers/sandy")

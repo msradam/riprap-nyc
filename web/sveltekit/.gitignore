@@ -1,0 +1,11 @@
+node_modules
+.svelte-kit
+# build/ is committed — HF Spaces does not run Node, so we ship the
+# adapter-static output the same way web/static/dist/riprap.js is committed
+# for the legacy custom-element bundle.
+.DS_Store
+.env*
+!.env.example
+vite.config.ts.timestamp-*
+test-results/
+playwright-report/
