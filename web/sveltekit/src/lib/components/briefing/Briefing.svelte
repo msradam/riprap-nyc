@@ -62,11 +62,13 @@
            No user-supplied input flows here.
         -->
       <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-      <div class="briefing-status">{@html block.html}</div>
+      <div class="briefing-status briefing-fade-in">{@html block.html}</div>
     {:else if block.kind === 'head'}
-      <SectionHead n={block.n} label={block.label} tier={block.tier} title={block.title} />
+      <div class="briefing-fade-in">
+        <SectionHead n={block.n} label={block.label} tier={block.tier} title={block.title} />
+      </div>
     {:else}
-      <p class="briefing-para">
+      <p class="briefing-para briefing-fade-in">
         {#each block.parts as part, j (j)}
           {#if part.tier}
             <Claim tier={part.tier}>{part.text}</Claim>{#if part.cite && cites[part.cite]}<Cite c={cites[part.cite]} />{/if}
@@ -77,7 +79,18 @@
       </p>
     {/if}
   {/each}
-  {#if visibleCount < blocks.length}
-    <span class="streaming-caret" aria-hidden="true">▍</span>
-  {/if}
 </div>
+
+<style>
+  /* Each newly-revealed block fades in over 320ms instead of the
+     blinking-cursor "typing" cadence. Citation-grounded paragraphs
+     should land with authority, not chatter. Respects
+     prefers-reduced-motion via the global rule in tokens.css. */
+  .briefing-fade-in {
+    animation: briefing-fade 320ms ease-out both;
+  }
+  @keyframes briefing-fade {
+    from { opacity: 0; transform: translateY(2px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+</style>

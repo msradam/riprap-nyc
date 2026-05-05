@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Riprap · Flood Exposure Briefing for NYC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IBM+Plex+Serif:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="tokens.css" />
+<link rel="stylesheet" href="landing-variants.css" />
+<style>
+.land-page { max-width: 1200px; margin: 0 auto; }
+.land-section-stones-detail { background: var(--paper-deep); padding: 56px 32px; border-top: 1px solid var(--rule-soft); }
+.land-stones-detail { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; background: white; border: 1px solid var(--rule-soft); border-bottom: 2px solid var(--ink); }
+.land-stones-detail-cell { position: relative; padding: 28px 18px 22px; border-right: 1px solid var(--rule-soft); display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
+.land-stones-detail-cell:last-child { border-right: none; }
+.land-stones-detail-num { position: absolute; top: 6px; right: 10px; font-family: var(--font-serif); font-style: italic; font-weight: 400; font-size: 38px; line-height: 1; color: var(--rule-soft); letter-spacing: -0.02em; pointer-events: none; }
+.land-stones-detail-name { font-family: var(--font-serif); font-size: 22px; font-weight: 500; margin: 0; color: var(--ink); }
+.land-stones-detail-role { font-family: var(--font-sans); font-size: 13px; color: var(--ink-secondary); }
+.land-stones-detail-tag { font-family: var(--font-serif); font-style: italic; font-size: 14px; color: var(--ink-tertiary); margin: 0 0 6px; line-height: 1.45; }
+.land-stones-detail-sources { margin-top: auto; padding-top: 10px; border-top: 1px dashed var(--rule-soft); font-family: var(--font-mono); font-size: 11px; color: var(--ink-secondary); line-height: 1.55; }
+.land-stones-deck { font-family: var(--font-serif); font-size: 17px; line-height: 1.6; color: var(--ink-secondary); max-width: 70ch; margin: 0 0 22px; }
+
+/* Compact "What you'll get back" · three panes (excerpt + evidence + map) */
+.land-preview-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: stretch; }
+.land-preview-pane { background: white; border: 1px solid var(--rule-soft); border-left: 3px solid var(--ink); padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.land-preview-pane .land-preview-eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-tertiary); margin: 0; }
+.land-preview-pane-excerpt .land-preview-body { font-family: var(--font-serif); font-size: 15px; line-height: 1.55; color: var(--ink); margin: 0; }
+.land-preview-pane-excerpt .land-preview-cites { display: flex; flex-direction: column; gap: 4px; padding-top: 10px; border-top: 1px dashed var(--rule-soft); }
+.land-preview-pane-excerpt .land-preview-cite-row { grid-template-columns: 30px 1fr 70px; gap: 8px; font-size: 11px; }
+
+.land-preview-pane-cards { gap: 8px; }
+.land-evcard { background: var(--paper); border: 1px solid var(--rule-soft); padding: 8px 10px; display: flex; flex-direction: column; gap: 3px; }
+.land-evcard-empirical { border-left: 2px solid var(--tier-empirical); }
+.land-evcard-modeled { border-left: 2px solid var(--tier-modeled); }
+.land-evcard-head { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; }
+.land-evcard-tier { color: var(--ink-secondary); text-transform: uppercase; }
+.land-evcard-empirical .land-evcard-tier { color: var(--tier-empirical); }
+.land-evcard-modeled .land-evcard-tier { color: var(--tier-modeled); }
+.land-evcard-id { color: var(--ink-tertiary); }
+.land-evcard-claim { font-family: var(--font-sans); font-size: 12.5px; line-height: 1.35; color: var(--ink); }
+.land-evcard-source { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-tertiary); }
+
+.land-preview-pane-map { padding: 16px 18px; }
+.land-mapmini { position: relative; aspect-ratio: 6 / 5; border: 1px solid var(--rule-soft); overflow: hidden; }
+.land-mapmini-legend { position: absolute; left: 6px; bottom: 6px; right: 6px; display: flex; gap: 10px; padding: 4px 6px; background: rgba(255,255,255,0.92); font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.04em; color: var(--ink-secondary); }
+.land-mapmini-legend span { display: inline-flex; align-items: center; gap: 4px; }
+.lm-sw { display: inline-block; width: 8px; height: 8px; }
+.lm-sw-emp { background: var(--tier-empirical); }
+.lm-sw-mod { background: rgba(42,111,168,0.4); border: 1px dashed var(--tier-modeled); }
+.lm-sw-prx { background: transparent; border: 1px solid #6B6B6B; border-radius: 50%; }
+.land-preview-mapmeta { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-tertiary); }
+
+@media (max-width: 1000px) {
+  .land-preview-grid { grid-template-columns: 1fr 1fr; }
+  .land-preview-pane-excerpt { grid-column: 1 / -1; }
+}
+@media (max-width: 640px) {
+  .land-preview-grid { grid-template-columns: 1fr; }
+  .land-preview-pane-excerpt { grid-column: auto; }
+}
+@media (max-width: 880px) {
+  .land-stones-detail { grid-template-columns: 1fr; }
+  .land-stones-detail-cell { border-right: none; border-bottom: 1px solid var(--rule-soft); }
+  .land-stones-detail-cell:last-child { border-bottom: none; }
+}
+</style>
+</head>
+<body>
+<template id="__bundler_thumbnail">
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <rect width="100" height="100" fill="#FAFAF7"/>
+  <g transform="translate(20 30)" fill="#0B5394">
+    <rect x="0" y="0" width="60" height="6"/>
+    <rect x="0" y="12" width="60" height="3"/>
+    <rect x="0" y="20" width="42" height="3"/>
+    <rect x="0" y="30" width="60" height="10"/>
+  </g>
+</svg>
+</template>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+const SAMPLE_QUERIES = [
+  "80 Pioneer Street, Red Hook",
+  "Coney Island Hospital",
+  "PS 188, Lower East Side",
+  "Hammels Houses, Rockaway",
+  "Bowling Green station",
+  "555 W 57th Street",
+];
+
+const STONE_FRIEZE = [
+  { name: "Cornerstone", role: "the hazard reader",  tag: "what NYC's ground remembers", sources: "USGS HWMs · FEMA NFHL · DEP stormwater · Prithvi historical" },
+  { name: "Keystone",    role: "the asset register", tag: "what's exposed",              sources: "MTA · NYCHA · DOE · DOH · PLUTO" },
+  { name: "Touchstone",  role: "the live observer",  tag: "what's happening now",        sources: "FloodNet sensors · 311 complaints · tidal gauges" },
+  { name: "Lodestone",   role: "the projector",      tag: "what's coming",               sources: "NPCC4 · TTM foundation model · TerraMind synthetic SAR · NFIP" },
+  { name: "Capstone",    role: "the synthesizer",    tag: "writes it all down",          sources: "Granite composer · Mellea grounding-check · WeasyPrint" },
+];
+
+const QueryBox = () => (
+  <form className="land-query land-query-lg" onSubmit={(e) => e.preventDefault()}>
+    <span className="land-query-prompt" aria-hidden="true">›</span>
+    <input
+      type="text"
+      placeholder="Address, neighborhood, or BBL. e.g. 80 Pioneer Street, Red Hook"
+      className="land-query-input"
+      aria-label="Query an address, neighborhood, or BBL"
+    />
+    <button type="submit" className="land-query-submit">Brief this place →</button>
+  </form>
+);
+
+const CyclingExamples = () => {
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setI((x) => (x + 1) % SAMPLE_QUERIES.length), 2200);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <div className="land-cycling" aria-live="polite">
+      <span className="land-cycling-label">Try:</span>
+      <span className="land-cycling-rail">
+        {SAMPLE_QUERIES.map((q, idx) => (
+          <span key={q} className={`land-cycling-item ${idx === i ? "is-active" : ""}`} aria-hidden={idx !== i}>
+            {q}
+          </span>
+        ))}
+      </span>
+    </div>
+  );
+};
+
+const GroundedOutputPreview = () => (
+  <div className="land-preview-grid">
+    {/* Pane 1 · Excerpt */}
+    <div className="land-preview-pane land-preview-pane-excerpt">
+      <div className="land-preview-eyebrow">Briefing excerpt</div>
+      <p className="land-preview-body">
+        The lot sits inside the FEMA <span className="land-preview-cite">1% AE flood zone <sup>[c3]</sup></span>,
+        with Sandy high-water marks recorded
+        <span className="land-preview-cite"> 4.7 ft above grade <sup>[c1]</sup></span>.
+        FloodNet FN-BK-018 has logged
+        <span className="land-preview-cite"> 14 nuisance floods since 2023 <sup>[c2]</sup></span>.
+      </p>
+      <div className="land-preview-cites">
+        <div className="land-preview-cite-row">
+          <span className="land-preview-cite-pin">[c1]</span>
+          <span className="land-preview-cite-src">USGS HWM · Sandy 2012</span>
+          <span className="land-preview-cite-tier">empirical</span>
+        </div>
+        <div className="land-preview-cite-row">
+          <span className="land-preview-cite-pin">[c2]</span>
+          <span className="land-preview-cite-src">FloodNet FN-BK-018</span>
+          <span className="land-preview-cite-tier">empirical</span>
+        </div>
+        <div className="land-preview-cite-row">
+          <span className="land-preview-cite-pin">[c3]</span>
+          <span className="land-preview-cite-src">FEMA NFHL · 36047C0207</span>
+          <span className="land-preview-cite-tier">modeled</span>
+        </div>
+      </div>
+    </div>
+
+    {/* Pane 2 · Evidence cards (2x2 grid) */}
+    <div className="land-preview-pane land-preview-pane-cards">
+      <div className="land-preview-eyebrow">Evidence cards</div>
+      <div className="land-evcard-grid">
+      <article className="land-evcard land-evcard-empirical">
+        <header className="land-evcard-head">
+          <span className="land-evcard-tier">empirical</span>
+          <span className="land-evcard-id">e1</span>
+        </header>
+        <div className="land-evcard-claim">4.7 ft Sandy storm-surge HWM at address</div>
+        <div className="land-evcard-source">USGS High-Water Mark database · 2012</div>
+      </article>
+      <article className="land-evcard land-evcard-empirical">
+        <header className="land-evcard-head">
+          <span className="land-evcard-tier">empirical</span>
+          <span className="land-evcard-id">e2</span>
+        </header>
+        <div className="land-evcard-claim">14 nuisance-flood events, 2023–2026</div>
+        <div className="land-evcard-source">FloodNet FN-BK-018 · 2 blocks north</div>
+      </article>
+      <article className="land-evcard land-evcard-modeled">
+        <header className="land-evcard-head">
+          <span className="land-evcard-tier">modeled</span>
+          <span className="land-evcard-id">e3</span>
+        </header>
+        <div className="land-evcard-claim">FEMA 1% annual-chance (AE) flood zone</div>
+        <div className="land-evcard-source">FEMA NFHL · panel 36047C0207</div>
+      </article>
+      <article className="land-evcard land-evcard-modeled">
+        <header className="land-evcard-head">
+          <span className="land-evcard-tier">modeled</span>
+          <span className="land-evcard-id">e5</span>
+        </header>
+        <div className="land-evcard-claim">+30 in MSL by 2070 (NPCC4 high)</div>
+        <div className="land-evcard-source">NPCC4 SLR projection · 2024</div>
+      </article>
+      </div>
+      <div className="land-preview-spacer"/>
+    </div>
+
+    {/* Pane 3 · Mini map */}
+    <div className="land-preview-pane land-preview-pane-map">
+      <div className="land-preview-eyebrow">Map</div>
+      <div className="land-mapmini" role="img" aria-label="Sample exposure map of Red Hook">
+        <svg viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" style={{ display: "block", width: "100%", height: "100%" }}>
+          {/* base */}
+          <rect width="240" height="200" fill="#F2F2EE"/>
+          {/* water */}
+          <path d="M0,150 Q60,140 120,148 T240,140 L240,200 L0,200 Z" fill="#D6DDE0"/>
+          <path d="M0,90 Q40,82 90,88 L120,86 L120,150 L0,150 Z" fill="#D6DDE0"/>
+          {/* AE zone (modeled) · translucent fill */}
+          <path d="M30,80 L130,76 L160,140 L40,148 Z" fill="rgba(42,111,168,0.22)" stroke="#2A6FA8" strokeWidth="0.8" strokeDasharray="3 2"/>
+          {/* HWM contour (empirical) */}
+          <path d="M50,90 Q90,84 130,90 T200,108" fill="none" stroke="#0B5394" strokeWidth="1.2"/>
+          {/* streets */}
+          <g stroke="#B8B5AE" strokeWidth="0.5" fill="none">
+            <path d="M0,60 L240,52"/>
+            <path d="M0,110 L240,102"/>
+            <path d="M60,0 L72,200"/>
+            <path d="M120,0 L132,200"/>
+            <path d="M180,0 L192,200"/>
+          </g>
+          {/* FloodNet sensor (empirical · square) */}
+          <g transform="translate(108 92)">
+            <rect x="-3" y="-3" width="6" height="6" fill="#0B5394" stroke="white" strokeWidth="0.8"/>
+          </g>
+          {/* 311 cluster (proxy · open circles) */}
+          <g fill="none" stroke="#6B6B6B" strokeWidth="0.8">
+            <circle cx="80" cy="120" r="3"/>
+            <circle cx="86" cy="124" r="3"/>
+            <circle cx="92" cy="118" r="3"/>
+          </g>
+          {/* queried address pin */}
+          <g transform="translate(118 112)">
+            <circle r="8" fill="none" stroke="#1A1A1A" strokeWidth="1.2"/>
+            <circle r="2.4" fill="#1A1A1A"/>
+          </g>
+        </svg>
+        <div className="land-mapmini-legend">
+          <span><span className="lm-sw lm-sw-emp"/>empirical</span>
+          <span><span className="lm-sw lm-sw-mod"/>modeled</span>
+          <span><span className="lm-sw lm-sw-prx"/>proxy</span>
+        </div>
+      </div>
+      <div className="land-preview-mapmeta">Red Hook · z16 · Carto Positron</div>
+    </div>
+  </div>
+);
+
+const StonesSection = () => (
+  <section className="land-section-stones-detail" id="methodology">
+    <div className="land-page">
+      <div className="land-section-head">
+        <span className="section-label">How Riprap reads a place</span>
+        <span className="land-section-meta">Five Stones · one taxonomy · every briefing</span>
+      </div>
+      <p className="land-stones-deck">
+        Each briefing routes through a fixed taxonomy of public-record specialists. Each Stone is a
+        class of evidence. Together they form the briefing, and every claim in the output traces
+        back to the Stone that produced it.
+      </p>
+      <div className="land-stones-detail">
+        {STONE_FRIEZE.map((s, i) => (
+          <article key={s.name} className="land-stones-detail-cell">
+            <div className="land-stones-detail-num">{String(i + 1).padStart(2, "0")}</div>
+            <h3 className="land-stones-detail-name">{s.name}</h3>
+            <div className="land-stones-detail-role">{s.role}</div>
+            <p className="land-stones-detail-tag">{s.tag}</p>
+            <div className="land-stones-detail-sources">{s.sources}</div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+);
+
+const Landing = () => (
+  <div className="land land-v1">
+    <header className="land-header">
+      <span className="riprap-wordmark">riprap</span>
+      <span className="land-header-sep">/</span>
+      <span className="land-header-context">Flood Exposure Briefing · NYC</span>
+      <nav className="land-header-nav">
+        <a href="#methodology">Methodology</a>
+        <a href="#sources">Sources</a>
+        <a href="#about">About</a>
+      </nav>
+    </header>
+
+    <div className="land-page">
+      <main className="land-hero land-hero-v1">
+        <h1 className="land-hero-h1">
+          <span className="land-hero-headline">A flood exposure briefing<br/>for <em>any place</em> in New York City.</span>
+          <span className="land-hero-deck">
+            Type an address. Get a written briefing where every numeric claim
+            links to its primary public-record source.
+          </span>
+        </h1>
+        <QueryBox/>
+        <CyclingExamples/>
+      </main>
+      <section className="land-section land-section-v1">
+        <div className="land-section-head">
+          <span className="section-label">What you'll get back</span>
+          <span className="land-section-meta">A grounded paragraph with citations, not a chatbot answer.</span>
+        </div>
+        <GroundedOutputPreview/>
+      </section>
+    </div>
+
+    <StonesSection/>
+
+    <footer className="land-footer">
+      <span className="land-footer-tiers">
+        <span className="land-footer-tier"><span className="lm-sw lm-sw-emp"/>empirical</span>
+        <span className="land-footer-tier"><span className="lm-sw lm-sw-mod"/>modeled</span>
+        <span className="land-footer-tier"><span className="lm-sw lm-sw-prx"/>proxy</span>
+        <span className="land-footer-tier"><span className="lm-sw lm-sw-syn"/>synthetic</span>
+      </span>
+      <span className="land-footer-build">Riprap v0.4.4 · NYC OpenData · FEMA NFHL · USGS · NPCC4</span>
+    </footer>
+  </div>
+);
+
+ReactDOM.createRoot(document.getElementById("root")).render(<Landing/>);
+</script>
+</body>
+</html>

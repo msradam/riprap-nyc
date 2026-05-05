@@ -2,13 +2,41 @@
   import { onMount } from 'svelte';
   import Briefing from '$lib/components/briefing/Briefing.svelte';
   import CitationDrawer from '$lib/components/briefing/CitationDrawer.svelte';
-  import EvidenceGrid from '$lib/components/evidence/EvidenceGrid.svelte';
-  import TraceUI from '$lib/components/trace/TraceUI.svelte';
   import RipMap from '$lib/components/map/RipMap.svelte';
   import MapLegend from '$lib/components/map/MapLegend.svelte';
-  import { BRIEFING_BLOCKS, CITATIONS, EVIDENCE, TRACE_ROOT, SAMPLE_ADDRESS } from '$lib/data/sample';
+  import FindingsRegion from '$lib/components/findings/FindingsRegion.svelte';
+  import { BRIEFING_BLOCKS, CITATIONS, SAMPLE_ADDRESS } from '$lib/data/sample';
+  import { SAMPLE_FINDINGS } from '$lib/data/findingsSample';
   import { briefingState, persistSnapshot } from '$lib/stores/briefingState.svelte';
+  import type { Density, ProvenanceMode } from '$lib/types/card';
   import type { FeatureCollection } from 'geojson';
+
+  /** Cross-linking state, lifted to the page so the briefing's map can
+   *  read the Findings card under hover. */
+  let linkedKey = $state<string | null>(null);
+  let density = $state<Density>('comfortable');
+  let provenanceMode = $state<ProvenanceMode>('smart');
+  /** Dev-only card-grammar catalog. Toggle with ?grammar=1 in the URL.
+   *  Read only on the client — adapter-static forbids url.searchParams
+   *  at prerender time. */
+  let showGrammar = $state(false);
+  $effect(() => {
+    if (typeof window !== 'undefined') {
+      showGrammar = new URL(window.location.href).searchParams.get('grammar') === '1';
+    }
+  });
+
+  function handleLink(key: string | null) {
+    linkedKey = key;
+  }
+  function handleCite(citeId: string) {
+    // Citation drawer is below; scroll it into view + flag for now.
+    // (Real wiring lands in C8 once CitationDrawer exposes an open()
+    // method.)
+    const el = document.getElementById('region-cites');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    void citeId;
+  }
 
   let active = $state({ empirical: true, modeled: true, synthetic: true, proxy: true });
   let streamKey = $state(0);
@@ -92,6 +120,7 @@
               address={queriedAddress}
               activeLayers={active}
               syntheticPrior={SYN_FIXTURE}
+              {linkedKey}
             />
             <MapLegend
               {active}
@@ -106,19 +135,23 @@
           </div>
         </aside>
 
-        <aside class="app-region app-region-cites" aria-label="Citations">
+        <aside id="region-cites" class="app-region app-region-cites" aria-label="Citations">
           <CitationDrawer citations={CITATIONS} />
         </aside>
       </div>
     </div>
 
     <div class="app-shell-bottom">
-      <section class="app-region app-region-evidence" aria-label="Evidence">
-        <EvidenceGrid items={EVIDENCE} />
-      </section>
-
-      <section id="region-trace" class="app-region app-region-trace" aria-label="Trace">
-        <TraceUI root={TRACE_ROOT} />
+      <section class="app-region app-region-findings" aria-label="Findings">
+        <FindingsRegion
+          data={SAMPLE_FINDINGS}
+          {density}
+          {provenanceMode}
+          {showGrammar}
+          {linkedKey}
+          onLink={handleLink}
+          onCite={handleCite}
+        />
       </section>
     </div>
   </div>

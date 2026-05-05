@@ -81,6 +81,33 @@
 
   <div class="cold-start-trust">
     <span class="section-label">How Riprap is built</span>
+
+    <!-- v0.4.5 §9 — five-Stones one-liner with Stone-tinted dots beside
+         each name. Tints are hint-level decoration; print degrades them
+         to neutral gray via the @media print rule in tokens.css. -->
+    <ul class="cold-start-stones">
+      <li>
+        <span class="stone-dot" style="background: var(--stone-cornerstone);" aria-hidden="true"></span>
+        <em>Cornerstone</em> remembers — what NYC's ground remembers.
+      </li>
+      <li>
+        <span class="stone-dot" style="background: var(--stone-keystone);" aria-hidden="true"></span>
+        <em>Keystone</em> tallies — what's exposed.
+      </li>
+      <li>
+        <span class="stone-dot" style="background: var(--stone-touchstone);" aria-hidden="true"></span>
+        <em>Touchstone</em> watches — what's happening now.
+      </li>
+      <li>
+        <span class="stone-dot" style="background: var(--stone-lodestone);" aria-hidden="true"></span>
+        <em>Lodestone</em> projects — what's coming.
+      </li>
+      <li>
+        <span class="stone-dot" style="background: var(--stone-capstone);" aria-hidden="true"></span>
+        <em>Capstone</em> writes it all down with citations.
+      </li>
+    </ul>
+
     <ul class="cold-start-trust-list">
       <li>All foundation models <strong>Apache-2.0</strong>; no commercial APIs at runtime.</li>
       <li>All data from public-record federal, state, and city sources.</li>
@@ -90,3 +117,38 @@
     <a href="#methodology" class="cold-start-method-link">Methodology paper →</a>
   </div>
 </section>
+
+<style>
+  .cold-start-stones {
+    list-style: none;
+    margin: 12px 0 16px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .cold-start-stones li {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--ink-secondary);
+    line-height: 1.5;
+  }
+  .cold-start-stones em {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 16px;
+    color: var(--ink);
+    margin-right: 2px;
+  }
+  .stone-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex: none;
+    align-self: center;
+  }
+</style>
