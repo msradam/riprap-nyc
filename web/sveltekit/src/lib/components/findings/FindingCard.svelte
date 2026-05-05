@@ -117,6 +117,13 @@
     font: inherit;
     padding: 0;
     width: 100%;
+    /* Fade each card in as it lands in the rail. Respects
+       prefers-reduced-motion via the global rule in tokens.css. */
+    animation: fc-fade-in 360ms ease-out both;
+  }
+  @keyframes fc-fade-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
   .fc.is-interactive { cursor: pointer; }
   .fc:hover { background: var(--paper-deep); }

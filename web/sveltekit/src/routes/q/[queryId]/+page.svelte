@@ -10,7 +10,7 @@
   import RerollBanner from '$lib/components/states/RerollBanner.svelte';
   import ErrorCard from '$lib/components/states/ErrorCard.svelte';
   import FindingsRegion from '$lib/components/findings/FindingsRegion.svelte';
-  import { adaptFinalToFindings } from '$lib/client/cardAdapter';
+  import { adaptFinalToFindings, applyStepEventToLiveState } from '$lib/client/cardAdapter';
   import type { Density, ProvenanceMode, FindingsData } from '$lib/types/card';
   import type { ErrorKey, RegisterData } from '$lib/types/states';
   import { extractRegisters } from '$lib/client/registerAdapter';
@@ -79,13 +79,27 @@
   let runStartedAt = $state<number | null>(null);
   let runWallSeconds = $state<number | undefined>(undefined);
 
-  /** Compose the FindingsData payload from the live FSM final-state +
-   *  trace tree. Re-derives as new specialists land. */
-  let findingsData = $derived<FindingsData>(
-    finalResult
-      ? adaptFinalToFindings(finalResult, traceRoot, runWallSeconds)
-      : { cards: [], stones: [], wallSeconds: runWallSeconds }
-  );
+  /** Live per-specialist results, keyed by FSM state name (sandy / dep
+   *  / floodnet / ...). Updated incrementally on every `step` event so
+   *  cards stream into the rail as their specialists complete; the
+   *  full final payload merges in once the reconcile event fires. */
+  let liveResults = $state<Record<string, unknown>>({});
+  /** Bumped on every step event so the $derived below recomputes even
+   *  though Svelte doesn't deep-track plain objects. */
+  let liveTick = $state(0);
+
+  /** Compose the FindingsData payload. During streaming we feed the
+   *  adapter from `liveResults` (slim per-step summaries). When `final`
+   *  arrives, its richer payload supersedes — same key shape, just
+   *  more fields populated. */
+  let findingsData = $derived.by<FindingsData>(() => {
+    void liveTick;
+    if (finalResult) {
+      const merged = { ...liveResults, ...finalResult } as Partial<typeof finalResult>;
+      return adaptFinalToFindings(merged, traceRoot, runWallSeconds, true);
+    }
+    return adaptFinalToFindings(liveResults, traceRoot, runWallSeconds, false);
+  });
 
   function handleFindingsLink(key: string | null) { linkedKey = key; }
   function handleFindingsCite(citeId: string) {
@@ -367,6 +381,13 @@
       onPlanToken: (d) => (planTokens += d),
       onPlan: (p) => (plan = p),
       onStep: (s) => {
+        // Mirror the step's slim result into liveResults so Findings cards
+        // can stream in as specialists complete. The card adapter is
+        // tolerant of partial summaries — at the end of the stream the
+        // richer `final` payload merges over the top.
+        applyStepEventToLiveState(liveResults, s.step, s.result, s.ok);
+        liveTick = liveTick + 1;
+
         // address from the geocode step (single_address / live_now)
         if (s.step === 'geocode') {
           if (s.ok && s.result && typeof s.result === 'object') {

@@ -545,13 +545,23 @@ function buildCapstoneMeta(final: FinalResult, wallSeconds?: number): Card {
 }
 
 /** Public adapter. Combines per-specialist card builders with the trace
- *  → StoneTrace mapper into a single FindingsData payload. */
+ *  → StoneTrace mapper into a single FindingsData payload.
+ *
+ *  Accepts either a real FinalResult (at end-of-stream) or a partial
+ *  one synthesized from in-flight step events (during streaming). Each
+ *  builder returns null when its slice of state is missing — so cards
+ *  pop into the rail as their specialist completes, without waiting
+ *  for the full reconcile. */
 export function adaptFinalToFindings(
-  final: FinalResult,
+  final: FinalResult | Partial<FinalResult> | null | undefined,
   trace: TraceNode | undefined | null,
   wallSeconds?: number,
+  /** When true, the Capstone meta card renders even with a stub final
+   *  (we always want the run-summary). When false (no final at all),
+   *  the meta card is skipped — there's nothing to summarise yet. */
+  hasFinal: boolean = true,
 ): FindingsData {
-  const f = final as Final;
+  const f = (final ?? {}) as Final;
   const geocode = obj(f.geocode);
   const cards: (Card | null)[] = [
     // Cornerstone
@@ -574,8 +584,8 @@ export function adaptFinalToFindings(
     buildNwsAlerts(f),
     buildTtmForecast(f),
     buildTtmBatterySurge(f),
-    // Capstone (always renders if we got here)
-    buildCapstoneMeta(final, wallSeconds),
+    // Capstone (only once we have something to summarise)
+    hasFinal ? buildCapstoneMeta((final ?? { paragraph: '' }) as FinalResult, wallSeconds) : null,
   ];
 
   return {
@@ -583,4 +593,76 @@ export function adaptFinalToFindings(
     stones: buildStoneTraces(trace),
     wallSeconds,
   };
+}
+
+/** Per-step-event live-state mapper. The FSM action `step_X` writes to
+ *  state key `X` (sometimes munged — e.g. `step_311` writes `nyc311`,
+ *  `step_terramind` writes `terramind`). The SSE `step.result` payload
+ *  is a slim summary (not the full doc body); cards adapt to whichever
+ *  fields are present.
+ *
+ *  Mutates `live` in place and returns the keys that changed so callers
+ *  can decide whether to re-render. */
+export function applyStepEventToLiveState(
+  live: Record<string, unknown>,
+  stepName: string,
+  result: unknown,
+  ok: boolean,
+): string[] {
+  const STEP_TO_STATE: Record<string, string> = {
+    sandy_inundation: 'sandy',
+    dep_stormwater: 'dep',
+    floodnet: 'floodnet',
+    nyc311: 'nyc311',
+    noaa_tides: 'noaa_tides',
+    nws_alerts: 'nws_alerts',
+    nws_obs: 'nws_obs',
+    ttm_forecast: 'ttm_forecast',
+    ttm_311_forecast: 'ttm_311_forecast',
+    ttm_battery_surge: 'ttm_battery_surge',
+    floodnet_forecast: 'floodnet_forecast',
+    ida_hwm_2021: 'ida_hwm',
+    prithvi_eo_v2: 'prithvi_water',
+    prithvi_eo_live: 'prithvi_live',
+    microtopo_lidar: 'microtopo',
+    mta_entrance_exposure: 'mta_entrances',
+    nycha_development_exposure: 'nycha_developments',
+    doe_school_exposure: 'doe_schools',
+    doh_hospital_exposure: 'doh_hospitals',
+    terramind_synthesis: 'terramind',
+    terramind_lulc: 'terramind_lulc',
+    terramind_buildings: 'terramind_buildings',
+    eo_chip_fetch: 'eo_chip',
+    geocode: 'geocode',
+  };
+  const key = STEP_TO_STATE[stepName];
+  if (!key) return [];
+
+  // Translate the slim summary shapes the FSM emits into the
+  // doc-payload shapes the card builders expect. Mostly identity
+  // (the summaries already nest the relevant fields), with a few
+  // exceptions documented inline.
+  if (stepName === 'sandy_inundation') {
+    // FSM summary: { inside: bool }. Adapter expects state.sandy === true.
+    const r = result as Record<string, unknown> | null;
+    live[key] = ok && r?.inside === true ? true : (ok ? false : null);
+  } else if (stepName === 'dep_stormwater') {
+    // FSM summary: { dep_extreme_2080: 'label', dep_moderate_2050: 'label', ... }.
+    // Adapter expects state.dep[scen] = { depth_class, depth_label }.
+    // Reconstruct depth_class>0 from any non-empty label.
+    const r = (result as Record<string, unknown>) ?? {};
+    const dep: Record<string, unknown> = {};
+    for (const [scen, label] of Object.entries(r)) {
+      const lbl = typeof label === 'string' ? label : '';
+      if (!lbl) continue;
+      dep[scen] = { depth_class: 1, depth_label: lbl };
+    }
+    live[key] = Object.keys(dep).length ? dep : null;
+  } else if (ok && result != null) {
+    live[key] = result;
+  } else {
+    live[key] = null;
+  }
+
+  return [key];
 }
