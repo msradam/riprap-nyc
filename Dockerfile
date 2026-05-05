@@ -45,13 +45,21 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Pull Granite 4.1:3b into the image. The official Ollama installer
 # stores models under /usr/share/ollama/.ollama by default; we point at a
 # user-writable location so the runtime container can also serve.
+#
+# Pattern: start ollama serve in the background, poll its HTTP endpoint
+# until it answers, then pull the model. We do NOT kill the daemon at the
+# end — the RUN shell's exit reaps it automatically, and `pkill -f` would
+# match this RUN command line itself (SIGTERM propagates up, build exits 143).
 ENV OLLAMA_MODELS=/home/user/.ollama/models
 RUN mkdir -p $OLLAMA_MODELS && \
-    (ollama serve &) && \
-    sleep 3 && \
+    ollama serve > /tmp/ollama.log 2>&1 & \
+    for i in $(seq 1 60); do \
+        curl -sf http://127.0.0.1:11434/ > /dev/null 2>&1 && break; \
+        sleep 1; \
+    done && \
+    ollama list && \
     ollama pull granite4.1:3b && \
-    sleep 1 && \
-    pkill -f "ollama serve" || true
+    ollama list
 
 # App code + fixtures
 COPY --chown=user:user app/ ./app/
