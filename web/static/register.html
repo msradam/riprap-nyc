@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Riprap — NYC public schools flood exposure register</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+</head>
+<body class="register-mode">
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span class="brand-name">Riprap</span>
+        <span class="brand-sep">·</span>
+        <span class="brand-tag">NYC public schools — flood exposure register</span>
+      </div>
+      <div class="topbar-right">
+        <a href="/" class="modelink">address</a>
+        <a href="/compare" class="modelink">compare</a>
+        <select id="classPicker" class="topbar-select">
+          <option value="schools">DOE schools</option>
+          <option value="nycha">NYCHA developments</option>
+          <option value="mta_entrances">MTA subway entrances</option>
+        </select>
+        <span class="local-pill" title="Pre-computed by the same FSM, bulk mode."><span class="dot"></span>bulk · pre-computed</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="register-summary">
+    <div class="reg-stat"><span class="reg-stat-num" id="totalCount">—</span><span class="reg-stat-lbl">schools assessed</span></div>
+    <div class="reg-stat tier-1"><span class="reg-stat-num" id="tier1Count">—</span><span class="reg-stat-lbl">Tier 1</span></div>
+    <div class="reg-stat tier-2"><span class="reg-stat-num" id="tier2Count">—</span><span class="reg-stat-lbl">Tier 2</span></div>
+    <div class="reg-stat tier-3"><span class="reg-stat-num" id="tier3Count">—</span><span class="reg-stat-lbl">Tier 3</span></div>
+    <div class="reg-stat-spacer"></div>
+    <div class="reg-controls">
+      <input type="text" id="filter" placeholder="filter by name, address, or borough…" />
+      <select id="boroughFilter">
+        <option value="">All boroughs</option>
+        <option>Manhattan</option><option>Bronx</option>
+        <option>Brooklyn</option><option>Queens</option><option>Staten Island</option>
+      </select>
+      <button id="exportCsv" class="btn-secondary" type="button">CSV</button>
+      <button id="exportGeojson" class="btn-secondary" type="button">GeoJSON</button>
+    </div>
+  </div>
+
+  <div class="register-workbench">
+    <section class="reg-table-wrap panel">
+      <h2>Ranked by exposure score<span class="hint">click any row for details</span></h2>
+      <div class="reg-tablescroll">
+        <table id="regTable">
+          <thead>
+            <tr>
+              <th>Tier</th>
+              <th>Score</th>
+              <th>School</th>
+              <th>Borough</th>
+              <th class="num">Sandy</th>
+              <th class="num">DEP&nbsp;2080</th>
+              <th class="num">311</th>
+              <th class="num">FloodNet</th>
+              <th class="num">Ida</th>
+            </tr>
+          </thead>
+          <tbody id="regBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <aside class="reg-detail panel" id="regDetail">
+      <h2>Detail<span class="hint">select a school</span></h2>
+      <div class="reg-detail-empty" id="detailEmpty">
+        Select a row to load the cited per-asset report.
+      </div>
+      <div class="reg-detail-body hidden" id="detailBody">
+        <div id="detailHeader" class="reg-detail-header"></div>
+        <div id="detailMap"></div>
+        <div class="report-section"><h3>At a glance</h3><ul id="detailGlance" class="glance-list"></ul></div>
+        <div class="report-section"><h3>Summary</h3><p id="detailParagraph"></p>
+          <div id="detailNoPara" class="hint" style="margin-top: 8px;">
+            Tier-3 paragraphs are computed on demand. <button id="livePara" type="button" class="btn-secondary">Generate cited paragraph (~10 s)</button>
+          </div>
+        </div>
+        <div class="report-section"><h3>Sources fired</h3><ol id="detailSources" class="sources-list"></ol></div>
+      </div>
+    </aside>
+  </div>
+
+  <footer>
+    <div class="foot-inner">
+      <div class="foot-col">
+        <h3>Bulk mode</h3>
+        <p>
+          The same 8-specialist FSM that answers a single address is run
+          in batch over every NYC public school (1,992 from the DOE
+          location dataset). Each row is scored on a transparent rubric —
+          Sandy 2012 inundation, DEP stormwater scenarios, FloodNet sensor
+          history, USGS Ida 2021 high-water marks, LiDAR micro-topography,
+          NYC 311 flood complaints. Tier-1 and Tier-2 schools have their
+          full Granite-reconciled cited paragraph pre-computed; Tier-3
+          paragraphs are generated on click.
+        </p>
+      </div>
+      <div class="foot-col">
+        <h3>Source</h3>
+        <p>
+          NYC DOE 2019-2020 School Point Locations
+          (<a href="https://data.cityofnewyork.us/Education/2019-2020-School-Point-Locations/a3nt-yts4" target="_blank">a3nt-yts4</a>).
+          Same data substrate as the address mode.
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/static/register.js"></script>
+</body>
+</html>

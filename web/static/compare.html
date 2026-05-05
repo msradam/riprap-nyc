@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Riprap — compare two NYC addresses</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+</head>
+<body class="compare-mode">
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span class="brand-name">Riprap</span>
+        <span class="brand-sep">·</span>
+        <span class="brand-tag">compare two NYC addresses, side by side</span>
+      </div>
+      <div class="topbar-right">
+        <a href="/" class="modelink">address</a>
+        <a href="/register/schools" class="modelink">register</a>
+        <span class="local-pill" title="Granite 4.1 inference runs on this machine. Two FSMs run in parallel.">
+          <span class="dot"></span>local · 2× Granite 4.1
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <div class="form-bar form-bar-compare">
+    <form id="cform">
+      <div class="cform-row">
+        <label>A</label>
+        <input type="text" id="qa" name="a" autocomplete="off"
+               placeholder='Address A — e.g. "153-09 90 Avenue, Jamaica, Queens"'
+               value="153-09 90 Avenue, Jamaica, Queens" required />
+      </div>
+      <div class="cform-row">
+        <label>B</label>
+        <input type="text" id="qb" name="b" autocomplete="off"
+               placeholder='Address B — e.g. "350 5 Avenue, Manhattan"  (Empire State)'
+               value="350 5 Avenue, Manhattan" required />
+      </div>
+      <button type="submit" id="cgo">Compare</button>
+    </form>
+    <div class="suggest">
+      <span class="suggest-label">try:</span>
+      <button class="chip" data-a="153-09 90 Avenue, Jamaica, Queens" data-b="350 5 Avenue, Manhattan">Ida basements vs. Empire State</button>
+      <button class="chip" data-a="180 Beach 35 St, Queens" data-b="2950 W 25 St, Brooklyn">Far Rockaway vs. Coney Island NYCHA</button>
+      <button class="chip" data-a="Smith and 9 Street, Brooklyn" data-b="220 W 109 St, Manhattan">Gowanus vs. Upper West Side</button>
+    </div>
+  </div>
+
+  <div class="workbench compare-workbench">
+
+    <!-- LEFT pane: address A -->
+    <aside class="cpane" id="paneA">
+      <div class="cpane-head"><span class="ctag a">A</span><span id="aTitle">Address A</span></div>
+      <section class="panel">
+        <h2>Trace<span class="hint">Burr FSM · A</span></h2>
+        <ul id="stepsA"></ul>
+      </section>
+      <section class="panel hidden" id="reportA">
+        <h2>Cited report<span class="hint">Granite 4.1 · A</span></h2>
+        <div class="report-section"><h3>At a glance</h3><ul id="glanceA" class="glance-list"></ul></div>
+        <div class="report-section"><h3>Summary</h3><p id="paragraphA"></p></div>
+        <div class="report-section"><h3>Sources fired</h3><ol id="sourcesA" class="sources-list"></ol></div>
+      </section>
+    </aside>
+
+    <!-- MIDDLE pane: shared map -->
+    <section class="col-mid compare-mid">
+      <div class="panel panel-map" id="map-card">
+        <h2>Map<span class="hint">Both addresses · shared layers</span></h2>
+        <div id="map"></div>
+        <div class="legend">
+          <span><i class="sw sandy"></i>Sandy 2012</span>
+          <span><i class="sw dep"></i>DEP Extreme 2080</span>
+          <span><i class="sw fnDot"></i>FloodNet (no events)</span>
+          <span><i class="sw fnDotHot"></i>FloodNet w/ events</span>
+          <span><i class="sw addr"></i>A &amp; B markers</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT pane: address B -->
+    <aside class="cpane" id="paneB">
+      <div class="cpane-head"><span class="ctag b">B</span><span id="bTitle">Address B</span></div>
+      <section class="panel">
+        <h2>Trace<span class="hint">Burr FSM · B</span></h2>
+        <ul id="stepsB"></ul>
+      </section>
+      <section class="panel hidden" id="reportB">
+        <h2>Cited report<span class="hint">Granite 4.1 · B</span></h2>
+        <div class="report-section"><h3>At a glance</h3><ul id="glanceB" class="glance-list"></ul></div>
+        <div class="report-section"><h3>Summary</h3><p id="paragraphB"></p></div>
+        <div class="report-section"><h3>Sources fired</h3><ol id="sourcesB" class="sources-list"></ol></div>
+      </section>
+    </aside>
+
+  </div>
+
+  <footer>
+    <div class="foot-inner">
+      <div class="foot-col">
+        <h3>Compare mode</h3>
+        <p>
+          Two addresses, two parallel runs of the same 8-specialist FSM.
+          Each side renders its own trace, at-a-glance signals, cited
+          summary, and source list. The map shows both markers and shared
+          layer overlays. Both Granite 4.1 reconciliations run concurrently
+          via Ollama (<code>OLLAMA_NUM_PARALLEL=2</code>); wallclock is
+          comparable to a single query.
+        </p>
+      </div>
+      <div class="foot-col">
+        <h3>Sources</h3>
+        <p>
+          <a href="https://data.cityofnewyork.us/" target="_blank">NYC Open Data</a> ·
+          <a href="https://api.floodnet.nyc/" target="_blank">FloodNet NYC</a> ·
+          <a href="https://geosearch.planninglabs.nyc/" target="_blank">NYC DCP Geosearch</a> ·
+          <a href="https://stn.wim.usgs.gov/" target="_blank">USGS STN</a> ·
+          <a href="https://www.usgs.gov/3d-elevation-program" target="_blank">USGS 3DEP</a>
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/static/compare.js"></script>
+</body>
+</html>
