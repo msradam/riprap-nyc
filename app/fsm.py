@@ -499,6 +499,44 @@ def step_ttm_forecast(state: State) -> State:
         rec["elapsed_s"] = round(time.time() - rec["started_at"], 2)
 
 
+@action(reads=["lat", "lon"], writes=["ttm_battery_surge", "trace"])
+def step_ttm_battery_surge(state: State) -> State:
+    """Granite TTM r2 fine-tune — 96 h hourly Battery surge nowcast.
+
+    Same TTM r2 backbone family as step_ttm_forecast but a different
+    artefact: msradam/Granite-TTM-r2-Battery-Surge, trained on AMD
+    MI300X. Hourly cadence vs the zero-shot's 6-min, 4-day vs 9.6 h
+    horizon. Both can fire on the same query — the reconciler frames
+    each as a distinct forecast in the briefing."""
+    rec, trace = _step(state, "ttm_battery_surge")
+    try:
+        if state.get("lat") is None:
+            rec["ok"] = False; rec["err"] = "no coords"
+            return state.update(ttm_battery_surge=None, trace=trace)
+        # Battery gauge is a single point; the forecast applies citywide
+        # to NYC harbor entrance, so we don't gate by NYC bbox.
+        from app.live import ttm_battery_surge
+        s = ttm_battery_surge.fetch()
+        rec["ok"] = bool(s.get("available"))
+        if not rec["ok"]:
+            rec["err"] = s.get("reason", "unavailable")
+            return state.update(ttm_battery_surge=None, trace=trace)
+        rec["result"] = {
+            "context_h": s.get("context_hours"),
+            "horizon_h": s.get("horizon_hours"),
+            "forecast_peak_m": s.get("forecast_peak_m"),
+            "forecast_peak_hours_ahead": s.get("forecast_peak_hours_ahead"),
+            "interesting": s.get("interesting"),
+        }
+        return state.update(ttm_battery_surge=s, trace=trace)
+    except Exception as e:
+        rec["ok"] = False; rec["err"] = str(e)
+        log.exception("ttm_battery_surge failed")
+        return state.update(ttm_battery_surge=None, trace=trace)
+    finally:
+        rec["elapsed_s"] = round(time.time() - rec["started_at"], 2)
+
+
 @action(reads=["lat", "lon"], writes=["floodnet_forecast", "trace"])
 def step_floodnet_forecast(state: State) -> State:
     """TTM r2 forecast of flood-event recurrence at the nearest FloodNet
@@ -893,7 +931,8 @@ def _label_counts(gliner_out: dict[str, dict]) -> dict[str, int]:
                "ida_hwm", "prithvi_water", "prithvi_live", "terramind",
                "terramind_lulc", "terramind_buildings",
                "noaa_tides", "nws_alerts", "nws_obs", "ttm_forecast",
-               "ttm_311_forecast", "floodnet_forecast", "mta_entrances",
+               "ttm_311_forecast", "floodnet_forecast", "ttm_battery_surge",
+               "mta_entrances",
                "nycha_developments", "doe_schools", "doh_hospitals",
                "rag", "gliner"],
         writes=["paragraph", "audit", "mellea", "trace"])
@@ -917,6 +956,7 @@ def step_reconcile(state: State) -> State:
             "ttm_forecast": state.get("ttm_forecast"),
             "ttm_311_forecast": state.get("ttm_311_forecast"),
             "floodnet_forecast": state.get("floodnet_forecast"),
+            "ttm_battery_surge": state.get("ttm_battery_surge"),
             "rag": state.get("rag"),
             "gliner": state.get("gliner"),
             "prithvi_live": state.get("prithvi_live"),
@@ -1027,6 +1067,7 @@ def build_app(query: str):
         "ttm_forecast": step_ttm_forecast,
         "ttm_311_forecast": step_ttm_311_forecast,
         "floodnet_forecast": step_floodnet_forecast,
+        "ttm_battery_surge": step_ttm_battery_surge,
         "microtopo": step_microtopo,
         "ida_hwm": step_ida_hwm,
         "mta_entrances": step_mta_entrances,
@@ -1091,6 +1132,7 @@ def run(query: str) -> dict[str, Any]:
         "ttm_forecast": final_state.get("ttm_forecast"),
         "ttm_311_forecast": final_state.get("ttm_311_forecast"),
         "floodnet_forecast": final_state.get("floodnet_forecast"),
+        "ttm_battery_surge": final_state.get("ttm_battery_surge"),
         "mta_entrances": final_state.get("mta_entrances"),
         "nycha_developments": final_state.get("nycha_developments"),
         "doe_schools": final_state.get("doe_schools"),
@@ -1214,6 +1256,7 @@ def iter_steps(query: str):
         "ttm_forecast": state.get("ttm_forecast"),
         "ttm_311_forecast": state.get("ttm_311_forecast"),
         "floodnet_forecast": state.get("floodnet_forecast"),
+        "ttm_battery_surge": state.get("ttm_battery_surge"),
         "mta_entrances": state.get("mta_entrances"),
         "nycha_developments": state.get("nycha_developments"),
         "doe_schools": state.get("doe_schools"),

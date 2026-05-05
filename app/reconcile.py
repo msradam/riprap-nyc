@@ -270,6 +270,7 @@ def trim_docs_to_plan(doc_msgs: list[dict],
         "ttm_forecast":       ("ttm_forecast",),
         "ttm_311_forecast":   ("ttm_311_forecast",),
         "floodnet_forecast":  ("floodnet_forecast",),
+        "ttm_battery_surge":  ("ttm_battery",),
         "terramind":          ("terramind", "syn_"),
         "terramind_lulc":     ("tm_lulc",),
         "terramind_buildings": ("tm_buildings",),
@@ -999,6 +1000,39 @@ def build_documents(state: dict[str, Any]) -> list[dict]:
             "extension to the same dataset, computable per-query.",
         ]
         docs.append(_doc_message(doc_id, body))
+
+    # Granite TTM r2 — Battery surge fine-tune (msradam/Granite-TTM-r2-
+    # Battery-Surge, Apache-2.0, fine-tuned on AMD MI300X). Hourly
+    # cadence, 96 h horizon — distinct from the existing zero-shot
+    # ttm_forecast above, which runs at 6-min cadence over a 9.6 h
+    # horizon. Both can fire on the same query.
+    tbs = state.get("ttm_battery_surge")
+    if (not out_of_nyc and tbs and tbs.get("available")
+            and tbs.get("interesting")):
+        body = [
+            "Source: msradam/Granite-TTM-r2-Battery-Surge (Apache-2.0). "
+            "Fine-tune of ibm-granite/granite-timeseries-ttm-r2 trained "
+            "on AMD Instinct MI300X via AMD Developer Cloud. Test MAE "
+            "0.1091 m, -41% vs persistence and -25% vs zero-shot TTM r2.",
+            f"Gauge: {tbs['station_name']} (NOAA {tbs['station_id']}).",
+            f"Context window: {tbs['context_hours']} hours "
+            f"(~{tbs['context_hours']/24:.1f} days) of hourly surge "
+            "residual (verified water level minus harmonic tide).",
+            f"Forecast horizon: {tbs['horizon_hours']} hours "
+            f"(~{tbs['horizon_hours']/24:.1f} days ahead).",
+            f"Recent residual: {tbs['history_recent_m']} m.",
+            f"Recent peak |residual| in context: "
+            f"{tbs['history_peak_abs_m']} m.",
+            f"Forecast peak surge residual: {tbs['forecast_peak_m']} m, "
+            f"expected {tbs['forecast_peak_hours_ahead']} hours from "
+            f"now (at {tbs['forecast_peak_time_utc']} UTC).",
+            "INTERPRETATION: positive residual is the meteorological "
+            "component (storm surge, atmospheric pressure, wind setup) "
+            "on top of astronomical tide. The Battery is the dominant "
+            "NYC harbor-entrance gauge — its surge characterises Sandy "
+            "and Ida conditions citywide.",
+        ]
+        docs.append(_doc_message("ttm_battery", body))
 
     # ---- Policy context (RAG + GLiNER, ancillary to the four Stones) ---
     # Retrieved policy paragraphs and GLiNER typed-entity extractions.
