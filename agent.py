@@ -1,4 +1,4 @@
-"""HeliOS-NYC agent CLI: address -> cited paragraph via the Burr FSM.
+"""Riprap agent CLI — address → cited briefing via the Burr FSM.
 
 Usage:
     python agent.py "180 Beach 35 St, Queens"

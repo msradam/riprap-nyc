@@ -1,0 +1,26 @@
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = [".venv", "data", "corpus", "outputs"]
+
+[tool.ruff.lint]
+# Pyflakes (real bug class) + import + bugbear; skip purely stylistic rules
+# (E701/E702 multi-statement-per-line) where the compact form is intentional
+# in our FSM error-recording one-liners.
+select = ["F", "E4", "E7", "E9", "I", "B", "UP"]
+ignore = [
+    "E701",  # one-line `if cond: stmt` — intentional in compact guards
+    "E702",  # `a; b` — intentional in compact `rec["ok"] = False; rec["err"] = ...` pairs
+    "E741",  # ambiguous var name (e.g. `l`) — accept context where it's clear
+    "B008",  # function call in default arg — fine for httpx Timeout etc.
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Scripts use one-shot patterns we don't want to over-lint.
+"scripts/*.py" = ["F841", "B007"]
+
+[tool.vulture]
+min_confidence = 80
+ignore_decorators = ["@app.get", "@app.post", "@action"]
+ignore_names = ["request"]  # FastAPI handler signatures
+paths = ["app", "web", "scripts", "riprap.py", "agent.py"]

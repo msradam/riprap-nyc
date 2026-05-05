@@ -1,0 +1,112 @@
+# Phase 19 — Prithvi-EO 2.0 NYC pluvial v2.
+#
+# Improvements over Phase 14 v1 (test/mIoU 0.5381 / flood IoU 0.10):
+#   1. Copy-paste augmentation: original 166 Ida positives + 332 synthetic
+#      via Ghiasi et al. CVPR 2021 simple-copy-paste, with feathered
+#      alpha blending on polygon edges.
+#   2. Major-TOM expanded negatives: 144 random sub-chips from 12 NYC
+#      parents (was 22 in v1). Class ratio: 498 pos / 144 neg ≈ 78/22.
+#   3. Lovász-Softmax loss (direct IoU surrogate). Lifts flood-class IoU
+#      vs Dice on Sen1Floods11-like benchmarks (Berman et al. 2018).
+#   4. lr 3e-5 (3x v1's 1e-5) + 60 epochs to fully exploit the larger
+#      training set.
+
+seed_everything: 42
+trainer:
+  accelerator: auto
+  strategy: auto
+  devices: auto
+  num_nodes: 1
+  precision: 16-mixed
+  logger:
+    class_path: lightning.pytorch.loggers.CSVLogger
+    init_args:
+      save_dir: /root/terramind_nyc/output_phase19_prithvi_v2/logs
+      name: prithvi_nyc_v2_lr3e-5
+  callbacks:
+    - class_path: RichProgressBar
+    - class_path: LearningRateMonitor
+      init_args:
+        logging_interval: epoch
+    - class_path: EarlyStopping
+      init_args:
+        monitor: val/loss
+        patience: 10
+    - class_path: ModelCheckpoint
+      init_args:
+        monitor: val/loss
+        mode: min
+        save_weights_only: true
+        dirpath: /root/terramind_nyc/output_phase19_prithvi_v2/ckpt
+        filename: best_val_loss
+  max_epochs: 60
+  log_every_n_steps: 5
+  default_root_dir: /root/terramind_nyc/output_phase19_prithvi_v2/
+
+data:
+  class_path: terratorch.datamodules.GenericNonGeoSegmentationDataModule
+  init_args:
+    batch_size: 8
+    num_workers: 4
+    img_grep: "*.tif"
+    label_grep: "*_annotation_flood.tif"
+    train_data_root: /root/terramind_nyc/prithvi_nyc_v2/data/S2L2A_tif
+    train_label_data_root: /root/terramind_nyc/prithvi_nyc_v2/data/MASK
+    val_data_root: /root/terramind_nyc/prithvi_nyc_v2/data/S2L2A_tif
+    val_label_data_root: /root/terramind_nyc/prithvi_nyc_v2/data/MASK
+    test_data_root: /root/terramind_nyc/prithvi_nyc_v2/data/S2L2A_tif
+    test_label_data_root: /root/terramind_nyc/prithvi_nyc_v2/data/MASK
+    train_split: /root/terramind_nyc/prithvi_nyc_v2/split/impactmesh_flood_train.txt
+    val_split: /root/terramind_nyc/prithvi_nyc_v2/split/impactmesh_flood_val.txt
+    test_split: /root/terramind_nyc/prithvi_nyc_v2/split/impactmesh_flood_test.txt
+    num_classes: 2
+    means:  [1086.45, 1063.0, 985.95, 2316.61, 2080.98, 1454.81]
+    stds:   [1141.95, 1170.10, 1287.78, 1369.24, 1374.77, 1318.21]
+    no_data_replace: 0
+    no_label_replace: -1
+
+model:
+  class_path: terratorch.tasks.SemanticSegmentationTask
+  init_args:
+    model_factory: EncoderDecoderFactory
+    model_args:
+      backbone: prithvi_eo_v2_300_tl
+      backbone_pretrained: true
+      backbone_bands:
+        - BLUE
+        - GREEN
+        - RED
+        - NARROW_NIR
+        - SWIR_1
+        - SWIR_2
+      necks:
+        - name: SelectIndices
+          indices: [5, 11, 17, 23]
+        - name: ReshapeTokensToImage
+          remove_cls_token: True
+        - name: LearnedInterpolateToPyramidal
+      decoder: UNetDecoder
+      decoder_channels: [512, 256, 128, 64]
+      head_dropout: 0.1
+      num_classes: 2
+    loss: lovasz
+    ignore_index: -1
+    freeze_backbone: false
+    freeze_decoder: false
+    class_weights: [0.4, 1.6]
+    tiled_inference_parameters:
+      crop: 224
+      stride: 200
+      batch_size: 64
+      delta: 8
+
+optimizer:
+  class_path: torch.optim.AdamW
+  init_args:
+    lr: 3.e-5
+lr_scheduler:
+  class_path: ReduceLROnPlateau
+  init_args:
+    monitor: val/loss
+    factor: 0.5
+    patience: 4

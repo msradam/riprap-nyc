@@ -1,0 +1,31 @@
+# Experiment-only dependencies. NOT installed on HF Spaces.
+# Production requirements.txt stays minimal; this file picks up the
+# heavy ML / EO toolchain that experiments need.
+#
+# Install:  uv pip install -r requirements-experiments.txt
+
+# STAC + remote sensing
+pystac-client>=0.7
+planetary-computer>=1.0
+rioxarray>=0.15
+xarray>=2024.1
+
+# Phase 1: Prithvi-EO 2.0 (Sen1Floods11 fine-tune)
+# terratorch is the IBM/NASA loading framework for Prithvi-EO 2.0.
+# Pinned loosely so experiments can pick up bug fixes; if integration
+# happens, pin tighter in production requirements.
+terratorch>=1.0
+einops>=0.8
+
+# Phase 2: GLiNER structured extraction
+gliner>=0.2.13
+
+# Phase 3: Granite Embedding Reranker R2 (cross-encoder via
+# sentence-transformers, sidecar pattern — vLLM --task score is out of
+# scope per project decision)
+sentence-transformers>=3.3
+
+# General experiment tooling
+pyarrow>=18.0
+matplotlib>=3.8
+pillow>=10.0

@@ -10,7 +10,26 @@ node_modules/
 .ruff_cache/
 .pytest_cache/
 
+# Session-local Claude Code context (per-machine, not for the public repo)
+CLAUDE.local.md
+.claude/
+
 # legacy / intermediate Prithvi artifacts (not shipped)
 data/hls_stack_*.tif
 data/prithvi_runs/
 data/*.legacy_*
+web/svelte/node_modules/
+web/sveltekit/node_modules/
+web/sveltekit/.svelte-kit/
+
+# Experiments — cached HF model downloads, training artifacts, intermediate
+# fixtures. RESULTS.md, NOTES.md, and source code stay tracked.
+experiments/**/.cache/
+experiments/**/restore/
+experiments/**/publish/
+experiments/**/*.tif
+experiments/**/*.png
+experiments/**/*.jpg
+experiments/**/*.parquet
+experiments/**/*.npy
+pitch/screenshots-*/

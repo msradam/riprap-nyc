@@ -9,15 +9,16 @@ from __future__ import annotations
 import json
 import sys
 import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import geopandas as gpd
-from shapely.geometry import Point
 
 from app.context import floodnet, microtopo, nyc311
 from app.flood_layers import dep_stormwater, ida_hwm, sandy_inundation
-from app.rag import retrieve as rag_retrieve, warm as rag_warm
+from app.rag import retrieve as rag_retrieve
+from app.rag import warm as rag_warm
 from app.reconcile import reconcile as run_reconcile
 from app.score import score_frame
 

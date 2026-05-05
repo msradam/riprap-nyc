@@ -8,7 +8,6 @@ Four scenarios, all in EPSG:2263. Polygons are categorized by depth class:
 from __future__ import annotations
 
 from functools import lru_cache
-from pathlib import Path
 
 import geopandas as gpd
 
@@ -71,3 +70,42 @@ def join(assets: gpd.GeoDataFrame, scenario: str) -> gpd.GeoDataFrame:
 
 def label(scenario: str) -> str:
     return SCENARIOS[scenario]["label"]
+
+
+def coverage_for_polygon(polygon, scenario: str,
+                         polygon_crs: str = "EPSG:4326") -> dict:
+    """Polygon-level summary: what fraction of the input polygon falls into
+    each depth class for a given DEP scenario? Used in neighborhood mode.
+
+    Returns:
+      {
+        'scenario':        scenario id,
+        'label':           human-readable scenario name,
+        'fraction_any':    fraction of polygon inside any flooded class,
+        'fraction_class':  {1: f, 2: f, 3: f} fraction in each class,
+        'polygon_area_m2': total polygon area,
+      }
+    """
+    z = load(scenario)
+    poly_gdf = gpd.GeoDataFrame(geometry=[polygon], crs=polygon_crs).to_crs(NYC_CRS)
+    poly_geom = poly_gdf.iloc[0].geometry
+    poly_ft2 = float(poly_geom.area)
+    sqft_to_m2 = 0.092903
+    fraction_class = {1: 0.0, 2: 0.0, 3: 0.0}
+    if poly_ft2:
+        for cat in (1, 2, 3):
+            sub = z[z["Flooding_Category"] == cat]
+            if sub.empty:
+                continue
+            inter = sub.geometry.intersection(poly_geom)
+            inter = inter[~inter.is_empty]
+            ft2 = float(inter.area.sum()) if len(inter) else 0.0
+            fraction_class[cat] = round(ft2 / poly_ft2, 4)
+    fraction_any = round(sum(fraction_class.values()), 4)
+    return {
+        "scenario":        scenario,
+        "label":           label(scenario),
+        "fraction_any":    fraction_any,
+        "fraction_class":  fraction_class,
+        "polygon_area_m2": round(poly_ft2 * sqft_to_m2, 1),
+    }

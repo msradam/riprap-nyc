@@ -12,6 +12,7 @@ The index is small (~1k chunks across 5 PDFs).
 from __future__ import annotations
 
 import logging
+import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -102,6 +103,18 @@ def _chunks_from_pdf(path: Path, target_chars: int = 700) -> list[Chunk]:
 
 
 _INDEX: dict | None = None
+_RERANKER = None  # lazy CrossEncoder
+
+# Reranker switch: when "1", retrieve() over-fetches K*5 candidates without
+# the per-doc dedup, scores them via the Granite Embedding Reranker R2
+# cross-encoder, then dedups to K. Falls back to the baseline ranker when
+# disabled. See experiments/03_granite_reranker/RESULTS.md for the
+# reasoning behind inverting dedup vs rerank.
+_RERANKER_ENABLE = os.environ.get("RIPRAP_RERANKER_ENABLE", "").lower() in ("1", "true", "yes")
+_RERANKER_MODEL_NAME = os.environ.get(
+    "RIPRAP_RERANKER_MODEL",
+    "ibm-granite/granite-embedding-reranker-english-r2",
+)
 
 
 def _ensure_index():
@@ -132,8 +145,28 @@ def _ensure_index():
     return _INDEX
 
 
+def _ensure_reranker():
+    """Lazy-load the cross-encoder. Returns None if disabled or load fails;
+    callers fall back to the baseline ranker silently."""
+    global _RERANKER
+    if not _RERANKER_ENABLE:
+        return None
+    if _RERANKER is not None:
+        return _RERANKER
+    try:
+        from sentence_transformers import CrossEncoder
+        log.info("rag: loading reranker %s", _RERANKER_MODEL_NAME)
+        _RERANKER = CrossEncoder(_RERANKER_MODEL_NAME)
+        log.info("rag: reranker ready")
+    except Exception:
+        log.exception("rag: reranker load failed; falling back to baseline")
+        _RERANKER = False  # sentinel: don't retry every call
+    return _RERANKER or None
+
+
 def warm():
     _ensure_index()
+    _ensure_reranker()
 
 
 def retrieve(query: str, k: int = 4, min_score: float = 0.30) -> list[dict]:
@@ -142,19 +175,57 @@ def retrieve(query: str, k: int = 4, min_score: float = 0.30) -> list[dict]:
         return []
     qv = idx["model"].encode([query], convert_to_numpy=True,
                              normalize_embeddings=True).astype("float32")
-    # cosine similarity (vectors are L2-normalized)
     sims = (idx["embs"] @ qv.T).ravel()
-    top = np.argsort(-sims)[:k * 3]  # over-fetch then de-dupe per doc
-    out: list[dict] = []
-    seen_per_doc: dict[str, int] = {}
+
+    reranker = _ensure_reranker()
+    if reranker is not None:
+        # Over-fetch K*5 candidates (no per-doc dedup yet), rerank, then
+        # dedup to K. This keeps high-relevance chunks alive long enough
+        # for the cross-encoder to see them — the legacy path's
+        # dedup-before-rank threw them away.
+        cand_n = min(len(idx["chunks"]), max(k * 5, 20))
+        top_idx = np.argsort(-sims)[:cand_n]
+        candidates = [(int(i), idx["chunks"][int(i)],
+                       float(sims[int(i)])) for i in top_idx
+                      if float(sims[int(i)]) >= min_score]
+        if not candidates:
+            return []
+        pairs = [[query, c.text] for _, c, _ in candidates]
+        scores = reranker.predict(pairs)
+        ranked = sorted(zip(candidates, scores, strict=True),
+                        key=lambda x: float(x[1]), reverse=True)
+        out: list[dict] = []
+        seen_per_doc: dict[str, int] = {}
+        for (_i, c, retr_score), rerank_score in ranked:
+            if seen_per_doc.get(c.doc_id, 0) >= 1:
+                continue
+            seen_per_doc[c.doc_id] = 1
+            out.append({
+                "doc_id": c.doc_id,
+                "title": c.title,
+                "citation": c.citation,
+                "file": c.file,
+                "page": c.page,
+                "text": c.text,
+                "score": float(rerank_score),
+                "retriever_score": retr_score,
+            })
+            if len(out) >= k:
+                break
+        return out
+
+    # Baseline ranker (unchanged behaviour when reranker disabled)
+    top = np.argsort(-sims)[:k * 3]
+    out2: list[dict] = []
+    seen_per_doc2: dict[str, int] = {}
     for i in top:
         if sims[i] < min_score:
             continue
         c = idx["chunks"][i]
-        if seen_per_doc.get(c.doc_id, 0) >= 1:  # at most 1 chunk per doc
+        if seen_per_doc2.get(c.doc_id, 0) >= 1:
             continue
-        seen_per_doc[c.doc_id] = seen_per_doc.get(c.doc_id, 0) + 1
-        out.append({
+        seen_per_doc2[c.doc_id] = 1
+        out2.append({
             "doc_id": c.doc_id,
             "title": c.title,
             "citation": c.citation,
@@ -163,6 +234,6 @@ def retrieve(query: str, k: int = 4, min_score: float = 0.30) -> list[dict]:
             "text": c.text,
             "score": float(sims[i]),
         })
-        if len(out) >= k:
+        if len(out2) >= k:
             break
-    return out
+    return out2

@@ -1,0 +1,16 @@
+{
+  "test/loss": 0.2834779620170593,
+  "test/Accuracy": 0.8313069939613342,
+  "test/Boundary_mIoU": 0.1802506446838379,
+  "test/Class_Accuracy_0": 0.8230504393577576,
+  "test/Class_Accuracy_1": 0.8395635485649109,
+  "test/F1_Score": 0.674245297908783,
+  "test/IoU_0": 0.8107223510742188,
+  "test/IoU_1": 0.29284337162971497,
+  "test/Pixel_Accuracy": 0.8244800567626953,
+  "test/mIoU": 0.5517828464508057,
+  "test/mIoU_Micro": 0.7013747692108154,
+  "mode": "lora",
+  "task_name": "buildings_nyc",
+  "num_classes": 2
+}

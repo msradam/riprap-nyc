@@ -1,0 +1,33 @@
+[aiter] import [module_aiter_enum] under /usr/local/lib/python3.12/dist-packages/aiter/jit/module_aiter_enum.so
+2026-05-05 13:17:32,207 - INFO - import [module_aiter_enum] under /usr/local/lib/python3.12/dist-packages/aiter/jit/module_aiter_enum.so
+Seed set to 42
+Using 16bit Automatic Mixed Precision (AMP)
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+💡 Tip: For seamless cloud logging and experiment tracking, try installing [litlogger](https://pypi.org/project/litlogger/) to enable LitLogger, which logs metrics and artifacts automatically to the Lightning Experiments platform.
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+/usr/local/lib/python3.12/dist-packages/lightning/pytorch/utilities/model_summary/model_summary.py:242: Precision 16-mixed is not supported by the model summary.  Estimated model size in MB will not be accurate. Using 32 bits instead.
+┏━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━┳━━━━━━━┓
+┃   ┃ Name          ┃ Type             ┃ Params ┃ Mode  ┃ FLOPs ┃
+┡━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━╇━━━━━━━┩
+│ 0 │ model         │ PixelWiseModel   │  168 M │ train │     0 │
+│ 1 │ criterion     │ CrossEntropyLoss │      0 │ train │     0 │
+│ 2 │ train_metrics │ MetricCollection │      0 │ train │     0 │
+│ 3 │ val_metrics   │ MetricCollection │      0 │ train │     0 │
+│ 4 │ test_metrics  │ ModuleList       │      0 │ train │     0 │
+└───┴───────────────┴──────────────────┴────────┴───────┴───────┘
+Trainable params: 80.8 M                                                        
+Non-trainable params: 87.9 M                                                    
+Total params: 168 M                                                             
+Total estimated model params size (MB): 674                                     
+Modules in train mode: 533                                                      
+Modules in eval mode: 0                                                         
+Total FLOPs: 0                                                                  
+/usr/local/lib/python3.12/dist-packages/torchmetrics/utilities/prints.py:43: UserWarning: The ``compute`` method of metric MulticlassAccuracy was called before the ``update`` method which may lead to errors, as metric states have not yet been updated.
+  warnings.warn(*args, **kwargs)
+`Trainer.fit` stopped: `max_epochs=40` reached.
+Epoch 39/39 ━━━━━━━━━━━━━━━━━━━━━━ 18/18 0:00:02 • 0:00:00 6.92it/s v_num: 0.000
+
+=== Adapter exported to /workspace/phase18/adapters/buildings_nyc/output ===
+  LoRA Δ params:             884,736
+  Decoder/neck/head:      79,902,091

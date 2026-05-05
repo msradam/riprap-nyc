@@ -20,15 +20,86 @@ pandas>=2.2
 pyarrow>=18.0
 numpy>=1.26
 
-# RAG: Granite Embedding 278M (CPU torch is sufficient on HF Spaces)
-sentence-transformers>=3.3
+# pyarrow.PyExtensionType was removed in pyarrow 17 and older `datasets`
+# (transitive dep of sentence-transformers / gliner / terratorch) crashes
+# on import against pyarrow 18+. datasets >= 3.0 uses pa.ExtensionType
+# instead. Without this pin, HF Spaces' resolver picks an older datasets
+# and FastAPI startup dies before the first request.
+datasets>=3.0
+
+# RAG: Granite Embedding 278M (CPU torch is sufficient on HF Spaces).
+# sentence-transformers 3.x's model_card.py does
+# `from transformers.integrations import CodeCarbonCallback` at import
+# time. transformers's lazy-import surface raises if `codecarbon` isn't
+# present; on HF Space (Python 3.10) the lazy-import resolution fails
+# even on import-only paths. Two options:
+#   (1) pin sentence-transformers to a version that didn't have model_card
+#   (2) install codecarbon so the lazy-import resolves
+# We tried (1) at <3.4 and <4 — both failed because 3.3.x also imports
+# CodeCarbonCallback. Going with (2): codecarbon is a small ~7MB pure-
+# Python package; we don't enable its tracking, just satisfy the import.
+sentence-transformers>=3.3,<4
+codecarbon>=2.5,<4
 pypdf>=5.0
 
-# Granite 4.1 reconciliation via Ollama
+# Tight coexistence pins: granite-tsfm 0.3.x calls transformers.utils
+# .download_url which was removed in transformers 5.x; mellea 0.3.x is
+# happy with the older hf_hub. Keep BOTH older to avoid the conflict
+# (transformers >=4.55,<5 + huggingface_hub >=0.34,<1).
+transformers>=4.55,<5
+huggingface_hub>=0.34,<1
+
+# Granite 4.1 reconciliation via Ollama (local fallback)
 ollama>=0.4
+
+# LiteLLM Router: unifies vLLM (AMD GPU, OpenAI-compatible) and Ollama
+# behind one chat() call surface, with automatic primary->fallback
+# routing when RIPRAP_LLM_PRIMARY=vllm is unreachable. See app/llm.py.
+litellm>=1.52
+
+# GLiNER specialist (Phase 2): typed entity extraction over RAG output.
+# Apache-2.0 model is `urchade/gliner_medium-v2.1` — NOT the gliner_base
+# variant which is CC-BY-NC-4.0. See app/context/gliner_extract.py.
+gliner>=0.2.13
+
+# Phase 1 (Prithvi live) + Phase 4 (TerraMind) + earth-observation deps.
+#
+# These deps live in `requirements-experiments.txt` (local + AMD), NOT
+# in production. Two attempts at bringing them into the HF image (the
+# floor at 1.0.x then the pin at 1.1rc6) both failed pip resolution
+# against our Py3.10 constraints (transformers<5, hf_hub<1,
+# granite-tsfm<0.3.4, mellea<0.4). `terratorch>=1.2` pins numpy>=2.2
+# which breaks the rest of the stack; `1.1rc6` and earlier had
+# transitive cone conflicts the resolver couldn't satisfy in the
+# 30-second pip budget.
+#
+# On HF Spaces the lazy-import path returns clean `skipped: deps
+# unavailable on this deployment` for both prithvi_live and
+# terramind_synthesis steps; the other 14 specialists run normally.
+#   - terratorch / torchgeo / pystac-client / planetary-computer
+#   - rioxarray / xarray / einops
 
 # Burr FSM
 burr>=0.40
+
+# Granite TimeSeries TTM r2 — short-horizon residual nowcast (Ekambaram et al.
+# 2024, NeurIPS). The PyPI package name is granite-tsfm; importable as
+# tsfm_public. Brings in transformers + accelerate; torch is already in the
+# CUDA base image.
+# Pinned to 0.3.3 because >=0.3.4 dropped Python 3.10 support and the
+# CUDA-runtime base image ships Ubuntu 22.04 / Python 3.10. The
+# tsfm_public.toolkit.get_model API is stable across this minor range.
+granite-tsfm>=0.3.0,<0.3.4
+
+# IBM Research's Mellea — instruct/validate/repair framework. Powers the
+# default reconciler: Granite output + programmatic post-conditions
+# + rejection sampling.
+# Pinned to <0.4 because 0.4+ requires Python>=3.11 and the
+# nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04 base image ships Python 3.10.
+# 0.3.2 has the same instruct/req/RejectionSamplingStrategy API surface
+# we use; if it doesn't, the validator falls through to the standard
+# reconciler (graceful degradation).
+mellea>=0.3.0,<0.4
 
 # Misc
 tqdm>=4.66

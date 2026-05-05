@@ -123,10 +123,9 @@ def _row_col(transform, lat: float, lon: float) -> tuple[int, int]:
     """Inverse-affine: WGS84 (lon,lat) -> raster (row, col).
     Mirrors rasterio.transform.rowcol but without holding a dataset handle.
     """
-    # affine: x = a*col + b*row + c ; y = d*col + e*row + f
-    # invert: col = (a_inv * (x - c)) approx — we have a diagonal affine
-    a, b, c, d, e, f = transform.a, transform.b, transform.c, transform.d, transform.e, transform.f
-    # diagonal case (b=d=0, common for north-up rasters):
+    # Diagonal affine (north-up raster): x = a*col + c, y = e*row + f.
+    a, c = transform.a, transform.c
+    e, f = transform.e, transform.f
     col = int(round((lon - c) / a))
     row = int(round((lat - f) / e))
     return row, col
@@ -206,3 +205,70 @@ def microtopo_at(lat: float, lon: float, radius_m: int = 750) -> Microtopo | Non
         twi=twi_v,
         hand_m=hand_v,
     )
+
+
+def microtopo_for_polygon(polygon, polygon_crs: str = "EPSG:4326") -> dict | None:
+    """Polygon-mode aggregation: distributional summary of the DEM/HAND/TWI
+    rasters clipped to the polygon. Returns medians + fraction of cells
+    in flood-prone bands. Used for neighborhood-mode queries."""
+    state = _load_dem()
+    if state is None:
+        return None
+    try:
+        import rasterio
+        from rasterio.mask import mask as rio_mask
+    except Exception:
+        return None
+    import geopandas as gpd
+
+    poly = gpd.GeoDataFrame(geometry=[polygon], crs=polygon_crs).to_crs("EPSG:4326")
+    geom = [poly.iloc[0].geometry.__geo_interface__]
+
+    def _stats(path: Path) -> dict | None:
+        if not path.exists():
+            return None
+        try:
+            with rasterio.open(path) as src:
+                clipped, _ = rio_mask(src, geom, crop=True, filled=False)
+                arr = clipped[0]
+                vals = arr.compressed() if hasattr(arr, "compressed") else arr.flatten()
+                vals = vals[np.isfinite(vals)]
+                if vals.size == 0:
+                    return None
+                return {
+                    "n_cells":   int(vals.size),
+                    "min":       float(np.min(vals)),
+                    "median":    float(np.median(vals)),
+                    "p10":       float(np.percentile(vals, 10)),
+                    "p90":       float(np.percentile(vals, 90)),
+                    "max":       float(np.max(vals)),
+                    "raw":       vals,
+                }
+        except Exception as e:
+            log.warning("polygon raster mask failed for %s: %r", path.name, e)
+            return None
+
+    elev = _stats(DEM_PATH)
+    hand = _stats(HAND_PATH)
+    twi = _stats(TWI_PATH)
+    if elev is None:
+        return None
+
+    # Fraction of polygon cells in canonical flood-prone bands
+    frac_hand_lt1 = (
+        round(float((hand["raw"] < 1.0).mean()), 4) if hand else None
+    )
+    frac_twi_gt10 = (
+        round(float((twi["raw"] > 10.0).mean()), 4) if twi else None
+    )
+    return {
+        "n_cells": elev["n_cells"],
+        "elev_min_m":     round(elev["min"], 2),
+        "elev_median_m":  round(elev["median"], 2),
+        "elev_p10_m":     round(elev["p10"], 2),
+        "elev_max_m":     round(elev["max"], 2),
+        "hand_median_m":  round(hand["median"], 2) if hand else None,
+        "twi_median":     round(twi["median"], 2) if twi else None,
+        "frac_hand_lt1":  frac_hand_lt1,
+        "frac_twi_gt10":  frac_twi_gt10,
+    }

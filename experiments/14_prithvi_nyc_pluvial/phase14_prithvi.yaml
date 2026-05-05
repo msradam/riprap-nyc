@@ -1,0 +1,109 @@
+# Phase 14 — Prithvi-EO 2.0 NYC pluvial fine-tune.
+#
+# Continuation from the published IBM-NASA Sen1Floods11 fine-tune
+# (Prithvi-EO-2.0-300M-TL-Sen1Floods11), specialized for NYC's
+# Hurricane Ida 2021 pluvial flood patterns.
+#
+# Dataset: built by experiments/14_prithvi_nyc_pluvial/build_dataset.py
+# (Riprap's 166 baked Ida polygons + matching Earth Search S2 chips +
+# clear-sky negatives from Major-TOM cache).
+
+seed_everything: 42
+trainer:
+  accelerator: auto
+  strategy: auto
+  devices: auto
+  num_nodes: 1
+  precision: 16-mixed
+  logger:
+    class_path: lightning.pytorch.loggers.CSVLogger
+    init_args:
+      save_dir: /root/terramind_nyc/output_phase14_prithvi/logs
+      name: prithvi_nyc_lr1e-5
+  callbacks:
+    - class_path: RichProgressBar
+    - class_path: LearningRateMonitor
+      init_args:
+        logging_interval: epoch
+    - class_path: EarlyStopping
+      init_args:
+        monitor: val/loss
+        patience: 5
+    - class_path: ModelCheckpoint
+      init_args:
+        monitor: val/loss
+        mode: min
+        save_weights_only: true
+        dirpath: /root/terramind_nyc/output_phase14_prithvi/ckpt
+        filename: best_val_loss
+  max_epochs: 30
+  log_every_n_steps: 5
+  default_root_dir: /root/terramind_nyc/output_phase14_prithvi/
+
+data:
+  class_path: terratorch.datamodules.GenericNonGeoSegmentationDataModule
+  init_args:
+    batch_size: 8
+    num_workers: 4
+    img_grep: "*.npz"
+    label_grep: "*_annotation_flood.tif"
+    train_data_root: /root/terramind_nyc/prithvi_nyc/data/S2L2A
+    train_label_data_root: /root/terramind_nyc/prithvi_nyc/data/MASK
+    val_data_root: /root/terramind_nyc/prithvi_nyc/data/S2L2A
+    val_label_data_root: /root/terramind_nyc/prithvi_nyc/data/MASK
+    test_data_root: /root/terramind_nyc/prithvi_nyc/data/S2L2A
+    test_label_data_root: /root/terramind_nyc/prithvi_nyc/data/MASK
+    train_split: /root/terramind_nyc/prithvi_nyc/split/impactmesh_flood_train.txt
+    val_split: /root/terramind_nyc/prithvi_nyc/split/impactmesh_flood_val.txt
+    test_split: /root/terramind_nyc/prithvi_nyc/split/impactmesh_flood_test.txt
+    num_classes: 2
+    means:  [0.107, 0.107, 0.115, 0.265, 0.235, 0.155]   # Sen1Floods11 stats (scaled L2A reflectance)
+    stds:   [0.082, 0.075, 0.085, 0.115, 0.110, 0.100]
+    no_data_replace: 0
+    no_label_replace: -1
+
+model:
+  class_path: terratorch.tasks.SemanticSegmentationTask
+  init_args:
+    model_factory: EncoderDecoderFactory
+    model_args:
+      backbone: prithvi_eo_v2_300_tl
+      backbone_pretrained: true
+      backbone_bands:
+        - BLUE
+        - GREEN
+        - RED
+        - NARROW_NIR
+        - SWIR_1
+        - SWIR_2
+      necks:
+        - name: SelectIndices
+          indices: [5, 11, 17, 23]
+        - name: ReshapeTokensToImage
+          remove_cls_token: True
+        - name: LearnedInterpolateToPyramidal
+      decoder: UNetDecoder
+      decoder_channels: [512, 256, 128, 64]
+      head_dropout: 0.1
+      num_classes: 2
+    loss: dice
+    ignore_index: -1
+    freeze_backbone: false
+    freeze_decoder: false
+    class_weights: [0.342, 1.316]
+    tiled_inference_parameters:
+      crop: 224
+      stride: 200
+      batch_size: 64
+      delta: 8
+
+optimizer:
+  class_path: torch.optim.AdamW
+  init_args:
+    lr: 1.e-5
+lr_scheduler:
+  class_path: ReduceLROnPlateau
+  init_args:
+    monitor: val/loss
+    factor: 0.5
+    patience: 2

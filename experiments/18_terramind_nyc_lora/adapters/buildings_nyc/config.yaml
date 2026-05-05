@@ -1,0 +1,63 @@
+# Buildings-NYC adapter — binary segmentation of NYC DOITT footprints.
+
+task_name: buildings_nyc
+seed: 42
+
+backbone:
+  name: terramind_v1_base
+  modalities: [S2L2A, S1RTC, DEM]
+  use_temporal: true
+  temporal_pooling: concat
+  temporal_n_timestamps: 4
+  hf_id: ibm-esa-geospatial/TerraMind-1.0-base
+
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  target_modules: [attn.qkv, attn.proj]
+
+decoder:
+  name: UNetDecoder
+  channels: [512, 256, 128, 64]
+  head_dropout: 0.1
+  select_indices: [2, 5, 8, 11]
+
+num_classes: 2
+# v2: class-weighted CE for training stability. Focal-Tversky (v1) caused
+# val/mIoU oscillation (0.21–0.43 range) and test/mIoU 0.3462 vs Phase 4
+# full-FT 0.5324. v1 archived in output_v1_focaltversky/. CE with
+# inverse-frequency class weights matches the Phase 4 baseline recipe.
+loss: ce
+class_weights: [0.6, 1.6]
+ignore_index: -1
+
+lora_lr:    5.0e-4
+decoder_lr: 1.0e-4
+weight_decay: 1.0e-4
+
+max_epochs: 40
+early_stop_patience: 10
+precision: 16-mixed
+
+data:
+  module: impactmesh.impactmesh_datamodule.ImpactMeshDataModule
+  init_args:
+    batch_size: 8
+    num_workers: 4
+    data_root: /root/terramind_nyc/nyc_buildings_flood/data
+    train_split: /root/terramind_nyc/nyc_buildings_flood/split/impactmesh_flood_train.txt
+    val_split:   /root/terramind_nyc/nyc_buildings_flood/split/impactmesh_flood_val.txt
+    test_split:  /root/terramind_nyc/nyc_buildings_flood/split/impactmesh_flood_test.txt
+    timesteps: [0, 1, 2, 3]
+    modalities: [S2L2A, S1RTC, DEM]
+    no_data_replace: 0
+    train_transform:
+      - class_path: terratorch.datasets.transforms.FlattenTemporalIntoChannels
+      - class_path: albumentations.D4
+      - class_path: albumentations.pytorch.ToTensorV2
+      - class_path: terratorch.datasets.transforms.UnflattenTemporalFromChannels
+        init_args:
+          n_timesteps: 4
+
+output_dir: /workspace/phase18/adapters/buildings_nyc/output

@@ -33,6 +33,7 @@ class HWMSummary:
     nearest_site: str | None
     nearest_elev_ft: float | None
     sample_sites: list[str]
+    points: list[dict] | None = None  # per-mark for the map layer
 
 
 def _haversine_m(lat1, lon1, lat2, lon2):
@@ -71,6 +72,17 @@ def summary_for_point(lat: float, lon: float, radius_m: int = 1000) -> HWMSummar
                if f["properties"].get("height_above_gnd") is not None]
     sites = [f["properties"].get("site_description") for _, f in in_radius]
     sites = [s for s in sites if s][:5]
+    points = []
+    for d, f in in_radius[:50]:  # cap so SSE payload stays small
+        flon, flat = f["geometry"]["coordinates"]
+        p = f["properties"]
+        points.append({
+            "lat": flat, "lon": flon,
+            "site": p.get("site_description"),
+            "elev_ft": p.get("elev_ft"),
+            "height_above_gnd_ft": p.get("height_above_gnd"),
+            "distance_m": round(d, 1),
+        })
     return HWMSummary(
         n_within_radius=len(in_radius),
         radius_m=radius_m,
@@ -80,4 +92,5 @@ def summary_for_point(lat: float, lon: float, radius_m: int = 1000) -> HWMSummar
         nearest_site=nf["properties"].get("site_description") if nf else None,
         nearest_elev_ft=nf["properties"].get("elev_ft") if nf else None,
         sample_sites=sites,
+        points=points,
     )
