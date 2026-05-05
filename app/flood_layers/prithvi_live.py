@@ -98,21 +98,30 @@ def warm():
 
 
 def _ensure_model():
-    """Load Prithvi-EO 2.0 once into RAM. Two artifact shapes are
-    supported, in priority order:
+    """Load Prithvi-EO 2.0 once into RAM.
 
-    1) **NYC Pluvial v2** (`msradam/Prithvi-EO-2.0-NYC-Pluvial`) —
-       Lightning checkpoint (`*.ckpt`) restored via
-       `SemanticSegmentationTask.load_from_checkpoint`. Full task
-       (config + weights) lives inside the ckpt.
-    2) **Sen1Floods11 base** (`ibm-nasa-geospatial/...`) — raw `.pt`
-       weights + a separate `config.yaml`, loaded via
-       `LightningInferenceModel.from_config(config, ckpt)`. This is
-       the path the original prithvi_live.py used.
+    The v2 NYC Pluvial fine-tune (`msradam/Prithvi-EO-2.0-NYC-Pluvial`)
+    is **architecturally distinct** from the IBM-NASA Sen1Floods11
+    base: v2 ships a `UNetDecoder` + 2-class head, the base ships a
+    UperNet with PSP / FPN. The model has to be built from each
+    repo's own config.yaml — there's no key-mapping shim that bridges
+    them.
 
-    The shared inference helper (`run_model`) only ships in the IBM-NASA
-    base repo; for the v2 path we monkey-import it from the base repo
-    so a single code path drives prediction either way."""
+    Strategy:
+
+      1. If the active REPO != BASE_REPO, try to build from the v2
+         yaml + v2 ckpt. The v2 yaml's data: paths point at the
+         training droplet's filesystem (`/root/terramind_nyc/...`)
+         which doesn't exist locally; that's fine — the
+         GenericNonGeoSegmentationDataModule constructor only
+         records the paths, splits aren't read until `setup()`.
+      2. On any v2 failure (yaml not present, datamodule constructor
+         strict, weights mismatch), fall back to the base yaml + base
+         ckpt. The base path is the proven pre-C5 behaviour.
+
+    The shared `inference.run_model` helper is only published by the
+    IBM-NASA base repo; we always pull it from there.
+    """
     global _MODEL, _RUN_MODEL
     if _MODEL is not None:
         return _MODEL, _RUN_MODEL
@@ -121,63 +130,57 @@ def _ensure_model():
             return _MODEL, _RUN_MODEL
         import importlib.util
 
-        from huggingface_hub import hf_hub_download, snapshot_download
+        from huggingface_hub import hf_hub_download
+        from terratorch.cli_tools import LightningInferenceModel
         log.info("prithvi_live: loading model from %s", REPO)
 
-        # ---- Try the v2 / Lightning-ckpt path first -----------------
+        # Inference helper only lives in the IBM-NASA base repo.
+        inference_py = hf_hub_download(BASE_REPO, "inference.py")
+
         m = None
-        try:
-            from terratorch.tasks import SemanticSegmentationTask
-            local_dir = snapshot_download(REPO)
-            ckpt = None
-            # Lightning saves under various conventional names; probe
-            # the most likely candidates rather than trusting one path.
-            for name in ("best_val_loss.ckpt", "model.ckpt",
-                          "last.ckpt"):
-                candidate = os.path.join(local_dir, name)
-                if os.path.exists(candidate):
-                    ckpt = candidate
-                    break
-            if ckpt is None:
-                # Walk the snapshot for any *.ckpt file.
-                for root, _, files in os.walk(local_dir):
-                    for f in files:
-                        if f.endswith(".ckpt"):
-                            ckpt = os.path.join(root, f)
-                            break
-                    if ckpt:
+        # ---- v2 path: yaml + ckpt from the published repo ----------
+        if REPO != BASE_REPO:
+            try:
+                # The v2 repo publishes `prithvi_nyc_phase14.yaml` and
+                # `prithvi_nyc_pluvial_v2.ckpt`. Be tolerant of small
+                # naming drift (best_val_loss.ckpt etc.) by probing.
+                v2_yaml = None
+                for name in ("prithvi_nyc_phase14.yaml",
+                              "config.yaml", "phase14.yaml",
+                              "prithvi_nyc_v2.yaml"):
+                    try:
+                        v2_yaml = hf_hub_download(REPO, name)
                         break
-            if ckpt is not None:
-                log.info("prithvi_live: loading Lightning ckpt %s", ckpt)
-                map_loc = "cuda" if (DEVICE == "cuda") else "cpu"
-                task = SemanticSegmentationTask.load_from_checkpoint(
-                    ckpt, map_location=map_loc, strict=False,
-                )
-                task.eval()
+                    except Exception:
+                        continue
+                v2_ckpt = None
+                for name in ("prithvi_nyc_pluvial_v2.ckpt",
+                              "best_val_loss.ckpt", "model.ckpt",
+                              "last.ckpt"):
+                    try:
+                        v2_ckpt = hf_hub_download(REPO, name)
+                        break
+                    except Exception:
+                        continue
+                if v2_yaml and v2_ckpt:
+                    log.info("prithvi_live: building v2 model from "
+                             "yaml=%s ckpt=%s", v2_yaml, v2_ckpt)
+                    m = LightningInferenceModel.from_config(v2_yaml, v2_ckpt)
+                else:
+                    log.warning("prithvi_live: v2 yaml/ckpt not "
+                                "discoverable in %s; falling back to base",
+                                REPO)
+            except Exception as e:
+                log.warning("prithvi_live: v2 build failed (%s); "
+                             "falling back to base", e)
+                m = None
 
-                # Mimic LightningInferenceModel's surface so the rest
-                # of the file (which expects `.model` and `.datamodule`)
-                # keeps working. datamodule isn't strictly needed by
-                # run_model in current terratorch but we set it to None
-                # explicitly so a missing-attr access surfaces clearly.
-                class _LightningTaskWrapper:
-                    def __init__(self, task):
-                        self.model = task
-                        self.datamodule = None
-
-                m = _LightningTaskWrapper(task)
-        except Exception as e:
-            log.warning("prithvi_live: Lightning-ckpt load failed (%s); "
-                        "falling back to raw-weights path", e)
-
-        # ---- Fallback: raw .pt + config.yaml (Sen1Floods11 base) ----
+        # ---- base path: proven IBM-NASA Sen1Floods11 fine-tune -----
         if m is None:
-            from terratorch.cli_tools import LightningInferenceModel
-            base = REPO if REPO == BASE_REPO else BASE_REPO
-            config_path = hf_hub_download(base, "config.yaml")
-            checkpoint = hf_hub_download(
-                base, "Prithvi-EO-V2-300M-TL-Sen1Floods11.pt")
-            m = LightningInferenceModel.from_config(config_path, checkpoint)
+            base_config = hf_hub_download(BASE_REPO, "config.yaml")
+            base_ckpt = hf_hub_download(
+                BASE_REPO, "Prithvi-EO-V2-300M-TL-Sen1Floods11.pt")
+            m = LightningInferenceModel.from_config(base_config, base_ckpt)
 
         m.model.eval()
         if DEVICE == "cuda":
@@ -188,8 +191,6 @@ def _ensure_model():
             except Exception:
                 log.exception("prithvi_live: cuda move failed")
 
-        # Inference helper lives only in the IBM-NASA base repo.
-        inference_py = hf_hub_download(BASE_REPO, "inference.py")
         spec = importlib.util.spec_from_file_location("_prithvi_inference",
                                                        inference_py)
         mod = importlib.util.module_from_spec(spec)
