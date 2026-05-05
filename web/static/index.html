@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Riprap — flood risk, NYC</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span class="brand-name">Riprap</span>
+        <span class="brand-sep">·</span>
+        <span class="brand-tag">citation-grounded civic AI for NYC flood risk</span>
+      </div>
+      <div class="topbar-right">
+        <a href="/compare" class="modelink">compare</a>
+        <a href="/register/schools" class="modelink">register</a>
+        <span class="local-pill" title="Granite 4.1 inference runs on this machine. No vendor LLM is contacted.">
+          <span class="dot"></span>local · Granite 4.1 / Ollama
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <div class="form-bar">
+    <form id="qform">
+      <input type="text" id="q" name="q" autocomplete="off"
+             placeholder='NYC address — e.g. "180 Beach 35 St, Queens"'
+             value="180 Beach 35 St, Queens"
+             required />
+      <button type="submit" id="go">Analyze</button>
+    </form>
+    <div class="suggest">
+      <span class="suggest-label">try:</span>
+      <button class="chip" data-q="180 Beach 35 St, Queens">Far Rockaway · Sandy zone</button>
+      <button class="chip" data-q="280 Broome St, Manhattan">LES · Lower Manhattan</button>
+      <button class="chip" data-q="153-09 90 Avenue, Jamaica, Queens">Jamaica · Ida basements</button>
+      <button class="chip" data-q="2950 W 25 St, Brooklyn">Coney Island · NYCHA</button>
+    </div>
+  </div>
+
+  <div class="workbench">
+
+    <!-- LEFT: trace + address details -->
+    <aside class="col-left">
+      <section id="trace" class="panel">
+        <h2>Specialist trace<span class="hint">Burr FSM · 8 nodes</span></h2>
+        <ul id="steps"></ul>
+      </section>
+
+      <section id="meta" class="panel hidden">
+        <h2>Address resolved</h2>
+        <dl id="addr"></dl>
+      </section>
+    </aside>
+
+    <!-- MIDDLE: map -->
+    <section class="col-mid">
+      <div id="map-card" class="panel panel-map hidden">
+        <h2>Map<span class="hint">Sandy 2012 · DEP extreme 2080 · Prithvi-EO Ida inundation · FloodNet</span></h2>
+        <div id="map"></div>
+        <div class="legend">
+          <span><i class="sw sandy"></i>Sandy 2012 zone</span>
+          <span><i class="sw dep"></i>DEP Extreme 2080</span>
+          <span><i class="sw prithvi"></i>Prithvi-EO Ida 2021 inundation</span>
+          <span><i class="sw fnDot"></i>FloodNet (no events)</span>
+          <span><i class="sw fnDotHot"></i>FloodNet w/ events</span>
+          <span><i class="sw addr"></i>Queried address</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: structured cited assessment -->
+    <aside class="col-right">
+      <section id="report" class="report panel hidden">
+
+        <header class="report-head">
+          <div class="report-id">
+            <div class="report-eyebrow">Flood exposure assessment</div>
+            <div class="report-addr" id="reportAddr">—</div>
+            <div class="report-meta">
+              <span id="reportBoro">—</span>
+              <span class="sep">·</span>
+              <span class="report-meta-k">BBL</span>
+              <span class="report-meta-v" id="reportBbl">—</span>
+              <span class="sep">·</span>
+              <span class="report-meta-k">Assessed</span>
+              <span class="report-meta-v" id="reportTs">—</span>
+            </div>
+          </div>
+        </header>
+
+        <div class="tier-block">
+          <div class="tier-badge tier-pending" id="tierBadge">
+            <div class="tier-badge-num" id="tierNum">—</div>
+            <div class="tier-badge-of">of 4</div>
+          </div>
+          <div class="tier-text">
+            <div class="tier-label" id="tierLabel">Awaiting assessment</div>
+            <div class="tier-help" id="tierHelp">—</div>
+          </div>
+        </div>
+
+        <div class="summary-box">
+          <div class="report-section-h">Summary</div>
+          <p id="paragraph"></p>
+        </div>
+
+        <div class="key-findings">
+          <div class="report-section-h">Key findings</div>
+          <dl id="keyFindings"></dl>
+        </div>
+
+        <div class="evidence-stack">
+          <div class="report-section-h">Evidence by source</div>
+          <div id="evidenceCards"></div>
+        </div>
+
+        <div class="policy-stack hidden" id="policySection">
+          <div class="report-section-h">Policy context <span class="hint-inline">(retrieved verbatim from agency reports)</span></div>
+          <ol id="policyList"></ol>
+        </div>
+
+        <div class="energy-footer">
+          <span class="energy-num-inline" id="energyLocal">—</span> local
+          <span class="sep">·</span>
+          <span class="energy-num-inline" id="energyCloud">—</span> est. frontier cloud
+          <span class="sep">·</span>
+          <span class="energy-num-inline" id="energyRatio">—</span> ratio
+          <span class="sep">·</span>
+          <span class="report-meta-k">via</span> Granite 4.1, local Ollama
+        </div>
+
+        <details class="methodology">
+          <summary>Methodology &amp; sources</summary>
+          <div class="method-body">
+            <p>
+              <strong>Specialists.</strong> Riprap runs nine independent specialists per query: NYC DCP Geosearch, Sandy Inundation Zone (NYC OD), three DEP Stormwater scenarios, FloodNet sensor network, NYC 311, USGS 3DEP LiDAR-derived terrain (elevation percentile + TWI + HAND), USGS STN Hurricane Ida 2021 high-water marks, Prithvi-EO 2.0 satellite water segmentation, and Granite Embedding RAG over NYC resilience plans. A specialist that produces no grounded data emits no document.
+            </p>
+            <p>
+              <strong>Tier rubric.</strong> Sandy 2012 zone: +3. DEP Extreme 2080 footprint: +2. DEP Moderate 2050 footprint: +2. DEP Moderate current: +1. Three or more 311 flood complaints in 200&nbsp;m, last 5&nbsp;yr: +1. FloodNet sensor with ≥1 event in 400&nbsp;m: +1. RAG hit naming this asset class: +1. Tier 1 if score ≥ 6, Tier 2 if 4-5, Tier 3 if 2-3, Tier 4 if 1, Tier 0 if 0.
+            </p>
+            <p>
+              <strong>Hallucination guardrail.</strong> Every numerical token in the Granite-generated paragraph is verified to appear in the source documents; sentences with ungrounded numbers are dropped. The Granite output is grounded via the model's native <code>document</code>-role chat template (Granite 4.1 / Ollama).
+            </p>
+            <h4>Numbered sources for this assessment</h4>
+            <ol id="sources"></ol>
+          </div>
+        </details>
+      </section>
+    </aside>
+
+  </div>
+
+  <footer>
+    <div class="foot-inner">
+      <div class="foot-col">
+        <h3>Why local Granite</h3>
+        <p>
+          Inference runs on the machine Riprap is deployed on, not in a
+          vendor LLM. That keeps queries and source documents inside an
+          organization's data boundary — material for newsrooms,
+          agencies, and researchers under FOIL or IRB constraints. The
+          reconciler uses an open-weight model in the ~3-billion-parameter
+          range; on Apple Silicon a single grounded query draws roughly
+          0.03&nbsp;Wh, an estimated order of magnitude below the
+          ~0.3&nbsp;Wh-per-query figure
+          <a href="https://epoch.ai/gradient-updates/how-much-energy-does-chatgpt-use" target="_blank">Epoch&nbsp;AI</a>
+          publishes for typical frontier-cloud (GPT-4o-class) queries.
+          Public NYC and USGS data services receive the resolved
+          coordinates for sensor and complaint lookups.
+        </p>
+      </div>
+      <div class="foot-col">
+        <h3>Sources</h3>
+        <p>
+          <a href="https://data.cityofnewyork.us/" target="_blank">NYC Open Data</a> ·
+          <a href="https://api.floodnet.nyc/" target="_blank">FloodNet NYC</a> ·
+          <a href="https://geosearch.planninglabs.nyc/" target="_blank">NYC DCP Geosearch</a> ·
+          <a href="https://stn.wim.usgs.gov/" target="_blank">USGS STN</a> ·
+          <a href="https://www.usgs.gov/3d-elevation-program" target="_blank">USGS 3DEP</a>
+        </p>
+        <h3 style="margin-top: 14px;">Models</h3>
+        <p>
+          <a href="https://huggingface.co/ibm-granite" target="_blank">IBM Granite 4.1</a> &
+          <a href="https://huggingface.co/ibm-granite/granite-embedding-278m-multilingual" target="_blank">Granite Embedding 278M</a>
+          via <a href="https://ollama.com" target="_blank">Ollama</a> +
+          sentence-transformers
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
