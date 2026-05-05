@@ -10,7 +10,8 @@ node_modules/
 .ruff_cache/
 .pytest_cache/
 
-# Session-local Claude Code context (per-machine, not for the public repo)
+# Claude Code context (per-machine, not for the public repo)
+CLAUDE.md
 CLAUDE.local.md
 .claude/
 
