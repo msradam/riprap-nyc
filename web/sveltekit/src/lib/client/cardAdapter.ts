@@ -21,17 +21,25 @@ import type {
 } from '$lib/types/card';
 import type { TraceNode, TraceStatus } from '$lib/types/trace';
 import type { FinalResult } from '$lib/client/agentStream';
+import { fillRosterForStone } from '$lib/data/stoneRegistry';
 
 /** Reasonable defaults — when the FSM doesn't supply a vintage, fall
  *  back to the Riprap publication date. */
 const RIPRAP_VINTAGE = '2026-05';
 
-/** Map an FSM step name to the trace status the Findings layer wants. */
+/** Map the FSM trace's TraceStatus into the v0.4.5 5-state SpecialistStatus.
+ *  Crucial split: a specialist that "returned no data" is `silent_by_design`,
+ *  not `errored`. The FSM marks both as `silent` in the trace; we
+ *  conservatively classify any successful trace-`silent` as
+ *  silent_by_design (the spec voice). Anything that raised in the FSM
+ *  becomes `errored`. `fan`/`merge` are structural; the few callers
+ *  that look at them treat them as fired.
+ */
 function mapStatus(s: TraceStatus): StoneMember['status'] {
-  if (s === 'fan' || s === 'merge') return 'ok'; // structural nodes
-  if (s === 'silent') return 'silent';
-  if (s === 'error') return 'error';
-  return 'ok';
+  if (s === 'fan' || s === 'merge') return 'fired';
+  if (s === 'silent') return 'silent_by_design';
+  if (s === 'error') return 'errored';
+  return 'fired';
 }
 
 function flattenTrace(node: TraceNode): TraceNode[] {
@@ -79,6 +87,8 @@ function buildStoneTraces(root: TraceNode | undefined | null): StoneTrace[] {
       if (!stone) continue;
       buckets[stone].push({
         id: node.id || node.name,
+        // Preserve the raw FSM step name here — the registry projection
+        // matches against `stepNames`, not display names.
         name: node.name,
         status: mapStatus(node.status),
         tier: node.tier,
@@ -87,9 +97,12 @@ function buildStoneTraces(root: TraceNode | undefined | null): StoneTrace[] {
       });
     }
   }
+  // v0.4.5 §3 — project the registry over each Stone so the provenance
+  // expander shows the full inventory, with absent specialists as
+  // not_invoked.
   return (Object.keys(buckets) as StoneKey[]).map((key) => ({
     key,
-    members: buckets[key],
+    members: fillRosterForStone(key, buckets[key]),
   }));
 }
 
@@ -418,36 +431,67 @@ function buildNoaaTides(state: Final): Card | null {
 function buildPrithviLive(state: Final): Card | null {
   const p = obj(state.prithvi_live);
   if (!p?.ok) return null;
+  const sceneDate = str(p.item_datetime)?.slice(0, 10);
   return {
     id: 'fsm-prithvi-live',
     stone: 'touchstone', tier: 'modeled', variant: 'raster-pred',
-    source: 'Prithvi-NYC v2', agency: 'msradam/Prithvi-EO-2.0-NYC-Pluvial · v2 fine-tune',
-    vintage: str(p.item_datetime)?.slice(0, 10) ?? RIPRAP_VINTAGE,
-    title: 'Live Sentinel-2 pluvial flood prediction',
+    source: 'Prithvi-NYC-Pluvial', agency: 'NASA-IBM Prithvi v2 · NYC fine-tune',
+    vintage: sceneDate ? `${sceneDate} · Sentinel-2` : 'Sentinel-2',
+    title: 'Pluvial flood prediction · Prithvi-NYC-Pluvial',
     rasterKind: 'prithvi',
-    headline: `${num(p.pct_water_within_500m) ?? 0}%`,
+    headline: `${num(p.pct_water_within_500m) ?? 0}% flooded`,
     subhead: `water within 500 m · cloud ${num(p.cloud_cover) ?? '?'}%`,
     sub: 'Test flood IoU 0.5979 on held-out NYC chips. Model interpretation, not a measurement.',
     illustrative: true,
-    docId: 'prithvi_live', citeId: 'prithvi_live', mapLayer: 'prithvi',
+    docId: 'prithvi_live', citeId: 'prithvi_live', mapLayer: 'prithvi-pluvial',
   };
 }
+
+/** Conventional LULC palette — matches the design handoff's LULC card
+ *  visual (urban / water / vegetation / barren / wetland). The colors
+ *  are layer conventions, NOT new tier signals. */
+const LULC_PALETTE: Record<string, string> = {
+  urban: '#C66',
+  water: '#5B7FB4',
+  vegetation: '#5B8A4A',
+  barren: '#A89A78',
+  wetland: '#D9C75A',
+};
 
 function buildTerramindLulc(state: Final): Card | null {
   const t = obj(state.terramind_lulc);
   if (!t?.ok) return null;
+  // Translate the FSM's class_fractions dict into the design-system's
+  // expected ordered class-mix (urban / water / vegetation / barren /
+  // wetland). Unknown class names land in barren as a catch-all.
+  const fractions = (obj(t.class_fractions) ?? {}) as Record<string, number>;
+  const buckets: Record<keyof typeof LULC_PALETTE, number> = {
+    urban: 0, water: 0, vegetation: 0, barren: 0, wetland: 0,
+  };
+  for (const [k, v] of Object.entries(fractions)) {
+    const lk = k.toLowerCase();
+    if (lk.includes('urban') || lk.includes('built') || lk.includes('impervious')) buckets.urban += v;
+    else if (lk.includes('water')) buckets.water += v;
+    else if (lk.includes('tree') || lk.includes('vegetation') || lk.includes('crop') || lk.includes('grass')) buckets.vegetation += v;
+    else if (lk.includes('bare') || lk.includes('barren') || lk.includes('soil')) buckets.barren += v;
+    else if (lk.includes('wet') || lk.includes('marsh')) buckets.wetland += v;
+    else buckets.barren += v;
+  }
+  const classMix = (Object.entries(buckets) as [keyof typeof LULC_PALETTE, number][])
+    .filter(([, v]) => v > 0)
+    .map(([k, v]) => ({ k, pct: Math.round(v), color: LULC_PALETTE[k] }));
+
   return {
     id: 'fsm-tm-lulc',
-    stone: 'touchstone', tier: 'modeled', variant: 'raster-pred',
-    source: 'TerraMind-NYC', agency: 'msradam/TerraMind-NYC-Adapters · LULC LoRA',
-    vintage: '2026',
-    title: 'Land-cover (current Sentinel-2 chip)',
+    stone: 'touchstone', tier: 'synthetic', variant: 'lulc',
+    source: 'TerraMind v1.2', agency: 'IBM TerraMind v1.2 · Sentinel-2 inputs',
+    vintage: 'Sentinel-2',
+    title: 'Land use / land cover · TerraMind v1.2',
     rasterKind: 'lulc',
-    headline: str(t.dominant_class) ?? 'dominant class',
-    subhead: `${num(t.dominant_pct) ?? 0}% of chip`,
-    sub: 'Test mIoU 0.5866 on held-out NYC chips.',
+    classMix: classMix.length ? classMix : undefined,
+    sub: 'Synthetic prior. LULC palette is a layer convention, not a tier signal.',
     illustrative: true,
-    docId: 'tm_lulc', citeId: 'tm_lulc', mapLayer: 'lulc',
+    docId: 'tm_lulc', citeId: 'tm_lulc', mapLayer: 'terramind-lulc',
   };
 }
 
@@ -460,13 +504,13 @@ function buildTtmForecast(state: Final): Card | null {
   return {
     id: 'fsm-ttm-fc',
     stone: 'lodestone', tier: 'modeled', variant: 'timeseries',
-    source: 'Granite TTM r2', agency: 'IBM Granite TimeSeries TTM r2 · zero-shot Battery surge',
+    source: 'Granite TTM r2 (zero-shot)', agency: 'IBM Granite-TimeSeries · regional',
     vintage: RIPRAP_VINTAGE,
-    title: 'Surge nowcast at the Battery — 9.6 h horizon',
+    title: 'Storm surge nowcast at The Battery — 9.6 h horizon (regional)',
     timeseries: { hours: 96, peak: { x: 38, y: 47 }, peakLabel: `${peak} ft @ +${Math.round(ahead/60)}h` },
     headline: `${peak} ft`,
-    subhead: 'peak surge residual',
-    sub: 'Zero-shot 6-min cadence. Distinct from the fine-tuned Battery surge nowcast.',
+    subhead: 'peak surge residual · 9.6h horizon · 6-min cadence',
+    sub: 'Regional disclosure. Distinct from the fine-tuned Battery surge nowcast.',
     spatialNote: 'regional · Battery, not point-of-query',
     docId: 'ttm_forecast', citeId: 'ttm_forecast',
   };
@@ -480,21 +524,26 @@ function buildTtmBatterySurge(state: Final): Card | null {
   if (peak == null || ahead == null) return null;
   return {
     id: 'fsm-ttm-batt',
-    stone: 'lodestone', tier: 'modeled', variant: 'timeseries',
-    source: 'Granite TTM r2 · NYC fine-tune',
-    agency: 'msradam/Granite-TTM-r2-Battery-Surge · 96 h horizon',
+    stone: 'lodestone', tier: 'modeled', variant: 'timeseries-ft',
+    source: 'msradam/Granite-TTM-r2-Battery-Surge',
+    agency: 'Granite TTM r2 · NYC-specialized fine-tune',
     vintage: RIPRAP_VINTAGE,
-    title: 'Battery storm-surge nowcast (96 h)',
+    title: 'Storm surge nowcast at The Battery — 96 h horizon (NYC-specialized fine-tune)',
     timeseries: {
       hours: 96,
       peak: { x: ahead, y: Math.round(peak * 100) },
       peakLabel: `${(peak * 100).toFixed(0)} cm @ +${ahead}h`,
     },
     headline: `${(peak * 100).toFixed(0)} cm`,
-    subhead: `peak surge · +${ahead}h ahead`,
-    sub: 'Test MAE 0.1091 m, −41% vs persistence. Hourly cadence; applies city-wide via NOAA station 8518750.',
+    subhead: `peak surge · 96h horizon · hourly cadence`,
+    sub: 'Fine-tuned on NYC tide-gauge history. Hourly cadence; applies city-wide via NOAA station 8518750.',
     spatialNote: 'regional · The Battery, not point-of-query',
     docId: 'ttm_battery', citeId: 'ttm_battery',
+    // v0.4.5 §5 — fine-tuned-model footer chrome
+    hfModelCard: 'huggingface.co/msradam/Granite-TTM-r2-Battery-Surge',
+    rmse: '0.157 m',
+    skillVsPersistence: '−35% vs persistence',
+    hardwareBadge: 'MI300X',
   };
 }
 
@@ -522,11 +571,18 @@ function buildNwsAlerts(state: Final): Card | null {
 }
 
 function buildCapstoneMeta(final: FinalResult, wallSeconds?: number): Card {
+  // v0.4.5 §2 — wire the four metrics to the reconciler's actual state.
+  // The Mellea attempts field is one-indexed by the reconciler (initial
+  // attempt + N rerolls). A clean run with one reroll arrives as
+  // attempts=2, which we surface as "1 reroll" — the human-meaningful
+  // count. attempts=1 renders as "0 rerolls" (initial pass only).
   const m = final.mellea;
   const passed = m?.passed?.length ?? 0;
   const failed = m?.failed?.length ?? 0;
-  const total = passed + failed;
+  const totalChecks = passed + failed > 0 ? passed + failed : 4;
   const attempts = m?.attempts ?? 0;
+  const rerolls = Math.max(0, attempts - 1);
+  const cites = final.citations?.length ?? 0;
   return {
     id: 'fsm-capstone-meta',
     stone: 'capstone', tier: 'modeled', variant: 'meta',
@@ -534,12 +590,12 @@ function buildCapstoneMeta(final: FinalResult, wallSeconds?: number): Card {
     vintage: RIPRAP_VINTAGE,
     title: 'Briefing reconciliation',
     metaRows: [
-      { k: 'Mellea reroll',     v: `${attempts} attempt${attempts === 1 ? '' : 's'}` },
-      { k: 'Grounding checks',  v: `${passed} / ${total || 4} passed` },
-      { k: 'Citations resolved',v: `${final.citations?.length ?? 0}` },
-      { k: 'Wall-clock',        v: wallSeconds != null ? `${wallSeconds.toFixed(1)} s` : '—' },
+      { k: 'mellea reroll',      v: `${rerolls} reroll${rerolls === 1 ? '' : 's'}` },
+      { k: 'grounding checks',   v: `${passed}/${totalChecks} passed` },
+      { k: 'citations resolved', v: `${cites}` },
+      { k: 'wall-clock',         v: wallSeconds != null ? `${wallSeconds.toFixed(1)} s` : '—' },
     ],
-    sub: 'Capstone produces prose, not cards. This meta-card summarises the reconciler chain that wrote the briefing above.',
+    sub: 'Capstone produces prose, not cards. This meta-card is the integrity-narration UI for the entire pipeline.',
     docId: 'capstone',
   };
 }

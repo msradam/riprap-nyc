@@ -9,7 +9,8 @@
  * Stone-trace member ids match the FSM step names where possible so the
  * adapter can replace this with live data without changing card copy.
  */
-import type { FindingsData } from '$lib/types/card';
+import type { FindingsData, StoneTrace } from '$lib/types/card';
+import { fillRosterForStone } from './stoneRegistry';
 
 export const SAMPLE_FINDINGS: FindingsData = {
   wallSeconds: 14.0,
@@ -104,18 +105,37 @@ export const SAMPLE_FINDINGS: FindingsData = {
       mapLayer: 'complaints',
     },
     {
-      id: 'fc-prithvi',
+      id: 'fc-prithvi-pluvial',
       stone: 'touchstone', tier: 'modeled', variant: 'raster-pred',
-      source: 'Prithvi-NYC', agency: 'Prithvi-NYC-Pluvial v2 · IBM/NASA × Riprap',
-      vintage: '2026-05-02',
-      title: 'Pluvial flood prediction, current Sentinel-2 chip',
+      source: 'Prithvi-NYC-Pluvial', agency: 'NASA-IBM Prithvi v2 · NYC fine-tune',
+      vintage: '2026-05-02 · Sentinel-2',
+      title: 'Pluvial flood prediction · Prithvi-NYC-Pluvial',
       rasterKind: 'prithvi',
       headline: '0.3% flooded',
       subhead: 'no flooding apparent · scene 2026-05-02',
       sub: 'Model interpretation of imagery, not real-time observation. Confidence-mean 0.84 across non-flooded pixels.',
       docId: 'PRITHVI-NYC-PLUV-V2-20260502', citeId: 'c-prithvi',
       illustrative: true,
-      mapLayer: 'prithvi',
+      mapLayer: 'prithvi-pluvial',
+    },
+    {
+      id: 'fc-terramind-lulc',
+      stone: 'touchstone', tier: 'synthetic', variant: 'lulc',
+      source: 'TerraMind v1.2', agency: 'IBM TerraMind v1.2 · Sentinel-2 inputs',
+      vintage: 'Sentinel-2 · 2024-09-18',
+      title: 'Land use / land cover · TerraMind v1.2',
+      rasterKind: 'lulc',
+      classMix: [
+        { k: 'urban',      pct: 62, color: '#C66' },
+        { k: 'water',      pct: 18, color: '#5B7FB4' },
+        { k: 'vegetation', pct: 12, color: '#5B8A4A' },
+        { k: 'barren',     pct:  6, color: '#A89A78' },
+        { k: 'wetland',    pct:  2, color: '#D9C75A' },
+      ],
+      sub: 'Synthetic prior. LULC palette is a layer convention, not a tier signal.',
+      docId: 'TERRAMIND-LULC-20240918', citeId: 'c-tm-lulc',
+      illustrative: true,
+      mapLayer: 'terramind-lulc',
     },
     {
       id: 'fc-nws',
@@ -137,16 +157,34 @@ export const SAMPLE_FINDINGS: FindingsData = {
     {
       id: 'fc-ttm-surge',
       stone: 'lodestone', tier: 'modeled', variant: 'timeseries',
-      source: 'Granite TTM r2', agency: 'IBM Granite-TimeSeries · Riprap fine-tune',
+      source: 'Granite TTM r2 (zero-shot)', agency: 'IBM Granite-TimeSeries · regional',
       vintage: '2026-05-05 12:00 ET',
-      title: 'Storm surge nowcast at The Battery, 96-hour horizon',
+      title: 'Storm surge nowcast at The Battery — 9.6 h horizon (regional)',
       timeseries: { hours: 96, peak: { x: 38, y: 47 }, peakLabel: '+47 cm @ +38h' },
       headline: '+47 cm',
-      subhead: 'peak surge residual · Wed 04:00 ET',
-      sub: 'Nowcast applies city-wide via NOAA station 8518750. Not localized to query address. Residual above harmonic tide.',
+      subhead: 'peak surge residual · 9.6h horizon · 6-min cadence',
+      sub: 'Regional disclosure. Nowcast applies city-wide via NOAA station 8518750. Distinct from the fine-tuned Battery surge nowcast.',
       spatialNote: 'regional · The Battery, not point-of-query',
-      docId: 'ttm_battery_surge_v2', citeId: 'c-ttm',
+      docId: 'ttm_battery_surge_zeroshot', citeId: 'c-ttm',
       mapLayer: null,
+    },
+    {
+      id: 'fc-ttm-surge-ft',
+      stone: 'lodestone', tier: 'modeled', variant: 'timeseries-ft',
+      source: 'msradam/Granite-TTM-r2-Battery-Surge', agency: 'Granite TTM r2 · NYC-specialized fine-tune',
+      vintage: '2026-05-05 12:00 ET',
+      title: 'Storm surge nowcast at The Battery — 96 h horizon (NYC-specialized fine-tune)',
+      timeseries: { hours: 96, peak: { x: 38, y: 53 }, peakLabel: '+53 cm @ +38h' },
+      headline: '+53 cm',
+      subhead: 'peak surge · 96h horizon · hourly cadence',
+      sub: 'Fine-tuned on NYC tide-gauge history. Trained on AMD MI300X.',
+      spatialNote: 'regional · The Battery, not point-of-query',
+      docId: 'ttm_battery_surge_finetune', citeId: 'c-ttm-ft',
+      mapLayer: null,
+      hfModelCard: 'huggingface.co/msradam/Granite-TTM-r2-Battery-Surge',
+      rmse: '0.157 m',
+      skillVsPersistence: '−35% vs persistence',
+      hardwareBadge: 'MI300X',
     },
     {
       id: 'fc-npcc4',
@@ -173,10 +211,10 @@ export const SAMPLE_FINDINGS: FindingsData = {
       vintage: '2026-05-05 14:22 ET',
       title: 'Briefing reconciliation',
       metaRows: [
-        { k: 'Mellea reroll',     v: '1 attempt' },
-        { k: 'Grounding checks',  v: '4 / 4 passed' },
-        { k: 'Citations resolved',v: '11 / 11' },
-        { k: 'RAG → GLiNER',      v: '9 entities · 0 unresolved' },
+        { k: 'mellea reroll',      v: '1 reroll' },
+        { k: 'grounding checks',   v: '4/4 passed' },
+        { k: 'citations resolved', v: '4' },
+        { k: 'wall-clock',         v: '24.0 s' },
       ],
       sub: 'Capstone produces prose, not cards. This meta-card summarizes the reconciler chain that wrote the four-section briefing above.',
       docId: 'RIPRAP-CAP-RH80', citeId: null,
@@ -184,52 +222,60 @@ export const SAMPLE_FINDINGS: FindingsData = {
     },
   ],
 
-  stones: [
+  // Stones below carry one member per FSM step name. The registry
+  // projection at the bottom of this file fills in the not_invoked
+  // rows so each Stone renders its full intended roster.
+  stones: ([
     {
       key: 'cornerstone',
       members: [
-        { id: 'CORN-001', name: 'pull FEMA NFHL panel 36047C0207G', status: 'ok',     tier: 'modeled',   ms: 412 },
-        { id: 'CORN-002', name: 'parse panel index for AE / VE bands', status: 'ok',  tier: 'modeled',   ms: 88 },
-        { id: 'CORN-003', name: 'USGS STN: post-Sandy HWM survey within 500 ft', status: 'ok', tier: 'empirical', ms: 612 },
-        { id: 'CORN-004', name: 'NYC DEP stormwater flood map 2024', status: 'ok',    tier: 'modeled',   ms: 980 },
-        { id: 'CORN-005', name: 'microtopo: 3DEP DEM + HAND + TWI', status: 'ok',     tier: 'proxy',     ms: 1240 },
+        { id: 'CORN-001', name: 'sandy_inundation',  status: 'fired', tier: 'empirical', ms: 412 },
+        { id: 'CORN-002', name: 'dep_stormwater',    status: 'fired', tier: 'modeled',   ms: 540 },
+        { id: 'CORN-003', name: 'ida_hwm_2021',      status: 'fired', tier: 'empirical', ms: 612 },
+        { id: 'CORN-004', name: 'prithvi_eo_v2',     status: 'fired', tier: 'modeled',   ms: 980 },
+        { id: 'CORN-005', name: 'microtopo_lidar',   status: 'fired', tier: 'proxy',     ms: 1240 },
       ],
     },
     {
       key: 'keystone',
       members: [
-        { id: 'KEY-001', name: 'MTA subway entrance proximity', status: 'ok',         tier: 'empirical', ms: 220 },
-        { id: 'KEY-002', name: 'NYCHA developments in 1 mi',   status: 'ok',         tier: 'empirical', ms: 410 },
-        { id: 'KEY-003', name: 'DOE schools in 1 mi',           status: 'ok',         tier: 'empirical', ms: 360 },
-        { id: 'KEY-004', name: 'NYS DOH hospitals in 1 mi',    status: 'silent', tier: 'empirical', ms: 95, note: 'no acute-care within 1 mi' },
-        { id: 'KEY-005', name: 'PLUTO BBL fetch',               status: 'ok',         tier: 'empirical', ms: 130 },
+        { id: 'KEY-001', name: 'mta_entrance_exposure',       status: 'silent_by_design', tier: 'empirical', ms: 30, note: 'no entrances within radius' },
+        { id: 'KEY-002', name: 'nycha_development_exposure',  status: 'silent_by_design', tier: 'empirical', ms: 28, note: 'no NYCHA developments within 1.0 mi' },
+        { id: 'KEY-003', name: 'doe_school_exposure',         status: 'silent_by_design', tier: 'empirical', ms: 24, note: 'no DOE schools within 1.0 mi' },
+        { id: 'KEY-004', name: 'doh_hospital_exposure',       status: 'silent_by_design', tier: 'empirical', ms: 22, note: 'no acute-care hospitals within 1.0 mi' },
       ],
     },
     {
       key: 'touchstone',
       members: [
-        { id: 'TCH-001', name: 'FloodNet sensor lookup',        status: 'ok',         tier: 'empirical', ms: 285 },
-        { id: 'TCH-002', name: 'NYC 311 flood complaints',      status: 'ok',         tier: 'proxy',     ms: 410 },
-        { id: 'TCH-003', name: 'NWS station KNYC observation',  status: 'ok',         tier: 'empirical', ms: 240 },
-        { id: 'TCH-004', name: 'NOAA tide gauge water level',   status: 'ok',         tier: 'empirical', ms: 196 },
-        { id: 'TCH-005', name: 'Prithvi-EO 2.0 NYC-Pluvial v2', status: 'ok',         tier: 'modeled',   ms: 4920 },
+        { id: 'TCH-001', name: 'floodnet',         status: 'fired', tier: 'empirical', ms: 285 },
+        { id: 'TCH-002', name: 'nyc311',           status: 'fired', tier: 'proxy',     ms: 410 },
+        { id: 'TCH-003', name: 'nws_obs',          status: 'fired', tier: 'empirical', ms: 240 },
+        { id: 'TCH-004', name: 'noaa_tides',       status: 'fired', tier: 'empirical', ms: 196 },
+        { id: 'TCH-005', name: 'prithvi_eo_live',  status: 'fired', tier: 'modeled',   ms: 4920 },
+        { id: 'TCH-006', name: 'terramind_lulc',   status: 'fired', tier: 'synthetic', ms: 2100 },
       ],
     },
     {
       key: 'lodestone',
       members: [
-        { id: 'LOD-001', name: 'Granite TTM r2 surge fine-tune', status: 'ok',         tier: 'modeled',   ms: 1820 },
-        { id: 'LOD-002', name: 'NPCC4 SLR projection table',     status: 'ok',         tier: 'modeled',   ms: 38 },
-        { id: 'LOD-003', name: 'NWS active flood alerts',        status: 'silent', tier: 'modeled',   ms: 110 },
+        { id: 'LOD-001', name: 'nws_alerts',         status: 'fired',         tier: 'modeled', ms: 110 },
+        { id: 'LOD-002', name: 'ttm_forecast',       status: 'fired',         tier: 'modeled', ms: 1500 },
+        { id: 'LOD-003', name: 'ttm_battery_surge',  status: 'fired',         tier: 'modeled', ms: 1480 },
+        { id: 'LOD-004', name: 'floodnet_forecast',  status: 'silent_by_design', tier: 'modeled', ms: 14, note: 'sensor has only 2 historical events; forecast omitted (silent-floor: 5)' },
+        { id: 'LOD-005', name: 'ttm_311_forecast',   status: 'errored',       tier: 'modeled', ms: 0, note: '311 history fetch failed: HTTP 503 at NYC OpenData (3 retries)' },
       ],
     },
     {
       key: 'capstone',
       members: [
-        { id: 'CAP-001', name: 'Granite Embedding RAG retrieval', status: 'ok',         tier: 'proxy',     ms: 410 },
-        { id: 'CAP-002', name: 'GLiNER typed extraction',         status: 'ok',         tier: 'proxy',     ms: 280 },
-        { id: 'CAP-003', name: 'Granite 4.1 reconcile (Mellea)',  status: 'ok',         tier: 'modeled',   ms: 6240 },
+        { id: 'CAP-001', name: 'rag_granite_embedding', status: 'fired', tier: 'proxy',   ms: 410 },
+        { id: 'CAP-002', name: 'gliner_extract',        status: 'fired', tier: 'proxy',   ms: 280 },
+        { id: 'CAP-003', name: 'reconcile_granite41',   status: 'fired', tier: 'modeled', ms: 6240 },
       ],
     },
-  ],
+  ] satisfies StoneTrace[]).map((s): StoneTrace => ({
+    key: s.key,
+    members: fillRosterForStone(s.key, s.members),
+  })),
 };

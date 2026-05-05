@@ -18,10 +18,14 @@
   }
   let allMembers = $derived(stones.flatMap((s) => flatten(s.members)));
   let total = $derived(allMembers.length);
-  let fired = $derived(allMembers.filter((m) => m.status === 'ok').length);
-  let silent = $derived(allMembers.filter((m) => m.status === 'silent').length);
-  let warn = $derived(allMembers.filter((m) => m.status === 'warn').length);
-  let err = $derived(allMembers.filter((m) => m.status === 'error').length);
+  // v0.4.5 split: see SpecialistStatus in lib/types/card.ts.
+  let fired = $derived(
+    allMembers.filter((m) => m.status === 'fired' || m.status === 'warned').length
+  );
+  let silent = $derived(allMembers.filter((m) => m.status === 'silent_by_design').length);
+  let warn = $derived(allMembers.filter((m) => m.status === 'warned').length);
+  let err = $derived(allMembers.filter((m) => m.status === 'errored').length);
+  let notInvoked = $derived(allMembers.filter((m) => m.status === 'not_invoked').length);
 
   let wall = $derived(wallSeconds == null
     ? '—'
@@ -31,7 +35,23 @@
 <div class="rh">
   <span class="rh-item"><strong>{stones.length}</strong> Stones</span>
   <span class="rh-sep">·</span>
-  <span class="rh-item"><strong>{fired}/{total}</strong> functions fired</span>
+  <span class="rh-item"><strong>{fired}</strong> fired</span>
+  {#if silent > 0}
+    <span class="rh-sep">·</span>
+    <span class="rh-item rh-silent"><strong>{silent}</strong> silent</span>
+  {/if}
+  {#if warn > 0}
+    <span class="rh-sep">·</span>
+    <span class="rh-item rh-warn"><strong>{warn}</strong> warned</span>
+  {/if}
+  {#if err > 0}
+    <span class="rh-sep">·</span>
+    <span class="rh-item rh-err"><strong>{err}</strong> errored</span>
+  {/if}
+  {#if notInvoked > 0}
+    <span class="rh-sep">·</span>
+    <span class="rh-item rh-notinvoked"><strong>{notInvoked}</strong> not invoked</span>
+  {/if}
   <span class="rh-sep">·</span>
   <span class="rh-item"><strong>{cards.length}</strong> evidence card{cards.length === 1 ? '' : 's'}</span>
   <span class="rh-sep">·</span>
@@ -40,18 +60,8 @@
     <span class="rh-sep">·</span>
     <span class="rh-item"><strong>{Math.round(cacheHit * 100)}%</strong> cache</span>
   {/if}
-  {#if silent > 0}
-    <span class="rh-sep">·</span>
-    <span class="rh-item rh-silent">{silent} silent</span>
-  {/if}
-  {#if warn > 0}
-    <span class="rh-sep">·</span>
-    <span class="rh-item rh-warn">{warn} warn</span>
-  {/if}
-  {#if err > 0}
-    <span class="rh-sep">·</span>
-    <span class="rh-item rh-err">{err} error</span>
-  {/if}
+  <span class="rh-sep">·</span>
+  <span class="rh-item rh-total"><strong>{total}</strong> registered</span>
 </div>
 
 <style>
@@ -78,4 +88,6 @@
   .rh-silent { color: var(--ink-tertiary); }
   .rh-warn { color: #B7791F; }
   .rh-err { color: #B91C1C; }
+  .rh-notinvoked { color: var(--ink-tertiary); font-style: italic; }
+  .rh-total strong { color: var(--ink-tertiary); }
 </style>

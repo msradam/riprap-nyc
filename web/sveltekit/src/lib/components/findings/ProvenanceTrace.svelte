@@ -8,13 +8,28 @@
    *  deprecated in Svelte 5). */
   let { members, depth = 0 }: { members: StoneMember[]; depth?: number } = $props();
 
+  /** v0.4.5 status pip — five distinct shapes per V0.4.5_SPEC.md §1.
+   *
+   *    fired             ● solid square (tier-colored)
+   *    silent_by_design  ○ open circle (neutral)
+   *    warned            ▲ solid triangle (warn ochre)
+   *    errored           ■ solid filled (red)
+   *    not_invoked       □ hollow gray square
+   */
   function pip(status: StoneMember['status']): string {
-    return ({ ok: '●', warn: '▲', error: '■', silent: '○' } as const)[status];
+    return ({
+      fired: '●',
+      silent_by_design: '○',
+      warned: '▲',
+      errored: '■',
+      not_invoked: '□',
+    } as const)[status];
   }
   function pipColorVar(m: StoneMember): string {
-    if (m.status === 'warn') return '#B7791F';
-    if (m.status === 'error') return '#B91C1C';
-    if (m.status === 'silent') return 'var(--ink-tertiary)';
+    if (m.status === 'warned') return '#B7791F';
+    if (m.status === 'errored') return '#B91C1C';
+    if (m.status === 'silent_by_design') return 'var(--ink-tertiary)';
+    if (m.status === 'not_invoked') return 'var(--ink-tertiary)';
     if (m.tier) return `var(--tier-${m.tier})`;
     return 'var(--ink)';
   }
@@ -90,8 +105,21 @@
     font-size: 10px;
     color: var(--ink-tertiary);
   }
-  .prov-status-silent .prov-name { color: var(--ink-tertiary); }
-  .prov-status-warn .prov-name { color: #B7791F; }
-  .prov-status-error .prov-name { color: #B91C1C; }
+  /* v0.4.5 status row treatments */
+  .prov-status-silent_by_design .prov-name {
+    color: var(--ink-tertiary);
+    font-style: italic;
+  }
+  .prov-status-warned .prov-name { color: #B7791F; }
+  .prov-status-errored .prov-name { color: #B91C1C; }
+  .prov-status-errored .prov-pip { font-weight: bold; }
+  .prov-status-not_invoked .prov-name {
+    color: var(--ink-tertiary);
+    font-style: italic;
+  }
+  .prov-status-not_invoked .prov-id {
+    color: var(--ink-tertiary);
+    opacity: 0.6;
+  }
   .prov-children { padding: 0; }
 </style>

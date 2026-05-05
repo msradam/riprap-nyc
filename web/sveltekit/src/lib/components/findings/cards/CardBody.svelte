@@ -5,8 +5,10 @@
   import ScalarsBody from './ScalarsBody.svelte';
   import SparkBody from './SparkBody.svelte';
   import TimeseriesBody from './TimeseriesBody.svelte';
+  import TimeseriesFtBody from './TimeseriesFtBody.svelte';
   import ForecastBody from './ForecastBody.svelte';
   import RasterBody from './RasterBody.svelte';
+  import LulcBody from './LulcBody.svelte';
   import RegisterBody from './RegisterBody.svelte';
   import ComparisonBody from './ComparisonBody.svelte';
   import MetaBody from './MetaBody.svelte';
@@ -28,10 +30,14 @@
   <SparkBody {card} />
 {:else if card.variant === 'timeseries'}
   <TimeseriesBody {card} />
+{:else if card.variant === 'timeseries-ft'}
+  <TimeseriesFtBody {card} />
 {:else if card.variant === 'forecast'}
   <ForecastBody {card} />
 {:else if card.variant === 'raster' || card.variant === 'raster-pred'}
   <RasterBody {card} />
+{:else if card.variant === 'lulc'}
+  <LulcBody {card} />
 {:else if card.variant === 'register'}
   <RegisterBody {card} />
 {:else if card.variant === 'comparison'}

@@ -120,6 +120,7 @@
               address={queriedAddress}
               activeLayers={active}
               syntheticPrior={SYN_FIXTURE}
+              {linkedKey}
             />
             <MapLegend
               {active}

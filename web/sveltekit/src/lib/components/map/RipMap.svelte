@@ -28,6 +28,11 @@
     registerPoints?: GeoJSON.FeatureCollection;
     registerPolygons?: GeoJSON.FeatureCollection;
     activeLayers?: { empirical: boolean; modeled: boolean; synthetic: boolean; proxy: boolean };
+    /** v0.4.5 §8 — when a Findings card is hovered/focused, its
+     *  `mapLayer` key flows in as `linkedKey`. The map root gains
+     *  `is-link-{key}` so existing layers can be visually emphasised
+     *  via scoped CSS. */
+    linkedKey?: string | null;
   }
 
   let {
@@ -38,7 +43,8 @@
     proxy311,
     registerPoints,
     registerPolygons,
-    activeLayers = { empirical: true, modeled: true, synthetic: true, proxy: true }
+    activeLayers = { empirical: true, modeled: true, synthetic: true, proxy: true },
+    linkedKey = null,
   }: Props = $props();
 
   let container: HTMLDivElement | null = $state(null);
@@ -293,13 +299,16 @@
   });
 </script>
 
-<div class="map-frame">
+<div class="map-frame" data-linked={linkedKey ?? ''}>
   <div
     bind:this={container}
     role="application"
     aria-label="Flood-exposure map for {address.label}"
     class="rip-map-container"
   ></div>
+  {#if linkedKey}
+    <span class="link-badge" aria-hidden="true">linked: {linkedKey}</span>
+  {/if}
 </div>
 
 <style>
@@ -312,5 +321,25 @@
   .map-frame {
     aspect-ratio: 8 / 5.6;
     position: relative;
+    transition: outline-color 200ms ease;
+    outline: 0 solid transparent;
+    outline-offset: 0;
+  }
+  .map-frame[data-linked]:not([data-linked='']) {
+    outline: 2px solid var(--accent-graphical);
+  }
+  .link-badge {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    padding: 3px 8px;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: lowercase;
+    z-index: 5;
+    pointer-events: none;
   }
 </style>

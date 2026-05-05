@@ -640,6 +640,7 @@
                 proxy311={proxyFc}
                 registerPoints={registerPointsFc}
                 registerPolygons={registerPolygonsFc}
+                {linkedKey}
               />
               <MapLegend
                 {active}

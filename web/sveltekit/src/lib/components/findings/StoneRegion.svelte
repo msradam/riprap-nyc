@@ -38,13 +38,18 @@
   }
   let flat = $derived(flatten(trace.members));
   let traceCount = $derived(flat.length);
-  let hasAnomaly = $derived(
-    flat.some((m) => m.status === 'warn' || m.status === 'error' || m.status === 'silent')
+  // v0.4.5: smart-expand when any specialist warned, errored, or was
+  // not_invoked. silent_by_design is normal operation, not an anomaly,
+  // so it doesn't trigger the auto-expand. The "anomaly" tag itself
+  // (v0.4.4) is dropped — the per-stone count chips carry the same
+  // info without the redundant label (V0.4.5_SPEC.md §6).
+  let hasInterestingState = $derived(
+    flat.some((m) => m.status === 'warned' || m.status === 'errored' || m.status === 'not_invoked')
   );
   let smartOpen = $derived(
     provenanceMode === 'all-expanded' ? true :
     provenanceMode === 'all-collapsed' ? false :
-    hasAnomaly
+    hasInterestingState
   );
 
   let userOpen = $state<boolean | null>(null);
@@ -104,7 +109,7 @@
       <span class="prov-caret" aria-hidden="true">{traceOpen ? '▾' : '▸'}</span>
       <span class="prov-label">{traceOpen ? 'Hide' : 'Show'} provenance</span>
       <span class="prov-meta">
-        · {traceCount} function{traceCount === 1 ? '' : 's'}{hasAnomaly ? ' · anomaly' : ''}
+        · {traceCount} function{traceCount === 1 ? '' : 's'}
       </span>
     </button>
     {#if traceOpen}
@@ -122,6 +127,11 @@
     background: transparent;
   }
   .region:first-of-type { border-top: 0; }
+
+  /* v0.4.5 §9 — Stone-tinted accent: 3px left-rule on the header strip,
+     keyed to the Stone's accent token. Hint-level decoration; the
+     four-tier palette inside cards is the load-bearing epistemic
+     signal. Print degrades to #999 via the tokens.css override. */
   .region-head {
     display: flex;
     align-items: baseline;
@@ -129,7 +139,14 @@
     gap: var(--s-4);
     margin-bottom: var(--s-3);
     flex-wrap: wrap;
+    border-left: 3px solid var(--stone-tint, var(--rule-soft));
+    padding-left: var(--s-3);
   }
+  .region-cornerstone .region-head { --stone-tint: var(--stone-cornerstone); }
+  .region-keystone    .region-head { --stone-tint: var(--stone-keystone); }
+  .region-touchstone  .region-head { --stone-tint: var(--stone-touchstone); }
+  .region-lodestone   .region-head { --stone-tint: var(--stone-lodestone); }
+  .region-capstone    .region-head { --stone-tint: var(--stone-capstone); }
   .region-head-left {
     display: flex;
     align-items: baseline;
@@ -172,9 +189,11 @@
   .rail :global(> .fc) { grid-column: span 4; }
   .rail :global(> .fc.fc-register),
   .rail :global(> .fc.fc-timeseries),
+  .rail :global(> .fc.fc-timeseries-ft),
   .rail :global(> .fc.fc-forecast),
   .rail :global(> .fc.fc-raster),
   .rail :global(> .fc.fc-raster-pred),
+  .rail :global(> .fc.fc-lulc),
   .rail :global(> .fc.fc-comparison) {
     grid-column: span 6;
   }

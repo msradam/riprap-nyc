@@ -1,6 +1,16 @@
 <script lang="ts">
   import type { Card } from '$lib/types/card';
   import TierGlyph from '$lib/components/glyphs/TierGlyph.svelte';
+
+  /** Hover-linking comes from the parent `FindingCard` chrome (which is
+   *  itself a button when card.mapLayer is set) — it sets `linkedKey`
+   *  on pointerenter / focus / keydown, so the map's `is-link-…` /
+   *  outline + badge fires for the whole register card.
+   *
+   *  v0.4.5 §8 click-to-fitBounds() per-row is a documented follow-up:
+   *  it requires plumbing a MapLibre handle through FindingsRegion →
+   *  StoneRegion → FindingCard → here, plus a register-points feature
+   *  index keyed by sourceId. Out of scope for this polish pass. */
   let { card }: { card: Card } = $props();
 </script>
 

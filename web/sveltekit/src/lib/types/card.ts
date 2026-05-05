@@ -33,7 +33,13 @@ export const STONE_META: Record<StoneKey, StoneMeta> = {
   capstone:    { name: 'Capstone',    role: 'the synthesizer',    tag: 'writes it all down with citations' },
 };
 
-/** 12 card body variants — one renderer per shape. */
+/** 14 card body variants — one renderer per shape.
+ *
+ *    timeseries-ft  — v0.4.5 §5: timeseries + fine-tuned-model footer
+ *                     (HF model-card link, RMSE, hardware badge).
+ *    lulc           — v0.4.5 §4: raster + horizontal stacked class-mix bar
+ *                     for TerraMind LULC outputs.
+ */
 export type CardVariant =
   | 'headline'
   | 'tabular'
@@ -41,9 +47,11 @@ export type CardVariant =
   | 'spark'
   | 'histogram'
   | 'timeseries'
+  | 'timeseries-ft'
   | 'forecast'
   | 'raster'
   | 'raster-pred'
+  | 'lulc'
   | 'register'
   | 'comparison'
   | 'meta';
@@ -164,15 +172,49 @@ export type Card = {
 
   // meta
   metaRows?: MetaRow[];
+
+  // timeseries-ft — fine-tuned-model footer chrome (v0.4.5 §5)
+  hfModelCard?: string;
+  rmse?: string;
+  skillVsPersistence?: string;
+  hardwareBadge?: string;
+
+  // lulc — class-mix bar (v0.4.5 §4)
+  classMix?: { k: string; pct: number; color: string }[];
 };
+
+/** Per-specialist run-state. v0.4.5 splits the v0.4.4 `ok|warn|error|silent`
+ *  enum into five distinct epistemic outcomes so the run-health tally
+ *  stops conflating "spec'd silent" with "specialist crashed":
+ *
+ *    fired             — completed and produced output the reconciler used
+ *    silent_by_design  — completed and correctly produced no output
+ *                        (e.g. "no entrances within radius")
+ *    warned            — output produced with a non-fatal warning
+ *    errored           — failed to complete, no usable output
+ *    not_invoked       — FSM skipped the specialist (precondition unmet
+ *                        / feature flag off / never wired)
+ *
+ *  See V0.4.5_SPEC.md §1 for the full rationale and message-voice rules.
+ */
+export type SpecialistStatus =
+  | 'fired'
+  | 'silent_by_design'
+  | 'warned'
+  | 'errored'
+  | 'not_invoked';
 
 /** Per-Stone provenance member (specialist) summary used by the trace. */
 export type StoneMember = {
   id: string;
   name: string;
-  status: 'ok' | 'warn' | 'error' | 'silent';
+  status: SpecialistStatus;
   tier?: Tier | null;
   ms?: number;
+  /** One-line engineering-honest message ("no entrances within radius",
+   *  "PLUTO join skipped: queried address not in NYC PLUTO dataset",
+   *  "311 history fetch failed: HTTP 503 at NYC OpenData (3 retries)").
+   *  Match v0.4.1–v0.4.4 voice — precise, slightly understated. */
   note?: string;
   children?: StoneMember[];
 };
