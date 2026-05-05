@@ -19,17 +19,22 @@
     }
   });
 
-  // The /print/<id> route renders its own self-contained artifact (no
-  // header / footer / skip-links). It's a print target, not an app surface.
+  // The /print/<id> route renders its own self-contained artifact and
+  // the landing at `/` is a self-contained marketing surface — both
+  // bring their own chrome, so the layout's AppHeader / AppFooter sit
+  // out for them. The cold-start at /app and the briefing at /q/<id>
+  // still get the app chrome.
   let isPrint = $derived(page.url.pathname.startsWith('/print/'));
+  let isLanding = $derived(page.url.pathname === '/');
+  let chromeFree = $derived(isPrint || isLanding);
 </script>
 
-{#if !isPrint}
+{#if !chromeFree}
   <SkipLinks />
-  <AppHeader query={query()} onResetCold={() => (window.location.href = '/')} />
+  <AppHeader query={query()} onResetCold={() => (window.location.href = '/app')} />
 {/if}
 <main>{@render children()}</main>
-{#if !isPrint}
+{#if !chromeFree}
   <AppFooter />
 {/if}
 

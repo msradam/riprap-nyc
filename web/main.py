@@ -312,14 +312,26 @@ async def api_backend():
 
 @app.get("/")
 def index():
-    """SvelteKit cold-start page (the new design-system UI). Falls back to
-    the legacy custom-element agent.html if the SvelteKit build hasn't been
-    compiled yet — that lets `uvicorn` boot in a fresh checkout without a
-    Node toolchain present."""
+    """SvelteKit landing page (the new design-system UI)."""
     sk = SVELTEKIT_BUILD / "index.html"
     if sk.exists():
         return FileResponse(sk)
-    return FileResponse(STATIC / "agent.html")
+    return JSONResponse(
+        {"error": "sveltekit build not present — run `cd web/sveltekit && npm run build`"},
+        status_code=503,
+    )
+
+
+@app.get("/app")
+def cold_start_page():
+    """SvelteKit cold-start (the analyst's "ready to query" page).
+    Distinct from the marketing landing at `/`. Per V0.4.5 README
+    §"Landing page" the two surfaces are separate.
+    """
+    sk = SVELTEKIT_BUILD / "app.html"
+    if sk.exists():
+        return FileResponse(sk)
+    return JSONResponse({"error": "sveltekit build not present"}, status_code=503)
 
 
 @app.get("/q/sample")
@@ -352,39 +364,11 @@ def print_page(query_id: str):  # noqa: ARG001 — captured by the SPA router
     return JSONResponse({"error": "sveltekit build not present"}, status_code=503)
 
 
-@app.get("/legacy")
-def legacy_index():
-    """Original custom-element agent page, preserved for fallback / debugging."""
-    return FileResponse(STATIC / "agent.html")
-
-
-@app.get("/single")
-def single_address_page():
-    return FileResponse(STATIC / "index.html")
-
-
-@app.get("/compare")
-def compare_page():
-    return FileResponse(STATIC / "compare.html")
-
-
-@app.get("/agent")
-def agent_page():
-    return FileResponse(STATIC / "agent.html")
-
-
-@app.get("/report")
-def report_page():
-    """Print-ready auditable report. Reads the prior agent run from
-    the browser's sessionStorage; fully client-side render."""
-    return FileResponse(STATIC / "report.html")
-
-
-@app.get("/register/{asset_class}")
-def register_page(asset_class: str):
-    if asset_class not in ("schools", "nycha", "mta_entrances"):
-        return JSONResponse({"error": f"unknown asset class {asset_class!r}"}, status_code=404)
-    return FileResponse(STATIC / "register.html")
+# Legacy custom-element bundle routes (/legacy, /single, /compare, /agent,
+# /report, /register/*) were retired in v0.4.5 — the SvelteKit UI fully
+# subsumes them. Static assets at /static/* still mount in case anything
+# external embeds them, but the page-level routes are gone. Hitting them
+# now returns the framework default 404.
 
 
 @app.get("/api/register/{asset_class}")

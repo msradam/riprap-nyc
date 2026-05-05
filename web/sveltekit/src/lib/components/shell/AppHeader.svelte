@@ -26,7 +26,7 @@
 <header class="app-header no-print" data-screen-label="App header">
   <div class="app-header-inner">
     <div class="app-header-left">
-      <a href="/" class="riprap-wordmark" aria-label="Riprap home">riprap</a>
+      <a href="/app" class="riprap-wordmark" aria-label="Riprap — back to query">riprap</a>
       <span class="app-header-sep">/</span>
       <span class="app-header-context">flood-exposure briefing</span>
     </div>
