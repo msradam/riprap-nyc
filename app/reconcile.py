@@ -839,9 +839,11 @@ def build_documents(state: dict[str, Any]) -> list[dict]:
     plive = state.get("prithvi_live")
     if not out_of_nyc and plive and plive.get("ok"):
         body = [
-            "Source: Prithvi-EO 2.0 (Sen1Floods11 fine-tune) live "
-            "segmentation over a Sentinel-2 L2A scene from Microsoft "
-            "Planetary Computer.",
+            "Source: msradam/Prithvi-EO-2.0-NYC-Pluvial (Apache-2.0) — "
+            "NYC-Pluvial v2 fine-tune of Prithvi-EO 2.0 trained on AMD "
+            "Instinct MI300X via AMD Developer Cloud (test flood IoU "
+            "0.5979). Live segmentation over a Sentinel-2 L2A scene "
+            "from Microsoft Planetary Computer.",
             f"Sentinel-2 scene id: {plive.get('item_id', 'unknown')}.",
             f"Observation date: {(plive.get('item_datetime') or 'unknown')[:10]}.",
             f"Cloud cover: {plive.get('cloud_cover', 0):.3f}%.",

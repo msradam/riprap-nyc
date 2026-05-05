@@ -1,13 +1,17 @@
-"""Prithvi-EO 2.0 (Sen1Floods11 fine-tune) live water segmentation.
+"""Prithvi-EO 2.0 (NYC Pluvial v2 fine-tune) live water segmentation.
 
 A per-query specialist: pulls the most recent low-cloud Sentinel-2 L2A
 scene over the address from Microsoft Planetary Computer, runs the
-IBM-NASA flood-mapping fine-tune, and reports % water within 500 m.
+NYC-specialized fine-tune, and reports % water within 500 m.
 
 Distinct from `app/flood_layers/prithvi_water.py`, which serves the
 offline-precomputed 2021 Ida polygons. This one is *fresh observation*
-each query — different doc_id (`prithvi_live`), different epistemic
-claim, additive to the static layer.
+each query — same doc_id (`prithvi_live`), but the underlying model
+has been swapped from the Sen1Floods11 base to
+`msradam/Prithvi-EO-2.0-NYC-Pluvial` (Apache-2.0, fine-tuned on AMD
+Instinct MI300X via AMD Developer Cloud — test flood IoU 0.5979,
+6× over the base). The base model is still loadable by setting
+RIPRAP_PRITHVI_LIVE_REPO to the IBM repo as a fallback.
 
 Network calls (STAC search + COG band reads) and a 300M-param model
 forward pass make this the slowest specialist after the LLM. Gated by
@@ -15,8 +19,7 @@ RIPRAP_PRITHVI_LIVE_ENABLE so deployments without the deps installed
 silently skip it. Cloud-cover refuses out at 30%+ to honor the
 Sen1Floods11 training distribution.
 
-License: Apache-2.0 (verified — `ibm-nasa-geospatial/Prithvi-EO-2.0-
-300M-TL-Sen1Floods11`). See experiments/shared/licenses.md.
+License: Apache-2.0. See experiments/shared/licenses.md.
 """
 
 from __future__ import annotations
@@ -33,7 +36,15 @@ ENABLE = os.environ.get("RIPRAP_PRITHVI_LIVE_ENABLE", "1").lower() in ("1", "tru
 SEARCH_DAYS = int(os.environ.get("RIPRAP_PRITHVI_LIVE_SEARCH_DAYS", "120"))
 MAX_CLOUD_PCT = float(os.environ.get("RIPRAP_PRITHVI_LIVE_MAX_CLOUD", "30"))
 DEVICE = os.environ.get("RIPRAP_PRITHVI_LIVE_DEVICE", "cpu")
-REPO = "ibm-nasa-geospatial/Prithvi-EO-2.0-300M-TL-Sen1Floods11"
+
+# Default to the NYC Pluvial v2 fine-tune; override to the IBM-NASA base
+# (`ibm-nasa-geospatial/Prithvi-EO-2.0-300M-TL-Sen1Floods11`) when the v2
+# artifact is unreachable or for A/B comparisons.
+REPO = os.environ.get(
+    "RIPRAP_PRITHVI_LIVE_REPO",
+    "msradam/Prithvi-EO-2.0-NYC-Pluvial",
+)
+BASE_REPO = "ibm-nasa-geospatial/Prithvi-EO-2.0-300M-TL-Sen1Floods11"
 
 # Sen1Floods11 expects 6 bands in this exact order.
 BANDS = ["B02", "B03", "B04", "B8A", "B11", "B12"]
@@ -87,6 +98,21 @@ def warm():
 
 
 def _ensure_model():
+    """Load Prithvi-EO 2.0 once into RAM. Two artifact shapes are
+    supported, in priority order:
+
+    1) **NYC Pluvial v2** (`msradam/Prithvi-EO-2.0-NYC-Pluvial`) —
+       Lightning checkpoint (`*.ckpt`) restored via
+       `SemanticSegmentationTask.load_from_checkpoint`. Full task
+       (config + weights) lives inside the ckpt.
+    2) **Sen1Floods11 base** (`ibm-nasa-geospatial/...`) — raw `.pt`
+       weights + a separate `config.yaml`, loaded via
+       `LightningInferenceModel.from_config(config, ckpt)`. This is
+       the path the original prithvi_live.py used.
+
+    The shared inference helper (`run_model`) only ships in the IBM-NASA
+    base repo; for the v2 path we monkey-import it from the base repo
+    so a single code path drives prediction either way."""
     global _MODEL, _RUN_MODEL
     if _MODEL is not None:
         return _MODEL, _RUN_MODEL
@@ -95,12 +121,64 @@ def _ensure_model():
             return _MODEL, _RUN_MODEL
         import importlib.util
 
-        from huggingface_hub import hf_hub_download
-        from terratorch.cli_tools import LightningInferenceModel
-        config_path = hf_hub_download(REPO, "config.yaml")
-        checkpoint = hf_hub_download(REPO, "Prithvi-EO-V2-300M-TL-Sen1Floods11.pt")
-        log.info("prithvi_live: loading model")
-        m = LightningInferenceModel.from_config(config_path, checkpoint)
+        from huggingface_hub import hf_hub_download, snapshot_download
+        log.info("prithvi_live: loading model from %s", REPO)
+
+        # ---- Try the v2 / Lightning-ckpt path first -----------------
+        m = None
+        try:
+            from terratorch.tasks import SemanticSegmentationTask
+            local_dir = snapshot_download(REPO)
+            ckpt = None
+            # Lightning saves under various conventional names; probe
+            # the most likely candidates rather than trusting one path.
+            for name in ("best_val_loss.ckpt", "model.ckpt",
+                          "last.ckpt"):
+                candidate = os.path.join(local_dir, name)
+                if os.path.exists(candidate):
+                    ckpt = candidate
+                    break
+            if ckpt is None:
+                # Walk the snapshot for any *.ckpt file.
+                for root, _, files in os.walk(local_dir):
+                    for f in files:
+                        if f.endswith(".ckpt"):
+                            ckpt = os.path.join(root, f)
+                            break
+                    if ckpt:
+                        break
+            if ckpt is not None:
+                log.info("prithvi_live: loading Lightning ckpt %s", ckpt)
+                map_loc = "cuda" if (DEVICE == "cuda") else "cpu"
+                task = SemanticSegmentationTask.load_from_checkpoint(
+                    ckpt, map_location=map_loc, strict=False,
+                )
+                task.eval()
+
+                # Mimic LightningInferenceModel's surface so the rest
+                # of the file (which expects `.model` and `.datamodule`)
+                # keeps working. datamodule isn't strictly needed by
+                # run_model in current terratorch but we set it to None
+                # explicitly so a missing-attr access surfaces clearly.
+                class _LightningTaskWrapper:
+                    def __init__(self, task):
+                        self.model = task
+                        self.datamodule = None
+
+                m = _LightningTaskWrapper(task)
+        except Exception as e:
+            log.warning("prithvi_live: Lightning-ckpt load failed (%s); "
+                        "falling back to raw-weights path", e)
+
+        # ---- Fallback: raw .pt + config.yaml (Sen1Floods11 base) ----
+        if m is None:
+            from terratorch.cli_tools import LightningInferenceModel
+            base = REPO if REPO == BASE_REPO else BASE_REPO
+            config_path = hf_hub_download(base, "config.yaml")
+            checkpoint = hf_hub_download(
+                base, "Prithvi-EO-V2-300M-TL-Sen1Floods11.pt")
+            m = LightningInferenceModel.from_config(config_path, checkpoint)
+
         m.model.eval()
         if DEVICE == "cuda":
             try:
@@ -110,7 +188,8 @@ def _ensure_model():
             except Exception:
                 log.exception("prithvi_live: cuda move failed")
 
-        inference_py = hf_hub_download(REPO, "inference.py")
+        # Inference helper lives only in the IBM-NASA base repo.
+        inference_py = hf_hub_download(BASE_REPO, "inference.py")
         spec = importlib.util.spec_from_file_location("_prithvi_inference",
                                                        inference_py)
         mod = importlib.util.module_from_spec(spec)
