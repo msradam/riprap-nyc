@@ -1237,6 +1237,32 @@ function ask(q) {
     if (step.step === "geocode" || step.step === "nta_resolve") setMapLoading(null);
   });
   es.addEventListener("step",  (e) => { pushTraceStep(JSON.parse(e.data)); });
+
+  // Stones envelope — `stone_start` and `stone_done` events bracket
+  // the contiguous step events of each Stone group. The current
+  // `<r-trace>` Svelte build doesn't yet render parent/child rows;
+  // we accumulate Stone markers in TRACE_BUF for the auditable report,
+  // and surface a lightweight badge on the trace component so users
+  // can see Cornerstone / Keystone / Touchstone / Lodestone / Capstone
+  // lighting up sequentially. The full collapsible parent-row UI
+  // lands once the trace component is rebuilt against this event
+  // vocabulary.
+  es.addEventListener("stone_start", (e) => {
+    const stone = JSON.parse(e.data);
+    TRACE_BUF.push({ _stone: "start", ...stone });
+    const trace = $("#trace");
+    if (trace && typeof trace.markStoneStart === "function") {
+      trace.markStoneStart(stone);
+    }
+  });
+  es.addEventListener("stone_done", (e) => {
+    const stone = JSON.parse(e.data);
+    TRACE_BUF.push({ _stone: "done", ...stone });
+    const trace = $("#trace");
+    if (trace && typeof trace.markStoneDone === "function") {
+      trace.markStoneDone(stone);
+    }
+  });
   let currentAttempt = 0;
   es.addEventListener("token", (e) => {
     const d = JSON.parse(e.data);

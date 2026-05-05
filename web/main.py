@@ -18,6 +18,63 @@ from fastapi.staticfiles import StaticFiles  # noqa: E402
 from app.context import floodnet  # noqa: E402
 from app.flood_layers import dep_stormwater, sandy_inundation  # noqa: E402
 from app.fsm import iter_steps  # noqa: E402
+from app.stones import DATA_STONES  # noqa: E402
+from app.stones import capstone as _capstone_stone  # noqa: E402
+
+# Map FSM step name -> Stone for the SSE stone_start / stone_done envelope.
+# Steps not in this map (geocode, rag_granite_embedding, gliner_extract,
+# nta_resolve and friends) don't open a Stone boundary — they're
+# orientation / policy infrastructure shared across Stones.
+_STEP_TO_STONE: dict[str, str] = {
+    # Cornerstone
+    "sandy_inundation":           "Cornerstone",
+    "dep_stormwater":             "Cornerstone",
+    "ida_hwm_2021":               "Cornerstone",
+    "prithvi_eo_v2":              "Cornerstone",
+    "microtopo_lidar":            "Cornerstone",
+    # Keystone (the chip fetch is infrastructure for the LoRA pair, but
+    # it's logically Keystone-adjacent and we surface it under that
+    # banner so the trace doesn't show a phantom orphan step).
+    "mta_entrance_exposure":      "Keystone",
+    "nycha_development_exposure": "Keystone",
+    "doe_school_exposure":        "Keystone",
+    "doh_hospital_exposure":      "Keystone",
+    "terramind_synthesis":        "Keystone",
+    "eo_chip_fetch":              "Keystone",
+    "terramind_buildings":        "Keystone",
+    # Touchstone
+    "floodnet":                   "Touchstone",
+    "nyc311":                     "Touchstone",
+    "nws_obs":                    "Touchstone",
+    "noaa_tides":                 "Touchstone",
+    "prithvi_eo_live":            "Touchstone",
+    "terramind_lulc":             "Touchstone",
+    # Lodestone
+    "nws_alerts":                 "Lodestone",
+    "ttm_forecast":               "Lodestone",
+    "ttm_311_forecast":           "Lodestone",
+    "floodnet_forecast":          "Lodestone",
+    "ttm_battery_surge":          "Lodestone",
+    # Capstone — the reconciler step's name varies between strict and
+    # legacy paths; both map to Capstone.
+    "reconcile_granite41":        "Capstone",
+    "mellea_reconcile_address":   "Capstone",
+    "reconcile_neighborhood":     "Capstone",
+    "reconcile_development":      "Capstone",
+    "reconcile_live_now":         "Capstone",
+}
+
+# Pretty-printed Stone metadata the frontend renders as parent-row labels.
+_STONE_META: dict[str, dict] = {
+    s.NAME: {"name": s.NAME, "tagline": s.TAGLINE,
+             "description": s.DESCRIPTION}
+    for s in DATA_STONES
+}
+_STONE_META[_capstone_stone.NAME] = {
+    "name": _capstone_stone.NAME,
+    "tagline": _capstone_stone.TAGLINE,
+    "description": _capstone_stone.DESCRIPTION,
+}
 
 ROOT = Path(__file__).resolve().parent
 STATIC = ROOT / "static"
@@ -488,6 +545,27 @@ async def api_agent_stream(q: str):
         loop = asyncio.get_event_loop()
         loop.run_in_executor(None, runner)
         yield f"event: hello\ndata: {json.dumps({'query': q})}\n\n"
+
+        # Stone-boundary envelope: track current Stone so we can wrap
+        # contiguous step events in stone_start / stone_done. step
+        # events whose name maps to None (geocode, rag, gliner) flow
+        # through without opening a Stone — those are orientation /
+        # ancillary, not part of any data-Stone group.
+        current_stone: str | None = None
+        stone_step_count: dict[str, int] = {}
+
+        def _open(stone: str) -> str:
+            stone_step_count[stone] = 0
+            payload = {**_STONE_META.get(stone, {"name": stone})}
+            return f"event: stone_start\ndata: {json.dumps(payload)}\n\n"
+
+        def _close(stone: str) -> str:
+            payload = {
+                **_STONE_META.get(stone, {"name": stone}),
+                "n_steps": stone_step_count.get(stone, 0),
+            }
+            return f"event: stone_done\ndata: {json.dumps(payload)}\n\n"
+
         while True:
             try:
                 ev = await asyncio.to_thread(out_q.get, True, 1.0)
@@ -496,7 +574,45 @@ async def api_agent_stream(q: str):
             kind = ev.get("kind")
             if kind == "_done":
                 break
+
+            # First reconcile token implies the data-Stones are done
+            # and the Capstone has begun, even if the FSM step event
+            # for reconcile hasn't fired yet (it fires AFTER the
+            # generation finishes). Open Capstone here so the UI
+            # shows it lighting up while tokens stream.
+            if kind == "token" and current_stone != "Capstone":
+                if current_stone is not None:
+                    yield _close(current_stone)
+                current_stone = "Capstone"
+                yield _open(current_stone)
+
+            if kind == "step":
+                step_name = ev.get("step") or ""
+                stone = _STEP_TO_STONE.get(step_name)
+                if stone is not None:
+                    if stone != current_stone:
+                        if current_stone is not None:
+                            yield _close(current_stone)
+                        current_stone = stone
+                        yield _open(current_stone)
+                    stone_step_count[stone] = (
+                        stone_step_count.get(stone, 0) + 1)
+
+            # `final` arrives after the Capstone has produced its
+            # paragraph. Close the Capstone before forwarding final
+            # so the trace cleanly reads: ... stone_done(Capstone),
+            # final, done.
+            if kind == "final" and current_stone is not None:
+                yield _close(current_stone)
+                current_stone = None
+
             yield f"event: {kind}\ndata: {json.dumps(ev, default=str)}\n\n"
+
+        # Pipeline ended without a final (error / abort) — close any
+        # still-open Stone so the client doesn't render an unbounded
+        # parent row.
+        if current_stone is not None:
+            yield _close(current_stone)
         yield "event: done\ndata: {}\n\n"
 
     return StreamingResponse(event_stream(), media_type="text/event-stream",
