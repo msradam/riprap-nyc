@@ -1,12 +1,20 @@
 # Riprap — Hugging Face Spaces (Docker SDK) deployment.
 #
+# CPU-tuned variant for HF Spaces cpu-basic (free tier). The
+# nvidia-t4-small / MI300X variants live alongside as build args
+# to switch when the Space is upgraded.
+#
 # Bakes:
 #   - Python 3.12 + pip deps (~2.5 GB once torch is in)
-#   - Ollama + granite4.1:3b model (~2 GB)
+#   - Ollama + granite4.1:3b model (~2 GB) — 3b only on cpu-basic.
+#     RIPRAP_OLLAMA_8B_TAG=granite4.1:3b aliases the 8b reconciler
+#     calls to 3b so the polished UI runs end-to-end without 8b's
+#     ~5 GB image cost. Quality drops vs 8b; speed lever is the
+#     vLLM-on-AMD-MI300X demo path (RIPRAP_LLM_PRIMARY=vllm).
 #   - All pre-computed fixtures in data/ + corpus/
 #
 # Runtime:
-#   - Ollama daemon serves Granite 4.1
+#   - Ollama daemon serves Granite 4.1:3b
 #   - Granite Embedding 278M auto-downloads via sentence-transformers
 #     on first FastAPI startup (~280 MB) — cached to /home/user/.cache
 #   - uvicorn FastAPI on port 7860 (HF default)
@@ -29,8 +37,11 @@ ENV HOME=/home/user \
     PYTHONUNBUFFERED=1 \
     HF_HOME=/home/user/.cache/huggingface \
     OLLAMA_HOST=127.0.0.1:11434 \
-    OLLAMA_NUM_PARALLEL=2 \
-    OLLAMA_KEEP_ALIVE=24h
+    OLLAMA_NUM_PARALLEL=1 \
+    OLLAMA_KEEP_ALIVE=24h \
+    RIPRAP_LLM_PRIMARY=ollama \
+    RIPRAP_OLLAMA_8B_TAG=granite4.1:3b \
+    RIPRAP_MELLEA_MAX_ATTEMPTS=2
 
 # Install Ollama (single-binary install)
 RUN curl -fsSL https://ollama.com/install.sh | sh
