@@ -682,6 +682,131 @@ def step_microtopo(state: State) -> State:
 
 
 
+@action(reads=["lat", "lon"], writes=["eo_chip", "trace"])
+def step_eo_chip(state: State) -> State:
+    """Fetch one S2L2A + S1RTC + DEM chip per query and stash it in
+    state for the TerraMind-NYC specialists.
+
+    Centralised so step_terramind_lulc and step_terramind_buildings
+    don't each re-fetch ~150 MB of imagery. Best-effort by design —
+    a deps-missing or no-scene outcome writes `{ok: False, skipped: ...}`
+    and the downstream TerraMind specialists silently no-op."""
+    rec, trace = _step(state, "eo_chip_fetch")
+    try:
+        if state.get("lat") is None:
+            rec["ok"] = False; rec["err"] = "no coords"
+            return state.update(eo_chip=None, trace=trace)
+        if not _in_nyc(state["lat"], state["lon"]):
+            rec["ok"] = False; rec["err"] = "out of NYC scope"
+            return state.update(eo_chip=None, trace=trace)
+        from app.context import eo_chip_cache
+        chip = eo_chip_cache.fetch(state["lat"], state["lon"])
+        rec["ok"] = bool(chip.get("ok"))
+        if not rec["ok"]:
+            rec["err"] = chip.get("skipped") or chip.get("err") or "unavailable"
+        else:
+            rec["result"] = {
+                "scene_id": (chip.get("s2_meta") or {}).get("scene_id"),
+                "scene_date": ((chip.get("s2_meta") or {}).get("datetime") or "")[:10],
+                "cloud_cover": (chip.get("s2_meta") or {}).get("cloud_cover"),
+                "has_s1": chip.get("s1") is not None,
+                "has_dem": chip.get("dem") is not None,
+            }
+        return state.update(eo_chip=chip, trace=trace)
+    except Exception as e:
+        rec["ok"] = False; rec["err"] = str(e)
+        log.exception("eo_chip failed")
+        return state.update(eo_chip=None, trace=trace)
+    finally:
+        rec["elapsed_s"] = round(time.time() - rec["started_at"], 2)
+
+
+@action(reads=["lat", "lon", "eo_chip"], writes=["terramind_lulc", "trace"])
+def step_terramind_lulc(state: State) -> State:
+    """5-class macro NYC LULC via msradam/TerraMind-NYC-Adapters.
+
+    Consumes the shared chip from step_eo_chip; if that didn't fire
+    cleanly this no-ops. Adapter loading (~1.6 GB base + ~325 MB LoRA)
+    is lazy on first call and cached across queries."""
+    rec, trace = _step(state, "terramind_lulc")
+    try:
+        if state.get("lat") is None:
+            rec["ok"] = False; rec["err"] = "no coords"
+            return state.update(terramind_lulc=None, trace=trace)
+        if not _in_nyc(state["lat"], state["lon"]):
+            rec["ok"] = False; rec["err"] = "out of NYC scope"
+            return state.update(terramind_lulc=None, trace=trace)
+        chip = state.get("eo_chip") or {}
+        if not chip.get("ok"):
+            rec["ok"] = False
+            rec["err"] = chip.get("skipped") or chip.get("err") or "no chip"
+            return state.update(terramind_lulc=None, trace=trace)
+        from app.context import terramind_nyc
+        tensors = chip.get("tensors") or {}
+        out = terramind_nyc.lulc(
+            tensors.get("S2L2A"),
+            s1rtc=tensors.get("S1RTC"),
+            dem=tensors.get("DEM"),
+        )
+        rec["ok"] = bool(out.get("ok"))
+        if not rec["ok"]:
+            rec["err"] = out.get("skipped") or out.get("err") or "unavailable"
+        else:
+            rec["result"] = {
+                "dominant_class": out.get("dominant_class"),
+                "dominant_pct": out.get("dominant_pct"),
+                "n_classes_observed": len(out.get("class_fractions") or {}),
+            }
+        return state.update(terramind_lulc=out, trace=trace)
+    except Exception as e:
+        rec["ok"] = False; rec["err"] = str(e)
+        log.exception("terramind_lulc failed")
+        return state.update(terramind_lulc=None, trace=trace)
+    finally:
+        rec["elapsed_s"] = round(time.time() - rec["started_at"], 2)
+
+
+@action(reads=["lat", "lon", "eo_chip"],
+        writes=["terramind_buildings", "trace"])
+def step_terramind_buildings(state: State) -> State:
+    """Binary NYC building-footprint mask via msradam/TerraMind-NYC-Adapters."""
+    rec, trace = _step(state, "terramind_buildings")
+    try:
+        if state.get("lat") is None:
+            rec["ok"] = False; rec["err"] = "no coords"
+            return state.update(terramind_buildings=None, trace=trace)
+        if not _in_nyc(state["lat"], state["lon"]):
+            rec["ok"] = False; rec["err"] = "out of NYC scope"
+            return state.update(terramind_buildings=None, trace=trace)
+        chip = state.get("eo_chip") or {}
+        if not chip.get("ok"):
+            rec["ok"] = False
+            rec["err"] = chip.get("skipped") or chip.get("err") or "no chip"
+            return state.update(terramind_buildings=None, trace=trace)
+        from app.context import terramind_nyc
+        tensors = chip.get("tensors") or {}
+        out = terramind_nyc.buildings(
+            tensors.get("S2L2A"),
+            s1rtc=tensors.get("S1RTC"),
+            dem=tensors.get("DEM"),
+        )
+        rec["ok"] = bool(out.get("ok"))
+        if not rec["ok"]:
+            rec["err"] = out.get("skipped") or out.get("err") or "unavailable"
+        else:
+            rec["result"] = {
+                "pct_buildings": out.get("pct_buildings"),
+                "n_building_components": out.get("n_building_components"),
+            }
+        return state.update(terramind_buildings=out, trace=trace)
+    except Exception as e:
+        rec["ok"] = False; rec["err"] = str(e)
+        log.exception("terramind_buildings failed")
+        return state.update(terramind_buildings=None, trace=trace)
+    finally:
+        rec["elapsed_s"] = round(time.time() - rec["started_at"], 2)
+
+
 @action(reads=["geocode", "sandy", "dep", "floodnet", "nyc311", "microtopo",
                "ida_hwm", "prithvi_water", "noaa_tides", "nws_alerts", "nws_obs",
                "ttm_forecast"],
@@ -766,6 +891,7 @@ def _label_counts(gliner_out: dict[str, dict]) -> dict[str, int]:
 
 @action(reads=["geocode", "sandy", "dep", "floodnet", "nyc311", "microtopo",
                "ida_hwm", "prithvi_water", "prithvi_live", "terramind",
+               "terramind_lulc", "terramind_buildings",
                "noaa_tides", "nws_alerts", "nws_obs", "ttm_forecast",
                "ttm_311_forecast", "floodnet_forecast", "mta_entrances",
                "nycha_developments", "doe_schools", "doh_hospitals",
@@ -795,6 +921,8 @@ def step_reconcile(state: State) -> State:
             "gliner": state.get("gliner"),
             "prithvi_live": state.get("prithvi_live"),
             "terramind": state.get("terramind"),
+            "terramind_lulc": state.get("terramind_lulc"),
+            "terramind_buildings": state.get("terramind_buildings"),
             "mta_entrances": state.get("mta_entrances"),
             "nycha_developments": state.get("nycha_developments"),
             "doe_schools": state.get("doe_schools"),
@@ -910,6 +1038,13 @@ def build_app(query: str):
         actions["doh_hospitals"] = step_doh_hospitals
         actions["prithvi_live"] = step_prithvi_live
         actions["terramind"] = step_terramind
+        # New TerraMind-NYC LoRA family — one chip fetch feeds two
+        # specialists. Keep eo_chip directly before the two consumers
+        # so the chip stays warm in memory and isn't garbage-collected
+        # by anything in between.
+        actions["eo_chip"] = step_eo_chip
+        actions["terramind_lulc"] = step_terramind_lulc
+        actions["terramind_buildings"] = step_terramind_buildings
     actions["rag"] = step_rag
     actions["gliner"] = step_gliner
     actions["reconcile"] = step_reconcile
@@ -947,6 +1082,9 @@ def run(query: str) -> dict[str, Any]:
         "ida_hwm": final_state.get("ida_hwm"),
         "prithvi_water": final_state.get("prithvi_water"),
         "terramind": final_state.get("terramind"),
+        "terramind_lulc": final_state.get("terramind_lulc"),
+        "terramind_buildings": final_state.get("terramind_buildings"),
+        "eo_chip": final_state.get("eo_chip"),
         "noaa_tides": final_state.get("noaa_tides"),
         "nws_alerts": final_state.get("nws_alerts"),
         "nws_obs": final_state.get("nws_obs"),
@@ -1068,6 +1206,8 @@ def iter_steps(query: str):
         "prithvi_water": state.get("prithvi_water"),
         "prithvi_live": state.get("prithvi_live"),
         "terramind": state.get("terramind"),
+        "terramind_lulc": state.get("terramind_lulc"),
+        "terramind_buildings": state.get("terramind_buildings"),
         "noaa_tides": state.get("noaa_tides"),
         "nws_alerts": state.get("nws_alerts"),
         "nws_obs": state.get("nws_obs"),

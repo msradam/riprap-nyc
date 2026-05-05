@@ -271,6 +271,8 @@ def trim_docs_to_plan(doc_msgs: list[dict],
         "ttm_311_forecast":   ("ttm_311_forecast",),
         "floodnet_forecast":  ("floodnet_forecast",),
         "terramind":          ("terramind", "syn_"),
+        "terramind_lulc":     ("tm_lulc",),
+        "terramind_buildings": ("tm_buildings",),
         "rag":                ("rag_",),
         "rag_mta":            ("rag_",),
         "nta_resolve":        ("nta_resolve", "nta_"),
@@ -709,6 +711,32 @@ def build_documents(state: dict[str, Any]) -> list[dict]:
         ])
         docs.append(_doc_message("terramind_synthetic", body))
 
+    # TerraMind-NYC Buildings adapter (msradam/TerraMind-NYC-Adapters,
+    # Apache-2.0, fine-tuned on NYC building footprints on AMD MI300X).
+    # Distinct from the synthetic-prior block above — this is a real
+    # segmentation against the per-query Sentinel-2/1/DEM chip and
+    # reports an empirical building-footprint area fraction.
+    tmb = state.get("terramind_buildings")
+    if not out_of_nyc and tmb and tmb.get("ok"):
+        body = [
+            "Source: msradam/TerraMind-NYC-Adapters (Apache-2.0) — NYC "
+            "Buildings LoRA on TerraMind 1.0 base, fine-tuned on AMD "
+            "Instinct MI300X. Test mIoU 0.5511 on held-out NYC chips.",
+            f"Adapter: {tmb.get('adapter')}.",
+            f"Predicted building-footprint coverage in chip: "
+            f"{tmb.get('pct_buildings')}%.",
+        ]
+        if tmb.get("n_building_components") is not None:
+            body.append(
+                f"Distinct building connected components: "
+                f"{tmb.get('n_building_components')}."
+            )
+        body.append(
+            "Class labels: " + ", ".join(tmb.get("class_labels") or [])
+            + "."
+        )
+        docs.append(_doc_message("tm_buildings", body))
+
     # ---- Touchstone — The Live Observer --------------------------------
     # Live sensors and per-query EO that change minute to minute:
     # FloodNet ultrasonic depth, NYC 311 flood complaints, NWS hourly
@@ -823,6 +851,24 @@ def build_documents(state: dict[str, Any]) -> list[dict]:
             f"{plive.get('pct_water_full', 0):.2f}.",
         ]
         docs.append(_doc_message("prithvi_live", body))
+
+    # TerraMind-NYC LULC adapter — current 5-class macro land-cover from
+    # the per-query Sentinel-2/1/DEM chip. Empirical observation, not the
+    # synthetic-prior emitted by the legacy `terramind_synthetic` doc.
+    tml = state.get("terramind_lulc")
+    if not out_of_nyc and tml and tml.get("ok"):
+        body = [
+            "Source: msradam/TerraMind-NYC-Adapters (Apache-2.0) — NYC "
+            "LULC LoRA on TerraMind 1.0 base, fine-tuned on AMD "
+            "Instinct MI300X. Test mIoU 0.5866 on held-out NYC chips.",
+            f"Adapter: {tml.get('adapter')}.",
+            f"Dominant land-cover class in chip: "
+            f"{tml.get('dominant_class')} at {tml.get('dominant_pct')}%.",
+            "Per-class fractions:",
+        ]
+        for label, pct in (tml.get("class_fractions") or {}).items():
+            body.append(f"  - {label}: {pct}%")
+        docs.append(_doc_message("tm_lulc", body))
 
     # ---- Lodestone — The Projector -------------------------------------
     # Forward-looking signals: NWS public flood alerts, Granite TTM r2
