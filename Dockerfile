@@ -13,9 +13,10 @@
 
 FROM python:3.12-slim AS base
 
-# OS deps for geo libs + curl for ollama installer
+# OS deps for geo libs + curl/zstd for Ollama installer (which now ships
+# its tarball compressed with zstd and refuses to install if it's missing).
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        curl ca-certificates \
+        curl ca-certificates zstd procps \
         gdal-bin libgdal-dev libgeos-dev libproj-dev \
     && rm -rf /var/lib/apt/lists/*
 
