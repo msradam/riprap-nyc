@@ -6,8 +6,11 @@
 # $HOME (which we own) instead.
 set -e
 
+# Stream Ollama's stdout+stderr to BOTH stdout (so it shows up in HF
+# Spaces runtime logs — needed to see GPU discovery output from
+# OLLAMA_DEBUG=1) AND a file (for the readiness fail-fast tail below).
 LOG_FILE="$HOME/ollama.log"
-ollama serve > "$LOG_FILE" 2>&1 &
+ollama serve 2>&1 | tee "$LOG_FILE" &
 OLLAMA_PID=$!
 
 # Wait for Ollama to be reachable (up to 60 s — first start can be slow
@@ -38,5 +41,17 @@ if ! ollama list | grep -q "granite4.1:3b"; then
 fi
 
 ollama list
+
+# Log GPU visibility + Ollama lib layout so we can confirm CUDA dispatch
+# from the runtime logs (paired with OLLAMA_DEBUG=1 in the daemon).
+if command -v nvidia-smi > /dev/null 2>&1; then
+  echo "[entrypoint] nvidia-smi present:"
+  nvidia-smi -L || true
+else
+  echo "[entrypoint] nvidia-smi NOT present — Ollama will run on CPU"
+fi
+echo "[entrypoint] ollama lib dirs:"
+ls -d /usr/lib/ollama 2>/dev/null && ls /usr/lib/ollama 2>/dev/null | head -20 || echo "  /usr/lib/ollama missing"
+ls -d /usr/local/lib/ollama 2>/dev/null && ls /usr/local/lib/ollama 2>/dev/null | head -20 || echo "  /usr/local/lib/ollama missing"
 
 exec uvicorn web.main:app --host 0.0.0.0 --port 7860 --log-level info
