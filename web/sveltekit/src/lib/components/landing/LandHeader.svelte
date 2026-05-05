@@ -9,7 +9,6 @@
   <span class="land-header-sep">/</span>
   <span class="land-header-context">Flood Exposure Briefing · NYC</span>
   <nav class="land-header-nav">
-    <a href="/app">Open the app</a>
     <a href="#methodology">Methodology</a>
     <a href="#sources">Sources</a>
   </nav>
@@ -50,8 +49,4 @@
     border-bottom: 1px dotted transparent;
   }
   .land-header-nav a:hover { border-bottom-color: var(--ink-secondary); }
-  .land-header-nav a:first-child {
-    color: var(--ink);
-    border-bottom: 1px solid var(--ink);
-  }
 </style>

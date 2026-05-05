@@ -322,18 +322,6 @@ def index():
     )
 
 
-@app.get("/app")
-def cold_start_page():
-    """SvelteKit cold-start (the analyst's "ready to query" page).
-    Distinct from the marketing landing at `/`. Per V0.4.5 README
-    §"Landing page" the two surfaces are separate.
-    """
-    sk = SVELTEKIT_BUILD / "app.html"
-    if sk.exists():
-        return FileResponse(sk)
-    return JSONResponse({"error": "sveltekit build not present"}, status_code=503)
-
-
 @app.get("/q/sample")
 def q_sample_page():
     """The prerendered Red Hook demo briefing (no SSE)."""
