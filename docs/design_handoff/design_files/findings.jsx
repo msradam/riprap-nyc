@@ -13,8 +13,8 @@ const CARDS_BY_QUERY = {
   redhook: {
     cornerstone: ["fc-fema", "fc-hwm", "fc-stormwater"],
     keystone:    ["fc-register-rh"],
-    touchstone:  ["fc-floodnet", "fc-311", "fc-prithvi", "fc-nws"],
-    lodestone:   ["fc-ttm-surge", "fc-npcc4"],
+    touchstone:  ["fc-floodnet", "fc-311", "fc-nws", "fc-terramind-lulc", "fc-prithvi-pluvial"],
+    lodestone:   ["fc-ttm-surge", "fc-ttm-surge-ft", "fc-npcc4"],
     capstone:    ["fc-mellea-meta"],
   },
   bronx: {
@@ -85,14 +85,13 @@ const CARDS = {
     source: "NYC OpenData", agency: "NYC OpenData · multi-agency join",
     title: "Nearby exposed assets",
     registers: [
-      { reg: "MTA",   tier: "empirical", label: "Smith–9 St subway entrance",   detail: "0.34 mi · F · G",       sourceId: "MTA-ENT-N048",  vintage: "2025-11", note: null },
-      { reg: "NYCHA", tier: "empirical", label: "Red Hook East Houses",         detail: "0.41 mi · 2,878 res.", sourceId: "NYCHA-RHE",     vintage: "2025-Q3", note: null },
-      { reg: "NYCHA", tier: "empirical", label: "Red Hook West Houses",         detail: "0.52 mi · 3,142 res.", sourceId: "NYCHA-RHW",     vintage: "2025-Q3", note: null },
-      { reg: "DOE",   tier: "empirical", label: "PS 27 Agnes Y. Humphrey",      detail: "0.29 mi · 271 K-5",    sourceId: "DOE-K027",      vintage: "2024-25", note: null },
-      { reg: "DOH",   tier: "empirical", label: null,                            detail: null,                   sourceId: null,             vintage: null,       note: "no acute-care hospital within 1.0 mi (silent)" },
-      { reg: "PLUTO", tier: "empirical", label: "Lot 36047 / 521 / 7",          detail: "BIN 3018472 · MX-1",   sourceId: "PLUTO-2024v2",   vintage: "2024-12", note: null },
+      { reg: "MTA",   tier: "empirical", label: null, detail: null, sourceId: null, vintage: null, note: "no entrances within radius" },
+      { reg: "NYCHA", tier: "empirical", label: null, detail: null, sourceId: null, vintage: null, note: "no NYCHA developments within 1.0 mi" },
+      { reg: "DOE",   tier: "empirical", label: null, detail: null, sourceId: null, vintage: null, note: "no DOE schools within 1.0 mi" },
+      { reg: "DOH",   tier: "empirical", label: null, detail: null, sourceId: null, vintage: null, note: "no acute-care hospitals within 1.0 mi" },
+      { reg: "PLUTO", tier: "empirical", label: null, detail: null, sourceId: null, vintage: null, note: "PLUTO join skipped: queried address not in NYC PLUTO dataset" },
     ],
-    sub: "5 of 6 registers fired · 1 silent · joined within 1.0 mi",
+    sub: "5 specialists · 5 silent_by_design · 0 cards landed (full inventory shown)",
     docId: "RIPRAP-EXP-RH80", vintage: "2026-05", citeId: "c-reg-rh",
     mapKey: "registers",
   },
@@ -143,16 +142,33 @@ const CARDS = {
     docId: "NYC311-FLD-CB11", vintage: "2025-12", citeId: "cx7",
     mapKey: "complaints",
   },
-  "fc-prithvi": {
+  "fc-prithvi-pluvial": {
     stone: "touchstone", tier: "modeled", variant: "raster-pred",
-    source: "Prithvi-NYC", agency: "Prithvi-NYC-Pluvial v2 · IBM/NASA × Riprap",
-    title: "Pluvial flood prediction, current Sentinel-2 chip",
+    source: "Prithvi-NYC-Pluvial", agency: "NASA-IBM Prithvi v2 · NYC fine-tune",
+    title: "Pluvial flood prediction · Prithvi-NYC-Pluvial",
     rasterKind: "prithvi",
     headline: "0.3% flooded", subhead: "no flooding apparent · scene 2026-05-02",
     sub: "Model interpretation of imagery, not real-time observation. Confidence-mean 0.84 across non-flooded pixels.",
-    docId: "PRITHVI-NYC-PLUV-V2-20260502", vintage: "2026-05-02",
+    docId: "PRITHVI-NYC-PLUV-V2-20260502", vintage: "2026-05-02 · Sentinel-2",
     illustrative: true, citeId: "c-prithvi",
-    mapKey: "prithvi",
+    mapKey: "prithvi-pluvial",
+  },
+  "fc-terramind-lulc": {
+    stone: "touchstone", tier: "synthetic", variant: "lulc",
+    source: "TerraMind v1.2", agency: "IBM TerraMind v1.2 · Sentinel-2 inputs",
+    title: "Land use / land cover · TerraMind v1.2",
+    rasterKind: "lulc",
+    classMix: [
+      { k: "urban",      pct: 62, color: "#C66" },
+      { k: "water",      pct: 18, color: "#5B7FB4" },
+      { k: "vegetation", pct: 12, color: "#5B8A4A" },
+      { k: "barren",     pct:  6, color: "#A89A78" },
+      { k: "wetland",    pct:  2, color: "#D9C75A" },
+    ],
+    sub: "Synthetic prior. LULC palette is a layer convention, not a tier signal.",
+    docId: "TERRAMIND-LULC-20240918", vintage: "Sentinel-2 · 2024-09-18",
+    citeId: "c-tm-lulc",
+    mapKey: "terramind-lulc",
   },
   "fc-nws": {
     stone: "touchstone", tier: "empirical", variant: "scalars",
@@ -171,15 +187,31 @@ const CARDS = {
   /* ── Lodestone ── */
   "fc-ttm-surge": {
     stone: "lodestone", tier: "modeled", variant: "timeseries",
-    source: "Granite TTM r2", agency: "IBM Granite-TimeSeries · Riprap fine-tune",
-    title: "Storm surge nowcast at The Battery, 96-hour horizon",
+    source: "Granite TTM r2 (zero-shot)", agency: "IBM Granite-TimeSeries · regional",
+    title: "Storm surge nowcast at The Battery — 9.6 h horizon (regional)",
     timeseries: { hours: 96, peak: { x: 38, y: 47 }, peakLabel: "+47 cm @ +38h" },
-    headline: "+47 cm", subhead: "peak surge residual · Wed 04:00 ET",
-    sub: "Nowcast applies city-wide via NOAA station 8518750. Not localized to query address. Residual above harmonic tide.",
-    docId: "ttm_battery_surge_v2", vintage: "2026-05-05 12:00 ET",
+    headline: "+47 cm", subhead: "peak surge residual · 9.6h horizon · 6-min cadence",
+    sub: "Regional disclosure. Nowcast applies city-wide via NOAA station 8518750. Distinct from the fine-tuned Battery surge nowcast.",
+    docId: "ttm_battery_surge_zeroshot", vintage: "2026-05-05 12:00 ET",
     spatialNote: "regional · The Battery, not point-of-query",
     citeId: "c-ttm",
-    mapKey: null,  /* TTM does not render on map; lives only as Lodestone card */
+    mapKey: null,
+  },
+  "fc-ttm-surge-ft": {
+    stone: "lodestone", tier: "modeled", variant: "timeseries-ft",
+    source: "msradam/Granite-TTM-r2-Battery-Surge", agency: "Granite TTM r2 · NYC-specialized fine-tune",
+    title: "Storm surge nowcast at The Battery — 96 h horizon (NYC-specialized fine-tune)",
+    timeseries: { hours: 96, peak: { x: 38, y: 53 }, peakLabel: "+53 cm @ +38h" },
+    headline: "+53 cm", subhead: "peak surge · 96h horizon · hourly cadence",
+    sub: "Fine-tuned on NYC tide-gauge history. Trained on AMD MI300X.",
+    docId: "ttm_battery_surge_finetune", vintage: "2026-05-05 12:00 ET",
+    spatialNote: "regional · The Battery, not point-of-query",
+    hfModelCard: "huggingface.co/msradam/Granite-TTM-r2-Battery-Surge",
+    rmse: "0.157 m",
+    skillVsPersistence: "−35% vs persistence",
+    hardwareBadge: "MI300X",
+    citeId: "c-ttm-ft",
+    mapKey: null,
   },
   "fc-npcc4": {
     stone: "lodestone", tier: "modeled", variant: "forecast",
@@ -202,10 +234,10 @@ const CARDS = {
     source: "Mellea", agency: "Capstone synthesis · grounding check",
     title: "Briefing reconciliation",
     metaRows: [
-      { k: "Mellea reroll",     v: "1 attempt" },
-      { k: "Grounding checks",  v: "4 / 4 passed" },
-      { k: "Citations resolved",v: "11 / 11" },
-      { k: "RAG → GLiNER",      v: "9 entities · 0 unresolved" },
+      { k: "Mellea reroll",      v: "1 reroll" },
+      { k: "Grounding checks",   v: "4 / 4 passed" },
+      { k: "Citations resolved", v: "4" },
+      { k: "Wall-clock",         v: "24.0 s" },
     ],
     sub: "Capstone produces prose, not cards. This meta-card summarizes the reconciler chain that wrote the four-section briefing above.",
     docId: "RIPRAP-CAP-RH80", vintage: "2026-05-05 14:22 ET", citeId: null,
@@ -679,10 +711,11 @@ const flatten = (members) => members.flatMap((m) => (m.children ? [m, ...flatten
 
 const StoneTally44 = ({ cardCount, members }) => {
   const flat = flatten(members);
-  const fired = flat.filter((m) => m.status === "ok").length;
-  const silent = flat.filter((m) => m.status === "silent").length;
-  const warn = flat.filter((m) => m.status === "warn").length;
-  const error = flat.filter((m) => m.status === "error").length;
+  const fired = flat.filter((m) => m.status === "fired" || m.status === "warned").length;
+  const silent = flat.filter((m) => m.status === "silent_by_design").length;
+  const warn = flat.filter((m) => m.status === "warned").length;
+  const error = flat.filter((m) => m.status === "errored").length;
+  const notInvoked = flat.filter((m) => m.status === "not_invoked").length;
   const ms = members.reduce((acc, m) => Math.max(acc, m.ms || 0), 0);
   const fmtMs = (x) => (x === 0 ? "—" : x < 1000 ? x + "ms" : (x / 1000).toFixed(1) + "s");
   return (
@@ -692,7 +725,8 @@ const StoneTally44 = ({ cardCount, members }) => {
       <span className="f-tally-fired"><span className="f-tally-strong">{fired}</span> fired</span>
       {silent > 0 && <><span className="f-tally-sep">·</span><span className="f-tally-silent"><span className="f-tally-strong">{silent}</span> silent</span></>}
       {warn > 0 && <><span className="f-tally-sep">·</span><span className="f-tally-warn"><span className="f-tally-strong">{warn}</span> warn</span></>}
-      {error > 0 && <><span className="f-tally-sep">·</span><span className="f-tally-err"><span className="f-tally-strong">{error}</span> error</span></>}
+      {error > 0 && <><span className="f-tally-sep">·</span><span className="f-tally-err"><span className="f-tally-strong">{error}</span> errored</span></>}
+      {notInvoked > 0 && <><span className="f-tally-sep">·</span><span className="f-tally-notinvoked"><span className="f-tally-strong">{notInvoked}</span> not invoked</span></>}
       <span className="f-tally-sep">·</span>
       <span className="f-tally-ms"><span className="f-tally-strong">{fmtMs(ms)}</span></span>
     </span>
@@ -704,11 +738,12 @@ const StoneRegion = ({ stone, cardIds, density, provenanceMode, onCite, onHover,
   const cards = cardIds.map((id) => CARDS[id]).filter(Boolean);
   const traceCount = flatten(stone.members).length;
   const flat = flatten(stone.members);
-  const hasAnomaly = flat.some((m) => m.status === "warn" || m.status === "error" || m.status === "silent");
+  const hasError = flat.some((m) => m.status === "errored");
+  const hasWarn = flat.some((m) => m.status === "warned");
   const defaultOpen =
     provenanceMode === "all-expanded" ? true :
     provenanceMode === "all-collapsed" ? false :
-    /* smart */ hasAnomaly;
+    /* smart */ hasError || hasWarn;
   const [traceOpen, setTraceOpen] = useFi(defaultOpen);
   /* Re-sync if user toggles tweak */
   useFiMemo(() => setTraceOpen(defaultOpen), [provenanceMode]);
@@ -763,7 +798,7 @@ const StoneRegion = ({ stone, cardIds, density, provenanceMode, onCite, onHover,
         >
           <span className="f-prov-caret" aria-hidden="true">{traceOpen ? "▾" : "▸"}</span>
           <span className="f-prov-label">{traceOpen ? "Hide" : "Show"} provenance</span>
-          <span className="f-prov-meta">· {traceCount} function{traceCount === 1 ? "" : "s"}{hasAnomaly ? " · anomaly" : ""}</span>
+          <span className="f-prov-meta">· {traceCount} function{traceCount === 1 ? "" : "s"}{hasError ? " · errored" : hasWarn ? " · warned" : ""}</span>
         </button>
         {traceOpen && (
           <div className="f-prov-body">
@@ -779,11 +814,11 @@ const StoneRegion = ({ stone, cardIds, density, provenanceMode, onCite, onHover,
 
 const RunHealth44 = ({ totalCards }) => {
   const all = window.STONES.flatMap((s) => flatten(s.members));
-  const fired = all.filter((m) => m.status === "ok").length;
+  const fired = all.filter((m) => m.status === "fired" || m.status === "warned").length;
   const total = all.length;
-  const silent = all.filter((m) => m.status === "silent").length;
-  const warn = all.filter((m) => m.status === "warn").length;
-  const error = all.filter((m) => m.status === "error").length;
+  const silent = all.filter((m) => m.status === "silent_by_design").length;
+  const warn = all.filter((m) => m.status === "warned").length;
+  const error = all.filter((m) => m.status === "errored").length;
   return (
     <div className="f-runhealth">
       <span className="f-rh-item"><strong>5</strong> Stones</span>
@@ -792,10 +827,10 @@ const RunHealth44 = ({ totalCards }) => {
       <span className="f-rh-sep">·</span>
       <span className="f-rh-item"><strong>{totalCards}</strong> evidence cards</span>
       <span className="f-rh-sep">·</span>
-      <span className="f-rh-item"><strong>14.0s</strong> wall-clock</span>
+      <span className="f-rh-item"><strong>24.0s</strong> wall-clock</span>
       {silent > 0 && <><span className="f-rh-sep">·</span><span className="f-rh-item f-rh-silent">{silent} silent</span></>}
-      {warn > 0 && <><span className="f-rh-sep">·</span><span className="f-rh-item f-rh-warn">{warn} warn</span></>}
-      {error > 0 && <><span className="f-rh-sep">·</span><span className="f-rh-item f-rh-err">{error} error</span></>}
+      {warn > 0 && <><span className="f-rh-sep">·</span><span className="f-rh-item f-rh-warn">{warn} warned</span></>}
+      {error > 0 && <><span className="f-rh-sep">·</span><span className="f-rh-item f-rh-err">{error} errored</span></>}
     </div>
   );
 };

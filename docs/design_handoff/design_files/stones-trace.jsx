@@ -1,5 +1,6 @@
-/* Riprap v0.4.4 ,  Stone-banded trace (Treatment A).
-   Pulled out of the deleted spec-v043.jsx; this is what the mockup uses.
+/* Riprap v0.4.5 · Stone-banded trace.
+   Status enum (v0.4.5): fired / silent_by_design / warned / errored / not_invoked.
+   See V0.4.5_SPEC.md §1 for the rationale.
 */
 
 const { useState: useStV44, useEffect: useEfV44 } = React;
@@ -9,11 +10,11 @@ const STONES = [
     key: "cornerstone", name: "Cornerstone", role: "the hazard reader",
     tag: "what NYC's ground remembers",
     members: [
-      { id: "c1", name: "sandy_inundation.lookup",  status: "ok",   ms: 380, tier: "empirical" },
-      { id: "c2", name: "usgs_hwm.spatial_join",     status: "ok",   ms: 460, tier: "empirical" },
-      { id: "c3", name: "fema_firm.lookup",          status: "ok",   ms: 290, tier: "modeled" },
-      { id: "c4", name: "dep_stormwater.lookup",     status: "ok",   ms: 540, tier: "modeled" },
-      { id: "c5", name: "prithvi.historical_segment",status: "warn", ms: 1240, tier: "modeled",
+      { id: "c1", name: "sandy_inundation.lookup",   status: "fired",  ms: 380, tier: "empirical" },
+      { id: "c2", name: "usgs_hwm.spatial_join",     status: "fired",  ms: 460, tier: "empirical" },
+      { id: "c3", name: "fema_firm.lookup",          status: "fired",  ms: 290, tier: "modeled" },
+      { id: "c4", name: "dep_stormwater.lookup",     status: "fired",  ms: 540, tier: "modeled" },
+      { id: "c5", name: "prithvi.historical_segment",status: "warned", ms: 1240, tier: "modeled",
         warning: "deprecation: Prithvi-100M v1 → v2 migration scheduled 2026-Q3" },
     ],
   },
@@ -21,68 +22,73 @@ const STONES = [
     key: "keystone", name: "Keystone", role: "the asset register",
     tag: "what's exposed",
     members: [
-      { id: "k1", name: "mta.entrance_join",      status: "ok", ms: 220, tier: "empirical" },
-      { id: "k2", name: "nycha.development_join", status: "ok", ms: 538, tier: "empirical" },
-      { id: "k3", name: "doe.school_join",        status: "ok", ms: 180, tier: "empirical" },
-      { id: "k4", name: "doh.facility_join",      status: "ok", ms: 210, tier: "empirical" },
-      { id: "k5", name: "pluto.lot_lookup",       status: "ok", ms: 142, tier: "empirical" },
+      { id: "k1", name: "mta_entrance_exposure",    status: "silent_by_design", ms: 30,  tier: "empirical",
+        note: "no entrances within radius" },
+      { id: "k2", name: "nycha.development_join",   status: "silent_by_design", ms: 28,  tier: "empirical",
+        note: "no NYCHA developments within 1.0 mi" },
+      { id: "k3", name: "doe.school_join",          status: "silent_by_design", ms: 24,  tier: "empirical",
+        note: "no DOE schools within 1.0 mi" },
+      { id: "k4", name: "doh.facility_join",        status: "silent_by_design", ms: 22,  tier: "empirical",
+        note: "no acute-care hospitals within 1.0 mi" },
+      { id: "k5", name: "pluto.lot_lookup",         status: "silent_by_design", ms: 18,  tier: "empirical",
+        note: "PLUTO join skipped: queried address not in NYC PLUTO dataset" },
     ],
   },
   {
     key: "touchstone", name: "Touchstone", role: "the live observer",
     tag: "what's happening now",
     members: [
-      { id: "t1", name: "floodnet.history",      status: "ok",     ms: 1240, tier: "empirical" },
-      { id: "t2", name: "nyc311.flood_complaints", status: "ok",   ms: 880, tier: "proxy" },
-      { id: "t3", name: "tidalgauge.recent",      status: "silent", ms: 0,  tier: "empirical",
-        note: "out of range (gauge >2km from address)" },
+      { id: "t1", name: "floodnet.history",          status: "fired",  ms: 1240, tier: "empirical" },
+      { id: "t2", name: "nyc311.flood_complaints",   status: "fired",  ms: 880,  tier: "proxy" },
+      { id: "t3", name: "noaa_coops.recent",         status: "fired",  ms: 410,  tier: "empirical" },
+      { id: "t4", name: "terramind.lulc",            status: "fired",  ms: 2100, tier: "synthetic" },
+      { id: "t5", name: "prithvi_nyc_pluvial",       status: "fired",  ms: 1820, tier: "modeled" },
     ],
   },
   {
     key: "lodestone", name: "Lodestone", role: "the projector",
     tag: "what's coming",
     members: [
-      { id: "l1", name: "npcc4.slr_projection", status: "ok", ms: 320, tier: "modeled" },
-      { id: "l2", name: "ttm.foundation_run", status: "ok", ms: 14000, tier: "modeled",
-        children: [
-          { id: "l2a", name: "ttm.zarr_load",        status: "ok",    ms: 2400, tier: "modeled" },
-          { id: "l2b", name: "ttm.checkpoint",        status: "error", ms: 10750, tier: "modeled",
-            error: "checkpoint architecture mismatch (ttm-r2 vs ttm-r1 weights)" },
-          { id: "l2c", name: "ttm.cpu_inference",    status: "ok",    ms: 850,  tier: "modeled" },
-        ],
-      },
-      { id: "l3", name: "terramind.synthetic_sar", status: "ok", ms: 8200, tier: "synthetic" },
-      { id: "l4", name: "nfip.claims_aggregation", status: "ok", ms: 460, tier: "proxy" },
+      { id: "l1", name: "npcc4.slr_projection",       status: "fired",   ms: 320,  tier: "modeled" },
+      { id: "l2", name: "ttm_battery_surge.zero_shot",status: "fired",   ms: 1500, tier: "modeled" },
+      { id: "l3", name: "ttm_battery_surge.fine_tune",status: "fired",   ms: 1480, tier: "modeled" },
+      { id: "l4", name: "floodnet_forecast",          status: "silent_by_design", ms: 14, tier: "modeled",
+        note: "sensor has only 2 historical events; forecast omitted (silent-floor: 5)" },
+      { id: "l5", name: "ttm_311_forecast",           status: "errored", ms: 0,    tier: "modeled",
+        error: "311 history fetch failed: HTTP 503 at NYC OpenData (3 retries)" },
     ],
   },
   {
     key: "capstone", name: "Capstone", role: "the synthesizer",
     tag: "writes it all down with citations",
     members: [
-      { id: "p1", name: "granite.compose_briefing",  status: "ok", ms: 3200, tier: "modeled" },
-      { id: "p2", name: "mellea.grounding_check",    status: "ok", ms: 480,  tier: "modeled" },
-      { id: "p3", name: "weasyprint.render_artifact",status: "ok", ms: 920,  tier: null },
+      { id: "p1", name: "granite.compose_briefing",  status: "fired", ms: 3200, tier: "modeled" },
+      { id: "p2", name: "mellea.grounding_check",    status: "fired", ms: 480,  tier: "modeled" },
+      { id: "p3", name: "weasyprint.render_artifact",status: "fired", ms: 920,  tier: null },
     ],
   },
 ];
 
-const fmtMs = (ms) => ms === 0 ? ", " : ms < 1000 ? ms + "ms" : (ms / 1000).toFixed(1) + "s";
+const fmtMs = (ms) => ms === 0 ? "—" : ms < 1000 ? ms + "ms" : (ms / 1000).toFixed(1) + "s";
 const tierColor = (t) => t ? `var(--tier-${t})` : "var(--ink-tertiary)";
 
+const flat04 = (members) => members.flatMap(m => m.children ? [m, ...flat04(m.children)] : [m]);
+
 const StoneAggregate = ({ stone }) => {
-  const flat = (members) => members.flatMap(m => m.children ? [m, ...flat(m.children)] : [m]);
-  const all = flat(stone.members);
-  const fired = all.filter(m => m.status === "ok").length;
-  const silent = all.filter(m => m.status === "silent").length;
-  const warn = all.filter(m => m.status === "warn").length;
-  const error = all.filter(m => m.status === "error").length;
+  const all = flat04(stone.members);
+  const fired = all.filter(m => m.status === "fired" || m.status === "warned").length;
+  const silent = all.filter(m => m.status === "silent_by_design").length;
+  const warn = all.filter(m => m.status === "warned").length;
+  const error = all.filter(m => m.status === "errored").length;
+  const notInvoked = all.filter(m => m.status === "not_invoked").length;
   const ms = stone.members.reduce((acc, m) => Math.max(acc, m.ms || 0), 0);
   return (
     <span className="stone-band-agg">
       <span className="stone-band-agg-num">{fired}</span> fired
       {silent > 0 && <> · <span className="stone-band-agg-num">{silent}</span> silent</>}
       {warn > 0 && <> · <span className="stone-band-agg-warn">{warn} warn</span></>}
-      {error > 0 && <> · <span className="stone-band-agg-err">{error} error</span></>}
+      {error > 0 && <> · <span className="stone-band-agg-err">{error} errored</span></>}
+      {notInvoked > 0 && <> · <span className="stone-band-agg-num">{notInvoked}</span> not invoked</>}
       {" · "}<span className="stone-band-agg-ms">{fmtMs(ms)}</span>
     </span>
   );
@@ -103,26 +109,71 @@ const TraceRow = ({ m, indent = 16 }) => {
       </details>
     );
   }
-  if (m.status === "error") {
+  if (m.status === "errored") {
     return (
-      <div className="trace-row trace-row-error" style={{ paddingLeft: indent }}>
-        <span className="trace-bullet">●</span>
+      <details className="trace-row trace-row-error trace-row-errored" style={{ paddingLeft: indent }}>
+        <summary>
+          <span className="trace-bullet trace-bullet-errored">■</span>
+          <span className="trace-name">{m.name}</span>
+          <span className="trace-status trace-status-err">errored</span>
+          <span className="trace-tier" style={{ color: tierColor(m.tier) }}>{m.tier || ""}</span>
+          <span className="trace-ms">{fmtMs(m.ms)}</span>
+          <span className="trace-error-summary">{m.error}</span>
+          <span className="trace-error-expand" aria-hidden="true">click to expand</span>
+        </summary>
+        <div className="trace-error-body">
+          <div className="trace-error-line"><span className="trace-error-k">error</span><span>{m.error}</span></div>
+          <div className="trace-error-line"><span className="trace-error-k">retries</span><span>3</span></div>
+          <div className="trace-error-line"><span className="trace-error-k">elapsed</span><span>{fmtMs(m.ms)}</span></div>
+        </div>
+      </details>
+    );
+  }
+  if (m.status === "silent_by_design") {
+    return (
+      <div className="trace-row trace-row-silent-bd" style={{ paddingLeft: indent }}>
+        <span className="trace-bullet trace-bullet-silent">▢</span>
         <span className="trace-name">{m.name}</span>
-        <span className="trace-status trace-status-err">error</span>
+        <span className="trace-status">silent</span>
         <span className="trace-tier" style={{ color: tierColor(m.tier) }}>{m.tier || ""}</span>
         <span className="trace-ms">{fmtMs(m.ms)}</span>
-        <span className="trace-error-summary">{m.error}</span>
+        {m.note && <span className="trace-silent-note">{m.note}</span>}
       </div>
     );
   }
+  if (m.status === "not_invoked") {
+    return (
+      <div className="trace-row trace-row-not-invoked" style={{ paddingLeft: indent }}>
+        <span className="trace-bullet trace-bullet-notinvoked">▫</span>
+        <span className="trace-name">{m.name}</span>
+        <span className="trace-status">not invoked</span>
+        <span className="trace-tier" style={{ color: tierColor(m.tier) }}>{m.tier || ""}</span>
+        <span className="trace-ms">—</span>
+        {m.note && <span className="trace-note">{m.note}</span>}
+      </div>
+    );
+  }
+  if (m.status === "warned") {
+    return (
+      <div className="trace-row trace-row-warned" style={{ paddingLeft: indent }}>
+        <span className="trace-bullet trace-bullet-warned" style={{ color: tierColor(m.tier) }}>■</span>
+        <span className="trace-name">{m.name}</span>
+        <span className="trace-status trace-status-warn">warned</span>
+        <span className="trace-tier" style={{ color: tierColor(m.tier) }}>{m.tier || ""}</span>
+        <span className="trace-ms">{fmtMs(m.ms)}</span>
+        <span className="trace-warn-sidemark" aria-hidden="true">!</span>
+        {m.warning && <span className="trace-warn-note">{m.warning}</span>}
+      </div>
+    );
+  }
+  /* fired */
   return (
-    <div className={`trace-row trace-row-${m.status}`} style={{ paddingLeft: indent }}>
-      <span className="trace-bullet">{m.status === "silent" ? "□" : m.status === "warn" ? "!" : "·"}</span>
+    <div className="trace-row trace-row-fired" style={{ paddingLeft: indent }}>
+      <span className="trace-bullet trace-bullet-fired" style={{ color: tierColor(m.tier), background: tierColor(m.tier) }}>■</span>
       <span className="trace-name">{m.name}</span>
-      <span className="trace-status">{m.status}</span>
+      <span className="trace-status">fired</span>
       <span className="trace-tier" style={{ color: tierColor(m.tier) }}>{m.tier || ""}</span>
       <span className="trace-ms">{fmtMs(m.ms)}</span>
-      {m.warning && <span className="trace-warn-note">{m.warning}</span>}
       {m.note && <span className="trace-note">{m.note}</span>}
     </div>
   );
@@ -131,11 +182,11 @@ const TraceRow = ({ m, indent = 16 }) => {
 const StoneBand = ({ stone }) => {
   const [open, setOpen] = useStV44(true);
   return (
-    <section className={`stone-band stone-band-${stone.key}`} aria-labelledby={`band-h-${stone.key}`}>
+    <section className={`stone-band stone-band-${stone.key}`} aria-labelledby={`band-h-${stone.key}`} data-stone={stone.key}>
       <button className="stone-band-head" aria-expanded={open} onClick={() => setOpen(o => !o)}>
         <span className="stone-band-head-left">
           <span id={`band-h-${stone.key}`} className="stone-band-name">{stone.name}</span>
-          <span className="stone-band-role">,  {stone.role}</span>
+          <span className="stone-band-role"> · {stone.role}</span>
           <span className="stone-band-tag">{stone.tag}</span>
         </span>
         <StoneAggregate stone={stone}/>
@@ -150,11 +201,15 @@ const StoneBand = ({ stone }) => {
 };
 
 const StoneTrace = () => {
+  const all = STONES.flatMap(s => flat04(s.members));
+  const fired = all.filter(m => m.status === "fired" || m.status === "warned").length;
+  const silent = all.filter(m => m.status === "silent_by_design").length;
+  const error = all.filter(m => m.status === "errored").length;
   return (
     <div className="trace-ui-v44">
       <header className="stone-trace-head">
         <span className="section-label">Run trace · 5 Stones</span>
-        <span className="stone-trace-tally">17 fired · 1 silent · 1 warn · 1 error · 14.0s</span>
+        <span className="stone-trace-tally">{fired} fired · {silent} silent · {error} errored · 24.0s</span>
       </header>
       {STONES.map(s => <StoneBand key={s.key} stone={s}/>)}
     </div>

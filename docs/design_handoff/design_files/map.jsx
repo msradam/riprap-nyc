@@ -175,34 +175,51 @@ const RedHookMapMock = ({ activeLayers, queriedAddress }) => {
 };
 
 const MapLegend = ({ activeLayers, onToggle }) => {
+  /* v0.4.5: restructured by Stone. Each row carries its source-Stone so the
+     panel visually mirrors the Findings stack. The tier swatch is unchanged. */
   const layers = [
-    { key: "empirical", tier: "empirical", label: "Sandy Inundation Zone (2012)", source: "NYC OEM" },
-    { key: "modeled", tier: "modeled", label: "FEMA Zone AE ,  preliminary FIRM", source: "FEMA" },
-    { key: "synthetic", tier: "synthetic", label: "Synthetic SAR (2025-09-14)", source: "TerraMind v1.2" },
-    { key: "proxy", tier: "proxy", label: "311 flood complaints, 2019–25", source: "NYC 311" },
+    { key: "empirical", tier: "empirical", stone: "cornerstone", label: "Sandy Inundation Zone (2012)", source: "NYC OEM" },
+    { key: "modeled",   tier: "modeled",   stone: "cornerstone", label: "FEMA Zone AE · preliminary FIRM", source: "FEMA" },
+    { key: "proxy",     tier: "proxy",     stone: "touchstone",  label: "311 flood complaints, 2019–25", source: "NYC 311" },
+    { key: "synthetic", tier: "synthetic", stone: "touchstone",  label: "Synthetic LULC (2025-09-14)", source: "TerraMind v1.2" },
+    { key: "prithvi-pluvial", tier: "modeled", stone: "touchstone", label: "Prithvi pluvial prediction", source: "Prithvi-NYC v2" },
   ];
+  const stoneOrder = ["cornerstone", "touchstone"];
+  const stoneMeta = {
+    cornerstone: { name: "Cornerstone", role: "what NYC's ground remembers" },
+    touchstone:  { name: "Touchstone",  role: "what's happening now" },
+  };
   return (
-    <div className="map-legend" role="group" aria-label="Map layer toggles">
+    <div className="map-legend" role="group" aria-label="Map layer toggles, grouped by Stone">
       <div className="map-legend-head">
-        <span className="section-label">Layers</span>
+        <span className="section-label">Layers · by Stone</span>
       </div>
-      {layers.map((l) => (
-        <button
-          key={l.key}
-          type="button"
-          className={`map-legend-item ${activeLayers[l.key] ? "is-on" : "is-off"}`}
-          onClick={() => onToggle(l.key)}
-          aria-pressed={activeLayers[l.key]}
-        >
-          <span className="map-legend-swatch" aria-hidden="true">
-            <TierGlyph tier={l.tier} size={11} color={`var(--tier-${l.tier})`} />
-          </span>
-          <span className="map-legend-text">
-            <span className="map-legend-label">{l.label}</span>
-            <span className="map-legend-source">{l.source} · <TierBadge tier={l.tier} compact /></span>
-          </span>
-          <span className="map-legend-toggle" aria-hidden="true">{activeLayers[l.key] ? "ON" : "OFF"}</span>
-        </button>
+      {stoneOrder.map((sk) => (
+        <div key={sk} className={`map-legend-stone map-legend-stone-${sk}`} data-stone={sk}>
+          <div className="map-legend-stone-head">
+            <span className={`map-legend-stone-dot map-legend-stone-dot-${sk}`} aria-hidden="true"></span>
+            <span className="map-legend-stone-name">{stoneMeta[sk].name}</span>
+            <span className="map-legend-stone-role">· {stoneMeta[sk].role}</span>
+          </div>
+          {layers.filter((l) => l.stone === sk).map((l) => (
+            <button
+              key={l.key}
+              type="button"
+              className={`map-legend-item ${activeLayers[l.key] ? "is-on" : "is-off"}`}
+              onClick={() => onToggle(l.key)}
+              aria-pressed={activeLayers[l.key]}
+            >
+              <span className="map-legend-swatch" aria-hidden="true">
+                <TierGlyph tier={l.tier} size={11} color={`var(--tier-${l.tier})`} />
+              </span>
+              <span className="map-legend-text">
+                <span className="map-legend-label">{l.label}</span>
+                <span className="map-legend-source">{l.source} · <TierBadge tier={l.tier} compact /></span>
+              </span>
+              <span className="map-legend-toggle" aria-hidden="true">{activeLayers[l.key] ? "ON" : "OFF"}</span>
+            </button>
+          ))}
+        </div>
       ))}
     </div>
   );

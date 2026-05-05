@@ -51,6 +51,16 @@
   --leading-prose: 1.55;
   --leading-tight: 1.25;
 
+  /* ── Stone accent tokens (v0.4.5) ──
+     Five muted hint-colors keyed to Stones. L≈45 OKLCH, chroma ≤0.04.
+     Hint-level decoration; never competes with the four-tier epistemic palette.
+     All five degrade to neutral gray in @media print (see below). */
+  --stone-cornerstone: #7C6F5E; /* warm taupe */
+  --stone-keystone:    #5E6E7C; /* cool slate */
+  --stone-touchstone:  #6B7C66; /* muted sage */
+  --stone-lodestone:   #7C6E5E; /* softened ochre */
+  --stone-capstone:    #5E5E6E; /* neutral indigo-gray */
+
   /* ── Spacing ── */
   --s-1: 4px;
   --s-2: 8px;
@@ -82,6 +92,16 @@ html, body {
   outline: 3px solid var(--accent-graphical);
   outline-offset: 2px;
   border-radius: 1px;
+}
+
+@media print {
+  :root {
+    --stone-cornerstone: #999;
+    --stone-keystone:    #999;
+    --stone-touchstone:  #999;
+    --stone-lodestone:   #999;
+    --stone-capstone:    #999;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

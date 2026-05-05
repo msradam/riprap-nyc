@@ -73,9 +73,11 @@ const ColdStart = ({ onPick, onSubmit }) => {
       <div className="cold-start-trust">
         <span className="section-label">How Riprap is built</span>
         <p className="cold-start-thesis">
-          <strong>Cornerstone</strong> remembers. <strong>Keystone</strong> tallies.
-          {" "}<strong>Touchstone</strong> watches. <strong>Lodestone</strong> projects.
-          {" "}<strong>Capstone</strong> writes it all down with citations.
+          <span className="cold-start-thesis-stone-dot cold-start-thesis-stone-dot-cornerstone" aria-hidden="true"></span><strong>Cornerstone</strong> remembers.{" "}
+          <span className="cold-start-thesis-stone-dot cold-start-thesis-stone-dot-keystone" aria-hidden="true"></span><strong>Keystone</strong> tallies.
+          {" "}<span className="cold-start-thesis-stone-dot cold-start-thesis-stone-dot-touchstone" aria-hidden="true"></span><strong>Touchstone</strong> watches.{" "}
+          <span className="cold-start-thesis-stone-dot cold-start-thesis-stone-dot-lodestone" aria-hidden="true"></span><strong>Lodestone</strong> projects.
+          {" "}<span className="cold-start-thesis-stone-dot cold-start-thesis-stone-dot-capstone" aria-hidden="true"></span><strong>Capstone</strong> writes it all down with citations.
         </p>
         <ul className="cold-start-trust-list">
           <li>Five named cognitive roles compose ~25 atomic specialists. <a href="#spec-stones">Architecture →</a></li>

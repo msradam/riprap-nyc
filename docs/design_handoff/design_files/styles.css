@@ -1083,6 +1083,158 @@
   .stone-band, .stone-band-head, .treatment-tab { transition: none; }
 }
 
+/* ============================================================
+   v0.4.5 — Stone accent layer + new status enum rules
+   Hint-only treatment: a 3-px left-rule per Stone, scoped to
+   .stone-band[data-stone] and .f-region[data-stone]. Tier
+   swatches inside cards/legend rows are unchanged.
+   See V0.4.5_SPEC.md §2 for the full rationale.
+   ============================================================ */
+
+/* 3-px left rule on Stone-banded sections */
+.stone-band[data-stone="cornerstone"] { border-left: 3px solid var(--stone-cornerstone); }
+.stone-band[data-stone="keystone"]    { border-left: 3px solid var(--stone-keystone); }
+.stone-band[data-stone="touchstone"]  { border-left: 3px solid var(--stone-touchstone); }
+.stone-band[data-stone="lodestone"]   { border-left: 3px solid var(--stone-lodestone); }
+.stone-band[data-stone="capstone"]    { border-left: 3px solid var(--stone-capstone); }
+
+.f-region[data-stone="cornerstone"]   { border-left: 3px solid var(--stone-cornerstone); }
+.f-region[data-stone="keystone"]      { border-left: 3px solid var(--stone-keystone); }
+.f-region[data-stone="touchstone"]    { border-left: 3px solid var(--stone-touchstone); }
+.f-region[data-stone="lodestone"]     { border-left: 3px solid var(--stone-lodestone); }
+.f-region[data-stone="capstone"]      { border-left: 3px solid var(--stone-capstone); }
+
+/* Map Layers panel — Stone group dots + soft inset rule */
+.map-legend-stone {
+  border-left: 2px solid transparent;
+  padding-left: 10px;
+  margin-bottom: 8px;
+}
+.map-legend-stone-cornerstone { border-left-color: var(--stone-cornerstone); }
+.map-legend-stone-keystone    { border-left-color: var(--stone-keystone); }
+.map-legend-stone-touchstone  { border-left-color: var(--stone-touchstone); }
+.map-legend-stone-lodestone   { border-left-color: var(--stone-lodestone); }
+.map-legend-stone-capstone    { border-left-color: var(--stone-capstone); }
+.map-legend-stone-head {
+  display: flex; align-items: baseline; gap: 6px;
+  margin: 8px 0 4px;
+  font-family: var(--font-sans); font-size: 11px; letter-spacing: 0.04em;
+}
+.map-legend-stone-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  display: inline-block; align-self: center;
+}
+.map-legend-stone-dot-cornerstone { background: var(--stone-cornerstone); }
+.map-legend-stone-dot-keystone    { background: var(--stone-keystone); }
+.map-legend-stone-dot-touchstone  { background: var(--stone-touchstone); }
+.map-legend-stone-dot-lodestone   { background: var(--stone-lodestone); }
+.map-legend-stone-dot-capstone    { background: var(--stone-capstone); }
+.map-legend-stone-name { font-weight: 600; color: var(--ink); text-transform: uppercase; letter-spacing: 0.06em; }
+.map-legend-stone-role { color: var(--ink-tertiary); font-size: 11px; font-style: italic; font-family: var(--font-serif); }
+
+/* Cold-start thesis row — colored dots beside Stone names */
+.cold-start-thesis-stone-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  display: inline-block; vertical-align: middle;
+  margin-right: 5px; transform: translateY(-1px);
+}
+.cold-start-thesis-stone-dot-cornerstone { background: var(--stone-cornerstone); }
+.cold-start-thesis-stone-dot-keystone    { background: var(--stone-keystone); }
+.cold-start-thesis-stone-dot-touchstone  { background: var(--stone-touchstone); }
+.cold-start-thesis-stone-dot-lodestone   { background: var(--stone-lodestone); }
+.cold-start-thesis-stone-dot-capstone    { background: var(--stone-capstone); }
+
+/* New status enum — replaces 0.4.4 anomaly/silent/warn/error rules.
+   v0.4.5 statuses: fired, silent_by_design, warned, errored, not_invoked. */
+.trace-row { padding: 8px 0; font-family: var(--font-mono); font-size: 12px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.trace-row .trace-name   { color: var(--ink); }
+.trace-row .trace-status { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-tertiary); }
+.trace-row .trace-tier   { font-size: 10px; letter-spacing: 0.04em; }
+.trace-row .trace-ms     { color: var(--ink-tertiary); margin-left: auto; }
+.trace-row .trace-bullet { width: 12px; display: inline-block; text-align: center; }
+
+.trace-row-fired { /* default — bullet color carries tier */ }
+
+.trace-row-silent-bd .trace-name   { color: var(--ink-secondary); }
+.trace-row-silent-bd .trace-bullet-silent { color: var(--ink-tertiary); }
+.trace-row-silent-bd .trace-silent-note   { color: var(--ink-tertiary); font-style: italic; font-family: var(--font-serif); font-size: 12px; }
+
+.trace-row-not-invoked .trace-name        { color: var(--ink-tertiary); }
+.trace-row-not-invoked .trace-bullet-notinvoked { color: var(--ink-tertiary); }
+
+.trace-row-warned {
+  background: var(--status-warning-soft);
+  /* keep stone left-rule; do NOT set border-left here */
+  position: relative;
+  padding-left: 8px;
+}
+.trace-row-warned .trace-status-warn { color: var(--status-warning); font-weight: 600; }
+.trace-row-warned .trace-warn-sidemark {
+  color: var(--status-warning);
+  font-weight: 700;
+  margin-left: 4px;
+}
+.trace-row-warned .trace-warn-note { color: var(--ink-secondary); font-family: var(--font-serif); font-style: italic; font-size: 12px; }
+
+.trace-row-errored {
+  background: var(--status-error-soft);
+  padding-left: 8px;
+}
+.trace-row-errored > summary { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; cursor: pointer; list-style: none; }
+.trace-row-errored > summary::-webkit-details-marker { display: none; }
+.trace-row-errored .trace-status-err { color: var(--status-error); font-weight: 600; }
+.trace-row-errored .trace-error-summary { color: var(--ink-secondary); font-style: italic; font-family: var(--font-serif); font-size: 12px; }
+.trace-row-errored .trace-error-expand { color: var(--ink-tertiary); font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; }
+.trace-row-errored[open] .trace-error-expand { display: none; }
+.trace-row-errored .trace-error-body {
+  margin-top: 6px;
+  padding: 8px 10px;
+  background: rgba(255,255,255,0.6);
+  border-left: 2px solid var(--status-error);
+  font-size: 11px;
+  display: grid; gap: 4px;
+}
+.trace-error-line { display: grid; grid-template-columns: 80px 1fr; gap: 8px; }
+.trace-error-k { color: var(--ink-tertiary); }
+
+/* Tally text colors */
+.f-tally-warn { color: var(--status-warning); }
+.f-tally-err  { color: var(--status-error); }
+.f-tally-notinvoked { color: var(--ink-tertiary); }
+
+/* Hover link — when an evidence card is "linked" to a hovered map glyph */
+.f-card.is-linked,
+.finding-card.is-linked {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* TerraMind LULC class-mix bar (Touchstone synthetic-prior card) */
+.lulc-bar { display: flex; height: 12px; border-radius: 2px; overflow: hidden; margin-top: 6px; }
+.lulc-bar-seg { height: 100%; }
+.lulc-legend { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 8px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-secondary); }
+.lulc-legend-swatch { display: inline-block; width: 8px; height: 8px; margin-right: 4px; border-radius: 1px; vertical-align: middle; }
+
+/* Fine-tuned TTM trim line + hardware badge */
+.ttm-ft-trim { border-top: 1px solid var(--rule-soft); margin-top: 10px; padding-top: 8px; display: grid; gap: 4px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-secondary); }
+.ttm-ft-row { display: grid; grid-template-columns: 110px 1fr; gap: 8px; }
+.ttm-ft-k { color: var(--ink-tertiary); }
+.ttm-hw-badge {
+  display: inline-block; padding: 1px 6px; border: 1px solid var(--rule-soft);
+  border-radius: 2px; font-size: 10px; letter-spacing: 0.04em;
+  font-family: var(--font-mono); color: var(--ink-secondary); background: white;
+}
+
+/* Print: drop accents to neutral, drop hover/error tints */
+@media print {
+  .stone-band[data-stone],
+  .f-region[data-stone],
+  .map-legend-stone { border-left-color: #999 !important; }
+  .cold-start-thesis-stone-dot,
+  .map-legend-stone-dot { background: #999 !important; }
+  .trace-row-warned, .trace-row-errored { background: transparent !important; }
+}
+
 /* ─────────── original v0.4.2 mobile rules ────────── */
 @media (max-width: 720px) {
   .app-header-inner { grid-template-columns: 1fr; gap: 8px; }

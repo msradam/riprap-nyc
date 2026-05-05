@@ -1,4 +1,12 @@
-# Handoff: Riprap Findings Region (v0.4.4)
+# Handoff: Riprap Findings Region
+
+**Current target version: v0.4.5** (polish on v0.4.4 — now applied in `Riprap Stone-Grouped UI v0.4.5.html`). See `V0.4.5_SPEC.md` for the nine deltas. This README is the v0.4.4 specification and remains the reference for everything *not* changing in v0.4.5.
+
+**Read order for the implementer:**
+1. `CLAUDE_CODE_PROMPT.md` — paste into Claude Code
+2. `V0.4.5_SPEC.md` — the nine fixes (now realized in `v0.4.5.html`)
+3. `README.md` (this file) — v0.4.4 reference
+4. `design_files/` — prototypes (both v0.4.4 and v0.4.5 HTMLs are present)
 
 ## Overview
 
@@ -323,9 +331,65 @@ design_handoff_riprap_findings/
 
 ## Scope
 
-**In scope** for this handoff: the Findings region (5 Stones, 12 card variants, run-health strip, smart provenance, hover linking, card grammar reference). Briefing prose and map are in scope to the extent they connect to Findings via `linkedKey`.
+**In scope** for this handoff:
 
-**Out of scope**: the cold-start state, the marketing landing page, the methodology PDF, the export-PDF flow. Port these later.
+- The Findings region (5 Stones, 12 card variants, run-health strip, smart provenance, hover linking, card grammar reference)
+- Briefing prose and map, to the extent they connect to Findings via `linkedKey`
+- The marketing **landing page** (see §"Landing page" below)
+- v0.4.5 deltas in `V0.4.5_SPEC.md`
+
+**Out of scope**: the methodology PDF, the export-PDF flow.
+
+## Landing page
+
+The landing page is the public-facing entry point at `/` (separate from the app's cold-start state at `/app`). Two design files in `design_files/`:
+
+- `Riprap Landing.html` — final shipping landing page
+- `Riprap Landing Variants.html` — three exploratory variants on a design canvas (kept for reference; do not port)
+
+### Landing structure (port `Riprap Landing.html`)
+
+Four-section vertical scroll, max-width 1200px, paper background:
+
+1. **Hero**
+   - Wordmark top-left (with `▌` accent prefix)
+   - Headline (52px serif, italic emphasis on *any place*, line-broken into two lines)
+   - Deck (18px sans, max 70ch, ink-secondary)
+   - Big query box: "Try:" label + cycling example queries on a fixed dotted-underline rail (rail width pinned, ellipsis fallback for overflow)
+   - Submit button (ink fill, paper text, mono caps)
+
+2. **"What you'll get back" preview** — 3-pane grid (1.4fr / 1fr / 1fr), bottoms equalized:
+   - **Excerpt pane**: serif briefing snippet with inline `[N]` citation pins; compact source list at bottom (tier-coded)
+   - **Evidence cards pane**: 2x2 grid of compact evidence cards, each with tier-coded left rule (2px), claim, source
+   - **Map pane**: mini SVG map (240x200, 8px paper-grain grid texture) with FEMA-AE polygon fill, HWM contour, FloodNet sensor pin, 311 cluster, address pin, and a compact tier-legend overlay bottom-edge
+
+3. **Five Stones strip** — explanation grid: 5 columns (`repeat(5, 1fr)`), one cell per Stone:
+   - Oversized italic-serif numerals `01..05` top-right of each cell (in `--rule-soft`, decorative)
+   - Stone name (serif 22px / 500)
+   - Role tagline (sans 13px / ink-secondary)
+   - Italic-serif tag ("what NYC's ground remembers" etc.)
+   - Dashed rule + mono source list at bottom
+
+4. **Footer** — earns its keep:
+   - Tier legend (4 swatches: empirical / modeled / proxy / synthetic)
+   - Build line (mono, ink-tertiary)
+
+### Landing — what's settled (don't redesign)
+
+- The hero dropped the redundant "Riprap" eyebrow; the wordmark already says it. Headline carries the lede.
+- Cycling examples ride a single fixed dotted underline (no jump on length change). Pin the rail width; ellipsis-truncate overflow.
+- Pane heights are equalized via a flex-1 spacer in the cards pane and `flex: 1` on the map pane.
+- Map texture is a subtle 8px paper-grain grid behind the colored layers — gives it a map register, not a diagram register.
+- Stones strip uses oversized italic numerals as a typographic register (decorative, in soft-rule color).
+- Italic serif is intentional: hero emphasis + Stone tags + Stone numerals. Reads as a deliberate third voice.
+
+### Landing — em-dashes
+
+All user-facing em-dashes have been purged from `Riprap Landing.html`, `landing-variants.css`, and `landing-variants.jsx`. Replacement convention: `, ` (comma-space) for em-dashes used as parenthetical breaks. **Maintain this convention** when porting copy. Em-dashes in source-code comments (non-rendered) are fine.
+
+### Landing — out of scope variants
+
+`Riprap Landing Variants.html` contains three earlier explorations on a design canvas: v1 (minimal pushed harder), v2 (example gallery), v3 (methodology-forward). Kept for reference only; **do not port**. The shipping landing page is `Riprap Landing.html` (a refinement of v1).
 
 ## Open questions for the design team
 
