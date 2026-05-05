@@ -26,12 +26,17 @@ from app.stones import capstone as _capstone_stone  # noqa: E402
 # nta_resolve and friends) don't open a Stone boundary — they're
 # orientation / policy infrastructure shared across Stones.
 _STEP_TO_STONE: dict[str, str] = {
-    # Cornerstone
+    # Cornerstone — single_address + polygon-aggregated (neighborhood)
     "sandy_inundation":           "Cornerstone",
     "dep_stormwater":             "Cornerstone",
     "ida_hwm_2021":               "Cornerstone",
     "prithvi_eo_v2":              "Cornerstone",
     "microtopo_lidar":            "Cornerstone",
+    "sandy_nta":                  "Cornerstone",
+    "dep_extreme_2080_nta":       "Cornerstone",
+    "dep_moderate_2050_nta":      "Cornerstone",
+    "dep_moderate_current_nta":   "Cornerstone",
+    "microtopo_nta":              "Cornerstone",
     # Keystone (the chip fetch is infrastructure for the LoRA pair, but
     # it's logically Keystone-adjacent and we surface it under that
     # banner so the trace doesn't show a phantom orphan step).
@@ -49,6 +54,7 @@ _STEP_TO_STONE: dict[str, str] = {
     "noaa_tides":                 "Touchstone",
     "prithvi_eo_live":            "Touchstone",
     "terramind_lulc":             "Touchstone",
+    "nyc311_nta":                 "Touchstone",
     # Lodestone
     "nws_alerts":                 "Lodestone",
     "ttm_forecast":               "Lodestone",
