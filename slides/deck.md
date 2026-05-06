@@ -70,23 +70,19 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 
 ---
 
-<div class="eyebrow">02 &middot; Solution</div>
+<div class="eyebrow">02 &middot; SOLUTION</div>
 
-# Every number cites its source. Or it doesn't appear.
+# A flood-exposure briefing for any place in New York City.
 
-<p style="margin-bottom: 12px;">Type a NYC address &rarr; <strong>five Stones</strong> fan out across NYC's flood evidence &rarr; one paragraph back, with <code>[doc_id]</code> citations on every numeric claim.</p>
+<p style="margin-bottom: 14px; font-size: 20px; max-width: 72ch; color: var(--ink-2);">Type an address or neighborhood. Get a written briefing in 5&ndash;13 seconds, fusing four temporal modes &mdash; Sandy 2012 inundation, current 311 history, FloodNet sensor reads, NPCC4 projections &mdash; into one cited paragraph.</p>
 
-<div class="codeblock"><span class="label">Status.</span> 442 East Houston Street, Manhattan, is exposed to flood risk: flooded by Hurricane Sandy in 2012, with recurrent localized flooding evidenced by 19 311 complaints and multiple FloodNet sensor events <span class="cite">[sandy], [nyc311], [floodnet]</span>.
-
-<span class="label">Empirical evidence.</span> Sandy flooded this address Oct 29-30, 2012 <span class="cite">[sandy]</span>. 19 flood-related 311 service requests within 200 m over five years <span class="cite">[nyc311]</span>. Three of five FloodNet sensors within 600 m documented events in the past three years <span class="cite">[floodnet]</span>.</div>
-
-<div class="box" style="margin-top: 16px; border: 2px dashed var(--stone-400); background: var(--paper-1); padding: 0; display: flex; align-items: center; justify-content: center; min-height: 120px;">
-  <p style="font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); text-align: center; margin: 0; padding: 24px;">
-    [ screenshot of app landing — to be added ]
+<div style="border: 2px dashed var(--rule-soft); background: var(--paper-deep); display: flex; align-items: center; justify-content: center; flex: 1; min-height: 240px; border-radius: 2px; margin-bottom: 10px;">
+  <p style="font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); text-align: center; margin: 0; padding: 24px;">
+    [ screenshot of riprap.nyc landing &mdash; to be added ]
   </p>
 </div>
 
-<p style="margin-top: 8px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3);">Hallucination guard &middot; four source-binding checks &middot; reroll until every claim resolves</p>
+<p style="font-size: 15px; color: var(--ink-3); margin: 0;">Behind the prose: every numeric claim links to its primary public-record source. Mellea rejection sampling refuses to publish what it can&rsquo;t cite.</p>
 
 ---
 
@@ -126,33 +122,65 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 
 <p style="margin: 4px 0 10px; font-size: 17px; color: var(--ink-3); font-family: var(--font-mono);">query &rarr; <strong style="color: var(--ink);">Planner</strong> (Granite 4.1 3B, intent classification) &rarr; Stone roster &rarr; <strong style="color: var(--ink);">Capstone</strong> (Granite 4.1 8B + Mellea) &rarr; briefing</p>
 
-<div class="box-grid cols-4" style="margin-top: 0; gap: 10px;">
+<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 0;">
 
-<div class="box" style="border-top: 3px solid #475569; padding: 14px 16px;">
-  <div class="lbl" style="color: #475569;">Cornerstone</div>
-  <div style="font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 6px;">Hazard Reader</div>
-  <div style="font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); line-height: 1.5;">Sandy 2012 zone<br>DEP stormwater<br>Ida USGS HWMs<br>Prithvi-EO · LiDAR</div>
+  <div style="background: var(--paper-deep); border: 1px solid var(--rule-soft); border-top: 3px solid #475569; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px;">
+    <div style="display: flex; justify-content: space-between; align-items: baseline;">
+      <span style="font-family: var(--font-mono); font-size: 9px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #475569;">Cornerstone · USGS 3DEP</span>
+      <span style="font-family: var(--font-mono); font-size: 9px; color: var(--ink-3);">2020</span>
+    </div>
+    <div style="font-size: 13px; font-weight: 600; color: var(--ink); line-height: 1.2; margin-bottom: 4px;">Microtopography (HAND / TWI)</div>
+    <div style="display: grid; grid-template-columns: auto 1fr; gap: 2px 8px;">
+      <span style="font-family: var(--font-mono); font-size: 9px; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.08em;">HAND</span><span style="font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: #475569;">0.82 m</span>
+      <span style="font-family: var(--font-mono); font-size: 9px; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.08em;">TWI</span><span style="font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: #475569;">14.3</span>
+      <span style="font-family: var(--font-mono); font-size: 9px; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.08em;">Elev.</span><span style="font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: #475569;">2.1 m MSL</span>
+      <span style="font-family: var(--font-mono); font-size: 9px; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.08em;">Pct. lower</span><span style="font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: #475569;">78%</span>
+    </div>
+    <div style="margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--rule-soft); font-family: var(--font-mono); font-size: 10px; color: #475569; font-weight: 600;">[topo]</div>
+  </div>
+
+  <div style="background: var(--paper-deep); border: 1px solid var(--rule-soft); border-top: 3px solid #1A4480; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px;">
+    <div style="display: flex; justify-content: space-between; align-items: baseline;">
+      <span style="font-family: var(--font-mono); font-size: 9px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #1A4480;">Keystone · TerraMind-NYC</span>
+      <span style="font-family: var(--font-mono); font-size: 9px; color: var(--ink-3);">2024</span>
+    </div>
+    <div style="font-size: 13px; font-weight: 600; color: var(--ink); line-height: 1.2; margin-bottom: 4px;">Building footprint coverage</div>
+    <div style="margin: 6px 0;">
+      <div style="font-family: var(--font-mono); font-size: 30px; font-weight: 700; color: #1A4480; line-height: 1;">48.41<span style="font-size: 16px;">%</span></div>
+      <div style="font-family: var(--font-mono); font-size: 10px; color: var(--ink-3); margin-top: 3px;">250 m radius &middot; Buildings LoRA adapter</div>
+    </div>
+    <div style="margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--rule-soft); font-family: var(--font-mono); font-size: 10px; color: #1A4480; font-weight: 600;">[keystone_bldg]</div>
+  </div>
+
+  <div style="background: var(--paper-deep); border: 1px solid var(--rule-soft); border-top: 3px solid #0E7490; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px;">
+    <div style="display: flex; justify-content: space-between; align-items: baseline;">
+      <span style="font-family: var(--font-mono); font-size: 9px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #0E7490;">Touchstone · NYC 311</span>
+      <span style="font-family: var(--font-mono); font-size: 9px; color: var(--ink-3);">live</span>
+    </div>
+    <div style="font-size: 13px; font-weight: 600; color: var(--ink); line-height: 1.2; margin-bottom: 4px;">Flood complaints · 200 m buffer</div>
+    <div style="margin: 6px 0;">
+      <div style="font-family: var(--font-mono); font-size: 30px; font-weight: 700; color: #0E7490; line-height: 1;">19</div>
+      <div style="font-family: var(--font-mono); font-size: 10px; color: var(--ink-3); margin-top: 3px;">service requests &middot; 5-yr lookback</div>
+    </div>
+    <div style="margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--rule-soft); font-family: var(--font-mono); font-size: 10px; color: #0E7490; font-weight: 600;">[nyc311]</div>
+  </div>
+
+  <div style="background: var(--paper-deep); border: 1px solid var(--rule-soft); border-top: 3px solid #92400E; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px;">
+    <div style="display: flex; justify-content: space-between; align-items: baseline;">
+      <span style="font-family: var(--font-mono); font-size: 9px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #92400E;">Lodestone · Granite TTM r2</span>
+      <span style="font-family: var(--font-mono); font-size: 9px; color: var(--ink-3);">live</span>
+    </div>
+    <div style="font-size: 13px; font-weight: 600; color: var(--ink); line-height: 1.2; margin-bottom: 4px;">Surge residual nowcast</div>
+    <div style="margin: 6px 0;">
+      <div style="font-family: var(--font-mono); font-size: 30px; font-weight: 700; color: #92400E; line-height: 1;">0.22 <span style="font-size: 16px;">ft</span></div>
+      <div style="font-family: var(--font-mono); font-size: 10px; color: var(--ink-3); margin-top: 3px;">peak surge residual &middot; 9.6 h horizon</div>
+    </div>
+    <div style="margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--rule-soft); font-family: var(--font-mono); font-size: 10px; color: #92400E; font-weight: 600;">[ttm_surge]</div>
+  </div>
+
 </div>
 
-<div class="box" style="border-top: 3px solid #1A4480; padding: 14px 16px;">
-  <div class="lbl" style="color: #1A4480;">Keystone</div>
-  <div style="font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 6px;">Asset Register</div>
-  <div style="font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); line-height: 1.5;">NYCHA · DOE · MTA<br>NYS hospitals<br>TerraMind-NYC<br>Buildings adapter</div>
-</div>
-
-<div class="box" style="border-top: 3px solid #0E7490; padding: 14px 16px;">
-  <div class="lbl" style="color: #0E7490;">Touchstone</div>
-  <div style="font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 6px;">Live Observer</div>
-  <div style="font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); line-height: 1.5;">FloodNet sensors<br>NYC 311 history<br>NOAA tide gauge<br>NWS METAR</div>
-</div>
-
-<div class="box" style="border-top: 3px solid #92400E; padding: 14px 16px;">
-  <div class="lbl" style="color: #92400E;">Lodestone</div>
-  <div style="font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 6px;">Projector</div>
-  <div style="font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); line-height: 1.5;">NWS alerts<br>Granite TTM r2<br>surge nowcast<br>311 recurrence</div>
-</div>
-
-</div>
+<p style="margin-top: 8px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3);">Real evidence cards rendered by the live system &nbsp;&middot;&nbsp; 442 East Houston Street, Manhattan.</p>
 
 <div class="box" style="border-top: 3px solid #162E51; margin-top: 10px; padding: 12px 18px;">
   <span style="font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #162E51;">Capstone</span>
@@ -197,64 +225,46 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 
 ---
 
-<div class="eyebrow">06 &middot; Demo</div>
+<div class="eyebrow">06 &middot; DEMO</div>
 
-# Try it live.
+# Live demo.
 
-<div style="margin: 28px 0 20px; text-align: center;">
-  <p style="font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 10px;">Query</p>
-  <p style="font-size: 26px; font-weight: 700; color: var(--ink); margin: 0 auto; max-width: 820px; line-height: 1.35;">&ldquo;I&rsquo;m thinking about renting an apartment at 80 Pioneer Street, Brooklyn. Should I worry?&rdquo;</p>
+<div style="margin: 48px 0 32px; text-align: center;">
+  <p style="font-family: var(--font-mono); font-size: 28px; font-weight: 700; color: var(--ink); margin: 0 auto; max-width: 860px; line-height: 1.35;">&ldquo;I&rsquo;m thinking about renting an apartment at 80 Pioneer Street, Brooklyn. Should I worry?&rdquo;</p>
 </div>
 
-<div style="text-align: center; margin-bottom: 24px;">
-  <span style="font-family: var(--font-mono); font-size: 18px; letter-spacing: 0.06em; color: var(--accent); font-weight: 700;">github.com/msradam/riprap-nyc</span>
+<div style="text-align: center; margin-bottom: 40px;">
+  <span style="font-family: var(--font-mono); font-size: 20px; letter-spacing: 0.06em; color: var(--accent); font-weight: 700;">riprap.nyc</span>
 </div>
 
-<div class="box-grid cols-3" style="margin-top: 0; gap: 10px;">
-
-<div class="box" style="padding: 14px 16px;">
-  <div class="lbl">Watch for</div>
-  <div style="font-size: 14px; color: var(--ink-2); line-height: 1.5;">Verdict opens with an explicit risk statement<br><span style="font-family: var(--font-mono); font-size: 12px; color: var(--ink-3);">&ldquo;Yes, this address is exposed&hellip;&rdquo;</span></div>
-</div>
-
-<div class="box" style="padding: 14px 16px;">
-  <div class="lbl">Watch for</div>
-  <div style="font-size: 14px; color: var(--ink-2); line-height: 1.5;">Citations resolve inline<br><span style="font-family: var(--font-mono); font-size: 12px; color: var(--ink-3);">[sandy], [nyc311], [floodnet] on every number</span></div>
-</div>
-
-<div class="box" style="padding: 14px 16px;">
-  <div class="lbl">Watch for</div>
-  <div style="font-size: 14px; color: var(--ink-2); line-height: 1.5;">Mellea grounding in the meta card<br><span style="font-family: var(--font-mono); font-size: 12px; color: var(--ink-3);">4 / 4 source checks, every run</span></div>
-</div>
-
-</div>
+<p style="text-align: center; font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); margin: 0 auto; max-width: none;">13 seconds end-to-end &nbsp;&middot;&nbsp; 4/4 grounding checks &nbsp;&middot;&nbsp; all sources public-record</p>
 
 ---
 
 <div class="eyebrow">07 &middot; What's next</div>
 
-# The longer arc.
+# What's next.
 
-<div class="box-grid cols-3" style="margin-top: 16px;">
+<p style="margin-bottom: 14px; font-size: 18px; color: var(--ink-3); font-family: var(--font-mono); letter-spacing: 0.02em;">The architecture is NYC-specific by data choice, not by code.</p>
+
+<div class="box-grid cols-3" style="margin-top: 0;">
 
 <div class="box">
-  <div class="lbl">Ida calibration &middot; ASCE NY</div>
-  <div class="body">Run the FSM backward against August 31, 2021 snapshot data. Validate Cornerstone + Lodestone outputs against measured Ida inundation. Presentation target: ASCE NY section, May 2026.</div>
+  <div class="lbl">Break out the Stones</div>
+  <div class="body">Each Stone is a coherent composition over data sources, models, and deterministic checks. Extract Cornerstone, Touchstone, Keystone, Lodestone as independent packages; any civic-tech project can pull one Stone without the full Riprap stack.</div>
 </div>
 
 <div class="box">
-  <div class="lbl">Stones v1.1 &middot; standalone packages</div>
-  <div class="body">Publish Cornerstone, Touchstone, Keystone, Lodestone as independent Python packages. Any NYC civic-tech project can pull one Stone without the full Riprap stack.</div>
+  <div class="lbl">Other flood-impacted cities</div>
+  <div class="body">Houston (Harvey, Beryl), Miami (king tides), Boston (CSO floods), Jakarta, Manila, Dhaka &mdash; the same five-Stone pattern, different probe sets and RAG corpora per city.</div>
 </div>
 
 <div class="box tinted">
-  <div class="lbl">Methodology paper</div>
-  <div class="body">The citation-grounding pipeline (Mellea rejection sampling + four invariants + reroll feedback) as a replicable pattern for any geospatial LLM. Targets MDPI Sustainability or similar open-access venue.</div>
+  <div class="lbl">Historical-event mode</div>
+  <div class="body">Re-run the FSM with snapshot data from any past date. Validate the system against measured outcomes &mdash; what would Riprap have said before Sandy, before Ida, before the 2024 Beryl remnants. Calibration as a first-class feature.</div>
 </div>
 
 </div>
-
-<p style="margin-top: 20px; font-size: 20px; color: var(--ink-2);">The architecture is NYC-specific by data choice, not by code. Houston (Harvey + Beryl 2024), Miami (king tides), Boston (CSO floods) are the next cities.</p>
 
 ---
 
@@ -264,8 +274,7 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 
 <div class="eyebrow" style="margin-top: 124px; color: var(--accent); border: 0; padding: 0;">Riprap &middot; flood briefings on AMD</div>
 
-# github.com/msradam/riprap-nyc
-
+<div style="font-family: var(--font-sans); font-weight: 700; font-size: 68px; line-height: 0.95; letter-spacing: -0.03em; color: var(--paper); margin: 80px 0 16px; white-space: nowrap;">github.com/msradam/riprap-nyc</div>
 
 <hr>
 
