@@ -70,13 +70,13 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 
 # Every number cites its source. Or it doesn't appear.
 
-<p style="margin-bottom: 12px;">Type a NYC address &rarr; <strong>17 specialists fan out</strong> &rarr; one paragraph back, with <code>[doc_id]</code> citations on every numeric claim.</p>
+<p style="margin-bottom: 12px;">Type a NYC address &rarr; <strong>five Stones</strong> fan out across NYC's flood evidence &rarr; one paragraph back, with <code>[doc_id]</code> citations on every numeric claim.</p>
 
 <div class="codeblock"><span class="label">Status.</span> 442 East Houston Street, Manhattan, is exposed to flood risk: flooded by Hurricane Sandy in 2012, with recurrent localized flooding evidenced by 19 311 complaints and multiple FloodNet sensor events <span class="cite">[sandy], [nyc311], [floodnet]</span>.
 
 <span class="label">Empirical evidence.</span> Sandy flooded this address Oct 29-30, 2012 <span class="cite">[sandy]</span>. 19 flood-related 311 service requests within 200 m over five years <span class="cite">[nyc311]</span>. Three of five FloodNet sensors within 600 m documented events in the past three years <span class="cite">[floodnet]</span>.</div>
 
-<p style="margin-top: 8px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3);">Mellea rejection sampling &middot; 4 grounding checks &middot; 4/4 pass = ship</p>
+<p style="margin-top: 8px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3);">Hallucination guard &middot; four source-binding checks &middot; reroll until every claim resolves</p>
 
 ---
 
@@ -87,7 +87,7 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 <div class="track-row engaged">
   <div class="check">▸</div>
   <div class="name">Agents &amp; Agentic Workflows</div>
-  <div class="detail">Burr FSM &middot; 17 specialists fanned across 5 Stones &middot; Mellea rejection sampling on every reconcile</div>
+  <div class="detail">Burr FSM &middot; five-Stone evidence taxonomy &middot; planner classifies intent and routes to the right roster &middot; hallucination guard on every reconcile</div>
   <div class="badge">Engaged</div>
 </div>
 
@@ -116,11 +116,11 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 
 <div class="eyebrow">04 &middot; The receipts</div>
 
-# 5 of 5 NYC addresses. Mellea 4/4 every run.
+# 5 of 5 NYC addresses. Every claim verified, every run.
 
 <table>
   <thead>
-    <tr><th>address</th><th>intent</th><th>wall</th><th>specialists</th><th>grounding</th></tr>
+    <tr><th>address</th><th>intent</th><th>wall</th><th>steps</th><th>verified</th></tr>
   </thead>
   <tbody>
     <tr><td>442 E Houston St &middot; LES</td><td>address</td><td>7.6 s</td><td>19</td><td>4/4</td></tr>
@@ -138,14 +138,14 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
     <div class="stat-label">vLLM on MI300X</div>
   </div>
   <div class="box">
-    <div class="lbl">Specialists</div>
-    <div class="stat-value">17</div>
-    <div class="stat-label">fused per address-intent</div>
+    <div class="lbl">Stones</div>
+    <div class="stat-value">5</div>
+    <div class="stat-label">evidence layers per briefing</div>
   </div>
   <div class="box">
-    <div class="lbl">Grounding</div>
+    <div class="lbl">Verified</div>
     <div class="stat-value">4 / 4</div>
-    <div class="stat-label">Mellea checks every run</div>
+    <div class="stat-label">source checks every run</div>
   </div>
 </div>
 

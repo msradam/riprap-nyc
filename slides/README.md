@@ -56,7 +56,7 @@ marp deck.md --theme riprap.css --pptx --output deck.pptx
 | 2 | Problem | Zillow yanked First Street in Dec 2025; black-box scores hit a wall | 0:30 |
 | 3 | What it is | Show the cited paragraph; "every number cites its source or it doesn't appear" | 0:35 |
 | 4 | Stack | Three of four hackathon tracks; MI300X, vLLM, three NYC fine-tunes | 0:40 |
-| 5 | Receipts | 5 of 5 probe pass, 5.8–13.1 s, Mellea 4/4 every run | 0:30 |
+| 5 | Receipts | 5 of 5 probe pass, 5.8–13.1 s, every claim verified | 0:30 |
 | 6 | Civic impact | NY disclosure law, DEP $30B plan, EJNYC FVI — open-source matters | 0:25 |
 | 7 | Demo handoff | Cut to the live HF Space; type the query; let the FSM speak | ~3:00 |
 | 8 | Closing CTA | github.com/msradam/riprap-nyc | 0:10 |
