@@ -243,7 +243,7 @@ def augment_system_prompt(base: str, *, query: str,
         return base
     return (
         f"{base}\n\n"
-        f"QUESTION-AWARE OPENING (overrides only the **Status.** sentence; "
-        f"the four-section structure and citation discipline below are "
-        f"unchanged):\n{directive}"
+        f"QUESTION-AWARE OPENING (this directive overrides ONLY the opening "
+        f"**Status.** sentence; the four-section structure and citation "
+        f"discipline above remain in force):\n{directive}"
     )
