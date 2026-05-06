@@ -70,7 +70,7 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 
 ---
 
-<div class="eyebrow">02 &middot; What riprap is</div>
+<div class="eyebrow">02 &middot; Solution</div>
 
 # Every number cites its source. Or it doesn't appear.
 
@@ -80,11 +80,47 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 
 <span class="label">Empirical evidence.</span> Sandy flooded this address Oct 29-30, 2012 <span class="cite">[sandy]</span>. 19 flood-related 311 service requests within 200 m over five years <span class="cite">[nyc311]</span>. Three of five FloodNet sensors within 600 m documented events in the past three years <span class="cite">[floodnet]</span>.</div>
 
+<div class="box" style="margin-top: 16px; border: 2px dashed var(--stone-400); background: var(--paper-1); padding: 0; display: flex; align-items: center; justify-content: center; min-height: 120px;">
+  <p style="font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); text-align: center; margin: 0; padding: 24px;">
+    [ screenshot of app landing — to be added ]
+  </p>
+</div>
+
 <p style="margin-top: 8px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3);">Hallucination guard &middot; four source-binding checks &middot; reroll until every claim resolves</p>
 
 ---
 
-<div class="eyebrow">03 &middot; Architecture</div>
+<div class="eyebrow">03 &middot; The civic-tech case</div>
+
+# The civic-tech case.
+
+<div class="box-grid cols-2">
+
+<div class="box">
+  <div class="lbl">NY Property Disclosure Law</div>
+  <div class="body">March 2024. Sellers must disclose flood history. <strong>Riprap is the citable narrative.</strong></div>
+</div>
+
+<div class="box">
+  <div class="lbl">NYC DEP Stormwater Plan</div>
+  <div class="body">2024. $30B priority list, 86 sites. <strong>Riprap is the per-NTA evidence layer.</strong></div>
+</div>
+
+<div class="box">
+  <div class="lbl">EJNYC Flood Vulnerability Index</div>
+  <div class="body">2024. 35% of state climate spend goes to "disadvantaged communities." <strong>Riprap stays open-source so advocacy can audit.</strong></div>
+</div>
+
+<div class="box dark">
+  <div class="lbl">No commercial APIs</div>
+  <div class="body">Every dataset is public-record federal, state, or city. Every foundation model is Apache-2.0. <strong>Every claim cites its source.</strong></div>
+</div>
+
+</div>
+
+---
+
+<div class="eyebrow">04 &middot; Architecture</div>
 
 # Five Stones fan out. One cited briefing comes back.
 
@@ -125,96 +161,70 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 
 ---
 
-<div class="eyebrow">04 &middot; The track</div>
+<div class="eyebrow">05 &middot; Fine-Tuning on AMD MI300X</div>
 
-# Submitted to Fine-Tuning on AMD GPUs.
+# Three Apache-2.0 NYC fine-tunes on MI300X.
 
-<p style="margin-bottom: 8px; font-size: 20px;">The work spans three tracks. The Fine-Tuning evidence is the strongest: three Apache-2.0 NYC models trained on AMD MI300X, published on HF Hub.</p>
+<div class="box-grid cols-3" style="margin-top: 12px; gap: 14px;">
 
-<div class="track-row engaged">
-  <div class="check">▸</div>
-  <div class="name">Fine-Tuning</div>
-  <div class="detail"><strong>Submitting here.</strong> Prithvi-EO-2.0-NYC-Pluvial &middot; TerraMind-NYC-Adapters &middot; Granite-TTM-r2-Battery-Surge &middot; trained on MI300X &middot; Apache-2.0 &middot; live on HF Hub</div>
-  <div class="badge">Primary</div>
+<div class="box" style="border-top: 3px solid #0E7490; padding: 18px 18px 16px;">
+  <div class="lbl" style="color: #0E7490; margin-bottom: 6px;">Prithvi-EO-2.0-NYC-Pluvial</div>
+  <div style="font-size: 14px; color: var(--ink-2); margin-bottom: 12px;">Hurricane Ida pluvial flood detection from Sentinel-2</div>
+  <div style="font-family: var(--font-mono); font-size: 22px; font-weight: 700; color: var(--ink); letter-spacing: -0.02em;">0.5979</div>
+  <div style="font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); margin-bottom: 10px;">test flood IoU &nbsp;·&nbsp; 6&times; lift over Sen1Floods11 baseline</div>
+  <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3);">MI300X &middot; AMD Developer Cloud</div>
 </div>
 
-<div class="track-row engaged">
-  <div class="check">▸</div>
-  <div class="name">Agents &amp; Agentic Workflows</div>
-  <div class="detail">Burr FSM &middot; five-Stone evidence taxonomy &middot; Planner classifies intent and routes to the right Stone roster &middot; Mellea rejection-sampling guard on every reconcile</div>
-  <div class="badge">Supporting</div>
+<div class="box" style="border-top: 3px solid #1A4480; padding: 18px 18px 16px;">
+  <div class="lbl" style="color: #1A4480; margin-bottom: 6px;">TerraMind-NYC-Adapters</div>
+  <div style="font-size: 14px; color: var(--ink-2); margin-bottom: 12px;">LULC + Buildings + TiM LoRA adapters for NYC</div>
+  <div style="font-family: var(--font-mono); font-size: 22px; font-weight: 700; color: var(--ink); letter-spacing: -0.02em;">+6.13<span style="font-size: 15px;">pp</span></div>
+  <div style="font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); margin-bottom: 10px;">LULC mIoU over full-FT baseline &nbsp;·&nbsp; mIoU 0.5866</div>
+  <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3);">~18 min total &middot; MI300X</div>
 </div>
 
-<div class="track-row engaged">
-  <div class="check">▸</div>
-  <div class="name">Vision &amp; Multimodal</div>
-  <div class="detail">Sentinel-2 chip &rarr; Prithvi pluvial segmentation &middot; TerraMind LULC + Buildings adapters &middot; Granite Embedding 278M retrieval &middot; GLiNER typed extraction</div>
-  <div class="badge">Supporting</div>
+<div class="box" style="border-top: 3px solid #92400E; padding: 18px 18px 16px;">
+  <div class="lbl" style="color: #92400E; margin-bottom: 6px;">Granite-TTM-r2-Battery-Surge</div>
+  <div style="font-size: 14px; color: var(--ink-2); margin-bottom: 12px;">NOAA Battery tide gauge 96h surge residual nowcast</div>
+  <div style="font-family: var(--font-mono); font-size: 22px; font-weight: 700; color: var(--ink); letter-spacing: -0.02em;">0.157<span style="font-size: 15px;">m</span></div>
+  <div style="font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); margin-bottom: 10px;">RMSE &nbsp;·&nbsp; &minus;35% vs persistence baseline</div>
+  <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3);">MI300X &middot; Apache-2.0 &middot; HF Hub</div>
 </div>
+
+</div>
+
+<p style="margin-top: 18px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3);">Track submitted: Fine-Tuning on AMD GPUs &nbsp;&middot;&nbsp; All three models Apache-2.0, published on HF Hub</p>
 
 ---
 
-<div class="eyebrow">05 &middot; The receipts</div>
+<div class="eyebrow">06 &middot; Demo</div>
 
-# 5 of 5 NYC addresses. Every claim verified, every run.
+# Try it live.
 
-<table>
-  <thead>
-    <tr><th>address</th><th>intent</th><th>wall</th><th>steps</th><th>verified</th></tr>
-  </thead>
-  <tbody>
-    <tr><td>442 E Houston St &middot; LES</td><td>address</td><td>7.6 s</td><td>19</td><td>4/4</td></tr>
-    <tr><td>80 Pioneer St &middot; Red Hook</td><td>address</td><td>13.1 s</td><td>19</td><td>4/4</td></tr>
-    <tr><td>100 Gold St &middot; Manhattan</td><td>address</td><td>11.2 s</td><td>19</td><td>4/4</td></tr>
-    <tr><td>Hollis &middot; Queens</td><td>nbhd</td><td>5.8 s</td><td>9</td><td>4/4</td></tr>
-    <tr><td>Coney Island &middot; Brooklyn</td><td>nbhd</td><td>9.9 s</td><td>9</td><td>4/4</td></tr>
-  </tbody>
-</table>
-
-<div class="box-grid cols-3" style="margin-top: 16px;">
-  <div class="box">
-    <div class="lbl">Wall-clock</div>
-    <div class="stat-value">5.8&ndash;13.1<span style="font-size: 22px; color: var(--ink-3); font-weight: 400; letter-spacing: 0;"> s</span></div>
-    <div class="stat-label">vLLM on MI300X</div>
-  </div>
-  <div class="box">
-    <div class="lbl">Stones</div>
-    <div class="stat-value">5</div>
-    <div class="stat-label">evidence layers per briefing</div>
-  </div>
-  <div class="box">
-    <div class="lbl">Verified</div>
-    <div class="stat-value">4 / 4</div>
-    <div class="stat-label">source checks every run</div>
-  </div>
+<div style="margin: 28px 0 20px; text-align: center;">
+  <p style="font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 10px;">Query</p>
+  <p style="font-size: 26px; font-weight: 700; color: var(--ink); margin: 0 auto; max-width: 820px; line-height: 1.35;">&ldquo;I&rsquo;m thinking about renting an apartment at 80 Pioneer Street, Brooklyn. Should I worry?&rdquo;</p>
 </div>
 
----
-
-<div class="eyebrow">06 &middot; Why it matters</div>
-
-# The civic-tech case.
-
-<div class="box-grid cols-2">
-
-<div class="box">
-  <div class="lbl">NY Property Disclosure Law</div>
-  <div class="body">March 2024. Sellers must disclose flood history. <strong>Riprap is the citable narrative.</strong></div>
+<div style="text-align: center; margin-bottom: 24px;">
+  <span style="font-family: var(--font-mono); font-size: 18px; letter-spacing: 0.06em; color: var(--accent); font-weight: 700;">github.com/msradam/riprap-nyc</span>
 </div>
 
-<div class="box">
-  <div class="lbl">NYC DEP Stormwater Plan</div>
-  <div class="body">2024. $30B priority list, 86 sites. <strong>Riprap is the per-NTA evidence layer.</strong></div>
+<div class="box-grid cols-3" style="margin-top: 0; gap: 10px;">
+
+<div class="box" style="padding: 14px 16px;">
+  <div class="lbl">Watch for</div>
+  <div style="font-size: 14px; color: var(--ink-2); line-height: 1.5;">Verdict opens with an explicit risk statement<br><span style="font-family: var(--font-mono); font-size: 12px; color: var(--ink-3);">&ldquo;Yes, this address is exposed&hellip;&rdquo;</span></div>
 </div>
 
-<div class="box">
-  <div class="lbl">EJNYC Flood Vulnerability Index</div>
-  <div class="body">2024. 35% of state climate spend goes to "disadvantaged communities." <strong>Riprap stays open-source so advocacy can audit.</strong></div>
+<div class="box" style="padding: 14px 16px;">
+  <div class="lbl">Watch for</div>
+  <div style="font-size: 14px; color: var(--ink-2); line-height: 1.5;">Citations resolve inline<br><span style="font-family: var(--font-mono); font-size: 12px; color: var(--ink-3);">[sandy], [nyc311], [floodnet] on every number</span></div>
 </div>
 
-<div class="box dark">
-  <div class="lbl">No commercial APIs</div>
-  <div class="body">Every dataset is public-record federal, state, or city. Every foundation model is Apache-2.0. <strong>Every claim cites its source.</strong></div>
+<div class="box" style="padding: 14px 16px;">
+  <div class="lbl">Watch for</div>
+  <div style="font-size: 14px; color: var(--ink-2); line-height: 1.5;">Mellea grounding in the meta card<br><span style="font-family: var(--font-mono); font-size: 12px; color: var(--ink-3);">4 / 4 source checks, every run</span></div>
 </div>
 
 </div>
@@ -254,9 +264,8 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 
 <div class="eyebrow" style="margin-top: 124px; color: var(--accent); border: 0; padding: 0;">Riprap &middot; flood briefings on AMD</div>
 
-# riprap.nyc
+# github.com/msradam/riprap-nyc
 
-## github.com/msradam/riprap-nyc
 
 <hr>
 
@@ -271,3 +280,42 @@ AMD &times; lablab.ai &middot; May 4&ndash;10 2026
 <p style="font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.08em; color: rgba(244,246,249,0.4); margin-top: 24px; text-transform: none;">
 Dam mark: "Dam" by Chintuza via the Noun Project, CC-BY 3.0.
 </p>
+
+---
+
+<!-- _paginate: false -->
+
+<div class="eyebrow">Appendix &middot; The receipts</div>
+
+# 5 of 5 NYC addresses. Every claim verified, every run.
+
+<table>
+  <thead>
+    <tr><th>address</th><th>intent</th><th>wall</th><th>steps</th><th>verified</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>442 E Houston St &middot; LES</td><td>address</td><td>7.6 s</td><td>19</td><td>4/4</td></tr>
+    <tr><td>80 Pioneer St &middot; Red Hook</td><td>address</td><td>13.1 s</td><td>19</td><td>4/4</td></tr>
+    <tr><td>100 Gold St &middot; Manhattan</td><td>address</td><td>11.2 s</td><td>19</td><td>4/4</td></tr>
+    <tr><td>Hollis &middot; Queens</td><td>nbhd</td><td>5.8 s</td><td>9</td><td>4/4</td></tr>
+    <tr><td>Coney Island &middot; Brooklyn</td><td>nbhd</td><td>9.9 s</td><td>9</td><td>4/4</td></tr>
+  </tbody>
+</table>
+
+<div class="box-grid cols-3" style="margin-top: 16px;">
+  <div class="box">
+    <div class="lbl">Wall-clock</div>
+    <div class="stat-value">5.8&ndash;13.1<span style="font-size: 22px; color: var(--ink-3); font-weight: 400; letter-spacing: 0;"> s</span></div>
+    <div class="stat-label">vLLM on MI300X</div>
+  </div>
+  <div class="box">
+    <div class="lbl">Stones</div>
+    <div class="stat-value">5</div>
+    <div class="stat-label">evidence layers per briefing</div>
+  </div>
+  <div class="box">
+    <div class="lbl">Verified</div>
+    <div class="stat-value">4 / 4</div>
+    <div class="stat-label">source checks every run</div>
+  </div>
+</div>
