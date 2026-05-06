@@ -82,7 +82,7 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 
 <div class="box" style="margin-top: 16px; border: 2px dashed var(--stone-400); background: var(--paper-1); padding: 0; display: flex; align-items: center; justify-content: center; min-height: 120px;">
   <p style="font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); text-align: center; margin: 0; padding: 24px;">
-    [ screenshot of riprap.nyc landing — to be added ]
+    [ screenshot of app landing — to be added ]
   </p>
 </div>
 
@@ -207,7 +207,7 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 </div>
 
 <div style="text-align: center; margin-bottom: 24px;">
-  <span style="font-family: var(--font-mono); font-size: 18px; letter-spacing: 0.06em; color: var(--accent); font-weight: 700;">riprap.nyc</span>
+  <span style="font-family: var(--font-mono); font-size: 18px; letter-spacing: 0.06em; color: var(--accent); font-weight: 700;">github.com/msradam/riprap-nyc</span>
 </div>
 
 <div class="box-grid cols-3" style="margin-top: 0; gap: 10px;">
@@ -264,9 +264,8 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 
 <div class="eyebrow" style="margin-top: 124px; color: var(--accent); border: 0; padding: 0;">Riprap &middot; flood briefings on AMD</div>
 
-# riprap.nyc
+# github.com/msradam/riprap-nyc
 
-## github.com/msradam/riprap-nyc
 
 <hr>
 
