@@ -1,13 +1,13 @@
-# Riprap — Architecture
+# Riprap architecture
 
 > **What it is.** A web tool that takes any NYC address and produces a
-> short, citation-grounded **flood-exposure briefing** — a tier (1–4)
+> short, citation-grounded **flood-exposure briefing**. A tier (1–4)
 > with a paragraph of evidence, where every numeric claim links back to
 > the specific dataset, agency report, or model output it came from.
 >
 > **Who it's for.** Urban planners, journalists on deadline, NYCEM
 > grant writers filing FEMA BRIC sub-applications, agency capital
-> planners, researchers under FOIL/IRB constraints — *not* consumers
+> planners, researchers under FOIL/IRB constraints. Not consumers
 > shopping for flood insurance.
 >
 > **Why local foundation models.** A newsroom with FOIL'd documents
@@ -21,56 +21,56 @@
 
 ## 1. A 60-second primer on NYC flooding
 
-Skip if you already know this. Most architecture docs assume you do —
-this one doesn't.
+Skip if you already know this. Most architecture docs assume you do.
+This one doesn't.
 
 ### 1.1 Three kinds of flood
 
 NYC gets hit by three flood mechanisms that look completely different
 on a map and are caused by different physics:
 
-- **Coastal / surge flooding** — The ocean rises into the city.
+- **Coastal / surge flooding**. The ocean rises into the city.
   Driven by storm surge (wind pushing water against the coast),
   astronomical high tide, and wave run-up. Affects the **shoreline:**
   Brighton Beach, Coney Island, Red Hook, Lower Manhattan, the
   Rockaways, Staten Island east shore. **Hurricane Sandy 2012** is
-  the canonical event — water came over the seawall and flooded
+  the canonical event. Water came over the seawall and flooded
   subway tunnels, hospitals, and electrical substations. Affects
   buildings that were dry that morning.
-- **Pluvial / stormwater flooding** — Rain falls faster than the
+- **Pluvial / stormwater flooding**. Rain falls faster than the
   drainage system can carry it away. Affects **inland low points,
   basement apartments, and chronically under-sewered neighborhoods**:
   Hollis (Queens), Carroll Gardens (Brooklyn), Jamaica. **Hurricane
-  Ida 2021** is the canonical event for NYC — most of the deaths
+  Ida 2021** is the canonical event for NYC. Most of the deaths
   were in basement apartments far from any coast. Optical satellites
   largely *can't see* this kind of flooding because the water drains
   fast and is often sub-surface.
-- **Compound flooding** — Coastal + pluvial happening at the same
+- **Compound flooding**. Coastal + pluvial happening at the same
   time, with groundwater rising too. Currently the active research
   frontier (NPCC4 Ch. 3 calls it out explicitly). Most agencies model
   these mechanisms separately; reality combines them.
 
 A good civic flood tool has to cover all three and be honest about
 what each signal can and cannot see. Riprap surfaces evidence for all
-three but **doesn't predict damage** — see scope below.
+three but **doesn't predict damage**. See scope below.
 
 ### 1.2 Empirical vs modeled vs proxy
 
 Each piece of flood evidence falls into one of three classes, and the
 distinction matters for how much weight to give it:
 
-- **Empirical** — Something flooded a place and was measured. USGS
+- **Empirical**. Something flooded a place and was measured. USGS
   high-water marks (people went out after Hurricane Ida and surveyed
   where water reached on building walls). The 2012 Sandy Inundation
   Zone (mapped by the city after the storm). FloodNet ultrasonic
   sensors that recorded an actual depth. **Highest-confidence**: this
   flood happened here.
-- **Modeled scenarios** — Hydraulic models simulate "what if" cases.
+- **Modeled scenarios**. Hydraulic models simulate "what if" cases.
   FEMA's regulatory floodplains (1 % and 0.2 % annual chance). NYC
   DEP's Stormwater Maps (modeled water depth under three rainfall
   scenarios with varying sea-level-rise assumptions). **Useful but
   scenario-bounded**: this could happen here under those conditions.
-- **Proxy signals** — Indirect indicators of flooding. NYC 311
+- **Proxy signals**. Indirect indicators of flooding. NYC 311
   complaints ("street flooding", "sewer backup") clustering around an
   address. Topographic indices (HAND, TWI) suggesting water *would*
   pool here based on terrain. **Useful but biased**: 311 reflects
@@ -79,7 +79,7 @@ distinction matters for how much weight to give it:
 
 Riprap surfaces all three classes. The score weights them in that
 order (empirical > modeled > proxy), with empirical hits granted a
-**floor rule** — see [§5](#5-the-scoring-rubric).
+**floor rule**. See [§5](#5-the-scoring-rubric).
 
 ### 1.3 Hydrology indices used in this app
 
@@ -87,11 +87,11 @@ Two terrain-derived numbers come up repeatedly. They're cheap to
 compute from a Digital Elevation Model (DEM) and they're the
 hydrological literature's canonical exposure proxies:
 
-- **HAND (Height Above Nearest Drainage)** — Vertical distance from
+- **HAND (Height Above Nearest Drainage)**. Vertical distance from
   the address up to the nearest river/drainage channel. **<1 m** = at
   drainage level (water *will* reach here in flood). **>10 m** =
   hillslope (very dry). Nobre et al. 2011.
-- **TWI (Topographic Wetness Index)** — `ln(catchment_area / tan
+- **TWI (Topographic Wetness Index)**. `ln(catchment_area / tan
   slope)`. **High TWI** = water tends to accumulate here (large
   contributing area, gentle slope). Beven & Kirkby 1979.
 
@@ -102,7 +102,7 @@ Neither is a flood prediction; both are exposure indicators that say
 
 ## 2. What Riprap actually produces
 
-For a given address (or any of three modes — see [§4](#4-three-user-modes)),
+For a given address (or any of three modes; see [§4](#4-three-user-modes)),
 Riprap returns:
 
 1. **A tier 1–4** computed by a deterministic, published rubric
@@ -113,11 +113,11 @@ Riprap returns:
    *Status*, *Empirical evidence*, *Modeled scenarios*, *Policy
    context*. A section is omitted entirely if no specialist fired for
    it (silence-over-confabulation contract).
-3. **Evidence cards** — one per fired specialist, with the raw values
+3. **Evidence cards**. One per fired specialist, with the raw values
    and a link to the source dataset.
-4. **Map overlay** — the address pinned, with the empirical and
+4. **Map overlay**. The address pinned, with the empirical and
    modeled flood extents that overlap it.
-5. **Live "right now" signals** — active NWS flood alerts, current
+5. **Live "right now" signals**. Active NWS flood alerts, current
    tide residual at the Battery, recent precipitation at the nearest
    ASOS, and a Granite TTM short-horizon forecast of the surge
    residual. **These do not modify the tier** (per IPCC AR6 WG II's
@@ -131,7 +131,7 @@ prose.
 
 ## 3. The Burr FSM and how the specialists chain
 
-Riprap is a **state machine** — a Burr FSM (DAGWorks) — that walks
+Riprap is a **state machine**, a Burr FSM (DAGWorks), that walks
 through a fixed list of "specialist" functions in order. Each
 specialist either produces a structured fact or stays silent. At the
 end, the reconciler reads all the produced facts and writes the
@@ -206,7 +206,7 @@ shows live as the FSM runs.
 | 8 | **nws_obs** *(live)*      | Recent precipitation from the nearest airport ASOS station (KNYC / KLGA / KJFK / KEWR / KFRG).                                                                                   | live               |
 | 9 | **ttm_forecast** *(live)* | Granite TTM r2 zero-shot forecast of the surge **residual** at the Battery for the next ~9.6 h. NOAA already publishes the astronomical tide; TTM forecasts the part NOAA doesn't. | live (model-derived) |
 | 10 | **microtopo**            | LiDAR-derived terrain features at the point: elevation, HAND, TWI, local relief percentile.                                                                                      | proxy              |
-| 11 | **ida_hwm**              | USGS Hurricane Ida 2021 high-water marks — actual measured water heights surveyed in the days after the storm.                                                                   | empirical          |
+| 11 | **ida_hwm**              | USGS Hurricane Ida 2021 high-water marks. Actual measured water heights surveyed in the days after the storm.                                                                   | empirical          |
 | 12 | **prithvi**              | NASA/IBM Prithvi-EO 2.0 segmentation of Sentinel-2 imagery for the Ida pre/post pair. Pre-computed offline; serves point-in-polygon queries against the resulting 166 polygons.   | empirical (model-derived) |
 | 13 | **rag**                  | Granite Embedding 278M retrieves the most-relevant paragraphs from 5 NYC policy PDFs (Comptroller, NPCC4, MTA, NYCHA, ConEd) given the address's borough + which scenarios fired. | policy             |
 | 14 | **reconcile**            | Granite 4.1 :3b reads all the documents produced by steps 1–13 and writes the cited briefing paragraph. See [§6](#6-document-grounded-reconciliation).                            | LLM synthesis      |
@@ -219,7 +219,7 @@ address:
 | Step | What it returns |
 |---|---|
 | geocode    | `(40.5780, -73.9617)`, BBL `3-08660-0001`, Brooklyn |
-| sandy      | **YES** — inside the 2012 Sandy Inundation Zone |
+| sandy      | **YES**. Inside the 2012 Sandy Inundation Zone |
 | dep_stormwater | `dep_moderate_2050`: depth 0.4-0.8 ft; `dep_extreme_2080`: depth 0.8-2.0 ft |
 | floodnet   | 2 sensors within 600 m; 1 trigger event in last 3 yr (peak 14 cm) |
 | nyc311     | 11 flood-related complaints in 200 m, 5-yr window |
@@ -267,7 +267,7 @@ saw those headers and didn't invent them.
 |---------------------------------------|------------------|---|
 | `/`                                   | **Single address** | Geocode → run the full FSM → cited paragraph + map. Live demo path. |
 | `/compare`                            | **Compare**      | Two addresses side by side; parallel FSM runs (`asyncio.to_thread`, `OLLAMA_NUM_PARALLEL=2`). Useful for "this site vs the alternative". |
-| `/register/{schools,nycha,mta_entrances}` | **Register** | Pre-computed bulk runs over NYC public-asset registries — 126 schools, 45 NYCHA developments, ~1,900 MTA subway entrances. Loaded from `data/registers/*.json` at boot. |
+| `/register/{schools,nycha,mta_entrances}` | **Register** | Pre-computed bulk runs over NYC public-asset registries. 126 schools, 45 NYCHA developments, ~1,900 MTA subway entrances. Loaded from `data/registers/*.json` at boot. |
 
 Single-address is the live path. Registers are pre-computed because
 running 1,900 reconciler calls at request time is a non-starter; the
@@ -302,14 +302,14 @@ Tier 4, 0 → Tier 0.
 ### 5.2 Max-empirical floor
 
 If **Sandy 2012 inundation** OR **a USGS Ida HWM within 100 m** fired,
-the tier is capped at **2 (Elevated)** — it cannot be worse,
+the tier is capped at **2 (Elevated)**. It cannot be worse,
 regardless of the additive composite.
 
 This recovers the *important* multiplicative behaviour Balica 2012
 argues for (empirical observations should not be cancelled by
 terrain or modeled scenarios) without giving up additive transparency.
 The 100 m radius is chosen because USGS HWM positional uncertainty is
-typically 5–30 m — 100 m gives ~3σ headroom for a confident "this
+typically 5–30 m. 100 m gives ~3σ headroom for a confident "this
 address was inundated" signal.
 
 ### 5.3 Live signals stay out
@@ -366,7 +366,7 @@ omitted entirely.
 
 `app/mellea_validator.py` wraps the Granite-via-Ollama call in IBM
 Research's [Mellea](https://github.com/generative-computing/mellea)
-framework — instruct, validate, repair. The synthesis intents call
+framework. Instruct, validate, repair. The synthesis intents call
 `reconcile_strict_streaming(...)` which:
 
 1. **Streams** each generation attempt's tokens to the user (via the
@@ -374,21 +374,21 @@ framework — instruct, validate, repair. The synthesis intents call
    `progress_q` for the polygon intents).
 2. After each attempt, runs **four deterministic checks** on the
    accumulated paragraph:
-   - **`numerics_grounded`** — every non-trivial number in the output
+   - **`numerics_grounded`**. Every non-trivial number in the output
      appears verbatim in a source document.
-   - **`no_placeholder_tokens`** — output contains no leaked
+   - **`no_placeholder_tokens`**. Output contains no leaked
      `[source]` / `<document>` template markup.
-   - **`citations_dense`** — every non-trivial number has a
+   - **`citations_dense`**. Every non-trivial number has a
      `[doc_id]` citation **somewhere in the same sentence** (sentence
      boundaries: `. ` / `.\n` / end-of-text).
-   - **`citations_resolve`** — cited `doc_id`s are a subset of the
+   - **`citations_resolve`**. Cited `doc_id`s are a subset of the
      input doc_ids.
 3. If any check fails, fires a `mellea_attempt` SSE event with the
    failed-requirement names, then **rerolls** with a feedback prompt
    that names the specific failing sentences (the model usually
    responds well to surgical corrections). Loop budget: 3 attempts.
 
-The frontend renders an inline banner above the briefing — amber on
+The frontend renders an inline banner above the briefing. Amber on
 reroll (with the failed-req list), green on first-try pass. The final
 reconcile step in the trace shows the `passed: N/4 · rerolls: M`
 metadata for full audit transparency.
@@ -411,12 +411,12 @@ X}fact<|end_of_cite|>` mode. **It's deprecated in 4.x.** Verified:
 - The official Ollama chat template for `granite4.x` has no citation
   branch (the 3.3 / 4.0-preview templates did).
 - `granite_common` ships only `granite3/granite32` and
-  `granite3/granite33` subdirs — no 4.x equivalent.
+  `granite3/granite33` subdirs. No 4.x equivalent.
 - `granite-io` has only `granite_3_2/` and `granite_3_3/` processor
   dirs.
 
 The base 4.1 weights still contain the cite tokens (training residue),
-so the model emits them as real tokens when nudged — but only as an
+so the model emits them as real tokens when nudged. But only as an
 end-of-response list, not inline in prose. IBM's published 4.x
 grounding path is a separate **Citation Generation LoRA** (built on
 `granite-4.0-micro`, not 4.1) requiring HF transformers + LoRA
@@ -452,11 +452,11 @@ drop noise, <1 km² to drop tidal artifacts) into **166 polygons**
 baked into `data/prithvi_ida_2021.geojson`. The runtime FSM does a
 point-in-polygon test, not fresh inference. This is honest about
 where foundation models earn their keep: **once, to produce a
-defensible event-level signal — not per request**.
+defensible event-level signal. Not per request**.
 
 ### 7.2 Why TTM r2 runs live
 
-TTM r2 is **1.5 M params** — vastly smaller than Prithvi or Granite
+TTM r2 is **1.5 M params**. Vastly smaller than Prithvi or Granite
 4.1. Inference is millisecond-scale even on CPU. It forecasts only
 the residual (surge component) at the Battery, which complements the
 NOAA snapshot specialist; it does **not** try to forecast the
@@ -474,7 +474,7 @@ from static layers and is handled separately:
   unless source data changed.
 - **Cadence**: NOAA tides update every 6 min; NWS alerts on push;
   NWS obs ~hourly; TTM is computed per query (cheap).
-- **Failure mode**: graceful — if NOAA times out, no `noaa_tides`
+- **Failure mode**: graceful. If NOAA times out, no `noaa_tides`
   doc is emitted; the reconciler simply doesn't see it.
 
 This mirrors how First Street separates Flood Factor (static, 30-yr)
@@ -551,7 +551,7 @@ riprap-nyc/
       compare.html / .js     two-address side-by-side
       register.html / .js    bulk register browser
       style.css              IBM Plex Sans, Planning Labs idiom
-      dist/                  Svelte 5 custom-element bundle (committed —
+      dist/                  Svelte 5 custom-element bundle (committed.
                               HF Spaces doesn't run a Node build).
                               Built from web/svelte/ via `npm run build`.
 
@@ -601,7 +601,7 @@ riprap-nyc/
   type, electrical hardening, drainage condition), social capacity,
   and financial absorption are out of scope.
 - **No sub-surface flooding.** Optical satellites can't see basement
-  apartments or subway entrances — the dominant Hurricane Ida damage
+  apartments or subway entrances. The dominant Hurricane Ida damage
   mode in NYC. Prithvi correctly emits no polygons for Hollis or
   Carroll Gardens. That silence is a feature, not a bug.
 - **Vintage-bounded.** FEMA NFHL is years stale; DEP Stormwater Maps
@@ -657,7 +657,7 @@ weights load and TTM downloads. Warm queries:
   adds ~25 s)
 
 The Svelte bundle in `web/static/dist/` is committed, so HF Spaces
-runs no Node build step — only the Python deps + Ollama install.
+runs no Node build step. Only the Python deps + Ollama install.
 
 ### 12.2 Local development
 

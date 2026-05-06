@@ -3,7 +3,7 @@ marp: true
 theme: riprap
 paginate: true
 size: 16:9
-title: Riprap — Citation-grounded NYC flood briefings
+title: Riprap. Citation-grounded NYC flood briefings.
 description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 ---
 

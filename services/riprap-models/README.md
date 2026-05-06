@@ -1,11 +1,11 @@
-# Riprap Models — droplet inference service
+# Riprap Models: droplet inference service
 
 GPU inference microservice that runs alongside vLLM on the AMD MI300X
 droplet. Exposes one HTTP endpoint per model class consumed by the
-Riprap FastAPI app's specialists, so all GPU-accelerable forward
-passes (Prithvi-NYC-Pluvial, TerraMind LULC + Buildings, Granite TTM
-r2, Granite Embedding 278M, GLiNER) run on the MI300X regardless of
-which surface — laptop or HF Space — hosts the FastAPI process.
+Riprap FastAPI app's probes, so all GPU-accelerable forward passes
+(Prithvi-NYC-Pluvial, TerraMind LULC + Buildings, Granite TTM r2,
+Granite Embedding 278M, GLiNER) run on the MI300X regardless of
+which surface (laptop or HF Space) hosts the FastAPI process.
 
 ## Service contract
 
@@ -22,7 +22,7 @@ Auth: bearer token on every `/v1/*` route via `RIPRAP_MODELS_API_KEY`.
 Same shape as vLLM. `/healthz` is open so liveness probes don't need
 auth.
 
-## Deploy — fresh droplet (recommended)
+## Deploy: fresh droplet (recommended)
 
 Use the one-shot bring-up script. Works on any AMD ROCm GPU droplet
 with Docker + GPU device files (`/dev/kfd`, `/dev/dri`) and SSH root
@@ -46,7 +46,7 @@ What it does, in order:
 6. Waits up to 90 s for vLLM `/v1/models` and 60 s for
    riprap-models `/healthz`, exits non-zero if either misses
 
-Re-running on the same droplet is idempotent — existing containers
+Re-running on the same droplet is idempotent. Existing containers
 get `docker rm -f`'d and recreated.
 
 Env knobs:
@@ -65,7 +65,7 @@ After it returns, set the printed env vars in your local shell or HF
 Space variables, run `scripts/probe_addresses.py` to verify, and
 you're live.
 
-## Deploy — extend an existing container (legacy)
+## Deploy: extend an existing container (legacy)
 
 If you already have a `terramind` container with the heavy ML deps
 baked in (the bootstrap-droplet path), you can skip the Dockerfile
@@ -92,10 +92,11 @@ mapping was set when the container was created.
 
 What survives a droplet destruction:
 
-- `services/riprap-models/Dockerfile` + `requirements-full.txt` —
-  every pinned dep, captured from the bootstrap droplet on 2026-05-05
-- `scripts/deploy_droplet.sh` — the bring-up script
-- HF Hub model artefacts — every fine-tune lives at
+- `services/riprap-models/Dockerfile` plus `requirements-full.txt`.
+  Every pinned dep, captured from the bootstrap droplet on
+  2026-05-05.
+- `scripts/deploy_droplet.sh`. The bring-up script.
+- HF Hub model artefacts. Every fine-tune lives at
   `msradam/Prithvi-EO-2.0-NYC-Pluvial`,
   `msradam/TerraMind-NYC-Adapters`,
   `msradam/Granite-TTM-r2-Battery-Surge`. The Dockerfile pulls them
@@ -104,12 +105,13 @@ What survives a droplet destruction:
 What does NOT survive:
 
 - The HF cache at `${HF_CACHE_HOST}` (default `/root/hf-cache`) on
-  the droplet — every redeploy re-downloads ~12 GB of weights
-  (Granite 4.1 8b for vLLM ~16 GB, Prithvi v2 ~1.3 GB, TerraMind
-  adapters ~600 MB, Granite Embedding ~600 MB, GLiNER ~400 MB,
-  Granite TTM r2 ~6 MB). First query after redeploy takes ~30 s
-  longer than steady-state because of the lazy model load
-- The bearer token — generate a fresh one when re-deploying
+  the droplet. Every redeploy re-downloads around 12 GB of weights
+  (Granite 4.1 8b for vLLM around 16 GB, Prithvi v2 around 1.3 GB,
+  TerraMind adapters around 600 MB, Granite Embedding around 600 MB,
+  GLiNER around 400 MB, Granite TTM r2 around 6 MB). First query
+  after redeploy takes around 30 s longer than steady-state because
+  of the lazy model load.
+- The bearer token. Generate a fresh one when re-deploying.
 
 To redeploy:
 

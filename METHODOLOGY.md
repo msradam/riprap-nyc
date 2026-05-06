@@ -1,4 +1,4 @@
-# Riprap — Scoring Methodology
+# Riprap scoring methodology
 
 > Riprap produces a **flood-exposure tier (1–4) per NYC address**, not
 > a calibrated damage probability. The tier is a deterministic
@@ -8,7 +8,7 @@
 ## 1. Why this design
 
 Closed-methodology scores (First Street, Jupiter, Fathom) are useful
-products but uncitable in civic work — a NYCEM grant writer can't quote
+products but uncitable in civic work. A NYCEM grant writer can't quote
 "0.73" in a FEMA BRIC sub-application without a defensible audit trail.
 At the same time, an LLM-emitted score would be non-reproducible and
 uncalibrated, with documented LLM-as-judge pathologies (Zheng et al.
@@ -25,19 +25,19 @@ The composite construction follows a well-trodden path in the multi-
 indicator vulnerability/exposure literature:
 
 - **Cutter, Boruff & Shirley (2003)**, *Social Science Quarterly* 84(2):
-  242–261 — the SoVI hazards-of-place pattern: group indicators
+  242–261. The SoVI hazards-of-place pattern: group indicators
   thematically; sum factors with equal weights because there is no
   defensible theoretical basis for differential weighting.
-- **Tate (2012)**, *Natural Hazards* 63: 325–347 — explicit Monte Carlo
+- **Tate (2012)**, *Natural Hazards* 63: 325–347. Explicit Monte Carlo
   sensitivity analysis showing that hierarchical equal-weighted
   composites are the most rank-stable. This is why we use equal weights
   *within* sub-indices.
 - **Balica, Wright & van der Meulen (2012)**, *Natural Hazards* 64:
-  73–105 — Coastal City Flood Vulnerability Index, multiplicative
+  73–105. Coastal City Flood Vulnerability Index, multiplicative
   (Exposure × Susceptibility / Resilience). We adopt only the
   override-behavior of multiplicative form, as a "max-empirical floor"
   (§4 below), because we have no resilience term.
-- **Kim et al. (2019)**, *Scientific Reports* 9:18564 — additive vs
+- **Kim et al. (2019)**, *Scientific Reports* 9:18564. Additive vs
   geometric aggregation; additive is more transparent and reproducible
   *if* sub-indices are pre-grouped thematically. Done.
 
@@ -58,15 +58,15 @@ Binary "inside zone" indicators with weights ordered by agency tiering:
 
 | Indicator                       | Weight | Citation |
 |---------------------------------|-------:|----------|
-| FEMA NFHL 1% (SFHA)             | 1.00   | FEMA NFHL — regulatory mandate threshold |
-| FEMA NFHL 0.2%                  | 0.50   | FEMA NFHL — tail scenario |
+| FEMA NFHL 1% (SFHA)             | 1.00   | FEMA NFHL. Regulatory mandate threshold |
+| FEMA NFHL 0.2%                  | 0.50   | FEMA NFHL. Tail scenario |
 | NYC DEP Moderate-2050 + 2.5 ft  | 0.75   | NYC DEP Stormwater Maps 2021; NPCC4 Ch.3 |
-| NYC DEP Extreme-2080 + SLR      | 0.50   | NYC DEP Stormwater Maps 2021 — explicitly tail |
+| NYC DEP Extreme-2080 + SLR      | 0.50   | NYC DEP Stormwater Maps 2021. Explicitly tail |
 | NYC DEP Tidal-2050              | 0.75   | NPCC4 Ch.3 coastal projection |
 
 Why DEP-2050 outranks DEP-2080: NPCC4 designates the 2080 extreme
 scenario as a **tail** projection. Closer-horizon coastal/pluvial
-maps — those a current planner can act on — get the higher weight.
+maps. Those a current planner can act on. Get the higher weight.
 
 ### 3.2 Hydrological sub-index
 
@@ -99,7 +99,7 @@ Mix of binary observed-extent flags and banded count signals:
 | FloodNet trigger (3 yr)    | 0.75   | FloodNet NYC; NPCC4 Ch.3 references |
 
 The 311 and FloodNet weights are capped at 0.75 because both signals
-have documented coverage and reporting bias — 311 reflects civic
+have documented coverage and reporting bias. 311 reflects civic
 engagement as well as flooding, FloodNet has uneven spatial coverage.
 Sandy and HWMs are 1.0 because they're engineered ground-truth
 observations.
@@ -116,7 +116,7 @@ Bands for 311 count (200 m buffer, 5-year window):
 ## 4. Max-empirical floor
 
 If **Sandy 2012 inundation** OR **a USGS Ida HWM within 100 m** fired,
-the tier is capped at **2 (Elevated)** — it cannot be worse, regardless
+the tier is capped at **2 (Elevated)**. It cannot be worse, regardless
 of the additive composite.
 
 This recovers the *important* multiplicative behaviour Balica 2012
@@ -126,7 +126,7 @@ floor (a `min(tier, 2)` after composition) rather than a full
 multiplicative form so the composite remains additive and auditable.
 
 The 100 m radius is chosen because USGS HWM positional uncertainty is
-typically 5–30 m horizontal — 100 m gives ~3σ headroom for a confident
+typically 5–30 m horizontal. 100 m gives ~3σ headroom for a confident
 "this address was inundated" signal.
 
 ## 5. Composite → tier mapping
@@ -177,7 +177,7 @@ Riprap's tier is **not**:
 
 It **is**:
 
-- An exposure prior — a literature-grounded, deterministic, reproducible
+- An exposure prior. A literature-grounded, deterministic, reproducible
   index of how many publicly-documented flood signals overlap this
   address.
 - Auditable end-to-end: every term has a published source; every weight
@@ -200,7 +200,7 @@ These appear next to the tier badge and in the methodology disclosure:
 
 > **DEP 2050/2080 and FEMA 0.2% are bounding scenarios, not forecasts.**
 > The tier reads them as "if this scenario materialized, this address
-> would be inside its footprint" — not "this is the expected future."
+> would be inside its footprint". Not "this is the expected future."
 
 > **Compound flooding is not separately modeled.** Concurrence of rain
 > + tide + groundwater is the residual research frontier (NPCC4 Ch. 3).
@@ -244,7 +244,7 @@ Kim, S. et al. (2019). "Assessment of Aggregation Frameworks for
 Composite Indicators in Measuring Flood Vulnerability to Climate
 Change." *Scientific Reports* 9:18564.
 
-Nobre, A. D. et al. (2011). "Height Above the Nearest Drainage — A
+Nobre, A. D. et al. (2011). "Height Above the Nearest Drainage. A
 Hydrologically Relevant New Terrain Model." *Journal of Hydrology*
 404(1–2): 13–29.
 

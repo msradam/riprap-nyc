@@ -8,7 +8,7 @@ Demo is **Sunday May 10**.
 Eight priorities closed against `audit/2026-05-03-evening-audit.md`:
 
 1. `pitch/cold_open.md` restored (was accidentally deleted in 1cb5ee6).
-2. Granite Guardian / refusal-classification leftovers removed —
+2. Granite Guardian / refusal-classification leftovers removed.
    Mellea is the sole grounding mechanism, period.
 3. **Trace UI is now clickable.** Click any specialist row to reveal
    its raw structured output (formatted JSON, copy button,
@@ -23,9 +23,9 @@ Eight priorities closed against `audit/2026-05-03-evening-audit.md`:
    NYCHA-centroid) coloured by Sandy exposure with click popups
    showing name + `[doc_id]`. NYCHA polygon-fill is queued for when
    `geometry_geojson` lands in the dataclass.
-6. **`floodnet_forecast` specialist** — TTM r2 forecast on the
+6. **`floodnet_forecast` specialist**. TTM r2 forecast on the
    nearest FloodNet sensor's flood-event recurrence. Reuses the
-   (512, 96) singleton already loaded for `ttm_311_forecast` —
+   (512, 96) singleton already loaded for `ttm_311_forecast`.
    *no new model class loaded into memory*. The strongest single
    TTM win for the NYU CUSP audience.
 7. Trace UI groups TTM specialists under one parent node
@@ -60,7 +60,7 @@ fine-tune prep green.
 
 End-to-end smoke on "Coney Island Brooklyn" produced citations
 `[mta_entrance_56]`, `[nycha_dev_239]`, `[nycha_dev_166]` alongside
-`[rag_mta]` and `[nyc311]` — family-prefix chip routing works.
+`[rag_mta]` and `[nyc311]`. Family-prefix chip routing works.
 
 Last commit: `86861be` (FSM integration of 4 register specialists).
 
@@ -85,7 +85,7 @@ Last commit: `86861be` (FSM integration of 4 register specialists).
   GPU with vLLM; both fit on one MI300X.
 - **TerraMind manifest is 1028 paired chips**, 2021-05 → 2026-04,
   NYC 5-borough hull +5 km, S2-cloud <30%, ≤3-day pair window. One
-  year (2022-05 → 2023-04) returned 0 due to PC API intermittency —
+  year (2022-05 → 2023-04) returned 0 due to PC API intermittency.
   acceptable for the micro-fine-tune.
 
 ## First thing Monday morning
@@ -112,7 +112,7 @@ Last commit: `86861be` (FSM integration of 4 register specialists).
    - A: ship the fine-tuned checkpoint as a Riprap specialist.
    - B: publish to HF as `msradam/TerraMind-1.0-NYC` with model card,
      don't ship in demo. **Bucket B is fully acceptable** per the
-     spec — civic-tech publication discipline is the durable goal.
+     spec. Civic-tech publication discipline is the durable goal.
    - C: discard checkpoint, no public artefact.
 
 ## Working on Monday
@@ -166,10 +166,10 @@ In rough priority order:
    tree.
 3. **WCAG 2.2 AA pass.**
 4. **Methodology paper draft** (6-8 page PDF). Goal: Saturday May 9.
-5. **Historical-event mode** — vintage-cutoff queries. Saturday.
+5. **Historical-event mode**. Vintage-cutoff queries. Saturday.
 6. **Five Build-in-Public posts** through the week.
 7. **5-minute hackathon pitch + 3 demo queries.** Friday rehearsal.
-8. **ASCE talk materials** — May 13 (post-hackathon).
+8. **ASCE talk materials**. May 13 (post-hackathon).
 
 ## Sharp edges to remember
 
@@ -196,14 +196,14 @@ In rough priority order:
 ## Files to read in order on Monday morning
 
 1. This file.
-2. `experiments/05_terramind_nyc_finetune/eval/eval_spec.md` — the
+2. `experiments/05_terramind_nyc_finetune/eval/eval_spec.md`. The
    contract for what training output triggers ship/publish/revert.
-3. `experiments/06_granite_guardian/RESULTS.md` — the Guardian →
+3. `experiments/06_granite_guardian/RESULTS.md`. The Guardian →
    planner pivot decision record (so you know why Guardian is in
    the repo but not on the demo path).
-4. `experiments/07_mta_entrances/RESULTS.md` — the canonical
+4. `experiments/07_mta_entrances/RESULTS.md`. The canonical
    register-specialist pattern (the other three follow it).
-5. `CLAUDE.md` — fix the AMD droplet IP (165.245.134.44 →
+5. `CLAUDE.md`. Fix the AMD droplet IP (165.245.134.44 →
    129.212.182.52) at the same time as the first edit of the day.
 
 ## Status as of 2026-05-03 ~12:50 ET
