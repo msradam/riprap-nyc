@@ -27,6 +27,10 @@
      *  not gated by `activeLayers`. */
     registerPoints?: GeoJSON.FeatureCollection;
     registerPolygons?: GeoJSON.FeatureCollection;
+    /** TerraMind-synthesis LULC polygons from the SSE final payload
+     *  (terramind.polygons_geojson). Categorical fill by `fill_color`
+     *  property; synthetic tier; controlled by the SYN master toggle. */
+    terramindLulc?: GeoJSON.FeatureCollection;
     activeLayers?: { empirical: boolean; modeled: boolean; synthetic: boolean; proxy: boolean };
     /** v0.4.5 §8 — when a Findings card is hovered/focused, its
      *  `mapLayer` key flows in as `linkedKey`. The map root gains
@@ -43,6 +47,7 @@
     proxy311,
     registerPoints,
     registerPolygons,
+    terramindLulc,
     activeLayers = { empirical: true, modeled: true, synthetic: true, proxy: true },
     linkedKey = null,
   }: Props = $props();
@@ -71,6 +76,7 @@
   $effect(() => { setSourceData('proxy-311', proxy311); });
   $effect(() => { setSourceData('register-points', registerPoints); });
   $effect(() => { setSourceData('register-polygons', registerPolygons); });
+  $effect(() => { setSourceData('terramind-lulc', terramindLulc); });
 
   $effect(() => {
     setLayerVisibility('tier-empirical-fill', activeLayers.empirical);
@@ -79,6 +85,8 @@
     setLayerVisibility('tier-modeled-line', activeLayers.modeled);
     setLayerVisibility('tier-synthetic-fill', activeLayers.synthetic);
     setLayerVisibility('tier-synthetic-line', activeLayers.synthetic);
+    setLayerVisibility('terramind-lulc-fill', activeLayers.synthetic);
+    setLayerVisibility('terramind-lulc-line', activeLayers.synthetic);
     setLayerVisibility('tier-proxy-dots', activeLayers.proxy);
   });
 
@@ -120,6 +128,7 @@
       map.addSource('proxy-311', { type: 'geojson', data: proxy311 ?? fcEmpty() });
       map.addSource('register-points', { type: 'geojson', data: registerPoints ?? fcEmpty() });
       map.addSource('register-polygons', { type: 'geojson', data: registerPolygons ?? fcEmpty() });
+      map.addSource('terramind-lulc', { type: 'geojson', data: terramindLulc ?? fcEmpty() });
       map.addSource('queried-address', {
         type: 'geojson',
         data: {
@@ -174,6 +183,20 @@
             1, 3, 5, 6, 15, 9, 30, 12
           ]
         }
+      });
+
+      // TerraMind-synthesis LULC categorical fill (synthetic prior tier).
+      // Per-feature fill_color property carries class-specific color from
+      // LULC_FILL_COLORS in terramind_synthesis.py. Rendered below register
+      // pins so asset markers stay dominant. Opacity kept low (0.25) so the
+      // Sandy/DEP flood-zone blues read through.
+      map.addLayer({
+        id: 'terramind-lulc-fill', type: 'fill', source: 'terramind-lulc',
+        paint: { 'fill-color': ['get', 'fill_color'], 'fill-opacity': 0.25 }
+      });
+      map.addLayer({
+        id: 'terramind-lulc-line', type: 'line', source: 'terramind-lulc',
+        paint: { 'line-color': ['get', 'fill_color'], 'line-width': 0.75, 'line-opacity': 0.45, 'line-dasharray': [3, 2] }
       });
 
       // Register-asset polygons (NYCHA developments only). Fill graded

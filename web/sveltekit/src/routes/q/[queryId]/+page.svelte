@@ -55,7 +55,7 @@
   let mapFeatureCounts = $derived({
     empirical: sandyFc?.features.length ?? 0,
     modeled: depFc?.features.length ?? 0,
-    synthetic: synFc?.features.length ?? 0,
+    synthetic: (synFc?.features.length ?? 0) + (terramindLulcFc?.features.length ?? 0),
     proxy: proxyFc?.features.length ?? 0
   });
 
@@ -299,6 +299,7 @@
   let depFc = $state<FeatureCollection | undefined>(undefined);
   let synFc = $state<FeatureCollection | undefined>(undefined);
   let proxyFc = $state<FeatureCollection | undefined>(undefined);
+  let terramindLulcFc = $state<FeatureCollection | undefined>(undefined);
 
   let blocks = $state<BriefingBlock[]>([]);
   let citations = $state<Record<string, Citation>>({});
@@ -543,6 +544,16 @@
         const fr = f as unknown as Record<string, unknown>;
         registerPointsFc = buildRegisterPointsFc(fr);
         registerPolygonsFc = buildRegisterPolygonsFc(fr);
+        // TerraMind-synthesis LULC polygons — already computed by the
+        // specialist and carried in terramind.polygons_geojson. Wire into
+        // the map's synthetic layer without an additional API round-trip.
+        const tm = fr.terramind as Record<string, unknown> | null | undefined;
+        if (tm?.ok && tm?.polygons_geojson) {
+          const pg = tm.polygons_geojson as FeatureCollection;
+          if (pg?.type === 'FeatureCollection' && (pg.features?.length ?? 0) > 0) {
+            terramindLulcFc = pg;
+          }
+        }
         // v0.4.2 §12 grounding failure: budget exhausted with failed checks.
         const mres = f.mellea;
         if (mres && mres.failed && mres.failed.length > 0
@@ -675,6 +686,7 @@
                 proxy311={proxyFc}
                 registerPoints={registerPointsFc}
                 registerPolygons={registerPolygonsFc}
+                terramindLulc={terramindLulcFc}
                 {linkedKey}
               />
               <MapLegend
