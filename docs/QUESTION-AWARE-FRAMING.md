@@ -103,3 +103,92 @@ The "below 3 on more than five" test is the trigger to move to
 heavier interventions — typically that the regex detector misclassified
 the question or the Granite model is ignoring the directive under the
 existing system prompt's strong four-section discipline.
+
+---
+
+## Outcome of the 2026-05-06 framed run
+
+`tests/integration/results/2026-05-06/FRAMING-DELTA.md` is the full
+report. Headline:
+
+- Mean framing **2.25 → 2.80** (+0.55).
+- Queries reaching 5/5: **0 → 3** — q01 resident habitability
+  ("Yes, this address is exposed..."), q02 attorney disclosure
+  ("Disclosure is warranted..."), q13 grant evidence
+  ("Vulnerability assessment: ...").
+- Queries reaching ≥ 4/5: **2 → 5**.
+- Mellea grounding: 4 queries improved (3/4 → 4/4); 2 regressed
+  (q01 4/4 → 3/4, q06 3/4 → 2/4); 14 unchanged. Net +2.
+
+**Stop condition fired.** 12 / 20 framed queries scored below 3.
+Triage of the 12:
+
+1. **Rubric-vs-directive vocabulary mismatch (4 queries).** q03, q08,
+   q10, q12 are bare neighborhood names that the suite labels
+   `capital_planning`. The detector returns `journalism` (the
+   bare-neighborhood fallback). Both are valid persona framings; the
+   journalism directive *is* applied (the openings change), but the
+   capital-planning rubric scores against verdict words like
+   "prioritize" / "merits prioritization" that the journalism
+   directive doesn't request. **Not a framing failure — a
+   measurement asymmetry.**
+2. **Short-prose floor (4 queries).** q07, q14, q15, q19 returned
+   ≤ 200 chars of prose because the geocoder failed (q07, q14, q18 —
+   long conversational queries) or the planner / NTA resolver
+   short-circuited (q15 ranking query, q19 BBMCR project name).
+   Documented in `OVERNIGHT-2026-05-06-OUT-OF-SCOPE.md`. No framing
+   change can salvage these — they need geocoder + intent-router
+   work first.
+3. **Granite ignored the directive (4 queries).** q04 (bare address,
+   underwriting label), q05 (bare borough, journalism label), q11
+   (PS 188 ambiguous), q17 (compare intent), q20 (Astoria control).
+   In each case the framing prompt was injected but the opening
+   stayed generic. Granite 4.1's existing four-section discipline
+   appears to overpower a soft "QUESTION-AWARE OPENING" directive
+   for some question types; the verdict-style types (Yes/No,
+   Disclosure, Vulnerability assessment) succeed because they have
+   explicit token shapes the model can latch onto.
+
+## What option (a) would require
+
+Adam's instruction: if the stop condition fires, document option (a)
+or (c) and stop — do not silently expand scope. **NOT IMPLEMENTED.**
+Sketch:
+
+1. **Planner schema gains a `question_type` field.** Add to
+   `app/planner.py:PLAN_SCHEMA_DESC`, `Plan` dataclass, and
+   `_validate()` so the model emits an 11-value enum alongside
+   `intent`.
+2. **Few-shot the planner on question_type.** Add 6-10 worked
+   examples to `SYSTEM_PROMPT` (one per persona from RESEARCH.md)
+   so granite4.1:3b reliably emits the right enum value. The
+   planner is already running with `format=json` constrained
+   decoding, so this is a pure prompt-engineering change.
+3. **Capstone consumes the planner's question_type instead of the
+   detector's.** `app.framing.augment_system_prompt` already takes
+   `intent`; add a third `question_type` parameter that overrides
+   `detect()` when present. Capstone callers (fsm.step_reconcile,
+   the three intents) read it from `plan.question_type` and pass
+   through.
+4. **Fall back to the regex detector when the planner emits an
+   unknown / missing value.** Belt-and-suspenders against planner
+   regression.
+5. **Re-validate** with the same 20-query suite. If mean framing
+   moves from 2.80 → ≥ 3.5 (target: ≥ half the queries scoring 4+),
+   option (a) was the right call. If not, the issue is downstream
+   (Granite ignoring the directive); option (c) won't help.
+
+**Cost estimate.** ~2-3 hr of work, plus re-validation against the
+address probe + the 20-query suite. The risk is the planner
+regressing on intent classification when prompted to also emit a
+new field — Granite 4.1:3b at temperature 0 with constrained
+decoding is robust but not infallible. Validate against the full
+address probe before merging.
+
+## What option (c) would add
+
+Layer (a) on top of (b). When the planner emits a question_type that
+matches the detector's, both agree → use the directive. When they
+disagree → log the disagreement (telemetry), use the planner's.
+Marginal value over (a) alone is small; defer unless (a) shows
+misclassification on the 20-query suite.

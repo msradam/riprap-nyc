@@ -5,17 +5,18 @@
 
 ## Status one-liner
 
-Three of four work streams landed: code audit ran clean and committed
-mechanical fixes only; the 20-query stakeholder integration suite
-exists, ran end-to-end against local Granite + local specialists, and
-now produces per-query JSON + SUMMARY + FAILURES; the question-aware
-Capstone framing landed as a Capstone prompt-conditional and the
-before/after delta is in `tests/integration/results/2026-05-06/FRAMING-DELTA.md`.
-The morning brief itself is the fourth deliverable.
-
-_(The baseline → framed delta numbers in §3 are filled in once both
-suite runs finish — see "Branch state" §6 for which commits to inspect
-in the meantime.)_
+All four work streams landed. The audit committed mechanical fixes
+only and flagged real bugs in `experiments/` for triage. The 20-query
+suite ran twice (baseline + framed) end-to-end against local Granite +
+local specialists. The question-aware Capstone framing lifted mean
+framing 2.25 → 2.80 and produced three verdict-style openings (q01
+"Yes", q02 "Disclosure is warranted", q13 "Vulnerability assessment:")
+where there were zero before. The framing's stop condition fired
+(12 < 3); option (a) — planner sub-classifier — is sketched in
+`docs/QUESTION-AWARE-FRAMING.md` but explicitly NOT implemented per
+your "don't silently expand scope" rule. One out-of-scope geocoder
+bug surfaced and is documented in
+`OVERNIGHT-2026-05-06-OUT-OF-SCOPE.md` (NOT fixed).
 
 ---
 
@@ -77,12 +78,28 @@ per-question-type rubric.
 - `FAILURES.md` — full briefings + proximate cause for any query
   that errored, timed out, missed Mellea, or returned no prose.
 
-**Baseline run summary** (filled in after run completes):
-- Mean framing score: _(see SUMMARY.md)_
-- Queries with framing ≥ 3: _(see SUMMARY.md)_
-- Queries that errored / timed out: _(see FAILURES.md)_
+**Baseline run summary:**
+- 20/20 OK (no errors, no timeouts).
+- Mean framing score: **2.25** (mostly stuck at 2 = "on-topic exposure
+  language but no question-aware framing").
+- Queries with framing ≥ 3: 5 / 20 (q06, q07, q14, q18, q19 — note q07,
+  q14, q18, q19 scored 3 only because they returned the canned
+  "No grounded data available for this address." which the rubric
+  scores as 3 = place-referenced).
+- 4 queries had Mellea 0/4: q07 (lease query, geocoder failed),
+  q14 (retrospective query, geocoder failed), q15 (NYCHA ranking,
+  planner mis-routed to dev_check with 0 steps), q16 (FloodNet
+  live_now with no active signals), q18 (court exhibit retrospective,
+  geocoder failed), q19 (BBMCR project name, NTA didn't resolve).
+- The geocoder failures are documented in
+  `OVERNIGHT-2026-05-06-OUT-OF-SCOPE.md` — same root cause: the
+  length-ratio heuristic in `app/intents/single_address.py:33`
+  rejects the planner's correctly-extracted address when the user's
+  query is conversational.
 
 **Baseline commit:** `e203d5f tests: add 20-query stakeholder integration suite`.
+Per-query JSONs preserved at
+`tests/integration/results/2026-05-06/baseline/`.
 
 ---
 
@@ -113,13 +130,52 @@ imposed label isn't discoverable from the query text alone — these
 fall back to `journalism` (bare neighborhood) or `generic_exposure`
 (bare address, baseline behavior preserved).
 
-**Before/after framing delta** (filled in after framed run):
-- Baseline mean: _(see FRAMING-DELTA.md)_
-- Framed mean: _(see FRAMING-DELTA.md)_
-- Δ: _(see FRAMING-DELTA.md)_
-- Stop condition: _(see FRAMING-DELTA.md)_
+**Before/after framing delta** (full report:
+`tests/integration/results/2026-05-06/FRAMING-DELTA.md`):
 
-**Commit:** `1a82fde framing: question-aware Capstone opening`.
+| Metric | Baseline | Framed | Δ |
+|--------|---------:|-------:|---:|
+| Mean framing | 2.25 | 2.80 | +0.55 |
+| ≥ 3/5 | 5 | 8 | +3 |
+| ≥ 4/5 | 2 | 5 | +3 |
+| ≥ 5/5 | 0 | 3 | +3 |
+
+**The three queries that hit 5/5** (verdict-style openings — the
+demo-critical wins):
+- **q01** resident habitability — opening flipped from "exposed to
+  historical flood events..." to "**Yes**, this address is exposed
+  to flood risk based on its inclusion within the Hurricane Sandy
+  inundation zone..."
+- **q02** attorney disclosure — opening flipped to "**Disclosure is
+  warranted** because the site experiences moderate flood exposure
+  as indicated by 56.6% of surrounding cells..."
+- **q13** grant evidence — opening flipped to "**Vulnerability
+  assessment**: Chinatown-Two Bridges (NTA MN0301) in Manhattan
+  exhibits moderate flood exposure..."
+
+**Mellea net change:** +4 improved (3/4 → 4/4), -2 regressed (q01
+4/4 → 3/4, q06 3/4 → 2/4), 14 unchanged. Net +2 grounding checks
+gained across the suite.
+
+**Stop condition: FIRED.** 12 / 20 framed queries scored below 3
+(threshold > 5 ⇒ stop). Per Adam's instruction, NOT iterating further
+on the prompt-conditional. Triage of the 12 + sketch of what option
+(a) — planner sub-classifier — would require lives in
+`docs/QUESTION-AWARE-FRAMING.md` §"Outcome of the 2026-05-06 framed
+run" + §"What option (a) would require." Headline:
+
+- 4 / 12 are rubric-vs-directive vocabulary mismatch (bare
+  neighborhood → journalism directive applied, but rubric scored
+  for capital_planning markers). Not a framing failure.
+- 4 / 12 are short-prose-floor failures (geocoder + planner short
+  circuit). No framing change can fix these.
+- 4 / 12 are cases where Granite ignored the soft directive. These
+  are where option (a) would actually help.
+
+**Commits:** `1a82fde framing: question-aware Capstone opening`,
+`342dd4d framing: clarify the directive's scope`,
+`f40ebd2 tests: add FRAMING-DELTA.md generator`,
+`9c61976 tests: baseline + framed run results`.
 
 ---
 
@@ -131,9 +187,13 @@ Branch: **`overnight-2026-05-06`**, local only. To inspect:
 git log --oneline overnight-2026-05-06 ^main
 ```
 
-Commit chronology (newest first; expect Adam's parallel `comms-`
-commits to be interleaved depending on which got merged):
+Commit chronology (newest first; Adam's parallel `comms-` commits
+get auto-merged in via the runtime so they may interleave):
 
+- `9c61976 tests: baseline + framed run results, 2026-05-06`
+- `342dd4d framing: clarify the directive's scope is the Status sentence only`
+- `e81962b docs: log out-of-scope findings from the overnight pass`
+- `8894517 docs: morning brief skeleton`
 - `f40ebd2 tests: add FRAMING-DELTA.md generator`
 - `1a82fde framing: question-aware Capstone opening (Capstone prompt-conditional)`
 - `e203d5f tests: add 20-query stakeholder integration suite`
@@ -157,23 +217,27 @@ backout if the framed run shows regressions.
 
 ## 5. Three things to look at first when you open the laptop
 
-1. **`tests/integration/results/2026-05-06/FRAMING-DELTA.md`** — does
-   the per-query before/after framing-score table show the lift you
-   expected? Pay special attention to q01 (resident, "should I worry"),
-   q02 (attorney, RPL §462), q06 (developer, Gowanus), q14
-   (retrospective, Hollis pre-Ida). Those are the personas where the
-   demo demands the framed shape.
-2. **`tests/integration/results/2026-05-06/FAILURES.md`** — which of
-   the 20 queries did NOT pass cleanly. The bare-address ones (q04
-   Houston, q11 PS 188) and the lateral ones (q14 retrospective, q15
-   ranking, q17 compare) are the most likely to fail in interesting
-   ways. Read the briefing prose under each to judge whether the
-   Capstone said something defensible.
+1. **`tests/integration/results/2026-05-06/FRAMING-DELTA.md`** — the
+   per-query opening diff is the most useful artifact in the pass.
+   Read q01, q02, q13 first (the three queries that hit 5/5 — these
+   are the demo wins). Then the four "Granite ignored the directive"
+   cases triaged in `docs/QUESTION-AWARE-FRAMING.md` ("Outcome of the
+   2026-05-06 framed run" §3) — those are where option (a) would
+   actually pay off if you decide to spend the 2-3 hours.
+2. **`OVERNIGHT-2026-05-06-OUT-OF-SCOPE.md`** — one real bug
+   surfaced: the planner-vs-query length-ratio threshold in
+   `app/intents/single_address.py:33` rejects the planner's
+   correctly-extracted address whenever the user's query is long and
+   conversational. Failure mode is "No grounded data available" with
+   Mellea 0/4. Hits q07 (resident lease question), q14
+   (retrospective), q18 (court exhibit) — exactly the conversational
+   personas the demo arc wants to handle gracefully. Suggested fix
+   is in the doc; NOT applied.
 3. **`audit/AUDIT-2026-05-06.md` punch list** — the four
-   `experiments/` bugs flagged at the top. Those are real bugs the
-   demo hides because nobody imports them at runtime, but if anyone
-   tries to reproduce the fine-tunes during the hackathon Q&A, they'll
-   hit `experiments/18` failing to import on Py 3.10.
+   `experiments/` bugs flagged at the top. Real bugs the demo
+   hides because nobody imports them at runtime; if anyone tries to
+   reproduce the fine-tunes during the hackathon Q&A, they'll hit
+   `experiments/18` failing to import on Py 3.10 (nested f-string).
 
 ---
 
