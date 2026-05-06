@@ -1,0 +1,1870 @@
+{
+  "qid": "06",
+  "slug": "developer-gowanus",
+  "query": "What are they building in Gowanus and is it risky",
+  "persona": "Architect / developer (Gowanus)",
+  "question_type": "development_siting",
+  "expected_intent": "development_check",
+  "anchor": "verbatim",
+  "started_at": 1778047623.295032,
+  "ended_at": 1778047731.030442,
+  "plan": {
+    "kind": "plan",
+    "intent": "development_check",
+    "targets": [
+      {
+        "type": "nta",
+        "text": "Gowanus"
+      }
+    ],
+    "specialists": [
+      "dob_permits",
+      "nta_resolve",
+      "sandy",
+      "dep_stormwater"
+    ],
+    "rationale": "The query asks about ongoing construction in Gowanus and its flood risk, so we need to retrieve active DOB permits for that neighborhood (development_check) and cross-reference them with historic Sandy flood data and DEP stormwater models to assess risk."
+  },
+  "intent": "development_check",
+  "paragraph": "**Status.**\nCarroll Gardens-Cobble Hill-Gowanus-Red Hook (NTA BK0601) in Brooklyn has **56 active major-construction projects** [dob_permits], with **13 (23%)** falling inside the 2012 Sandy inundation zone and **13 (23%)** within at least one DEP Stormwater scenario, including **6 (11%)** in deeper DEP bands (1-4 ft or >4 ft) [dob_permits].\n\n**Flagged projects.**\n- **20 Coffey St, Brooklyn (BBL 3-00589-0003).** new building issued 11/26/2025; owner **20 COFFEY LLC**. In Sandy zone: True; in DEP scenarios: dep_extreme_2080; max DEP depth class: 3. [dob_permits]\n- **62 Imlay Street, Brooklyn (BBL 3-00515-0050).** major alteration (use/occupancy) issued 10/14/2025; owner **PRIME GROUP HOLDINGS, LLC**. In Sandy zone: True; in DEP scenarios: dep_extreme_2080, dep_moderate_2050; max DEP depth class: 3. [dob_permits]\n- **570 Smith Street, Brooklyn (BBL 3-00486-0023).** major alteration (use/occupancy) issued 09/30/2025; owner **570 SMITH STREET REALTY CORP**. In Sandy zone: True; in DEP scenarios: dep_extreme_2080, dep_moderate_2050; max DEP depth class: 3. [dob_permits]\n- **100 Sullivan Street, Brooklyn (BBL 3-00555-0027).** new building issued 08/04/2025; owner **CHEN AND LIN INC**. In Sandy",
+  "steps": [
+    {
+      "kind": "step",
+      "step": "nta_resolve",
+      "started_at": 1778047630.029492,
+      "ok": true,
+      "result": {
+        "nta_code": "BK0601",
+        "nta_name": "Carroll Gardens-Cobble Hill-Gowanus-Red Hook",
+        "borough": "Brooklyn",
+        "bbox": [
+          -74.01995197798658,
+          40.66456833578927,
+          -73.97961680019212,
+          40.692549071104274
+        ]
+      },
+      "elapsed_s": 0.05
+    },
+    {
+      "kind": "step",
+      "step": "dob_permits_nta",
+      "started_at": 1778047630.0754921,
+      "ok": true,
+      "result": {
+        "n_total": 56,
+        "n_in_sandy": 13,
+        "n_in_dep_any": 13,
+        "all_pins": [
+          {
+            "lat": 40.686179,
+            "lon": -73.993239,
+            "address": "278 Warren Street",
+            "job_type": "NB",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.677705,
+            "lon": -74.017388,
+            "address": "117 Ferris Street",
+            "job_type": "A1",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.682575,
+            "lon": -73.985975,
+            "address": "483 Baltic Street",
+            "job_type": "A1",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.674505,
+            "lon": -74.010833,
+            "address": "151 Dwight Street",
+            "job_type": "NB",
+            "in_sandy": true,
+            "dep_max_class": 0,
+            "any_flood": true
+          },
+          {
+            "lat": 40.687807,
+            "lon": -73.997667,
+            "address": "388 Henry Street",
+            "job_type": "A1",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.669326,
+            "lon": -73.991864,
+            "address": "162 12 Street",
+            "job_type": "A1",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.683069,
+            "lon": -73.991419,
+            "address": "94 Douglass Street",
+            "job_type": "A1",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.678027,
+            "lon": -73.986657,
+            "address": "499 President Street",
+            "job_type": "NB",
+            "in_sandy": false,
+            "dep_max_class": 1,
+            "any_flood": true
+          },
+          {
+            "lat": 40.686446,
+            "lon": -73.995125,
+            "address": "234 Baltic Street",
+            "job_type": "A1",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.689567,
+            "lon": -74.000501,
+            "address": "63 Columbia Street",
+            "job_type": "NB",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.678357,
+            "lon": -73.994776,
+            "address": "31 3 Street",
+            "job_type": "A1",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.68902,
+            "lon": -73.998147,
+            "address": "113 Congress Street",
+            "job_type": "A1",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.675162,
+            "lon": -73.996651,
+            "address": "240 Huntington Street",
+            "job_type": "NB",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.674044,
+            "lon": -74.010898,
+            "address": "20 Coffey St",
+            "job_type": "NB",
+            "in_sandy": true,
+            "dep_max_class": 3,
+            "any_flood": true
+          },
+          {
+            "lat": 40.677689,
+            "lon": -73.98374,
+            "address": "651 Union Street",
+            "job_type": "NB",
+            "in_sandy": false,
+            "dep_max_class": 1,
+            "any_flood": true
+          },
+          {
+            "lat": 40.683929,
+            "lon": -73.999517,
+            "address": "506 Henry Street",
+            "job_type": "A1",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.675425,
+            "lon": -74.001536,
+            "address": "590 Clinton Street",
+            "job_type": "NB",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.669348,
+            "lon": -73.991911,
+            "address": "160 12Th Street",
+            "job_type": "NB",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.683643,
+            "lon": -73.992569,
+            "address": "240 Smith Street",
+            "job_type": "NB",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.691046,
+            "lon": -73.997851,
+            "address": "336 Hicks Street",
+            "job_type": "NB",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.682444,
+            "lon": -73.998107,
+            "address": "407 Clinton Street",
+            "job_type": "A1",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.682405,
+            "lon": -74.008148,
+            "address": "62 Imlay Street",
+            "job_type": "A1",
+            "in_sandy": true,
+            "dep_max_class": 3,
+            "any_flood": true
+          },
+          {
+            "lat": 40.671726,
+            "lon": -73.999621,
+            "address": "570 Smith Street",
+            "job_type": "A1",
+            "in_sandy": true,
+            "dep_max_class": 3,
+            "any_flood": true
+          },
+          {
+            "lat": 40.683286,
+            "lon": -73.985736,
+            "address": "471 Warren Street",
+            "job_type": "A1",
+            "in_sandy": false,
+            "dep_max_class": 1,
+            "any_flood": true
+          },
+          {
+            "lat": 40.674684,
+            "lon": -74.010653,
+            "address": "132 Dwight  St.",
+            "job_type": "A1",
+            "in_sandy": true,
+            "dep_max_class": 1,
+            "any_flood": true
+          },
+          {
+            "lat": 40.675622,
+            "lon": -74.011839,
+            "address": "61 Dikeman St.",
+            "job_type": "NB",
+            "in_sandy": true,
+            "dep_max_class": 0,
+            "any_flood": true
+          },
+          {
+            "lat": 40.676742,
+            "lon": -74.010891,
+            "address": "147 Richards Street",
+            "job_type": "NB",
+            "in_sandy": true,
+            "dep_max_class": 1,
+            "any_flood": true
+          },
+          {
+            "lat": 40.678131,
+            "lon": -74.012683,
+            "address": "100 Sullivan Street",
+            "job_type": "NB",
+            "in_sandy": true,
+            "dep_max_class": 3,
+            "any_flood": true
+          },
+          {
+            "lat": 40.677428,
+            "lon": -74.01587,
+            "address": "168 Coffey Street",
+            "job_type": "A1",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.678906,
+            "lon": -74.004799,
+            "address": "20 Luquer Street",
+            "job_type": "NB",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.677789,
+            "lon": -74.000728,
+            "address": "117 Luquer Street",
+            "job_type": "NB",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.690343,
+            "lon": -73.994764,
+            "address": "152 Atlantic Ave",
+            "job_type": "A1",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.66746,
+            "lon": -73.993248,
+            "address": "100 15 Street",
+            "job_type": "A1",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.680284,
+            "lon": -74.000126,
+            "address": "32 2Nd Place",
+            "job_type": "A1",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.685488,
+            "lon": -74.004172,
+            "address": "77 Sackett Street",
+            "job_type": "A1",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.678776,
+            "lon": -73.984454,
+            "address": "597 Sackett St",
+            "job_type": "A1",
+            "in_sandy": false,
+            "dep_max_class": 2,
+            "any_flood": true
+          },
+          {
+            "lat": 40.675513,
+            "lon": -74.010249,
+            "address": "7 Wolcott St",
+            "job_type": "A1",
+            "in_sandy": true,
+            "dep_max_class": 0,
+            "any_flood": true
+          },
+          {
+            "lat": 40.680942,
+            "lon": -73.99916,
+            "address": "48 First Place",
+            "job_type": "A1",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.669164,
+            "lon": -73.991532,
+            "address": "176 12 Street",
+            "job_type": "A1",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.685806,
+            "lon": -73.998623,
+            "address": "452 Henry Street",
+            "job_type": "A1",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.671138,
+            "lon": -73.990328,
+            "address": "197 9 Street",
+            "job_type": "NB",
+            "in_sandy": false,
+            "dep_max_class": 1,
+            "any_flood": true
+          },
+          {
+            "lat": 40.686553,
+            "lon": -73.999138,
+            "address": "8 Cheever Place",
+            "job_type": "A1",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.679076,
+            "lon": -73.994552,
+            "address": "24 2Nd Street",
+            "job_type": "A1",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.677201,
+            "lon": -74.010351,
+            "address": "135 Richards Street",
+            "job_type": "NB",
+            "in_sandy": true,
+            "dep_max_class": 1,
+            "any_flood": true
+          },
+          {
+            "lat": 40.675752,
+            "lon": -74.009377,
+            "address": "100 Dwight Street",
+            "job_type": "NB",
+            "in_sandy": true,
+            "dep_max_class": 0,
+            "any_flood": true
+          },
+          {
+            "lat": 40.686075,
+            "lon": -74.002181,
+            "address": "183 Columbia Street",
+            "job_type": "NB",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.67086,
+            "lon": -73.989748,
+            "address": "217 9Th Street",
+            "job_type": "NB",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.685451,
+            "lon": -73.987236,
+            "address": "166 Bergen Street",
+            "job_type": "A1",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.675499,
+            "lon": -74.012405,
+            "address": "206 Richards Street",
+            "job_type": "A1",
+            "in_sandy": true,
+            "dep_max_class": 3,
+            "any_flood": true
+          },
+          {
+            "lat": 40.677797,
+            "lon": -74.000761,
+            "address": "115 Luquer Street",
+            "job_type": "A1",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.67932,
+            "lon": -73.99205,
+            "address": "319 Carroll Street",
+            "job_type": "A1",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.677525,
+            "lon": -73.987436,
+            "address": "445 Carroll Street",
+            "job_type": "NB",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.681294,
+            "lon": -73.993002,
+            "address": "377 Union Street",
+            "job_type": "A1",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.677714,
+            "lon": -74.014691,
+            "address": "202 Conover Street",
+            "job_type": "NB",
+            "in_sandy": true,
+            "dep_max_class": 0,
+            "any_flood": true
+          },
+          {
+            "lat": 40.668624,
+            "lon": -73.995599,
+            "address": "39 15Th Street",
+            "job_type": "NB",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          },
+          {
+            "lat": 40.677181,
+            "lon": -74.015319,
+            "address": "220 Conover Street",
+            "job_type": "A1",
+            "in_sandy": false,
+            "dep_max_class": 0,
+            "any_flood": false
+          }
+        ]
+      },
+      "elapsed_s": 9.92
+    },
+    {
+      "kind": "step",
+      "step": "mellea_reconcile_development",
+      "started_at": 1778047639.9935281,
+      "ok": true,
+      "result": {
+        "rerolls": 1,
+        "passed": "3/4",
+        "paragraph_chars": 1206
+      },
+      "elapsed_s": 91.03
+    }
+  ],
+  "mellea_attempts": [
+    {
+      "kind": "mellea_attempt",
+      "attempt": 0,
+      "passed": [
+        "numerics_grounded",
+        "no_placeholder_tokens",
+        "citations_resolve"
+      ],
+      "failed": [
+        "citations_dense"
+      ]
+    },
+    {
+      "kind": "mellea_attempt",
+      "attempt": 1,
+      "passed": [
+        "numerics_grounded",
+        "no_placeholder_tokens",
+        "citations_resolve"
+      ],
+      "failed": [
+        "citations_dense"
+      ]
+    }
+  ],
+  "final": {
+    "kind": "final",
+    "intent": "development_check",
+    "query": "What are they building in Gowanus and is it risky",
+    "plan": {
+      "intent": "development_check",
+      "targets": [
+        {
+          "type": "nta",
+          "text": "Gowanus"
+        }
+      ],
+      "specialists": [
+        "dob_permits",
+        "nta_resolve",
+        "sandy",
+        "dep_stormwater"
+      ],
+      "rationale": "The query asks about ongoing construction in Gowanus and its flood risk, so we need to retrieve active DOB permits for that neighborhood (development_check) and cross-reference them with historic Sandy flood data and DEP stormwater models to assess risk."
+    },
+    "target": {
+      "nta_code": "BK0601",
+      "nta_name": "Carroll Gardens-Cobble Hill-Gowanus-Red Hook",
+      "borough": "Brooklyn",
+      "cdta": "BK06 Park Slope-Carroll Gardens (CD 6 Approximation)",
+      "bbox": [
+        -74.01995197798658,
+        40.66456833578927,
+        -73.97961680019212,
+        40.692549071104274
+      ]
+    },
+    "n_matches": 1,
+    "dob_summary": {
+      "since": "2024-11-12",
+      "n_total": 56,
+      "n_in_sandy": 13,
+      "n_in_dep_any": 13,
+      "n_in_dep_severe": 6,
+      "n_any_flood": 18,
+      "by_job_type": {
+        "major alteration (use/occupancy)": 32,
+        "new building": 24
+      },
+      "by_permit_status": {
+        "ISSUED": 56
+      },
+      "flagged_top": [
+        {
+          "job_id": "320828075",
+          "job_type": "NB",
+          "job_type_label": "new building",
+          "permit_status": "ISSUED",
+          "issuance_date": "11/26/2025",
+          "expiration_date": "11/10/2026",
+          "address": "20 Coffey St",
+          "borough": "Brooklyn",
+          "bbl": "3-00589-0003",
+          "lat": 40.674044,
+          "lon": -74.010898,
+          "owner_business": "20 COFFEY LLC",
+          "permittee_business": "MC SQUARED CORP",
+          "nta_name": "Carroll Gardens-Columbia Street-Red Hook",
+          "in_sandy": true,
+          "dep_max_class": 3,
+          "dep_scenarios": [
+            "dep_extreme_2080"
+          ],
+          "any_flood_layer_hit": true
+        },
+        {
+          "job_id": "322120673",
+          "job_type": "A1",
+          "job_type_label": "major alteration (use/occupancy)",
+          "permit_status": "ISSUED",
+          "issuance_date": "10/14/2025",
+          "expiration_date": "10/14/2026",
+          "address": "62 Imlay Street",
+          "borough": "Brooklyn",
+          "bbl": "3-00515-0050",
+          "lat": 40.682405,
+          "lon": -74.008148,
+          "owner_business": "PRIME GROUP HOLDINGS, LLC",
+          "permittee_business": "CUSTODIO CONSULTNG",
+          "nta_name": "Carroll Gardens-Columbia Street-Red Hook",
+          "in_sandy": true,
+          "dep_max_class": 3,
+          "dep_scenarios": [
+            "dep_extreme_2080",
+            "dep_moderate_2050"
+          ],
+          "any_flood_layer_hit": true
+        },
+        {
+          "job_id": "340790497",
+          "job_type": "A1",
+          "job_type_label": "major alteration (use/occupancy)",
+          "permit_status": "ISSUED",
+          "issuance_date": "09/30/2025",
+          "expiration_date": "09/18/2026",
+          "address": "570 Smith Street",
+          "borough": "Brooklyn",
+          "bbl": "3-00486-0023",
+          "lat": 40.671726,
+          "lon": -73.999621,
+          "owner_business": "570 SMITH STREET REALTY CORP",
+          "permittee_business": "THREE STAR CONSTRUCTION G",
+          "nta_name": "Carroll Gardens-Columbia Street-Red Hook",
+          "in_sandy": true,
+          "dep_max_class": 3,
+          "dep_scenarios": [
+            "dep_extreme_2080",
+            "dep_moderate_2050"
+          ],
+          "any_flood_layer_hit": true
+        },
+        {
+          "job_id": "321591078",
+          "job_type": "NB",
+          "job_type_label": "new building",
+          "permit_status": "ISSUED",
+          "issuance_date": "08/04/2025",
+          "expiration_date": "08/04/2026",
+          "address": "100 Sullivan Street",
+          "borough": "Brooklyn",
+          "bbl": "3-00555-0027",
+          "lat": 40.678131,
+          "lon": -74.012683,
+          "owner_business": "CHEN AND LIN INC.",
+          "permittee_business": "LT PRO CONSTRUCTION INC",
+          "nta_name": "Carroll Gardens-Columbia Street-Red Hook",
+          "in_sandy": true,
+          "dep_max_class": 3,
+          "dep_scenarios": [
+            "dep_extreme_2080"
+          ],
+          "any_flood_layer_hit": true
+        },
+        {
+          "job_id": "320907382",
+          "job_type": "A1",
+          "job_type_label": "major alteration (use/occupancy)",
+          "permit_status": "ISSUED",
+          "issuance_date": "04/18/2025",
+          "expiration_date": "04/12/2026",
+          "address": "206 Richards Street",
+          "borough": "Brooklyn",
+          "bbl": "3-00587-0032",
+          "lat": 40.675499,
+          "lon": -74.012405,
+          "owner_business": "OWNER",
+          "permittee_business": "HOME STONE INC",
+          "nta_name": "Carroll Gardens-Columbia Street-Red Hook",
+          "in_sandy": true,
+          "dep_max_class": 3,
+          "dep_scenarios": [
+            "dep_extreme_2080"
+          ],
+          "any_flood_layer_hit": true
+        }
+      ],
+      "all_pins": [
+        {
+          "lat": 40.686179,
+          "lon": -73.993239,
+          "address": "278 Warren Street",
+          "job_type": "NB",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.677705,
+          "lon": -74.017388,
+          "address": "117 Ferris Street",
+          "job_type": "A1",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.682575,
+          "lon": -73.985975,
+          "address": "483 Baltic Street",
+          "job_type": "A1",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.674505,
+          "lon": -74.010833,
+          "address": "151 Dwight Street",
+          "job_type": "NB",
+          "in_sandy": true,
+          "dep_max_class": 0,
+          "any_flood": true
+        },
+        {
+          "lat": 40.687807,
+          "lon": -73.997667,
+          "address": "388 Henry Street",
+          "job_type": "A1",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.669326,
+          "lon": -73.991864,
+          "address": "162 12 Street",
+          "job_type": "A1",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.683069,
+          "lon": -73.991419,
+          "address": "94 Douglass Street",
+          "job_type": "A1",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.678027,
+          "lon": -73.986657,
+          "address": "499 President Street",
+          "job_type": "NB",
+          "in_sandy": false,
+          "dep_max_class": 1,
+          "any_flood": true
+        },
+        {
+          "lat": 40.686446,
+          "lon": -73.995125,
+          "address": "234 Baltic Street",
+          "job_type": "A1",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.689567,
+          "lon": -74.000501,
+          "address": "63 Columbia Street",
+          "job_type": "NB",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.678357,
+          "lon": -73.994776,
+          "address": "31 3 Street",
+          "job_type": "A1",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.68902,
+          "lon": -73.998147,
+          "address": "113 Congress Street",
+          "job_type": "A1",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.675162,
+          "lon": -73.996651,
+          "address": "240 Huntington Street",
+          "job_type": "NB",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.674044,
+          "lon": -74.010898,
+          "address": "20 Coffey St",
+          "job_type": "NB",
+          "in_sandy": true,
+          "dep_max_class": 3,
+          "any_flood": true
+        },
+        {
+          "lat": 40.677689,
+          "lon": -73.98374,
+          "address": "651 Union Street",
+          "job_type": "NB",
+          "in_sandy": false,
+          "dep_max_class": 1,
+          "any_flood": true
+        },
+        {
+          "lat": 40.683929,
+          "lon": -73.999517,
+          "address": "506 Henry Street",
+          "job_type": "A1",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.675425,
+          "lon": -74.001536,
+          "address": "590 Clinton Street",
+          "job_type": "NB",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.669348,
+          "lon": -73.991911,
+          "address": "160 12Th Street",
+          "job_type": "NB",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.683643,
+          "lon": -73.992569,
+          "address": "240 Smith Street",
+          "job_type": "NB",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.691046,
+          "lon": -73.997851,
+          "address": "336 Hicks Street",
+          "job_type": "NB",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.682444,
+          "lon": -73.998107,
+          "address": "407 Clinton Street",
+          "job_type": "A1",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.682405,
+          "lon": -74.008148,
+          "address": "62 Imlay Street",
+          "job_type": "A1",
+          "in_sandy": true,
+          "dep_max_class": 3,
+          "any_flood": true
+        },
+        {
+          "lat": 40.671726,
+          "lon": -73.999621,
+          "address": "570 Smith Street",
+          "job_type": "A1",
+          "in_sandy": true,
+          "dep_max_class": 3,
+          "any_flood": true
+        },
+        {
+          "lat": 40.683286,
+          "lon": -73.985736,
+          "address": "471 Warren Street",
+          "job_type": "A1",
+          "in_sandy": false,
+          "dep_max_class": 1,
+          "any_flood": true
+        },
+        {
+          "lat": 40.674684,
+          "lon": -74.010653,
+          "address": "132 Dwight  St.",
+          "job_type": "A1",
+          "in_sandy": true,
+          "dep_max_class": 1,
+          "any_flood": true
+        },
+        {
+          "lat": 40.675622,
+          "lon": -74.011839,
+          "address": "61 Dikeman St.",
+          "job_type": "NB",
+          "in_sandy": true,
+          "dep_max_class": 0,
+          "any_flood": true
+        },
+        {
+          "lat": 40.676742,
+          "lon": -74.010891,
+          "address": "147 Richards Street",
+          "job_type": "NB",
+          "in_sandy": true,
+          "dep_max_class": 1,
+          "any_flood": true
+        },
+        {
+          "lat": 40.678131,
+          "lon": -74.012683,
+          "address": "100 Sullivan Street",
+          "job_type": "NB",
+          "in_sandy": true,
+          "dep_max_class": 3,
+          "any_flood": true
+        },
+        {
+          "lat": 40.677428,
+          "lon": -74.01587,
+          "address": "168 Coffey Street",
+          "job_type": "A1",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.678906,
+          "lon": -74.004799,
+          "address": "20 Luquer Street",
+          "job_type": "NB",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.677789,
+          "lon": -74.000728,
+          "address": "117 Luquer Street",
+          "job_type": "NB",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.690343,
+          "lon": -73.994764,
+          "address": "152 Atlantic Ave",
+          "job_type": "A1",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.66746,
+          "lon": -73.993248,
+          "address": "100 15 Street",
+          "job_type": "A1",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.680284,
+          "lon": -74.000126,
+          "address": "32 2Nd Place",
+          "job_type": "A1",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.685488,
+          "lon": -74.004172,
+          "address": "77 Sackett Street",
+          "job_type": "A1",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.678776,
+          "lon": -73.984454,
+          "address": "597 Sackett St",
+          "job_type": "A1",
+          "in_sandy": false,
+          "dep_max_class": 2,
+          "any_flood": true
+        },
+        {
+          "lat": 40.675513,
+          "lon": -74.010249,
+          "address": "7 Wolcott St",
+          "job_type": "A1",
+          "in_sandy": true,
+          "dep_max_class": 0,
+          "any_flood": true
+        },
+        {
+          "lat": 40.680942,
+          "lon": -73.99916,
+          "address": "48 First Place",
+          "job_type": "A1",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.669164,
+          "lon": -73.991532,
+          "address": "176 12 Street",
+          "job_type": "A1",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.685806,
+          "lon": -73.998623,
+          "address": "452 Henry Street",
+          "job_type": "A1",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.671138,
+          "lon": -73.990328,
+          "address": "197 9 Street",
+          "job_type": "NB",
+          "in_sandy": false,
+          "dep_max_class": 1,
+          "any_flood": true
+        },
+        {
+          "lat": 40.686553,
+          "lon": -73.999138,
+          "address": "8 Cheever Place",
+          "job_type": "A1",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.679076,
+          "lon": -73.994552,
+          "address": "24 2Nd Street",
+          "job_type": "A1",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.677201,
+          "lon": -74.010351,
+          "address": "135 Richards Street",
+          "job_type": "NB",
+          "in_sandy": true,
+          "dep_max_class": 1,
+          "any_flood": true
+        },
+        {
+          "lat": 40.675752,
+          "lon": -74.009377,
+          "address": "100 Dwight Street",
+          "job_type": "NB",
+          "in_sandy": true,
+          "dep_max_class": 0,
+          "any_flood": true
+        },
+        {
+          "lat": 40.686075,
+          "lon": -74.002181,
+          "address": "183 Columbia Street",
+          "job_type": "NB",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.67086,
+          "lon": -73.989748,
+          "address": "217 9Th Street",
+          "job_type": "NB",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.685451,
+          "lon": -73.987236,
+          "address": "166 Bergen Street",
+          "job_type": "A1",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.675499,
+          "lon": -74.012405,
+          "address": "206 Richards Street",
+          "job_type": "A1",
+          "in_sandy": true,
+          "dep_max_class": 3,
+          "any_flood": true
+        },
+        {
+          "lat": 40.677797,
+          "lon": -74.000761,
+          "address": "115 Luquer Street",
+          "job_type": "A1",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.67932,
+          "lon": -73.99205,
+          "address": "319 Carroll Street",
+          "job_type": "A1",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.677525,
+          "lon": -73.987436,
+          "address": "445 Carroll Street",
+          "job_type": "NB",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.681294,
+          "lon": -73.993002,
+          "address": "377 Union Street",
+          "job_type": "A1",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.677714,
+          "lon": -74.014691,
+          "address": "202 Conover Street",
+          "job_type": "NB",
+          "in_sandy": true,
+          "dep_max_class": 0,
+          "any_flood": true
+        },
+        {
+          "lat": 40.668624,
+          "lon": -73.995599,
+          "address": "39 15Th Street",
+          "job_type": "NB",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        },
+        {
+          "lat": 40.677181,
+          "lon": -74.015319,
+          "address": "220 Conover Street",
+          "job_type": "A1",
+          "in_sandy": false,
+          "dep_max_class": 0,
+          "any_flood": false
+        }
+      ],
+      "all_count": 56
+    },
+    "rag": [],
+    "paragraph": "**Status.**\nCarroll Gardens-Cobble Hill-Gowanus-Red Hook (NTA BK0601) in Brooklyn has **56 active major-construction projects** [dob_permits], with **13 (23%)** falling inside the 2012 Sandy inundation zone and **13 (23%)** within at least one DEP Stormwater scenario, including **6 (11%)** in deeper DEP bands (1-4 ft or >4 ft) [dob_permits].\n\n**Flagged projects.**\n- **20 Coffey St, Brooklyn (BBL 3-00589-0003).** new building issued 11/26/2025; owner **20 COFFEY LLC**. In Sandy zone: True; in DEP scenarios: dep_extreme_2080; max DEP depth class: 3. [dob_permits]\n- **62 Imlay Street, Brooklyn (BBL 3-00515-0050).** major alteration (use/occupancy) issued 10/14/2025; owner **PRIME GROUP HOLDINGS, LLC**. In Sandy zone: True; in DEP scenarios: dep_extreme_2080, dep_moderate_2050; max DEP depth class: 3. [dob_permits]\n- **570 Smith Street, Brooklyn (BBL 3-00486-0023).** major alteration (use/occupancy) issued 09/30/2025; owner **570 SMITH STREET REALTY CORP**. In Sandy zone: True; in DEP scenarios: dep_extreme_2080, dep_moderate_2050; max DEP depth class: 3. [dob_permits]\n- **100 Sullivan Street, Brooklyn (BBL 3-00555-0027).** new building issued 08/04/2025; owner **CHEN AND LIN INC**. In Sandy",
+    "audit": {
+      "raw": "**Status.**\nCarroll Gardens-Cobble Hill-Gowanus-Red Hook (NTA BK0601) in Brooklyn has **56 active major-construction projects** [dob_permits], with **13 (23%)** falling inside the 2012 Sandy inundation zone and **13 (23%)** within at least one DEP Stormwater scenario, including **6 (11%)** in deeper DEP bands (1-4 ft or >4 ft) [dob_permits].\n\n**Flagged projects.**\n- **20 Coffey St, Brooklyn (BBL 3-00589-0003).** new building issued 11/26/2025; owner **20 COFFEY LLC**. In Sandy zone: True; in DEP scenarios: dep_extreme_2080; max DEP depth class: 3. [dob_permits]\n- **62 Imlay Street, Brooklyn (BBL 3-00515-0050).** major alteration (use/occupancy) issued 10/14/2025; owner **PRIME GROUP HOLDINGS, LLC**. In Sandy zone: True; in DEP scenarios: dep_extreme_2080, dep_moderate_2050; max DEP depth class: 3. [dob_permits]\n- **570 Smith Street, Brooklyn (BBL 3-00486-0023).** major alteration (use/occupancy) issued 09/30/2025; owner **570 SMITH STREET REALTY CORP**. In Sandy zone: True; in DEP scenarios: dep_extreme_2080, dep_moderate_2050; max DEP depth class: 3. [dob_permits]\n- **100 Sullivan Street, Brooklyn (BBL 3-00555-0027).** new building issued 08/04/2025; owner **CHEN AND LIN INC**. In Sandy",
+      "dropped": []
+    },
+    "mellea": {
+      "rerolls": 1,
+      "n_attempts": 2,
+      "requirements_passed": [
+        "numerics_grounded",
+        "no_placeholder_tokens",
+        "citations_resolve"
+      ],
+      "requirements_failed": [
+        "citations_dense"
+      ],
+      "requirements_total": 4,
+      "model": "granite4.1:8b",
+      "loop_budget": 2
+    },
+    "trace": [
+      {
+        "step": "nta_resolve",
+        "started_at": 1778047630.029492,
+        "ok": true,
+        "result": {
+          "nta_code": "BK0601",
+          "nta_name": "Carroll Gardens-Cobble Hill-Gowanus-Red Hook",
+          "borough": "Brooklyn",
+          "bbox": [
+            -74.01995197798658,
+            40.66456833578927,
+            -73.97961680019212,
+            40.692549071104274
+          ]
+        },
+        "elapsed_s": 0.05
+      },
+      {
+        "step": "dob_permits_nta",
+        "started_at": 1778047630.0754921,
+        "ok": true,
+        "result": {
+          "n_total": 56,
+          "n_in_sandy": 13,
+          "n_in_dep_any": 13,
+          "all_pins": [
+            {
+              "lat": 40.686179,
+              "lon": -73.993239,
+              "address": "278 Warren Street",
+              "job_type": "NB",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.677705,
+              "lon": -74.017388,
+              "address": "117 Ferris Street",
+              "job_type": "A1",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.682575,
+              "lon": -73.985975,
+              "address": "483 Baltic Street",
+              "job_type": "A1",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.674505,
+              "lon": -74.010833,
+              "address": "151 Dwight Street",
+              "job_type": "NB",
+              "in_sandy": true,
+              "dep_max_class": 0,
+              "any_flood": true
+            },
+            {
+              "lat": 40.687807,
+              "lon": -73.997667,
+              "address": "388 Henry Street",
+              "job_type": "A1",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.669326,
+              "lon": -73.991864,
+              "address": "162 12 Street",
+              "job_type": "A1",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.683069,
+              "lon": -73.991419,
+              "address": "94 Douglass Street",
+              "job_type": "A1",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.678027,
+              "lon": -73.986657,
+              "address": "499 President Street",
+              "job_type": "NB",
+              "in_sandy": false,
+              "dep_max_class": 1,
+              "any_flood": true
+            },
+            {
+              "lat": 40.686446,
+              "lon": -73.995125,
+              "address": "234 Baltic Street",
+              "job_type": "A1",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.689567,
+              "lon": -74.000501,
+              "address": "63 Columbia Street",
+              "job_type": "NB",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.678357,
+              "lon": -73.994776,
+              "address": "31 3 Street",
+              "job_type": "A1",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.68902,
+              "lon": -73.998147,
+              "address": "113 Congress Street",
+              "job_type": "A1",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.675162,
+              "lon": -73.996651,
+              "address": "240 Huntington Street",
+              "job_type": "NB",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.674044,
+              "lon": -74.010898,
+              "address": "20 Coffey St",
+              "job_type": "NB",
+              "in_sandy": true,
+              "dep_max_class": 3,
+              "any_flood": true
+            },
+            {
+              "lat": 40.677689,
+              "lon": -73.98374,
+              "address": "651 Union Street",
+              "job_type": "NB",
+              "in_sandy": false,
+              "dep_max_class": 1,
+              "any_flood": true
+            },
+            {
+              "lat": 40.683929,
+              "lon": -73.999517,
+              "address": "506 Henry Street",
+              "job_type": "A1",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.675425,
+              "lon": -74.001536,
+              "address": "590 Clinton Street",
+              "job_type": "NB",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.669348,
+              "lon": -73.991911,
+              "address": "160 12Th Street",
+              "job_type": "NB",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.683643,
+              "lon": -73.992569,
+              "address": "240 Smith Street",
+              "job_type": "NB",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.691046,
+              "lon": -73.997851,
+              "address": "336 Hicks Street",
+              "job_type": "NB",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.682444,
+              "lon": -73.998107,
+              "address": "407 Clinton Street",
+              "job_type": "A1",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.682405,
+              "lon": -74.008148,
+              "address": "62 Imlay Street",
+              "job_type": "A1",
+              "in_sandy": true,
+              "dep_max_class": 3,
+              "any_flood": true
+            },
+            {
+              "lat": 40.671726,
+              "lon": -73.999621,
+              "address": "570 Smith Street",
+              "job_type": "A1",
+              "in_sandy": true,
+              "dep_max_class": 3,
+              "any_flood": true
+            },
+            {
+              "lat": 40.683286,
+              "lon": -73.985736,
+              "address": "471 Warren Street",
+              "job_type": "A1",
+              "in_sandy": false,
+              "dep_max_class": 1,
+              "any_flood": true
+            },
+            {
+              "lat": 40.674684,
+              "lon": -74.010653,
+              "address": "132 Dwight  St.",
+              "job_type": "A1",
+              "in_sandy": true,
+              "dep_max_class": 1,
+              "any_flood": true
+            },
+            {
+              "lat": 40.675622,
+              "lon": -74.011839,
+              "address": "61 Dikeman St.",
+              "job_type": "NB",
+              "in_sandy": true,
+              "dep_max_class": 0,
+              "any_flood": true
+            },
+            {
+              "lat": 40.676742,
+              "lon": -74.010891,
+              "address": "147 Richards Street",
+              "job_type": "NB",
+              "in_sandy": true,
+              "dep_max_class": 1,
+              "any_flood": true
+            },
+            {
+              "lat": 40.678131,
+              "lon": -74.012683,
+              "address": "100 Sullivan Street",
+              "job_type": "NB",
+              "in_sandy": true,
+              "dep_max_class": 3,
+              "any_flood": true
+            },
+            {
+              "lat": 40.677428,
+              "lon": -74.01587,
+              "address": "168 Coffey Street",
+              "job_type": "A1",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.678906,
+              "lon": -74.004799,
+              "address": "20 Luquer Street",
+              "job_type": "NB",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.677789,
+              "lon": -74.000728,
+              "address": "117 Luquer Street",
+              "job_type": "NB",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.690343,
+              "lon": -73.994764,
+              "address": "152 Atlantic Ave",
+              "job_type": "A1",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.66746,
+              "lon": -73.993248,
+              "address": "100 15 Street",
+              "job_type": "A1",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.680284,
+              "lon": -74.000126,
+              "address": "32 2Nd Place",
+              "job_type": "A1",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.685488,
+              "lon": -74.004172,
+              "address": "77 Sackett Street",
+              "job_type": "A1",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.678776,
+              "lon": -73.984454,
+              "address": "597 Sackett St",
+              "job_type": "A1",
+              "in_sandy": false,
+              "dep_max_class": 2,
+              "any_flood": true
+            },
+            {
+              "lat": 40.675513,
+              "lon": -74.010249,
+              "address": "7 Wolcott St",
+              "job_type": "A1",
+              "in_sandy": true,
+              "dep_max_class": 0,
+              "any_flood": true
+            },
+            {
+              "lat": 40.680942,
+              "lon": -73.99916,
+              "address": "48 First Place",
+              "job_type": "A1",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.669164,
+              "lon": -73.991532,
+              "address": "176 12 Street",
+              "job_type": "A1",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.685806,
+              "lon": -73.998623,
+              "address": "452 Henry Street",
+              "job_type": "A1",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.671138,
+              "lon": -73.990328,
+              "address": "197 9 Street",
+              "job_type": "NB",
+              "in_sandy": false,
+              "dep_max_class": 1,
+              "any_flood": true
+            },
+            {
+              "lat": 40.686553,
+              "lon": -73.999138,
+              "address": "8 Cheever Place",
+              "job_type": "A1",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.679076,
+              "lon": -73.994552,
+              "address": "24 2Nd Street",
+              "job_type": "A1",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.677201,
+              "lon": -74.010351,
+              "address": "135 Richards Street",
+              "job_type": "NB",
+              "in_sandy": true,
+              "dep_max_class": 1,
+              "any_flood": true
+            },
+            {
+              "lat": 40.675752,
+              "lon": -74.009377,
+              "address": "100 Dwight Street",
+              "job_type": "NB",
+              "in_sandy": true,
+              "dep_max_class": 0,
+              "any_flood": true
+            },
+            {
+              "lat": 40.686075,
+              "lon": -74.002181,
+              "address": "183 Columbia Street",
+              "job_type": "NB",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.67086,
+              "lon": -73.989748,
+              "address": "217 9Th Street",
+              "job_type": "NB",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.685451,
+              "lon": -73.987236,
+              "address": "166 Bergen Street",
+              "job_type": "A1",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.675499,
+              "lon": -74.012405,
+              "address": "206 Richards Street",
+              "job_type": "A1",
+              "in_sandy": true,
+              "dep_max_class": 3,
+              "any_flood": true
+            },
+            {
+              "lat": 40.677797,
+              "lon": -74.000761,
+              "address": "115 Luquer Street",
+              "job_type": "A1",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.67932,
+              "lon": -73.99205,
+              "address": "319 Carroll Street",
+              "job_type": "A1",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.677525,
+              "lon": -73.987436,
+              "address": "445 Carroll Street",
+              "job_type": "NB",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.681294,
+              "lon": -73.993002,
+              "address": "377 Union Street",
+              "job_type": "A1",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.677714,
+              "lon": -74.014691,
+              "address": "202 Conover Street",
+              "job_type": "NB",
+              "in_sandy": true,
+              "dep_max_class": 0,
+              "any_flood": true
+            },
+            {
+              "lat": 40.668624,
+              "lon": -73.995599,
+              "address": "39 15Th Street",
+              "job_type": "NB",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            },
+            {
+              "lat": 40.677181,
+              "lon": -74.015319,
+              "address": "220 Conover Street",
+              "job_type": "A1",
+              "in_sandy": false,
+              "dep_max_class": 0,
+              "any_flood": false
+            }
+          ]
+        },
+        "elapsed_s": 9.92
+      },
+      {
+        "step": "mellea_reconcile_development",
+        "started_at": 1778047639.9935281,
+        "ok": true,
+        "result": {
+          "rerolls": 1,
+          "passed": "3/4",
+          "paragraph_chars": 1206
+        },
+        "elapsed_s": 91.03
+      }
+    ],
+    "total_s": 100.99
+  },
+  "stone_timings": {},
+  "error": null,
+  "timed_out": false,
+  "transport_error": null,
+  "framing_score": 4,
+  "framing_rationale": "topic marker matched: /construction|development|filing|permit|DOB/ (no verdict)",
+  "wall_clock_s": 107.74,
+  "mellea": {
+    "passed": 3,
+    "total": 4,
+    "rerolls": 1,
+    "n_attempts": 2,
+    "requirements_passed": [
+      "numerics_grounded",
+      "no_placeholder_tokens",
+      "citations_resolve"
+    ],
+    "requirements_failed": [
+      "citations_dense"
+    ]
+  },
+  "citations": [
+    "[dob_permits]"
+  ],
+  "citation_count": 1
+}
