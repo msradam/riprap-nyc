@@ -25,7 +25,7 @@
   import { parseBriefing, citationFromMeta } from '$lib/client/parseBriefing';
   import {
     fetchSandy, fetchDep, fetchPrithviSynthetic, fetchProxyDots,
-    fetchSandyNta, fetchDepNta
+    fetchIdaHwm, fetchSandyNta, fetchDepNta
   } from '$lib/client/mapLayers';
   import type { FeatureCollection } from 'geojson';
 
@@ -53,7 +53,7 @@
   // dropped from the legend display per the silence-over-confabulation
   // rule (handoff hard rule #3).
   let mapFeatureCounts = $derived({
-    empirical: sandyFc?.features.length ?? 0,
+    empirical: (sandyFc?.features.length ?? 0) + (idaHwmFc?.features.length ?? 0),
     modeled: depFc?.features.length ?? 0,
     synthetic: (synFc?.features.length ?? 0) + (terramindLulcFc?.features.length ?? 0),
     proxy: proxyFc?.features.length ?? 0
@@ -300,6 +300,7 @@
   let synFc = $state<FeatureCollection | undefined>(undefined);
   let proxyFc = $state<FeatureCollection | undefined>(undefined);
   let terramindLulcFc = $state<FeatureCollection | undefined>(undefined);
+  let idaHwmFc = $state<FeatureCollection | undefined>(undefined);
 
   let blocks = $state<BriefingBlock[]>([]);
   let citations = $state<Record<string, Citation>>({});
@@ -366,11 +367,13 @@
       // looking.
       fetchPrithviSynthetic(lat, lon, 2500).then((fc) => (synFc = fc));
       fetchProxyDots(lat, lon, 3000).then((fc) => (proxyFc = fc));
+      fetchIdaHwm(lat, lon, 3000).then((fc) => (idaHwmFc = fc));
     } else {
       fetchSandy(lat, lon).then((fc) => (sandyFc = fc));
       fetchDep(lat, lon).then((fc) => (depFc = fc));
       fetchPrithviSynthetic(lat, lon).then((fc) => (synFc = fc));
       fetchProxyDots(lat, lon).then((fc) => (proxyFc = fc));
+      fetchIdaHwm(lat, lon).then((fc) => (idaHwmFc = fc));
     }
   });
 
@@ -684,6 +687,7 @@
                 depModeled={depFc}
                 syntheticPrior={synFc}
                 proxy311={proxyFc}
+                idaHwm={idaHwmFc}
                 registerPoints={registerPointsFc}
                 registerPolygons={registerPolygonsFc}
                 terramindLulc={terramindLulcFc}

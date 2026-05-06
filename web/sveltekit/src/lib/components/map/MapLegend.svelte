@@ -42,7 +42,7 @@
     cornerstone: [
       { label: 'Sandy Inundation Zone (2012)', source: 'NYC OEM',  tier: 'empirical', wired: true  },
       { label: 'FEMA / DEP scenarios',         source: 'FEMA · NYC DEP', tier: 'modeled',   wired: true  },
-      { label: 'Ida HWM points (2021)',        source: 'USGS STN', tier: 'empirical', wired: false },
+      { label: 'Ida HWM points (2021)',        source: 'USGS STN', tier: 'empirical', wired: true  },
       { label: 'Microtopography (HAND/TWI)',   source: 'USGS 3DEP', tier: 'proxy',     wired: false },
     ],
     keystone: [

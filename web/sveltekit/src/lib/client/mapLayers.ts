@@ -74,6 +74,16 @@ interface FloodNetSensor {
 }
 
 /**
+ * USGS Hurricane Ida 2021 high-water marks within radius_m of the queried
+ * address. Returns Points with site_description, elev_ft,
+ * height_above_gnd_ft, hwm_quality, waterbody, distance_m properties.
+ * Empirical tier — surveyed ground-truth water marks.
+ */
+export async function fetchIdaHwm(lat: number, lon: number, r = 1500): Promise<FeatureCollection> {
+  return fetchFc(`/api/layers/ida_hwm?lat=${lat}&lon=${lon}&r=${r}`);
+}
+
+/**
  * FloodNet sensor points as a graduated-circle layer. The handoff puts 311
  * complaints on the proxy layer; we don't currently expose 311 as GeoJSON
  * from FastAPI, so floodnet sensor density (event count) drives the dot

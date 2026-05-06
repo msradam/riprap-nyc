@@ -31,6 +31,9 @@
      *  (terramind.polygons_geojson). Categorical fill by `fill_color`
      *  property; synthetic tier; controlled by the SYN master toggle. */
     terramindLulc?: GeoJSON.FeatureCollection;
+    /** USGS Ida 2021 high-water mark points. Empirical tier; amber fill.
+     *  Controlled by EMP master toggle. */
+    idaHwm?: GeoJSON.FeatureCollection;
     activeLayers?: { empirical: boolean; modeled: boolean; synthetic: boolean; proxy: boolean };
     /** v0.4.5 §8 — when a Findings card is hovered/focused, its
      *  `mapLayer` key flows in as `linkedKey`. The map root gains
@@ -48,6 +51,7 @@
     registerPoints,
     registerPolygons,
     terramindLulc,
+    idaHwm,
     activeLayers = { empirical: true, modeled: true, synthetic: true, proxy: true },
     linkedKey = null,
   }: Props = $props();
@@ -77,10 +81,12 @@
   $effect(() => { setSourceData('register-points', registerPoints); });
   $effect(() => { setSourceData('register-polygons', registerPolygons); });
   $effect(() => { setSourceData('terramind-lulc', terramindLulc); });
+  $effect(() => { setSourceData('ida-hwm', idaHwm); });
 
   $effect(() => {
     setLayerVisibility('tier-empirical-fill', activeLayers.empirical);
     setLayerVisibility('tier-empirical-line', activeLayers.empirical);
+    setLayerVisibility('ida-hwm-circle', activeLayers.empirical);
     setLayerVisibility('tier-modeled-fill', activeLayers.modeled);
     setLayerVisibility('tier-modeled-line', activeLayers.modeled);
     setLayerVisibility('tier-synthetic-fill', activeLayers.synthetic);
@@ -129,6 +135,7 @@
       map.addSource('register-points', { type: 'geojson', data: registerPoints ?? fcEmpty() });
       map.addSource('register-polygons', { type: 'geojson', data: registerPolygons ?? fcEmpty() });
       map.addSource('terramind-lulc', { type: 'geojson', data: terramindLulc ?? fcEmpty() });
+      map.addSource('ida-hwm', { type: 'geojson', data: idaHwm ?? fcEmpty() });
       map.addSource('queried-address', {
         type: 'geojson',
         data: {
@@ -216,6 +223,55 @@
       map.addLayer({
         id: 'register-polygons-line', type: 'line', source: 'register-polygons',
         paint: { 'line-color': '#0B5394', 'line-width': 1.0, 'line-opacity': 0.85 }
+      });
+
+      // Ida 2021 HWM points — USGS surveyed water marks, empirical tier.
+      // Amber fill distinguishes from Sandy blue polygons; size scaled by
+      // height_above_gnd_ft so higher water levels read as larger circles.
+      map.addLayer({
+        id: 'ida-hwm-circle', type: 'circle', source: 'ida-hwm',
+        paint: {
+          'circle-color': '#D97706',
+          'circle-stroke-color': '#F4F6F9',
+          'circle-stroke-width': 1.5,
+          'circle-radius': [
+            'interpolate', ['linear'],
+            ['coalesce', ['get', 'height_above_gnd_ft'], 0.5],
+            0, 5, 1, 7, 3, 9, 5, 12
+          ],
+          'circle-opacity': 0.92
+        }
+      });
+      map.on('mouseenter', 'ida-hwm-circle', () => {
+        if (map) map.getCanvas().style.cursor = 'pointer';
+      });
+      map.on('mouseleave', 'ida-hwm-circle', () => {
+        if (map) map.getCanvas().style.cursor = '';
+      });
+      map.on('click', 'ida-hwm-circle', (e) => {
+        if (!map || !e.features?.length) return;
+        const f = e.features[0];
+        const p = (f.properties ?? {}) as Record<string, unknown>;
+        const site = String(p.site_description ?? '?');
+        const elev = p.elev_ft != null ? `${Number(p.elev_ft).toFixed(1)} ft NAVD88` : '—';
+        const height = p.height_above_gnd_ft != null ? `${Number(p.height_above_gnd_ft).toFixed(2)} ft above ground` : '—';
+        const quality = String(p.hwm_quality ?? '');
+        const dist = p.distance_m != null ? `${p.distance_m} m from query` : '';
+        const html = `
+          <div style="font-family: 'IBM Plex Sans', system-ui; font-size: 12px; max-width: 220px;">
+            <div style="font-weight: 600; color: #D97706; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase;">Ida 2021 HWM · USGS</div>
+            <div style="margin-top: 4px; color: #0F172A; font-size: 12px;">${site}</div>
+            <div style="margin-top: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: #6B6B6B;">
+              elev: ${elev}<br>
+              mark: ${height}<br>
+              ${quality ? `quality: ${quality}<br>` : ''}
+              ${dist}
+            </div>
+          </div>`;
+        // @ts-expect-error: maplibre captured in outer onMount scope
+        const popup = new maplibre.Popup({ closeButton: true, offset: 12 });
+        const coords = (f.geometry as GeoJSON.Point).coordinates as [number, number];
+        popup.setLngLat(coords).setHTML(html).addTo(map);
       });
 
       // Register-asset points (subway entrances, schools, hospitals).
