@@ -88,50 +88,39 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 
 # Five Stones fan out. One cited briefing comes back.
 
-<div style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px;">
+<p style="margin: 4px 0 10px; font-size: 17px; color: var(--ink-3); font-family: var(--font-mono);">query &rarr; <strong style="color: var(--ink);">Planner</strong> (Granite 4.1 3B, intent classification) &rarr; Stone roster &rarr; <strong style="color: var(--ink);">Capstone</strong> (Granite 4.1 8B + Mellea) &rarr; briefing</p>
 
-<div style="display: flex; gap: 12px; align-items: center;">
-  <div class="box" style="padding: 10px 16px; flex: 0 0 180px; font-family: var(--font-mono); font-size: 13px; text-align: center;">free-text query</div>
-  <div style="font-family: var(--font-mono); color: var(--ink-3); font-size: 18px;">&rarr;</div>
-  <div class="box tinted" style="padding: 10px 16px; flex: 1; font-family: var(--font-mono); font-size: 13px;"><strong>Planner</strong> &middot; Granite 4.1 3B &nbsp;&middot;&nbsp; classifies intent: single_address · neighborhood · development_check · live_now</div>
+<div class="box-grid cols-4" style="margin-top: 0; gap: 10px;">
+
+<div class="box" style="border-top: 3px solid #475569; padding: 14px 16px;">
+  <div class="lbl" style="color: #475569;">Cornerstone</div>
+  <div style="font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 6px;">Hazard Reader</div>
+  <div style="font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); line-height: 1.5;">Sandy 2012 zone<br>DEP stormwater<br>Ida USGS HWMs<br>Prithvi-EO · LiDAR</div>
 </div>
 
-<div style="font-family: var(--font-mono); color: var(--ink-3); font-size: 14px; padding-left: 84px;">&#9660; routes to Stone roster</div>
-
-<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
-  <div style="border: 1px solid var(--rule-soft); border-top: 3px solid var(--stone-cornerstone); padding: 10px 14px; background: var(--paper);">
-    <div style="font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--stone-cornerstone); margin-bottom: 4px;">Cornerstone</div>
-    <div style="font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 4px;">Hazard Reader</div>
-    <div style="font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); line-height: 1.4;">Sandy 2012<br>DEP scenarios<br>Ida USGS HWMs<br>Prithvi-EO · LiDAR</div>
-  </div>
-  <div style="border: 1px solid var(--rule-soft); border-top: 3px solid var(--stone-keystone); padding: 10px 14px; background: var(--paper);">
-    <div style="font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--stone-keystone); margin-bottom: 4px;">Keystone</div>
-    <div style="font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 4px;">Asset Register</div>
-    <div style="font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); line-height: 1.4;">NYCHA · DOE<br>MTA · hospitals<br>TerraMind-NYC<br>Buildings adapter</div>
-  </div>
-  <div style="border: 1px solid var(--rule-soft); border-top: 3px solid var(--stone-touchstone); padding: 10px 14px; background: var(--paper);">
-    <div style="font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--stone-touchstone); margin-bottom: 4px;">Touchstone</div>
-    <div style="font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 4px;">Live Observer</div>
-    <div style="font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); line-height: 1.4;">FloodNet sensors<br>NYC 311 history<br>NOAA gauge<br>NWS METAR</div>
-  </div>
-  <div style="border: 1px solid var(--rule-soft); border-top: 3px solid var(--stone-lodestone); padding: 10px 14px; background: var(--paper);">
-    <div style="font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--stone-lodestone); margin-bottom: 4px;">Lodestone</div>
-    <div style="font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 4px;">Projector</div>
-    <div style="font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); line-height: 1.4;">NWS alerts<br>Granite TTM r2<br>surge nowcast<br>311 recurrence</div>
-  </div>
+<div class="box" style="border-top: 3px solid #1A4480; padding: 14px 16px;">
+  <div class="lbl" style="color: #1A4480;">Keystone</div>
+  <div style="font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 6px;">Asset Register</div>
+  <div style="font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); line-height: 1.5;">NYCHA · DOE · MTA<br>NYS hospitals<br>TerraMind-NYC<br>Buildings adapter</div>
 </div>
 
-<div style="font-family: var(--font-mono); color: var(--ink-3); font-size: 14px; padding-left: 84px;">&#9660;</div>
-
-<div style="display: flex; gap: 12px; align-items: center;">
-  <div style="border: 1px solid var(--rule-soft); border-top: 3px solid var(--stone-capstone); padding: 10px 16px; flex: 1; background: var(--paper);">
-    <span style="font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--stone-capstone);">Capstone</span>
-    <span style="font-size: 14px; color: var(--ink-2); margin-left: 12px;">Granite 4.1 8B + Mellea &nbsp;&middot;&nbsp; <code>numerics_grounded</code> &middot; <code>no_placeholder_tokens</code> &middot; <code>citations_dense</code> &middot; <code>citations_resolve</code> &nbsp;&middot;&nbsp; reroll until resolved</span>
-  </div>
-  <div style="font-family: var(--font-mono); color: var(--ink-3); font-size: 18px;">&rarr;</div>
-  <div class="box" style="padding: 10px 16px; flex: 0 0 220px; font-family: var(--font-mono); font-size: 12px; text-align: center; border-left: 3px solid var(--accent);">cited 4-section briefing<br><code>[doc_id]</code> on every number</div>
+<div class="box" style="border-top: 3px solid #0E7490; padding: 14px 16px;">
+  <div class="lbl" style="color: #0E7490;">Touchstone</div>
+  <div style="font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 6px;">Live Observer</div>
+  <div style="font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); line-height: 1.5;">FloodNet sensors<br>NYC 311 history<br>NOAA tide gauge<br>NWS METAR</div>
 </div>
 
+<div class="box" style="border-top: 3px solid #92400E; padding: 14px 16px;">
+  <div class="lbl" style="color: #92400E;">Lodestone</div>
+  <div style="font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 6px;">Projector</div>
+  <div style="font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); line-height: 1.5;">NWS alerts<br>Granite TTM r2<br>surge nowcast<br>311 recurrence</div>
+</div>
+
+</div>
+
+<div class="box" style="border-top: 3px solid #162E51; margin-top: 10px; padding: 12px 18px;">
+  <span style="font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #162E51;">Capstone</span>
+  <span style="font-size: 16px; color: var(--ink-2); margin-left: 14px;">Granite 4.1 8B + Mellea rejection sampling &nbsp;&middot;&nbsp; <code>numerics_grounded</code> &middot; <code>no_placeholder_tokens</code> &middot; <code>citations_dense</code> &middot; <code>citations_resolve</code> &nbsp;&middot;&nbsp; reroll until resolved &nbsp;&rarr;&nbsp; <strong>cited 4-section briefing</strong></span>
 </div>
 
 ---
