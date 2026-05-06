@@ -30,10 +30,10 @@ RIPRAP_ML_* env is unset (e.g. on first-light dev or in unit tests).
 from __future__ import annotations
 
 import base64
-import io
 import logging
 import os
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
 
 import httpx
 

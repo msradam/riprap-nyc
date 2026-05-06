@@ -38,7 +38,6 @@ from urllib.parse import quote
 
 import httpx
 
-
 # Curated probe set. Each entry exercises a different surface of the
 # system; together they cover every Stone's specialists at least once.
 DEFAULT_ADDRESSES: list[dict[str, Any]] = [

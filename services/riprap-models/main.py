@@ -37,7 +37,7 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 import numpy as np
-from fastapi import Depends, FastAPI, HTTPException, Header
+from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel
 
 log = logging.getLogger("riprap.models")

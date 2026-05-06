@@ -48,7 +48,10 @@ def _stage_stack(out_path: Path, scene_id: str) -> bool:
     if out_path.exists():
         print(f"  reusing {out_path.name}", file=sys.stderr)
         return True
-    import pystac_client, planetary_computer, rasterio, numpy as np
+    import numpy as np
+    import planetary_computer
+    import pystac_client
+    import rasterio
     print(f"fetching {scene_id}...", file=sys.stderr)
     catalog = pystac_client.Client.open(
         "https://planetarycomputer.microsoft.com/api/stac/v1",
@@ -126,11 +129,11 @@ def main() -> int:
         return 2
 
     # ---- diff: NEW water in post that wasn't in pre = Ida-attributable ----
-    import rasterio
-    import numpy as np
-    from rasterio.features import shapes
-    from shapely.geometry import shape, mapping
     import geopandas as gpd
+    import numpy as np
+    import rasterio
+    from rasterio.features import shapes
+    from shapely.geometry import mapping, shape
 
     with rasterio.open(pre_pred) as ds:
         pre = ds.read(1)

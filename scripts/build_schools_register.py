@@ -17,7 +17,6 @@ sys.path.insert(0, str(ROOT))
 from app.assets import schools  # noqa: E402
 from app.register_builder import build_register  # noqa: E402
 
-
 if __name__ == "__main__":
     build_register("schools", schools.load,
                    meta_keys=("name", "address", "borough", "bbl", "bin"))

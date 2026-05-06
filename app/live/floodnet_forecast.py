@@ -36,9 +36,9 @@ import numpy as np
 
 from app.context.floodnet import flood_events_for, sensors_near
 from app.live.ttm_forecast import (
+    _MODEL_LOAD_ERROR,
     DAILY_CONTEXT,
     DAILY_PREDICTION,
-    _MODEL_LOAD_ERROR,
     _run_ttm,
 )
 
