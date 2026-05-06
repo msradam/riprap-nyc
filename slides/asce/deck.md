@@ -28,7 +28,7 @@ description: ASCE NY State Convention, Albany, May 13, 2026
   <div class="meta-divider"></div>
   <div>
     <div class="meta-label">Invited by</div>
-    <div class="meta-value">[ IBM STSM placeholder ]</div>
+    <div class="meta-value">Andrew Hicks</div>
   </div>
   <div class="meta-divider"></div>
   <div>
@@ -46,10 +46,10 @@ description: ASCE NY State Convention, Albany, May 13, 2026
 <p style="font-size: 18px; color: var(--ink-3); margin-bottom: 16px; max-width: none;">After this session, you will be able to:</p>
 
 <ol style="margin-top: 0;">
-  <li>Describe a <strong>citation-grounded synthesis architecture</strong> for fusing multi-source flood evidence into auditable, site-specific narratives.</li>
+  <li>Describe a <strong>citation-grounded architecture</strong> for synthesizing multi-source flood evidence into auditable, site-specific narratives.</li>
   <li>Identify where this approach is <strong>appropriate</strong> (screening, grant evidence, capital planning) and where it is <strong>not</strong> (hydraulic modeling, stamped deliverables).</li>
-  <li>Evaluate the <strong>epistemic guarantees and limitations</strong> of LLM-based evidence synthesis in civil engineering practice.</li>
-  <li>Apply the Five-Stone architecture to <strong>other flood-exposure domains</strong> — riverine, ice-jam, dam-failure — relevant to upstate NY.</li>
+  <li>Evaluate the <strong>guarantees and limitations</strong> of LLM-based evidence synthesis in civil engineering practice.</li>
+  <li>Apply the Five-Stone architecture to <strong>riverine, ice-jam, and dam-failure flooding</strong>.</li>
 </ol>
 
 <p style="position: absolute; bottom: 52px; left: 64px; right: 64px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); margin: 0;">PDH documentation available on request &nbsp;&middot;&nbsp; 1.0 contact hour</p>
@@ -58,7 +58,7 @@ description: ASCE NY State Convention, Albany, May 13, 2026
 
 <div class="eyebrow">01 &middot; The problem</div>
 
-# When you assess flood exposure, the evidence is scattered.
+# When you assess flood exposure, the evidence sits in eight or more places.
 
 <p style="font-size: 20px; color: var(--ink-2); max-width: 72ch; margin-bottom: 14px;">For a capital project, a grant application, a vulnerability assessment, or a property disclosure — the relevant evidence sits across eight or more disconnected primary sources. Synthesizing them into a citable narrative takes hours of GIS work per site.</p>
 
@@ -94,11 +94,11 @@ description: ASCE NY State Convention, Albany, May 13, 2026
 
 # A flood-exposure briefing for any place in New York.
 
-<p style="margin-bottom: 14px; font-size: 20px; max-width: 72ch; color: var(--ink-2);">Type an address or neighborhood. Get a written briefing in 5&ndash;13 seconds, fusing four temporal modes &mdash; historical inundation, current observations, modeled scenarios, projections &mdash; into one cited paragraph.</p>
+<p style="margin-bottom: 14px; font-size: 20px; max-width: 72ch; color: var(--ink-2);">Type an address or neighborhood. Get a written briefing in 5&ndash;13 seconds, fusing four temporal modes (historical inundation, current observations, modeled scenarios, projections) into one cited paragraph.</p>
 
 <div style="border: 2px dashed #94A3B8; background: #E8ECF2; display: flex; align-items: center; justify-content: center; height: 260px; border-radius: 2px; margin-bottom: 10px;">
   <p style="font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); text-align: center; margin: 0; padding: 24px;">
-    [ screenshot of riprap.nyc landing &mdash; to be added ]
+    [ live system screenshot, to be added ]
   </p>
 </div>
 
@@ -108,41 +108,97 @@ description: ASCE NY State Convention, Albany, May 13, 2026
 
 <div class="eyebrow">03 &middot; Architecture</div>
 
-# Five Stones. Each with one job and one epistemic posture.
+# Five Stones. Each with one job.
 
-<p style="font-size: 16px; color: var(--ink-3); margin: 0 0 10px; font-style: normal;">The names are deliberate &mdash; these are load-bearing terms from masonry and structural engineering. The components carry analogous responsibilities.</p>
+<p style="margin: 4px 0 10px; font-size: 17px; color: var(--ink-3); font-family: var(--font-mono);">query &rarr; <strong style="color: var(--ink);">Planner</strong> (Granite 4.1 3B, intent classification) &rarr; Stone roster &rarr; <strong style="color: var(--ink);">Capstone</strong> (Granite 4.1 8B + Mellea) &rarr; briefing</p>
 
 <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 0;">
 
-  <div style="background: var(--paper-deep); border: 1px solid var(--rule-soft); border-top: 3px solid #475569; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px;">
-    <div style="font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #475569;">Cornerstone</div>
-    <div style="font-size: 13px; font-weight: 700; color: var(--ink); line-height: 1.2;">Hazard Reader</div>
-    <div style="font-size: 13px; color: var(--ink-2); line-height: 1.4;">What the ground remembers. Sandy 2012 inundation, Ida 2021 HWMs, NYC DEP stormwater scenarios, USGS 3DEP microtopography (HAND, TWI).</div>
-    <div style="margin-top: auto; padding-top: 8px; border-top: 1px solid var(--rule-soft); font-family: var(--font-mono); font-size: 9px; color: #475569; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;">Empirical &middot; Historical</div>
+  <div style="background: var(--paper-deep); border: 1px solid var(--rule-soft); border-top: 3px solid #475569; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px;">
+    <div style="display: flex; justify-content: space-between; align-items: baseline;">
+      <span style="font-family: var(--font-mono); font-size: 9px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #475569;">Cornerstone · USGS 3DEP</span>
+      <span style="font-family: var(--font-mono); font-size: 9px; color: var(--ink-3);">2020</span>
+    </div>
+    <div style="font-size: 13px; font-weight: 600; color: var(--ink); line-height: 1.2; margin-bottom: 4px;">Microtopography (HAND / TWI)</div>
+    <div style="display: grid; grid-template-columns: auto 1fr; gap: 2px 8px;">
+      <span style="font-family: var(--font-mono); font-size: 9px; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.08em;">HAND</span><span style="font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: #475569;">0.82 m</span>
+      <span style="font-family: var(--font-mono); font-size: 9px; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.08em;">TWI</span><span style="font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: #475569;">14.3</span>
+      <span style="font-family: var(--font-mono); font-size: 9px; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.08em;">Elev.</span><span style="font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: #475569;">2.1 m MSL</span>
+      <span style="font-family: var(--font-mono); font-size: 9px; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.08em;">Pct. lower</span><span style="font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: #475569;">78%</span>
+    </div>
+    <div style="margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--rule-soft); font-family: var(--font-mono); font-size: 10px; color: #475569; font-weight: 600;">[topo]</div>
   </div>
 
-  <div style="background: var(--paper-deep); border: 1px solid var(--rule-soft); border-top: 3px solid #1A4480; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px;">
-    <div style="font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #1A4480;">Keystone</div>
-    <div style="font-size: 13px; font-weight: 700; color: var(--ink); line-height: 1.2;">Asset Register</div>
-    <div style="font-size: 13px; color: var(--ink-2); line-height: 1.4;">What is exposed. NYCHA developments, DOE schools, MTA subway entrances, NYS hospitals, building footprints via TerraMind-NYC.</div>
-    <div style="margin-top: auto; padding-top: 8px; border-top: 1px solid var(--rule-soft); font-family: var(--font-mono); font-size: 9px; color: #1A4480; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;">Modeled &middot; Administrative</div>
+  <div style="background: var(--paper-deep); border: 1px solid var(--rule-soft); border-top: 3px solid #1A4480; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px;">
+    <div style="display: flex; justify-content: space-between; align-items: baseline;">
+      <span style="font-family: var(--font-mono); font-size: 9px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #1A4480;">Keystone · TerraMind-NYC</span>
+      <span style="font-family: var(--font-mono); font-size: 9px; color: var(--ink-3);">2024</span>
+    </div>
+    <div style="font-size: 13px; font-weight: 600; color: var(--ink); line-height: 1.2; margin-bottom: 4px;">Building footprint coverage</div>
+    <div style="margin: 6px 0;">
+      <div style="font-family: var(--font-mono); font-size: 30px; font-weight: 700; color: #1A4480; line-height: 1;">48.41<span style="font-size: 16px;">%</span></div>
+      <div style="font-family: var(--font-mono); font-size: 10px; color: var(--ink-3); margin-top: 3px;">250 m radius &middot; Buildings LoRA adapter</div>
+    </div>
+    <div style="margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--rule-soft); font-family: var(--font-mono); font-size: 10px; color: #1A4480; font-weight: 600;">[keystone_bldg]</div>
   </div>
 
-  <div style="background: var(--paper-deep); border: 1px solid var(--rule-soft); border-top: 3px solid #0E7490; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px;">
-    <div style="font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #0E7490;">Touchstone</div>
-    <div style="font-size: 13px; font-weight: 700; color: var(--ink); line-height: 1.2;">Live Observer</div>
-    <div style="font-size: 13px; color: var(--ink-2); line-height: 1.4;">What is happening now. FloodNet sensors, NYC 311 complaints, NOAA CO-OPS tide gauge, NWS METAR. Real-time evidence, not modeled.</div>
-    <div style="margin-top: auto; padding-top: 8px; border-top: 1px solid var(--rule-soft); font-family: var(--font-mono); font-size: 9px; color: #0E7490; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;">Observational &middot; Live</div>
+  <div style="background: var(--paper-deep); border: 1px solid var(--rule-soft); border-top: 3px solid #0E7490; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px;">
+    <div style="display: flex; justify-content: space-between; align-items: baseline;">
+      <span style="font-family: var(--font-mono); font-size: 9px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #0E7490;">Touchstone · NYC 311</span>
+      <span style="font-family: var(--font-mono); font-size: 9px; color: var(--ink-3);">live</span>
+    </div>
+    <div style="font-size: 13px; font-weight: 600; color: var(--ink); line-height: 1.2; margin-bottom: 4px;">Flood complaints · 200 m buffer</div>
+    <div style="margin: 4px 0;">
+      <svg viewBox="0 0 220 60" style="width:100%; display:block;">
+        <rect x="8" y="52" width="212" height="1" fill="#CBD5E1"/>
+        <rect x="12" y="35" width="28" height="17" fill="#0E7490" rx="1"/>
+        <rect x="54" y="18" width="28" height="34" fill="#0E7490" rx="1"/>
+        <rect x="96" y="10" width="28" height="42" fill="#0E7490" rx="1"/>
+        <rect x="138" y="10" width="28" height="42" fill="#0E7490" rx="1"/>
+        <rect x="180" y="27" width="28" height="25" fill="#0E7490" rx="1"/>
+        <text x="26" y="32" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="8" fill="#0E7490">2</text>
+        <text x="68" y="15" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="8" fill="#0E7490">4</text>
+        <text x="110" y="7" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="8" fill="#0E7490">5</text>
+        <text x="152" y="7" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="8" fill="#0E7490">5</text>
+        <text x="194" y="24" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="8" fill="#0E7490">3</text>
+        <text x="26" y="59" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="7" fill="#94A3B8">'19</text>
+        <text x="68" y="59" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="7" fill="#94A3B8">'20</text>
+        <text x="110" y="59" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="7" fill="#94A3B8">'21</text>
+        <text x="152" y="59" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="7" fill="#94A3B8">'22</text>
+        <text x="194" y="59" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="7" fill="#94A3B8">'23</text>
+      </svg>
+      <div style="font-family: var(--font-mono); font-size: 10px; color: var(--ink-3);">19 requests &middot; 5-yr lookback</div>
+    </div>
+    <div style="margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--rule-soft); font-family: var(--font-mono); font-size: 10px; color: #0E7490; font-weight: 600;">[nyc311]</div>
   </div>
 
-  <div style="background: var(--paper-deep); border: 1px solid var(--rule-soft); border-top: 3px solid #92400E; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px;">
-    <div style="font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #92400E;">Lodestone</div>
-    <div style="font-size: 13px; font-weight: 700; color: var(--ink); line-height: 1.2;">Projector</div>
-    <div style="font-size: 13px; color: var(--ink-2); line-height: 1.4;">What is coming. NPCC4 SLR projections, NWS flood watches, IBM Granite TTM r2 storm-surge nowcast. Forward-looking, explicitly uncertain.</div>
-    <div style="margin-top: auto; padding-top: 8px; border-top: 1px solid var(--rule-soft); font-family: var(--font-mono); font-size: 9px; color: #92400E; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;">Modeled &middot; Forecast</div>
+  <div style="background: var(--paper-deep); border: 1px solid var(--rule-soft); border-top: 3px solid #92400E; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px;">
+    <div style="display: flex; justify-content: space-between; align-items: baseline;">
+      <span style="font-family: var(--font-mono); font-size: 9px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #92400E;">Lodestone · Granite TTM r2</span>
+      <span style="font-family: var(--font-mono); font-size: 9px; color: var(--ink-3);">live</span>
+    </div>
+    <div style="font-size: 13px; font-weight: 600; color: var(--ink); line-height: 1.2; margin-bottom: 4px;">Surge residual nowcast</div>
+    <div style="margin: 4px 0;">
+      <svg viewBox="0 0 220 60" style="width:100%; display:block;">
+        <path d="M10,40 35,30 60,19 85,16 110,21 135,27 160,34 185,40 210,45 L210,52 L10,52 Z" fill="#92400E" opacity="0.12"/>
+        <rect x="8" y="52" width="212" height="1" fill="#CBD5E1"/>
+        <line x1="60" y1="19" x2="60" y2="52" stroke="#92400E" stroke-width="1" stroke-dasharray="3,2" opacity="0.6"/>
+        <polyline points="10,40 35,30 60,19 85,16 110,21 135,27 160,34 185,40 210,45" fill="none" stroke="#92400E" stroke-width="2" stroke-linejoin="round"/>
+        <circle cx="60" cy="19" r="3" fill="#92400E"/>
+        <text x="65" y="17" font-family="IBM Plex Mono,monospace" font-size="8" fill="#92400E" font-weight="700">0.22 ft</text>
+        <text x="10" y="59" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="7" fill="#94A3B8">0h</text>
+        <text x="60" y="59" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="7" fill="#92400E">NOW</text>
+        <text x="110" y="59" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="7" fill="#94A3B8">4.8h</text>
+        <text x="210" y="59" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="7" fill="#94A3B8">9.6h</text>
+      </svg>
+      <div style="font-family: var(--font-mono); font-size: 10px; color: var(--ink-3);">peak surge residual &middot; 9.6 h horizon</div>
+    </div>
+    <div style="margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--rule-soft); font-family: var(--font-mono); font-size: 10px; color: #92400E; font-weight: 600;">[ttm_surge]</div>
   </div>
 
 </div>
+
+<p style="margin-top: 8px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3);">Real evidence cards rendered by the live system &nbsp;&middot;&nbsp; 442 East Houston Street, Manhattan.</p>
 
 <div class="box" style="border-top: 3px solid #162E51; margin-top: 10px; padding: 10px 18px;">
   <span style="font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #162E51;">Capstone</span>
@@ -155,18 +211,16 @@ description: ASCE NY State Convention, Albany, May 13, 2026
 
 # Live demo.
 
-<div style="margin: 40px 0 28px; text-align: center;">
-  <p style="font-family: var(--font-mono); font-size: 28px; font-weight: 700; color: var(--ink); margin: 0 auto; max-width: 860px; line-height: 1.35;">&ldquo;I&rsquo;m thinking about renting an apartment at 80 Pioneer Street, Brooklyn. Should I worry?&rdquo;</p>
+<div style="margin: 40px 0 18px; text-align: center;">
+  <p style="font-family: var(--font-mono); font-size: 28px; font-weight: 700; color: var(--ink); margin: 0 auto; max-width: 860px; line-height: 1.35;">&ldquo;Hollis, Queens&rdquo;</p>
 </div>
 
-<div style="text-align: center; margin-bottom: 36px;">
-  <span style="font-family: var(--font-mono); font-size: 20px; letter-spacing: 0.06em; color: var(--accent); font-weight: 700;">riprap.nyc</span>
-</div>
+<p style="text-align: center; font-style: italic; font-size: 16px; color: var(--ink-3); margin: 0 auto 28px; max-width: 72ch;">A neighborhood-scale briefing. NYC DEP and OEM planners use this shape of query when scoping where the next $30B stormwater priority site should land.</p>
 
 <div class="box-grid cols-3" style="margin-top: 0;">
   <div class="box" style="text-align: center; padding: 14px 18px;">
-    <div class="stat-value" style="font-size: 40px;">13 s</div>
-    <div class="stat-label">end-to-end on AMD MI300X</div>
+    <div class="stat-value" style="font-size: 40px;">5.8 s</div>
+    <div class="stat-label">end-to-end</div>
   </div>
   <div class="box" style="text-align: center; padding: 14px 18px;">
     <div class="stat-value" style="font-size: 40px;">4 / 4</div>
@@ -210,7 +264,7 @@ description: ASCE NY State Convention, Albany, May 13, 2026
 
 ---
 
-<div class="eyebrow">06 &middot; Honest boundaries</div>
+<div class="eyebrow">06 &middot; What Riprap is not.</div>
 
 # What Riprap is not.
 
@@ -230,7 +284,7 @@ description: ASCE NY State Convention, Albany, May 13, 2026
 
 <div class="box" style="border-top: 3px solid var(--rule-soft);">
   <div class="lbl">Not a substitute for site investigation</div>
-  <div class="body" style="font-size: 17px;">Microtopography is from 1 m USGS 3DEP LiDAR &mdash; appropriate for screening, not for design. Field reconnaissance, soil borings, and survey are not replaced.</div>
+  <div class="body" style="font-size: 17px;">Microtopography is from 1 m USGS 3DEP LiDAR, appropriate for screening, not for design. Field reconnaissance, soil borings, and survey are not replaced.</div>
 </div>
 
 <div class="box" style="border-top: 3px solid var(--rule-soft);">
@@ -252,22 +306,22 @@ description: ASCE NY State Convention, Albany, May 13, 2026
 
 <div class="box">
   <div class="lbl" style="color: #005EA2;">Upstate NY flooding</div>
-  <div class="body">The Five-Stone pattern adapted for riverine flooding (Mohawk River, Hudson tributaries), ice-jam events, and dam-failure inundation downstream of NYS&rsquo;s aging dam inventory. Same architecture, different primary sources.</div>
+  <div class="body">The same five-Stone pattern for riverine, ice-jam, and dam-failure flooding. Different primary sources, same architecture.</div>
 </div>
 
 <div class="box">
   <div class="lbl" style="color: #475569;">Historical-event mode</div>
-  <div class="body">Re-run the FSM with snapshot data from any past date. Validate the system against measured outcomes &mdash; what would Riprap have said before Sandy, before Ida, before the 2024 Beryl remnants. Calibration as a first-class feature for civil engineering use.</div>
+  <div class="body">Re-run the system against snapshot data from any past date. Calibration as a core feature.</div>
 </div>
 
 <div class="box">
   <div class="lbl" style="color: #1A4480;">Stones as standalone packages</div>
-  <div class="body">Each Stone is a coherent composition over data sources, models, and deterministic checks. Extract Cornerstone, Touchstone, Keystone, Lodestone as independent packages; any civic-tech or consulting workflow can pull one Stone without the full Riprap stack.</div>
+  <div class="body">Each Stone runs alone. Pull one without the full Riprap stack.</div>
 </div>
 
 <div class="box tinted">
   <div class="lbl" style="color: #0E7490;">Cross-domain</div>
-  <div class="body">The same epistemic pattern &mdash; citation-grounded synthesis, silent when uncertain &mdash; applied to transit, water, energy, and structural-condition reporting. The architecture is general; flood is the first domain.</div>
+  <div class="body">The same pattern for transit, water, energy, and structural-condition reporting. Flood is the first domain.</div>
 </div>
 
 </div>
@@ -281,9 +335,9 @@ description: ASCE NY State Convention, Albany, May 13, 2026
 <div class="box-grid cols-2" style="margin-top: 8px; gap: 20px;">
 
 <div>
-  <p style="font-size: 20px; color: var(--ink-2); max-width: none; margin-bottom: 16px;">Three days of agentic AI-assisted development, on top of months of design thinking. Four foundation models. Three Apache-2.0 NYC fine-tunes trained on AMD MI300X for the AMD &times; lablab.ai Developer Hackathon (May 4&ndash;10, 2026).</p>
+  <p style="font-size: 20px; color: var(--ink-2); max-width: none; margin-bottom: 16px;">Three days of AI-assisted development, on top of months of design thinking. Four foundation models. Three Apache-2.0 NYC fine-tunes trained on AMD MI300X for the AMD &times; lablab.ai Developer Hackathon (May 4&ndash;10, 2026).</p>
   <p style="font-size: 20px; color: var(--ink-2); max-width: none;">Apache-2.0 end-to-end on public-record federal, state, and city data. No commercial APIs contacted at runtime.</p>
-  <p style="font-size: 20px; color: var(--ink); max-width: none; margin-top: 12px;"><strong>A working civic-tech tool is now a three-day artifact for an engineer who knows what they want to build.</strong> The substance is what we just walked through. The build approach is the demonstration of how reachable that substance has become.</p>
+  <p style="font-size: 20px; color: var(--ink); max-width: none; margin-top: 12px;"><strong>Built in three days. Designed over months. The tools have shifted what one engineer can ship.</strong></p>
 </div>
 
 <div>
@@ -310,7 +364,7 @@ description: ASCE NY State Convention, Albany, May 13, 2026
 # What I want from this room.
 
 <div class="box" style="border-left: 3px solid var(--accent); padding: 18px 24px; margin-bottom: 18px; background: var(--paper-deep);">
-  <div class="body" style="font-size: 19px; line-height: 1.5; max-width: none;">I am a software engineer, not a civil engineer. The system I just showed you is opinionated about epistemic posture &mdash; citation-grounded, silent when uncertain, public-record only &mdash; but I am less sure about where it falls short of how a stamped engineering deliverable would need to behave.</div>
+  <div class="body" style="font-size: 19px; line-height: 1.5; max-width: none;">I am a software engineer, not a civil engineer. The system I just showed you is opinionated about what counts as evidence: citation-grounded, silent when uncertain, public-record only. But I am less sure about where it falls short of how a stamped engineering deliverable would need to behave.</div>
 </div>
 
 <p style="font-size: 19px; font-weight: 600; color: var(--ink); margin-bottom: 10px;">Three questions for the room:</p>
