@@ -3,7 +3,7 @@ marp: true
 theme: riprap
 paginate: true
 size: 16:9
-title: Riprap. Citation-grounded flood-exposure briefings for any place in New York.
+title: Riprap. Citation-grounded flood-exposure briefings for any place in New York City.
 description: ASCE NY State Convention, Albany, May 13, 2026
 ---
 
@@ -18,9 +18,9 @@ description: ASCE NY State Convention, Albany, May 13, 2026
 
 # Riprap
 
-## Citation-grounded flood-exposure briefings for any place in New York.
+## Citation-grounded flood-exposure briefings for any place in New York City.
 
-<div class="meta" style="grid-template-columns: auto 1px auto 1px auto; margin-top: 28px;">
+<div class="meta" style="grid-template-columns: auto 1px auto; margin-top: 28px;">
   <div>
     <div class="meta-label">Speaker</div>
     <div class="meta-value">Adam Munawar Rahman &middot; IBM &middot; MS CE, NYU</div>
@@ -29,11 +29,6 @@ description: ASCE NY State Convention, Albany, May 13, 2026
   <div>
     <div class="meta-label">Invited by</div>
     <div class="meta-value">Andrew Hicks</div>
-  </div>
-  <div class="meta-divider"></div>
-  <div>
-    <div class="meta-label">PDH</div>
-    <div class="meta-value">1.0 hour &middot; Technical Specialty</div>
   </div>
 </div>
 
@@ -52,7 +47,6 @@ description: ASCE NY State Convention, Albany, May 13, 2026
   <li>Apply the Five-Stone architecture to <strong>riverine, ice-jam, and dam-failure flooding</strong>.</li>
 </ol>
 
-<p style="position: absolute; bottom: 52px; left: 64px; right: 64px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); margin: 0;">PDH documentation available on request &nbsp;&middot;&nbsp; 1.0 contact hour</p>
 
 ---
 
@@ -92,7 +86,7 @@ description: ASCE NY State Convention, Albany, May 13, 2026
 
 <div class="eyebrow">02 &middot; Solution</div>
 
-# A flood-exposure briefing for any place in New York.
+# A flood-exposure briefing for any place in New York City.
 
 <p style="margin-bottom: 14px; font-size: 20px; max-width: 72ch; color: var(--ink-2);">Type an address or neighborhood. Get a written briefing in 5&ndash;13 seconds, fusing four temporal modes (historical inundation, current observations, modeled scenarios, projections) into one cited paragraph.</p>
 
