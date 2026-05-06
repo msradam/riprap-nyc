@@ -88,15 +88,9 @@ description: ASCE NY State Convention, Albany, May 13, 2026
 
 # A flood-exposure briefing for any place in New York City.
 
-<p style="margin-bottom: 14px; font-size: 20px; max-width: 72ch; color: var(--ink-2);">Type an address or neighborhood. Get a written briefing in 5&ndash;13 seconds, fusing four temporal modes (historical inundation, current observations, modeled scenarios, projections) into one cited paragraph.</p>
-
-<div style="border: 2px dashed #94A3B8; background: #E8ECF2; display: flex; align-items: center; justify-content: center; height: 260px; border-radius: 2px; margin-bottom: 10px;">
-  <p style="font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); text-align: center; margin: 0; padding: 24px;">
-    [ live system screenshot, to be added ]
-  </p>
+<div style="border: 2px solid #94A3B8; border-radius: 2px; overflow: hidden; height: 450px;">
+  <img src="../../assets/screenshots/hero.png" style="width: 100%; height: 100%; object-fit: cover; object-position: top;" />
 </div>
-
-<p style="font-size: 15px; color: var(--ink-3); margin: 0;">Behind the prose: every numeric claim links to its primary public-record source. Mellea rejection sampling refuses to publish what it can&rsquo;t cite.</p>
 
 ---
 

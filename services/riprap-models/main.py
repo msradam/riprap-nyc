@@ -138,6 +138,22 @@ def _load_prithvi():
         if v2_yaml and v2_ckpt:
             log.info("prithvi: building from v2 yaml=%s ckpt=%s", v2_yaml, v2_ckpt)
             m = LightningInferenceModel.from_config(v2_yaml, v2_ckpt)
+            # prithvi_nyc_phase14.yaml uses GenericNonGeoSegmentationDataModule
+            # which omits test_transform (→ None). IBM inference.py:run_model()
+            # calls it on a 3D image dict; patch to match the IBM base contract.
+            if getattr(getattr(m, 'datamodule', None),
+                       'test_transform', None) is None:
+                import albumentations as A
+                import kornia.augmentation as _Ka
+                from albumentations.pytorch import ToTensorV2
+                m.datamodule.test_transform = A.Compose([ToTensorV2()])
+                _old = m.datamodule.aug
+                m.datamodule.aug = _Ka.AugmentationSequential(
+                    _Ka.Normalize(_old.means.view(-1).tolist(),
+                                  _old.stds.view(-1).tolist()),
+                    data_keys=None)
+                log.info("prithvi: patched v2 datamodule transforms "
+                         "for IBM inference.py compat")
         else:
             log.info("prithvi: v2 unavailable, falling back to base")
             base_ckpt = hf_hub_download(

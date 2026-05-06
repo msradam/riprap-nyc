@@ -42,7 +42,7 @@
     cornerstone: [
       { label: 'Sandy Inundation Zone (2012)', source: 'NYC OEM',  tier: 'empirical', wired: true  },
       { label: 'FEMA / DEP scenarios',         source: 'FEMA · NYC DEP', tier: 'modeled',   wired: true  },
-      { label: 'Ida HWM points (2021)',        source: 'USGS STN', tier: 'empirical', wired: false },
+      { label: 'Ida HWM points (2021)',        source: 'USGS STN', tier: 'empirical', wired: true  },
       { label: 'Microtopography (HAND/TWI)',   source: 'USGS 3DEP', tier: 'proxy',     wired: false },
     ],
     keystone: [
@@ -53,9 +53,9 @@
       { label: 'TerraMind Buildings (current)', source: 'msradam/TerraMind-NYC-Adapters', tier: 'synthetic', wired: false },
     ],
     touchstone: [
-      { label: '311 flood complaints',           source: 'NYC 311',  tier: 'proxy',     wired: true  },
-      { label: 'FloodNet sensors',               source: 'FloodNet NYC', tier: 'empirical', wired: false },
-      { label: 'TerraMind LULC (current)',       source: 'msradam/TerraMind-NYC-Adapters', tier: 'synthetic', wired: false },
+      { label: '311 flood complaints',           source: 'NYC 311',  tier: 'proxy',     wired: false },
+      { label: 'FloodNet sensors',               source: 'FloodNet NYC', tier: 'proxy',     wired: true  },
+      { label: 'TerraMind LULC (current)',       source: 'msradam/TerraMind-NYC-Adapters', tier: 'synthetic', wired: true  },
       { label: 'Prithvi-NYC-Pluvial flood pred.', source: 'msradam/Prithvi-EO-2.0-NYC-Pluvial', tier: 'modeled', wired: false },
     ],
     lodestone: [],   // intentional — surfaced as the explicit absence row
