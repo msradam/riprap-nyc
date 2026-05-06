@@ -52,7 +52,12 @@ WORKDIR /workspace/riprap-models
 # kornia / albumentations chain, granite-tsfm's tsfm_public, etc.).
 COPY services/riprap-models/requirements-full.txt /tmp/req-full.txt
 RUN pip install --upgrade pip && \
-    pip install -r /tmp/req-full.txt
+    # Freeze the ROCm torch/torchvision/torchaudio at whatever version
+    # the vLLM base image ships, so transitive deps (peft, torchgeo, etc.)
+    # don't pull a CUDA build from PyPI and replace the ROCm one.
+    pip freeze | grep -E "^(torch|torchvision|torchaudio)==" > /tmp/torch-lock.txt && \
+    cat /tmp/torch-lock.txt && \
+    pip install -r /tmp/req-full.txt --constraint /tmp/torch-lock.txt
 
 # Service code itself. Cheap to invalidate; lands last.
 COPY services/riprap-models/main.py /workspace/riprap-models/main.py

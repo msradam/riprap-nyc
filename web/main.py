@@ -502,6 +502,14 @@ def api_agent(q: str):
     from app.intents import single_address as i_addr
     from app.planner import plan as run_planner
     p = run_planner(q)
+    if p.intent == "not_implemented":
+        return JSONResponse({
+            "paragraph": p.rationale,
+            "mellea": {"rerolls": 0, "n_attempts": 0,
+                       "requirements_passed": [], "requirements_failed": [],
+                       "requirements_total": 0},
+            "status": "not_implemented",
+        })
     if p.intent == "development_check":
         out = i_dev.run(p, q, strict=True)
     elif p.intent == "neighborhood":
@@ -538,7 +546,16 @@ async def api_agent_stream(q: str):
                        "targets": p.targets,
                        "specialists": p.specialists,
                        "rationale": p.rationale})
-            if p.intent == "development_check":
+            if p.intent == "not_implemented":
+                final = {
+                    "paragraph": p.rationale,
+                    "mellea": {"rerolls": 0, "n_attempts": 0,
+                               "requirements_passed": [],
+                               "requirements_failed": [],
+                               "requirements_total": 0},
+                    "status": "not_implemented",
+                }
+            elif p.intent == "development_check":
                 final = i_dev.run(p, q, progress_q=out_q, strict=True)
             elif p.intent == "neighborhood":
                 final = i_nbhd.run(p, q, progress_q=out_q, strict=True)
