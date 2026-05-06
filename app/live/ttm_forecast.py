@@ -180,16 +180,44 @@ def _residual_series(station_id: str,
 
 def _run_ttm(history: np.ndarray,
              context_length: int = CONTEXT_LENGTH,
-             prediction_length: int = PREDICTION_LENGTH) -> np.ndarray | None:
+             prediction_length: int = PREDICTION_LENGTH,
+             cadence: str = "h") -> np.ndarray | None:
     """Channel-wise standardize, run model, de-standardize. Returns a
-    `prediction_length`-step de-standardized forecast in input units."""
+    `prediction_length`-step de-standardized forecast in input units.
+
+    v0.4.5 — tries the MI300X riprap-models service first; falls back
+    to the local in-process model on RemoteUnreachable. The
+    standardize / de-standardize math is owned by THIS function so the
+    remote service stays a thin "given a series, give me a forecast"
+    contract.
+    """
+    mu = float(history.mean())
+    sigma = float(history.std() + 1e-6)
+    normed = (history - mu) / sigma
+
+    # Try remote first
+    try:
+        from app import inference as _inf
+        if _inf.remote_enabled():
+            remote = _inf.ttm_forecast(
+                "zero_shot_battery", normed.tolist(),
+                context_length=context_length,
+                prediction_length=prediction_length,
+                cadence=cadence,
+            )
+            if remote.get("ok"):
+                pred = np.asarray(remote["forecast"], dtype=np.float32)
+                return pred * sigma + mu
+    except _inf.RemoteUnreachable as e:
+        log.info("TTM zero-shot: remote unreachable (%s); local fallback", e)
+    except Exception:
+        log.exception("TTM zero-shot remote call failed; local fallback")
+
+    # Local fallback
     model = _load_model(context_length, prediction_length)
     if model is None:
         return None
     import torch
-    mu = float(history.mean())
-    sigma = float(history.std() + 1e-6)
-    normed = (history - mu) / sigma
     x = torch.from_numpy(normed.astype(np.float32))[None, :, None]
     try:
         with torch.no_grad():

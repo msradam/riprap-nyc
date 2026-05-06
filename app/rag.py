@@ -132,15 +132,38 @@ def _ensure_index():
         _INDEX = {"chunks": [], "embs": None, "model": None}
         return _INDEX
 
-    from sentence_transformers import SentenceTransformer
-    log.info("rag: loading %s", EMBED_MODEL_NAME)
-    model = SentenceTransformer(EMBED_MODEL_NAME)
-
     texts = [c.text for c in chunks]
     log.info("rag: embedding %d chunks", len(texts))
-    embs = model.encode(texts, batch_size=32, show_progress_bar=False,
-                        convert_to_numpy=True, normalize_embeddings=True)
-    _INDEX = {"chunks": chunks, "embs": embs.astype("float32"), "model": model}
+
+    # v0.4.5 — try the MI300X service first. Avoids loading
+    # sentence-transformers + the granite-embedding weights on a
+    # cpu-basic surface (HF Space). Falls back to local on
+    # RemoteUnreachable so dev laptops keep working with no env.
+    embs = None
+    model = None
+    try:
+        from app import inference as _inf
+        if _inf.remote_enabled():
+            log.info("rag: encoding via remote MI300X")
+            remote = _inf.granite_embed(texts, timeout=120.0)
+            if remote.get("ok"):
+                embs = np.asarray(remote["vectors"], dtype="float32")
+                # Per-query encodes will also route through remote;
+                # `model` stays None and `retrieve()` checks for it.
+    except _inf.RemoteUnreachable as e:
+        log.info("rag: remote unreachable (%s); local fallback", e)
+    except Exception:
+        log.exception("rag: remote encode failed; local fallback")
+
+    if embs is None:
+        from sentence_transformers import SentenceTransformer
+        log.info("rag: loading %s (local fallback)", EMBED_MODEL_NAME)
+        model = SentenceTransformer(EMBED_MODEL_NAME)
+        embs = model.encode(texts, batch_size=32, show_progress_bar=False,
+                             convert_to_numpy=True, normalize_embeddings=True)
+        embs = embs.astype("float32")
+
+    _INDEX = {"chunks": chunks, "embs": embs, "model": model}
     log.info("rag: index ready (%s)", embs.shape)
     return _INDEX
 
@@ -173,8 +196,35 @@ def retrieve(query: str, k: int = 4, min_score: float = 0.30) -> list[dict]:
     idx = _ensure_index()
     if idx["embs"] is None or not idx["chunks"]:
         return []
-    qv = idx["model"].encode([query], convert_to_numpy=True,
-                             normalize_embeddings=True).astype("float32")
+
+    # v0.4.5 — encode query via remote when corpus was embedded remotely.
+    # `_ensure_index` leaves `model = None` when it took the remote
+    # path, so this branch handles both:
+    #   - model present  → local SentenceTransformer.encode (fast, in-mem)
+    #   - model is None  → POST to MI300X, fallback to a one-shot local
+    #                       SentenceTransformer load if remote is down.
+    if idx["model"] is not None:
+        qv = idx["model"].encode([query], convert_to_numpy=True,
+                                  normalize_embeddings=True).astype("float32")
+    else:
+        qv = None
+        try:
+            from app import inference as _inf
+            if _inf.remote_enabled():
+                remote = _inf.granite_embed([query])
+                if remote.get("ok"):
+                    qv = np.asarray(remote["vectors"], dtype="float32")
+        except _inf.RemoteUnreachable as e:
+            log.info("rag: per-query encode remote unreachable (%s)", e)
+        if qv is None:
+            from sentence_transformers import SentenceTransformer
+            log.info("rag: cold-loading %s for per-query encode (remote down)",
+                     EMBED_MODEL_NAME)
+            local = SentenceTransformer(EMBED_MODEL_NAME)
+            qv = local.encode([query], convert_to_numpy=True,
+                              normalize_embeddings=True).astype("float32")
+            # Cache so subsequent queries don't re-load
+            idx["model"] = local
     sims = (idx["embs"] @ qv.T).ravel()
 
     reranker = _ensure_reranker()

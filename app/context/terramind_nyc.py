@@ -293,11 +293,51 @@ def _summarize_buildings(pred, class_labels: list[str]) -> dict[str, Any]:
     }
 
 
+def _try_remote(adapter_name: str, modality_chips: dict) -> dict | None:
+    """v0.4.5 — POST to MI300X riprap-models if configured. Returns the
+    parsed result on success; None on RemoteUnreachable so the caller
+    falls through to the local terratorch path."""
+    try:
+        from app import inference as _inf
+        if not _inf.remote_enabled():
+            return None
+        s2 = modality_chips.get("S2L2A")
+        s1 = modality_chips.get("S1RTC")
+        dem = modality_chips.get("DEM")
+        # The router serializes torch tensors to base64 numpy float32 —
+        # the chip cache hands us [B, C, T, H, W]; keep that shape, the
+        # service rebuilds the temporal stack on its end.
+        result = _inf.terramind(adapter_name, s2, s1, dem)
+        if not result.get("ok"):
+            return None
+        result.setdefault("adapter", adapter_name)
+        result.setdefault("repo", ADAPTERS_REPO)
+        result["compute"] = f"remote · {result.get('device', 'gpu')}"
+        return result
+    except _inf.RemoteUnreachable as e:
+        log.info("terramind/%s: remote unreachable (%s); local fallback",
+                 adapter_name, e)
+        return None
+    except Exception:
+        log.exception("terramind/%s: remote call failed; local fallback",
+                       adapter_name)
+        return None
+
+
 def _run(adapter_name: str, modality_chips: dict, summarizer):
-    """Common boilerplate: gate, time, load, tiled predict, summarize."""
+    """Common boilerplate: gate, time, [remote attempt], load, tiled
+    predict, summarize."""
     if not ENABLE:
         return {"ok": False,
                 "skipped": "RIPRAP_TERRAMIND_NYC_ENABLE=0"}
+
+    # v0.4.5 — try remote first. The remote service has its own deps,
+    # so this path works even when local _DEPS_OK is False (the most
+    # common HF Spaces case until terratorch + peft are baked in).
+    remote = _try_remote(adapter_name, modality_chips or {})
+    if remote is not None:
+        return remote
+
     if not _DEPS_OK:
         return {"ok": False,
                 "skipped": f"deps unavailable on this deployment: "
@@ -315,6 +355,7 @@ def _run(adapter_name: str, modality_chips: dict, summarizer):
         result["elapsed_s"] = round(time.time() - t0, 2)
         result["adapter"] = adapter_name
         result["repo"] = ADAPTERS_REPO
+        result["compute"] = "local"
         return result
     except Exception as e:
         log.exception("terramind_nyc.%s failed", adapter_name)

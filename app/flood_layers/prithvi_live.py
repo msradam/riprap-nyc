@@ -350,6 +350,43 @@ def fetch(lat: float, lon: float, timeout_s: float = 60.0) -> dict[str, Any]:
         img, ref_da, epsg = _build_chip(item, lat, lon)
         if time.time() - t0 > timeout_s:
             return {"ok": False, "skipped": "chip build exceeded budget"}
+
+        # v0.4.5 — try the MI300X inference service first if configured.
+        # On RemoteUnreachable (service down / not configured / 5xx) fall
+        # through to the local terratorch path. The 4-band slice the
+        # service expects is the same shape the local path uses.
+        try:
+            from app import inference as _inf
+            if _inf.remote_enabled():
+                remote = _inf.prithvi_pluvial(
+                    img, scene_id=item.id,
+                    scene_datetime=str(item.datetime),
+                    cloud_cover=cc,
+                    timeout=timeout_s,
+                )
+                if remote.get("ok"):
+                    return {
+                        "ok": True,
+                        "item_id": item.id,
+                        "item_datetime": str(item.datetime),
+                        "cloud_cover": cc,
+                        "pct_water_full": remote.get("pct_water_full"),
+                        "pct_water_within_500m": remote.get("pct_water_within_500m"),
+                        # Service doesn't currently return polygonised GeoJSON
+                        # (transport size); the local fallback below produces
+                        # them. For now the remote path leaves polygons null
+                        # and the map renders the layer empty until the
+                        # service grows a polygonisation step.
+                        "polygons_geojson": None,
+                        "compute": f"remote · {remote.get('device', 'gpu')}",
+                        "elapsed_s": round(time.time() - t0, 2),
+                    }
+        except _inf.RemoteUnreachable as e:
+            log.info("prithvi_live: remote unreachable (%s); falling back to local", e)
+        except Exception:
+            log.exception("prithvi_live: remote call failed; falling back to local")
+
+        # Local fallback — the path that's been live since v0.4.4.
         model, run_model = _ensure_model()
         x = img[None, :, None, :, :]  # (1, 6, 1, H, W)
         pred_t = run_model(x, None, None, model.model, model.datamodule, IMG_SIZE)
@@ -361,7 +398,6 @@ def fetch(lat: float, lon: float, timeout_s: float = 60.0) -> dict[str, Any]:
         radius_px = CENTER_RADIUS_M / PIXEL_M
         circle = (yy - cy) ** 2 + (xx - cx) ** 2 <= radius_px ** 2
         pct_500 = float(100.0 * pred[circle].mean()) if circle.sum() else 0.0
-        # Polygonize the water mask into EPSG:4326 GeoJSON for the map.
         polygons_geojson = _polygonize_mask(pred, ref_da, epsg)
         return {
             "ok": True,
@@ -371,6 +407,7 @@ def fetch(lat: float, lon: float, timeout_s: float = 60.0) -> dict[str, Any]:
             "pct_water_full": pct_full,
             "pct_water_within_500m": pct_500,
             "polygons_geojson": polygons_geojson,
+            "compute": "local",
             "elapsed_s": round(time.time() - t0, 2),
         }
     except Exception as e:

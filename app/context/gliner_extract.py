@@ -80,8 +80,30 @@ def _source_short(rag_doc_id: str) -> str:
 
 
 def extract_for_chunk(text: str, threshold: float = DEFAULT_THRESHOLD) -> list[Extraction]:
+    if not text:
+        return []
+
+    # v0.4.5 — try the MI300X service first. The remote handles its
+    # own GLiNER load; this lets cpu-basic surfaces run typed
+    # extraction without baking gliner into the image.
+    try:
+        from app import inference as _inf
+        if _inf.remote_enabled():
+            remote = _inf.gliner_extract(text, ENTITY_LABELS)
+            if remote.get("ok"):
+                return [
+                    Extraction(label=e["label"], text=e["text"],
+                               score=float(e.get("score", 0)))
+                    for e in remote.get("entities", [])
+                    if e.get("score", 0) >= threshold
+                ]
+    except _inf.RemoteUnreachable as e:
+        log.info("gliner: remote unreachable (%s); local fallback", e)
+    except Exception:
+        log.exception("gliner: remote call failed; local fallback")
+
     model = _ensure_model()
-    if model is None or not text:
+    if model is None:
         return []
     raw = model.predict_entities(text, ENTITY_LABELS, threshold=threshold)
     return [Extraction(label=r["label"], text=r["text"],

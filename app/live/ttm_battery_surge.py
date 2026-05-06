@@ -230,10 +230,7 @@ def fetch(timeout_s: float = 60.0) -> dict[str, Any]:
     if not ENABLE:
         return {"available": False,
                 "reason": "RIPRAP_TTM_BATTERY_SURGE_ENABLE=0"}
-    if not _DEPS_OK:
-        return {"available": False,
-                "reason": f"deps unavailable on this deployment: "
-                          f"{_DEPS_MISSING}"}
+
     t0 = time.time()
     try:
         df = _fetch_battery_history(CONTEXT_LENGTH)
@@ -245,21 +242,51 @@ def fetch(timeout_s: float = 60.0) -> dict[str, Any]:
             return {"available": False,
                     "reason": "NOAA fetch exceeded budget"}
 
-        import torch
-        model = _ensure_model()
-        # [B=1, T=1024, C=1] tensor of metres surge residual.
         residuals = df["surge_residual_m"].to_numpy().astype("float32")
-        past = torch.from_numpy(residuals).unsqueeze(0).unsqueeze(-1)
-        if DEVICE == "cuda":
-            try:
-                if torch.cuda.is_available():
-                    past = past.cuda()
-            except Exception:
-                log.exception("ttm_battery_surge: cuda move failed")
-        with torch.no_grad():
-            out = model(past_values=past)
-        forecast = out.prediction_outputs.squeeze(-1).squeeze(0).cpu().numpy()
+
+        # v0.4.5 — try the MI300X service first. The remote handles its
+        # own model loading; if it's reachable we never need local
+        # tsfm_public, which lets the HF Space drop the granite-tsfm
+        # bake from the image.
+        forecast = None
+        compute = "local"
+        try:
+            from app import inference as _inf
+            if _inf.remote_enabled():
+                remote = _inf.ttm_forecast(
+                    "fine_tune_battery", residuals.tolist(),
+                    context_length=CONTEXT_LENGTH,
+                    prediction_length=PREDICTION_LENGTH,
+                    cadence="h",
+                    timeout=timeout_s,
+                )
+                if remote.get("ok"):
+                    import numpy as np
+                    forecast = np.asarray(remote["forecast"], dtype="float32")
+                    compute = f"remote · {remote.get('device', 'gpu')}"
+        except _inf.RemoteUnreachable as e:
+            log.info("ttm_battery_surge: remote unreachable (%s); local", e)
+
+        if forecast is None:
+            if not _DEPS_OK:
+                return {"available": False,
+                        "reason": f"deps unavailable on this deployment: "
+                                  f"{_DEPS_MISSING}"}
+            import torch
+            model = _ensure_model()
+            past = torch.from_numpy(residuals).unsqueeze(0).unsqueeze(-1)
+            if DEVICE == "cuda":
+                try:
+                    if torch.cuda.is_available():
+                        past = past.cuda()
+                except Exception:
+                    log.exception("ttm_battery_surge: cuda move failed")
+            with torch.no_grad():
+                out = model(past_values=past)
+            forecast = out.prediction_outputs.squeeze(-1).squeeze(0).cpu().numpy()
+
         result = _summarize(df, forecast)
+        result["compute"] = compute
         result["elapsed_s"] = round(time.time() - t0, 2)
         return result
     except Exception as e:

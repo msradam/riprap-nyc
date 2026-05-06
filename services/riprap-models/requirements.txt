@@ -1,0 +1,12 @@
+# Riprap Models — droplet inference service.
+#
+# Most heavy deps (torch+ROCm, terratorch, granite-tsfm, transformers,
+# peft, safetensors, fastapi, uvicorn) are already in the `terramind`
+# container's image. This list is only the deltas the service needs
+# beyond that base — install with:
+#
+#   docker exec terramind pip install -r /workspace/riprap-models/requirements.txt
+fastapi-cli >= 0.0.5
+gliner >= 0.2.6
+sentence-transformers >= 5.0.0
+huggingface_hub >= 0.34
