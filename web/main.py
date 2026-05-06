@@ -757,6 +757,35 @@ def layer_prithvi_water(lat: float, lon: float, r: float = 1500):
                         headers={"Cache-Control": "public, max-age=3600"})
 
 
+@app.get("/api/layers/ida_hwm")
+def layer_ida_hwm(lat: float, lon: float, r: float = 1500):
+    """USGS Hurricane Ida 2021 high-water marks within radius_m of (lat, lon).
+    Returns GeoJSON FeatureCollection of Point features. No geopandas needed —
+    HWMs are already points so haversine filter is sufficient."""
+    from app.flood_layers import ida_hwm as _ida
+    features = []
+    for f in _ida._load():
+        flon, flat = f["geometry"]["coordinates"]
+        d = _ida._haversine_m(lat, lon, flat, flon)
+        if d <= r:
+            p = f["properties"]
+            features.append({
+                "type": "Feature",
+                "geometry": f["geometry"],
+                "properties": {
+                    "hwm_id": p.get("hwm_id"),
+                    "site_description": p.get("site_description"),
+                    "elev_ft": p.get("elev_ft"),
+                    "height_above_gnd_ft": p.get("height_above_gnd"),
+                    "hwm_quality": p.get("hwm_quality"),
+                    "waterbody": p.get("waterbody"),
+                    "distance_m": round(d, 0),
+                },
+            })
+    return JSONResponse({"type": "FeatureCollection", "features": features},
+                        headers={"Cache-Control": "public, max-age=3600"})
+
+
 @app.get("/api/floodnet_near")
 def floodnet_near(lat: float, lon: float, r: float = 1000):
     sensors = floodnet.sensors_near(lat, lon, r)
