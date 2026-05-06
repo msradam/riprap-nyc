@@ -65,24 +65,32 @@ INTENTS = {
         "DOB construction permits inside it, cross-reference each project "
         "with Sandy + DEP flood layers, return a flagged-projects list."
     ),
+    "compare": (
+        "Use ONLY when the query explicitly compares TWO specific street "
+        "ADDRESSES (e.g. 'compare 80 Pioneer St Brooklyn to 100 Gold St "
+        "Manhattan', 'which is riskier: X or Y?', 'X vs Y flood risk'). "
+        "Extract BOTH full street addresses into targets as two separate "
+        "{type: 'address', text: ...} objects. Run the full single-address "
+        "specialist suite for each."
+    ),
 }
 
 SPECIALISTS = {
     # name: (description, which intents may invoke it)
-    "geocode":       ("Resolve address text to lat/lon via NYC DCP Geosearch.",     ["single_address"]),
+    "geocode":       ("Resolve address text to lat/lon via NYC DCP Geosearch.",     ["single_address", "compare"]),
     "nta_resolve":   ("Resolve a neighborhood or borough name to NTA polygon(s).",  ["neighborhood"]),
-    "sandy":         ("2012 Sandy inundation extent (point-in-polygon or % of NTA).", ["single_address", "neighborhood"]),
-    "dep_stormwater":("DEP Stormwater Maps — 3 modeled scenarios.",                ["single_address", "neighborhood"]),
-    "floodnet":      ("Live FloodNet ultrasonic sensors + trigger history.",      ["single_address", "neighborhood", "live_now"]),
-    "nyc311":        ("NYC 311 flood-related complaints in buffer or polygon.",    ["single_address", "neighborhood"]),
-    "noaa_tides":    ("Live NOAA Battery / Kings Pt / Sandy Hook water level.",   ["single_address", "neighborhood", "live_now"]),
-    "nws_alerts":    ("Live NWS active flood-relevant alerts at point.",           ["single_address", "neighborhood", "live_now"]),
-    "nws_obs":       ("Live NWS hourly precip from nearest ASOS station.",         ["single_address", "neighborhood", "live_now"]),
-    "ttm_forecast":  ("Granite TTM r2 surge-residual nowcast at the Battery.",     ["single_address", "neighborhood", "live_now"]),
-    "microtopo":     ("LiDAR-derived terrain (HAND, TWI, percentile) at point or aggregated over polygon.", ["single_address", "neighborhood"]),
-    "ida_hwm":       ("USGS Hurricane Ida 2021 high-water marks proximity.",       ["single_address", "neighborhood"]),
-    "prithvi":       ("Prithvi-EO 2.0 Hurricane Ida 2021 satellite flood polygons.", ["single_address", "neighborhood"]),
-    "rag":           ("Retrieve relevant agency-report passages over the policy corpus.", ["single_address", "neighborhood", "development_check"]),
+    "sandy":         ("2012 Sandy inundation extent (point-in-polygon or % of NTA).", ["single_address", "neighborhood", "compare"]),
+    "dep_stormwater":("DEP Stormwater Maps — 3 modeled scenarios.",                ["single_address", "neighborhood", "compare"]),
+    "floodnet":      ("Live FloodNet ultrasonic sensors + trigger history.",      ["single_address", "neighborhood", "live_now", "compare"]),
+    "nyc311":        ("NYC 311 flood-related complaints in buffer or polygon.",    ["single_address", "neighborhood", "compare"]),
+    "noaa_tides":    ("Live NOAA Battery / Kings Pt / Sandy Hook water level.",   ["single_address", "neighborhood", "live_now", "compare"]),
+    "nws_alerts":    ("Live NWS active flood-relevant alerts at point.",           ["single_address", "neighborhood", "live_now", "compare"]),
+    "nws_obs":       ("Live NWS hourly precip from nearest ASOS station.",         ["single_address", "neighborhood", "live_now", "compare"]),
+    "ttm_forecast":  ("Granite TTM r2 surge-residual nowcast at the Battery.",     ["single_address", "neighborhood", "live_now", "compare"]),
+    "microtopo":     ("LiDAR-derived terrain (HAND, TWI, percentile) at point or aggregated over polygon.", ["single_address", "neighborhood", "compare"]),
+    "ida_hwm":       ("USGS Hurricane Ida 2021 high-water marks proximity.",       ["single_address", "neighborhood", "compare"]),
+    "prithvi":       ("Prithvi-EO 2.0 Hurricane Ida 2021 satellite flood polygons.", ["single_address", "neighborhood", "compare"]),
+    "rag":           ("Retrieve relevant agency-report passages over the policy corpus.", ["single_address", "neighborhood", "development_check", "compare"]),
     "dob_permits":   ("Active NYC DOB construction permits inside a polygon, each cross-referenced with Sandy + DEP flood scenarios. Use for 'what are they building' / 'projects in progress' queries.", ["development_check"]),
 }
 
@@ -117,6 +125,7 @@ Hard rules:
 - For intent=neighborhood: ALWAYS include "nta_resolve". Skip "geocode". Include polygon-capable specialists.
 - For intent=live_now: ONLY live specialists. Skip historic/modeled (sandy, dep_*, ida_hwm, prithvi).
 - For intent=development_check: ALWAYS include "nta_resolve" AND "dob_permits". Sandy + DEP are also useful so the model can compare project locations to flood layers.
+- For intent=compare: ALWAYS include "geocode". Extract BOTH street addresses into targets — the executor runs the full specialist suite once per address. Targets must be exactly 2 items, both type="address".
 - IMPORTANT — TARGETS: extract neighborhood/borough names directly from the query text. If the query says "in Gowanus", "what about Brighton Beach", "around Carroll Gardens", etc., the target MUST be {"type": "nta", "text": "<the place name>"}. Use {"type": "nyc"} ONLY when the query mentions NYC as a whole and no specific place. Failing to extract a place name will cause the executor to give up — be explicit.
 - "targets" is a list because the user may name multiple places (e.g. "compare Brighton Beach and Coney Island").
 - "rationale" is one short sentence — what your reasoning was.
@@ -259,6 +268,13 @@ def _validate(d: dict[str, Any], raw_query: str) -> Plan:
             targets = [{"type": "address", "text": raw_query}]
         elif intent == "neighborhood":
             targets = [{"type": "nta", "text": raw_query}]
+        elif intent == "compare":
+            # Planner failed to extract two addresses — treat whole query as
+            # single address so the caller gets at least one result rather
+            # than a confusing empty response.
+            log.warning("compare intent but no valid targets extracted; "
+                        "falling back to single raw query")
+            targets = [{"type": "address", "text": raw_query}]
         else:
             targets = [{"type": "nyc", "text": "NYC"}]
 
@@ -295,11 +311,13 @@ def _required_specialists(intent: str) -> list[str]:
         return ["nws_alerts", "noaa_tides"]
     if intent == "development_check":
         return ["nta_resolve", "dob_permits", "sandy", "dep_stormwater"]
+    if intent == "compare":
+        return ["geocode", "sandy", "dep_stormwater", "microtopo"]
     return []
 
 
 def _default_specialists(intent: str) -> list[str]:
-    if intent == "single_address":
+    if intent in ("single_address", "compare"):
         return ["geocode", "sandy", "dep_stormwater", "floodnet", "nyc311",
                 "noaa_tides", "nws_alerts", "nws_obs", "ttm_forecast",
                 "microtopo", "ida_hwm", "prithvi", "rag"]
