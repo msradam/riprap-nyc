@@ -16,7 +16,12 @@
 # Build:    docker build -t riprap-models:latest -f Dockerfile ../..
 # Layout:   the build context is the project root so the COPY lines
 #           below can reach `services/riprap-models/`.
-FROM rocm/pytorch:rocm7.2.3_ubuntu24.04_py3.12_pytorch_release_2.9.1
+# Use the vLLM ROCm image as base — it ships torch 2.9.1+git8907517
+# (the actual AMD bespoke build) and is already cached on DigitalOcean
+# AMD GPU droplets, so no download is needed during bring-up.
+# The public rocm/pytorch release image is a fallback if this image is
+# not available; see the comment block above for background.
+FROM vllm/vllm-openai-rocm:v0.17.1
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
