@@ -8,7 +8,20 @@ parallelism for an address is bounded by Granite 4.1 reconcile time
 anyway."""
 from __future__ import annotations
 
+import re
+
 from app.fsm import run as run_linear
+
+_ADDRESS_SHAPE = re.compile(
+    r"^\d+\s+[A-Z][\w\s\.\-']+(St|Street|Ave|Avenue|Rd|Road|Blvd|"
+    r"Boulevard|Pl|Place|Ln|Lane|Dr|Drive|Way|Ct|Court|Pkwy|"
+    r"Parkway|Sq|Square|Ter|Terrace|Hwy|Highway)\.?",
+    re.IGNORECASE,
+)
+
+
+def _looks_like_address(s: str) -> bool:
+    return bool(s and _ADDRESS_SHAPE.search(s))
 
 
 def run(plan, query: str, progress_q=None, strict: bool = False) -> dict:
@@ -32,7 +45,7 @@ def run(plan, query: str, progress_q=None, strict: bool = False) -> dict:
         (t["text"] for t in plan.targets if t.get("type") == "address"),
         None,
     )
-    addr = planner_addr if (planner_addr and len(planner_addr) >= len(query) * 0.7) else query
+    addr = planner_addr if _looks_like_address(planner_addr) else query
     set_strict_mode(strict)
     set_planned_specialists(plan.specialists or [])
     set_user_query(query)
