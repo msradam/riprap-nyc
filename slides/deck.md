@@ -76,7 +76,7 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 
 <p style="margin-bottom: 14px; font-size: 20px; max-width: 72ch; color: var(--ink-2);">Type an address or neighborhood. Get a written briefing in 5&ndash;13 seconds, fusing four temporal modes &mdash; Sandy 2012 inundation, current 311 history, FloodNet sensor reads, NPCC4 projections &mdash; into one cited paragraph.</p>
 
-<div style="border: 2px dashed var(--rule-soft); background: var(--paper-deep); display: flex; align-items: center; justify-content: center; flex: 1; min-height: 240px; border-radius: 2px; margin-bottom: 10px;">
+<div style="border: 2px dashed #94A3B8; background: #E8ECF2; display: flex; align-items: center; justify-content: center; height: 280px; border-radius: 2px; margin-bottom: 10px;">
   <p style="font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); text-align: center; margin: 0; padding: 24px;">
     [ screenshot of riprap.nyc landing &mdash; to be added ]
   </p>
@@ -274,7 +274,7 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 
 <div class="eyebrow" style="margin-top: 124px; color: var(--accent); border: 0; padding: 0;">Riprap &middot; flood briefings on AMD</div>
 
-<div style="font-family: var(--font-sans); font-weight: 700; font-size: 68px; line-height: 0.95; letter-spacing: -0.03em; color: var(--paper); margin: 80px 0 16px; white-space: nowrap;">github.com/msradam/riprap-nyc</div>
+<h1 style="white-space: nowrap; font-size: 72px;">github.com/msradam/riprap-nyc</h1>
 
 <hr>
 
