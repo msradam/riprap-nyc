@@ -16,6 +16,7 @@ specialist instead of surfacing a noisy error.
 """
 from __future__ import annotations
 
+import concurrent.futures
 import logging
 import os
 import threading
@@ -264,18 +265,8 @@ def _to_terramind_tensors(modalities: dict[str, Any]) -> dict[str, Any]:
     return chips
 
 
-def fetch(lat: float, lon: float, timeout_s: float = 60.0) -> dict[str, Any]:
-    """Run the chip pipeline. Always returns a dict with at minimum
-    `{ok, skipped|err, ...}`; on success the dict carries the
-    co-registered numpy arrays plus `tensors` (the TerraMind-shaped
-    torch dict).
-    """
-    if not ENABLE:
-        return {"ok": False, "skipped": "RIPRAP_EO_CHIP_ENABLE=0"}
-    if not _DEPS_OK:
-        return {"ok": False,
-                "skipped": f"deps unavailable on this deployment: "
-                           f"{_DEPS_MISSING}"}
+def _fetch_and_build(lat: float, lon: float, timeout_s: float) -> dict[str, Any]:
+    """Inner fetch + tensor build, run inside a bounded thread."""
     with _FETCH_LOCK:
         try:
             modalities = _fetch_modalities(lat, lon, timeout_s=timeout_s)
@@ -291,3 +282,31 @@ def fetch(lat: float, lon: float, timeout_s: float = 60.0) -> dict[str, Any]:
             return {"ok": False,
                     "err": f"tensor build failed: {type(e).__name__}: {e}"}
         return modalities
+
+
+def fetch(lat: float, lon: float, timeout_s: float = 60.0) -> dict[str, Any]:
+    """Run the chip pipeline. Always returns a dict with at minimum
+    `{ok, skipped|err, ...}`; on success the dict carries the
+    co-registered numpy arrays plus `tensors` (the TerraMind-shaped
+    torch dict).
+
+    Runs in a daemon thread so that STAC searches and COG band downloads
+    (which use requests/rioxarray without per-call timeouts) are bounded
+    by a hard wall-clock deadline even when the network hangs.
+    """
+    if not ENABLE:
+        return {"ok": False, "skipped": "RIPRAP_EO_CHIP_ENABLE=0"}
+    if not _DEPS_OK:
+        return {"ok": False,
+                "skipped": f"deps unavailable on this deployment: "
+                           f"{_DEPS_MISSING}"}
+    # Hard wall-clock cap: pystac_client / rioxarray COG reads don't expose
+    # uniform per-request timeouts, so we bound the whole pipeline here.
+    hard_timeout = timeout_s + 15.0
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+        future = pool.submit(_fetch_and_build, lat, lon, timeout_s)
+        try:
+            return future.result(timeout=hard_timeout)
+        except concurrent.futures.TimeoutError:
+            log.warning("eo_chip: hard timeout after %.0fs (STAC/COG hung)", hard_timeout)
+            return {"ok": False, "skipped": f"eo_chip timed out after {hard_timeout:.0f}s"}

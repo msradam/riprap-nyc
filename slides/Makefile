@@ -1,6 +1,6 @@
 DECK := deck.md
 THEME := riprap.css
-MARP := marp $(DECK) --theme $(THEME) --allow-local-files
+MARP := marp $(DECK) --theme $(THEME) --allow-local-files --html
 
 .PHONY: all pdf html pptx clean
 
@@ -10,7 +10,7 @@ pdf:
 	$(MARP) --pdf  --output deck.pdf
 
 html:
-	$(MARP) --html --output deck.html
+	$(MARP) --output deck.html
 
 pptx:
 	$(MARP) --pptx --output deck.pptx

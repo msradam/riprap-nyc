@@ -1,0 +1,305 @@
+{
+  "qid": "07",
+  "slug": "resident-grand-disclosure",
+  "query": "I just got a lease for 504 Grand Street, Lower East Side. The landlord says no flood history. Is that true?",
+  "persona": "Resident, disclosure-suspicion (Grand)",
+  "question_type": "habitability_decision",
+  "expected_intent": "single_address",
+  "anchor": "adapted",
+  "started_at": 1778049216.096405,
+  "ended_at": 1778049223.9419122,
+  "plan": {
+    "kind": "plan",
+    "intent": "single_address",
+    "targets": [
+      {
+        "type": "address",
+        "text": "504 Grand Street"
+      }
+    ],
+    "specialists": [
+      "geocode",
+      "sandy",
+      "dep_stormwater",
+      "floodnet",
+      "nyc311",
+      "noaa_tides",
+      "nws_alerts",
+      "ttm_forecast",
+      "microtopo",
+      "ida_hwm"
+    ],
+    "rationale": "The query specifies a concrete street address, so we need to resolve it geographically and then check historical flood data and current conditions for that exact location."
+  },
+  "intent": "single_address",
+  "paragraph": "No grounded data available for this address.",
+  "steps": [
+    {
+      "kind": "step",
+      "step": "geocode",
+      "ok": false,
+      "elapsed_s": 0.56,
+      "result": null,
+      "err": "no geocoder match"
+    },
+    {
+      "kind": "step",
+      "step": "sandy_inundation",
+      "ok": false,
+      "elapsed_s": 0.0,
+      "result": null,
+      "err": "no coords"
+    },
+    {
+      "kind": "step",
+      "step": "dep_stormwater",
+      "ok": false,
+      "elapsed_s": 0.0,
+      "result": null,
+      "err": "no coords"
+    },
+    {
+      "kind": "step",
+      "step": "floodnet",
+      "ok": false,
+      "elapsed_s": 0.0,
+      "result": null,
+      "err": "no coords"
+    },
+    {
+      "kind": "step",
+      "step": "nyc311",
+      "ok": false,
+      "elapsed_s": 0.0,
+      "result": null,
+      "err": "no coords"
+    },
+    {
+      "kind": "step",
+      "step": "noaa_tides",
+      "ok": false,
+      "elapsed_s": 0.0,
+      "result": null,
+      "err": "no coords"
+    },
+    {
+      "kind": "step",
+      "step": "nws_alerts",
+      "ok": false,
+      "elapsed_s": 0.0,
+      "result": null,
+      "err": "no coords"
+    },
+    {
+      "kind": "step",
+      "step": "nws_obs",
+      "ok": false,
+      "elapsed_s": 0.0,
+      "result": null,
+      "err": "no coords"
+    },
+    {
+      "kind": "step",
+      "step": "ttm_forecast",
+      "ok": false,
+      "elapsed_s": 0.0,
+      "result": null,
+      "err": "no coords"
+    },
+    {
+      "kind": "step",
+      "step": "ttm_311_forecast",
+      "ok": false,
+      "elapsed_s": 0.0,
+      "result": null,
+      "err": "no coords"
+    },
+    {
+      "kind": "step",
+      "step": "floodnet_forecast",
+      "ok": false,
+      "elapsed_s": 0.0,
+      "result": null,
+      "err": "no coords"
+    },
+    {
+      "kind": "step",
+      "step": "ttm_battery_surge",
+      "ok": false,
+      "elapsed_s": 0.0,
+      "result": null,
+      "err": "no coords"
+    },
+    {
+      "kind": "step",
+      "step": "microtopo_lidar",
+      "ok": false,
+      "elapsed_s": 0.0,
+      "result": null,
+      "err": "no coords"
+    },
+    {
+      "kind": "step",
+      "step": "ida_hwm_2021",
+      "ok": false,
+      "elapsed_s": 0.0,
+      "result": null,
+      "err": "no coords"
+    },
+    {
+      "kind": "step",
+      "step": "mta_entrance_exposure",
+      "ok": false,
+      "elapsed_s": 0.0,
+      "result": null,
+      "err": "no coords"
+    },
+    {
+      "kind": "step",
+      "step": "prithvi_eo_v2",
+      "ok": false,
+      "elapsed_s": 0.0,
+      "result": null,
+      "err": "no coords"
+    },
+    {
+      "kind": "step",
+      "step": "rag_granite_embedding",
+      "ok": false,
+      "elapsed_s": 0.0,
+      "result": null,
+      "err": "out of NYC scope"
+    },
+    {
+      "kind": "step",
+      "step": "gliner_extract",
+      "ok": true,
+      "elapsed_s": 0.0,
+      "result": {
+        "sources": 0,
+        "skipped": "no rag hits"
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "mellea_reconcile_address",
+      "ok": true,
+      "elapsed_s": 0.0,
+      "result": {
+        "rerolls": null,
+        "passed": "0/0",
+        "paragraph_chars": 44
+      },
+      "err": null
+    }
+  ],
+  "mellea_attempts": [],
+  "final": {
+    "kind": "final",
+    "geocode": null,
+    "sandy": null,
+    "dep": null,
+    "floodnet": null,
+    "nyc311": null,
+    "microtopo": null,
+    "ida_hwm": null,
+    "prithvi_water": null,
+    "prithvi_live": null,
+    "terramind": null,
+    "terramind_lulc": null,
+    "terramind_buildings": null,
+    "noaa_tides": null,
+    "nws_alerts": null,
+    "nws_obs": null,
+    "ttm_forecast": null,
+    "ttm_311_forecast": null,
+    "floodnet_forecast": null,
+    "ttm_battery_surge": null,
+    "mta_entrances": null,
+    "nycha_developments": null,
+    "doe_schools": null,
+    "doh_hospitals": null,
+    "rag": [],
+    "gliner": {},
+    "paragraph": "No grounded data available for this address.",
+    "audit": {
+      "raw": "No grounded data available for this address.",
+      "dropped": []
+    },
+    "mellea": null,
+    "energy": null,
+    "trace": [],
+    "intent": "single_address",
+    "plan": {
+      "intent": "single_address",
+      "targets": [
+        {
+          "type": "address",
+          "text": "504 Grand Street"
+        }
+      ],
+      "specialists": [
+        "geocode",
+        "sandy",
+        "dep_stormwater",
+        "floodnet",
+        "nyc311",
+        "noaa_tides",
+        "nws_alerts",
+        "ttm_forecast",
+        "microtopo",
+        "ida_hwm"
+      ],
+      "rationale": "The query specifies a concrete street address, so we need to resolve it geographically and then check historical flood data and current conditions for that exact location."
+    }
+  },
+  "stone_timings": {
+    "Cornerstone": {
+      "n_steps": 5,
+      "n_ok": 0,
+      "n_err": 5,
+      "wall_clock_s": 0.0
+    },
+    "Touchstone": {
+      "n_steps": 4,
+      "n_ok": 0,
+      "n_err": 4,
+      "wall_clock_s": 0.0
+    },
+    "Lodestone": {
+      "n_steps": 5,
+      "n_ok": 0,
+      "n_err": 5,
+      "wall_clock_s": 0.0
+    },
+    "Keystone": {
+      "n_steps": 1,
+      "n_ok": 0,
+      "n_err": 1,
+      "wall_clock_s": 0.0
+    },
+    "Capstone": {
+      "n_steps": 1,
+      "n_ok": 1,
+      "n_err": 0,
+      "wall_clock_s": 0.0
+    }
+  },
+  "error": null,
+  "timed_out": false,
+  "transport_error": null,
+  "framing_score": 3,
+  "framing_rationale": "place reference only: /this address|this location|this property/",
+  "wall_clock_s": 7.85,
+  "mellea": {
+    "passed": 0,
+    "total": 4,
+    "rerolls": 0,
+    "n_attempts": 0,
+    "requirements_passed": [],
+    "requirements_failed": []
+  },
+  "citations": [],
+  "citation_count": 0
+}

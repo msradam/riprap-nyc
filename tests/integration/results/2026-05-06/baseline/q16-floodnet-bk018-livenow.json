@@ -1,0 +1,217 @@
+{
+  "qid": "16",
+  "slug": "floodnet-bk018-livenow",
+  "query": "FloodNet sensor BK-018 just triggered. What's at stake in the next six hours within 500 m?",
+  "persona": "FloodNet alert federation (BK-018)",
+  "question_type": "emergency_response",
+  "expected_intent": "live_now",
+  "anchor": "lateral",
+  "started_at": 1778048217.3599622,
+  "ended_at": 1778048231.705193,
+  "plan": {
+    "kind": "plan",
+    "intent": "live_now",
+    "targets": [
+      {
+        "type": "nyc",
+        "text": "NYC"
+      }
+    ],
+    "specialists": [
+      "floodnet",
+      "noaa_tides",
+      "ttm_forecast",
+      "nws_alerts"
+    ],
+    "rationale": "The query asks for current flood risk in NYC within the next six hours based on a triggered FloodNet sensor, so we need live data from FloodNet and tide information."
+  },
+  "intent": "live_now",
+  "paragraph": "**Status.**\n**Live signals.**\n- Tide observation and residual from [noaa_tides]: Observed water level is 3.57 ft above MLLW, with a predicted astronomical tide of 3.78 ft, resulting in a residual setdown of -0.21 ft. - Recent peak |residual| in context window from [ttm_forecast]: The forecasted peak surge residual at The Battery, NY is 0.18 ft, expected to occur about 6 minutes from now.",
+  "steps": [
+    {
+      "kind": "step",
+      "step": "noaa_tides",
+      "started_at": 1778048222.919341,
+      "ok": true,
+      "result": {
+        "station_id": "8518750",
+        "station_name": "The Battery, NY",
+        "station_lat": 40.7006
+      },
+      "elapsed_s": 0.29
+    },
+    {
+      "kind": "step",
+      "step": "nws_alerts",
+      "started_at": 1778048223.208601,
+      "ok": true,
+      "result": {
+        "n_active": 0,
+        "alerts": [],
+        "error": null
+      },
+      "elapsed_s": 0.66
+    },
+    {
+      "kind": "step",
+      "step": "ttm_forecast",
+      "started_at": 1778048223.8639622,
+      "ok": true,
+      "result": {
+        "available": true,
+        "interesting": true,
+        "station_id": "8518750"
+      },
+      "elapsed_s": 0.28
+    },
+    {
+      "kind": "step",
+      "step": "reconcile_live_now",
+      "started_at": 1778048224.146539,
+      "ok": true,
+      "elapsed_s": 7.56
+    }
+  ],
+  "mellea_attempts": [],
+  "final": {
+    "kind": "final",
+    "intent": "live_now",
+    "query": "FloodNet sensor BK-018 just triggered. What's at stake in the next six hours within 500 m?",
+    "place": "NYC",
+    "plan": {
+      "intent": "live_now",
+      "targets": [
+        {
+          "type": "nyc",
+          "text": "NYC"
+        }
+      ],
+      "specialists": [
+        "floodnet",
+        "noaa_tides",
+        "ttm_forecast",
+        "nws_alerts"
+      ],
+      "rationale": "The query asks for current flood risk in NYC within the next six hours based on a triggered FloodNet sensor, so we need live data from FloodNet and tide information."
+    },
+    "noaa_tides": {
+      "station_id": "8518750",
+      "station_name": "The Battery, NY",
+      "station_lat": 40.7006,
+      "station_lon": -74.0142,
+      "distance_km": 1.5,
+      "observed_ft_mllw": 3.57,
+      "predicted_ft_mllw": 3.78,
+      "residual_ft": -0.21,
+      "obs_time": "2026-05-06 02:06",
+      "error": null
+    },
+    "nws_alerts": {
+      "n_active": 0,
+      "alerts": [],
+      "error": null
+    },
+    "nws_obs": null,
+    "ttm_forecast": {
+      "available": true,
+      "interesting": true,
+      "station_id": "8518750",
+      "station_name": "The Battery, NY",
+      "distance_km": 1.5,
+      "context_length": 512,
+      "horizon_steps": 96,
+      "history_peak_abs_ft": 0.47,
+      "history_recent_ft": 0.17,
+      "forecast_peak_ft": 0.18,
+      "forecast_peak_minutes_ahead": 6,
+      "forecast_peak_time_utc": "2026-05-06T06:23Z",
+      "threshold_ft": 0.3
+    },
+    "paragraph": "**Status.**\n**Live signals.**\n- Tide observation and residual from [noaa_tides]: Observed water level is 3.57 ft above MLLW, with a predicted astronomical tide of 3.78 ft, resulting in a residual setdown of -0.21 ft. - Recent peak |residual| in context window from [ttm_forecast]: The forecasted peak surge residual at The Battery, NY is 0.18 ft, expected to occur about 6 minutes from now.",
+    "audit": {
+      "raw": "**Status.**  \n**Live signals.**  \n- Tide observation and residual from [noaa_tides]: Observed water level is 3.57 ft above MLLW, with a predicted astronomical tide of 3.78 ft, resulting in a residual setdown of -0.21 ft.  \n- Recent peak |residual| in context window from [ttm_forecast]: The forecasted peak surge residual at The Battery, NY is 0.18 ft, expected to occur about 6 minutes from now.",
+      "dropped": []
+    },
+    "trace": [
+      {
+        "step": "noaa_tides",
+        "started_at": 1778048222.919341,
+        "ok": true,
+        "result": {
+          "station_id": "8518750",
+          "station_name": "The Battery, NY",
+          "station_lat": 40.7006
+        },
+        "elapsed_s": 0.29
+      },
+      {
+        "step": "nws_alerts",
+        "started_at": 1778048223.208601,
+        "ok": true,
+        "result": {
+          "n_active": 0,
+          "alerts": [],
+          "error": null
+        },
+        "elapsed_s": 0.66
+      },
+      {
+        "step": "ttm_forecast",
+        "started_at": 1778048223.8639622,
+        "ok": true,
+        "result": {
+          "available": true,
+          "interesting": true,
+          "station_id": "8518750"
+        },
+        "elapsed_s": 0.28
+      },
+      {
+        "step": "reconcile_live_now",
+        "started_at": 1778048224.146539,
+        "ok": true,
+        "elapsed_s": 7.56
+      }
+    ],
+    "total_s": 8.78
+  },
+  "stone_timings": {
+    "Touchstone": {
+      "n_steps": 1,
+      "n_ok": 1,
+      "n_err": 0,
+      "wall_clock_s": 0.29
+    },
+    "Lodestone": {
+      "n_steps": 2,
+      "n_ok": 2,
+      "n_err": 0,
+      "wall_clock_s": 0.94
+    },
+    "Capstone": {
+      "n_steps": 1,
+      "n_ok": 1,
+      "n_err": 0,
+      "wall_clock_s": 7.56
+    }
+  },
+  "error": null,
+  "timed_out": false,
+  "transport_error": null,
+  "framing_score": 0,
+  "framing_rationale": "no opening prose to score",
+  "wall_clock_s": 14.35,
+  "mellea": {
+    "passed": 0,
+    "total": 4,
+    "rerolls": 0,
+    "n_attempts": 0,
+    "requirements_passed": [],
+    "requirements_failed": []
+  },
+  "citations": [
+    "[noaa_tides]",
+    "[ttm_forecast]"
+  ],
+  "citation_count": 2
+}

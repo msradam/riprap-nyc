@@ -1,0 +1,95 @@
+{
+  "qid": "19",
+  "slug": "bbmcr-protection-envelope",
+  "query": "Brooklyn-Bridge Montgomery Coastal Resiliency project area. What's the protection envelope and what's outside it?",
+  "persona": "Capital planning, protection-shadow (BBMCR)",
+  "question_type": "capital_planning",
+  "expected_intent": "neighborhood",
+  "anchor": "lateral",
+  "started_at": 1778049806.351246,
+  "ended_at": 1778049817.044569,
+  "plan": {
+    "kind": "plan",
+    "intent": "neighborhood",
+    "targets": [
+      {
+        "type": "nta",
+        "text": "Brooklyn Bridge"
+      }
+    ],
+    "specialists": [
+      "sandy",
+      "dep_stormwater",
+      "floodnet",
+      "nyc311",
+      "noaa_tides",
+      "nws_alerts",
+      "ttm_forecast",
+      "microtopo",
+      "ida_hwm",
+      "prithvi",
+      "nta_resolve"
+    ],
+    "rationale": "The query refers to a specific coastal resiliency project area (Brooklyn Bridge Montgomery Coastal Resiliency) located in Brooklyn, so we need neighborhood\u2011level data. We\u2019ll use historic Sandy flood layers and DEP stormwater models along with live sensor feeds to describe the protection envelope and identify areas outside it."
+  },
+  "intent": "neighborhood",
+  "paragraph": "Could not resolve target to an NTA: no NTA match in target='Brooklyn Bridge' or query=\"Brooklyn-Bridge Montgomery Coastal Resiliency project area. What's the protection envelope and what's outside it?\"",
+  "steps": [],
+  "mellea_attempts": [],
+  "final": {
+    "kind": "final",
+    "intent": "neighborhood",
+    "query": "Brooklyn-Bridge Montgomery Coastal Resiliency project area. What's the protection envelope and what's outside it?",
+    "error": "no NTA match in target='Brooklyn Bridge' or query=\"Brooklyn-Bridge Montgomery Coastal Resiliency project area. What's the protection envelope and what's outside it?\"",
+    "plan": {
+      "intent": "neighborhood",
+      "targets": [
+        {
+          "type": "nta",
+          "text": "Brooklyn Bridge"
+        }
+      ],
+      "specialists": [
+        "sandy",
+        "dep_stormwater",
+        "floodnet",
+        "nyc311",
+        "noaa_tides",
+        "nws_alerts",
+        "ttm_forecast",
+        "microtopo",
+        "ida_hwm",
+        "prithvi",
+        "nta_resolve"
+      ],
+      "rationale": "The query refers to a specific coastal resiliency project area (Brooklyn Bridge Montgomery Coastal Resiliency) located in Brooklyn, so we need neighborhood\u2011level data. We\u2019ll use historic Sandy flood layers and DEP stormwater models along with live sensor feeds to describe the protection envelope and identify areas outside it."
+    },
+    "trace": [
+      {
+        "step": "nta_resolve",
+        "started_at": 1778049816.986115,
+        "ok": false,
+        "err": "no NTA match in target='Brooklyn Bridge' or query=\"Brooklyn-Bridge Montgomery Coastal Resiliency project area. What's the protection envelope and what's outside it?\"",
+        "elapsed_s": 0.06
+      }
+    ],
+    "paragraph": "Could not resolve target to an NTA: no NTA match in target='Brooklyn Bridge' or query=\"Brooklyn-Bridge Montgomery Coastal Resiliency project area. What's the protection envelope and what's outside it?\""
+  },
+  "stone_timings": {},
+  "error": null,
+  "timed_out": false,
+  "transport_error": null,
+  "framing_score": 4,
+  "framing_rationale": "topic marker matched: /planning|investment|infrastructure|hardening|resilien(ce|cy)/ (no verdict)",
+  "wall_clock_s": 10.69,
+  "mellea": {
+    "passed": 0,
+    "total": 4,
+    "rerolls": 0,
+    "n_attempts": 0,
+    "requirements_passed": [],
+    "requirements_failed": []
+  },
+  "citations": [],
+  "citation_count": 0
+}

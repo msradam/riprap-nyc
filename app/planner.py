@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 from dataclasses import dataclass
 from typing import Any
 
@@ -137,6 +138,58 @@ Available specialists (and which intents they apply to):
 Output ONLY the JSON object. No commentary, no markdown."""
 
 
+# ---- Not-implemented short-circuits ----------------------------------------
+#
+# These patterns are well-defined feature gaps. Returning a graceful message
+# is better than routing them into an intent that silently fails.
+
+_RETROSPECTIVE_RE = re.compile(
+    r"(?:what\s+would\s+(?:riprap|you|it)\s+have\s+said"
+    r"|what\s+(?:was|were)\s+(?:the\s+)?(?:flood|risk|status)"
+    r"|(?:as\s+of|on)\s+(?:august|september|october|november|december|january|"
+    r"february|march|april|may|june|july)\s+\d"
+    r"|on\s+(?:the\s+date\s+of|hurricane\s+ida|hurricane\s+sandy)"
+    r"|(?:september|august|october)\s+\d{1,2},?\s+20\d{2}"
+    r")",
+    re.IGNORECASE,
+)
+
+_RANKING_RE = re.compile(
+    r"(?:rank\s+(?:the\s+)?top\s+\d"
+    r"|top\s+\d+\s+\w+\s+by\s+flood"
+    r"|intersect(?:ed)?\s+with\s+(?:dac|ejnyc|social\s+vulnerability)"
+    r"|sort(?:ed)?\s+by\s+(?:flood\s+)?(?:exposure|risk|score)"
+    r")",
+    re.IGNORECASE,
+)
+
+NOT_IMPLEMENTED_INTENTS = {
+    "retrospective": (
+        _RETROSPECTIVE_RE,
+        "Historical-date mode (\"what would Riprap have said on [date]\") "
+        "is on the roadmap but not yet available. Riprap currently reports "
+        "present-state flood exposure; past-state reconstruction is planned "
+        "for a future release (see deck slide 8).",
+    ),
+    "ranking": (
+        _RANKING_RE,
+        "Cross-development ranking queries (\"rank top N by flood exposure\", "
+        "\"intersect with DAC designation\") require a cross-register join "
+        "that is on the roadmap but not yet available. Try a specific address "
+        "or neighborhood instead.",
+    ),
+}
+
+
+def _not_implemented_message(query: str) -> str | None:
+    """Return a user-facing message if the query matches a known feature gap,
+    else None."""
+    for _name, (pattern, message) in NOT_IMPLEMENTED_INTENTS.items():
+        if pattern.search(query):
+            return message
+    return None
+
+
 # ---- Planner call ----------------------------------------------------------
 
 def plan(query: str, model: str = OLLAMA_MODEL, on_token=None) -> Plan:
@@ -147,6 +200,14 @@ def plan(query: str, model: str = OLLAMA_MODEL, on_token=None) -> Plan:
     Granite generates. The streaming endpoint uses this to show the
     agent's reasoning forming live in the UI.
     """
+    msg = _not_implemented_message(query)
+    if msg:
+        log.info("planner: short-circuit not_implemented for query %r", query[:80])
+        if on_token:
+            on_token(json.dumps({"intent": "not_implemented", "message": msg}))
+        return Plan(intent="not_implemented", targets=[],
+                    specialists=[], rationale=msg)
+
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user",   "content": query},

@@ -130,6 +130,9 @@ def _check_no_placeholder_tokens():
             bad.append("<document>")
         if "</document" in text:
             bad.append("</document>")
+        if "[doc_id]" in text:
+            # Model echoed the EXTRA_SYSTEM_PROMPT skeleton literally
+            bad.append("[doc_id]")
         return not bad
     return _fn
 

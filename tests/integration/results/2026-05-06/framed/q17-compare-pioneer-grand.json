@@ -1,0 +1,1208 @@
+{
+  "qid": "17",
+  "slug": "compare-pioneer-grand",
+  "query": "Compare 80 Pioneer Street, Brooklyn to 504 Grand Street, Manhattan for flood exposure.",
+  "persona": "Compare intent (Pioneer vs Grand)",
+  "question_type": "comparison",
+  "expected_intent": null,
+  "anchor": "lateral",
+  "started_at": 1778049692.398072,
+  "ended_at": 1778049794.473872,
+  "plan": {
+    "kind": "plan",
+    "intent": "single_address",
+    "targets": [
+      {
+        "type": "address",
+        "text": "80 Pioneer Street, Brooklyn"
+      },
+      {
+        "type": "address",
+        "text": "504 Grand Street, Manhattan"
+      }
+    ],
+    "specialists": [
+      "sandy",
+      "dep_stormwater",
+      "floodnet",
+      "nyc311",
+      "noaa_tides",
+      "nws_alerts",
+      "ttm_forecast",
+      "geocode",
+      "microtopo"
+    ],
+    "rationale": "We need to compare flood exposure for two specific addresses in different boroughs, so we must resolve each address geographically and then query historic Sandy inundation extents, DEP stormwater modeling layers, live sensor data, NYC 311 complaints, tide levels, NWS alerts, and TTM forecast nowcasts."
+  },
+  "intent": "single_address",
+  "paragraph": "**Status.**\nThe address at 80 PIONEER STREET, Brooklyn, NY (BBL: 3005310031) is **exposed to higher flood risk than comparable inland locations**, as it was **flooded by Hurricane Sandy in 2012** ([sandy]) and sits at a **topographic low point** with a **Topographic Wetness Index (TWI) of 14.79**, indicating very high saturation propensity ([microtopo]). \n\n**Empirical evidence.**\nThe address is **within the empirical 2012 inundation extent of Hurricane Sandy** ([sandy]), confirming direct flooding during that event. Additionally, there have been **65 flood-related complaints within a 200\u202fm radius over the past five years**, with the most common descriptors being \"Catch Basin Clogged/Flooding\" (24) and \"Sewer Backup\" (22) ([nyc311]). Nearby FloodNet sensors recorded **4 total flood events in the last three years**, including a peak depth of 51\u202fmm at one sensor on 2025\u201110\u201130 ([floodnet]).\n\n**Modeled scenarios.**\nThe location's elevation is **1.37\u202fm above sea level**, and it functions as a **topographic low point** where **80\u202f% of surrounding cells within 200\u202fm are lower** ([microtopo]). The **Fraction of cells within 750\u202fm that are lower** is **23.8\u202f%** ([microtopo]), indicating moderate relief with the basin's maximum elevation being **13.27\u202fm higher** than the address ([microtopo]). The **Height Above Nearest Drainage (HAND) value of 3.81\u202fm** suggests a typical urban\u2011block elevation above drainage, while the **TWI of 14.79** denotes very high saturation potential ([microtopo]).\n\n**Policy",
+  "steps": [
+    {
+      "kind": "step",
+      "step": "geocode",
+      "ok": true,
+      "elapsed_s": 0.13,
+      "result": {
+        "address": "80 PIONEER STREET, Brooklyn, NY, USA",
+        "lat": 40.678113,
+        "lon": -74.009514
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "sandy_inundation",
+      "ok": true,
+      "elapsed_s": 0.05,
+      "result": {
+        "inside": true
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "dep_stormwater",
+      "ok": true,
+      "elapsed_s": 0.04,
+      "result": {
+        "dep_extreme_2080": "outside",
+        "dep_moderate_2050": "outside",
+        "dep_moderate_current": "outside"
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "floodnet",
+      "ok": true,
+      "elapsed_s": 0.16,
+      "result": {
+        "n_sensors": 4,
+        "n_events_3y": 4
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "nyc311",
+      "ok": true,
+      "elapsed_s": 0.29,
+      "result": {
+        "n": 65
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "noaa_tides",
+      "ok": true,
+      "elapsed_s": 0.28,
+      "result": {
+        "station": "8518750",
+        "observed_ft_mllw": 3.09,
+        "residual_ft": -0.31
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "nws_alerts",
+      "ok": true,
+      "elapsed_s": 0.95,
+      "result": {
+        "n_active": 0
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "nws_obs",
+      "ok": true,
+      "elapsed_s": 0.06,
+      "result": {
+        "station": "KNYC",
+        "p1h_mm": null,
+        "p6h_mm": null
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "ttm_forecast",
+      "ok": true,
+      "elapsed_s": 0.31,
+      "result": {
+        "context": 512,
+        "horizon": 96,
+        "forecast_peak_ft": 0.23,
+        "forecast_peak_min_ahead": 6,
+        "interesting": true
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "ttm_311_forecast",
+      "ok": true,
+      "elapsed_s": 0.25,
+      "result": {
+        "history_total": 8,
+        "history_recent_mean": null,
+        "forecast_mean": null,
+        "forecast_peak": null,
+        "accelerating": false
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "floodnet_forecast",
+      "ok": false,
+      "elapsed_s": 0.16,
+      "result": null,
+      "err": "sensor has only 2 historical events (<5); forecast omitted"
+    },
+    {
+      "kind": "step",
+      "step": "ttm_battery_surge",
+      "ok": true,
+      "elapsed_s": 1.55,
+      "result": {
+        "context_h": 1024,
+        "horizon_h": 96,
+        "forecast_peak_m": 0.074,
+        "forecast_peak_hours_ahead": 96,
+        "interesting": false
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "microtopo_lidar",
+      "ok": true,
+      "elapsed_s": 0.01,
+      "result": {
+        "elev_m": 1.37,
+        "pct_200m": 0.8,
+        "relief_m": 13.27
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "ida_hwm_2021",
+      "ok": true,
+      "elapsed_s": 0.0,
+      "result": {
+        "n_within_800m": 1,
+        "max_height_above_gnd_ft": 0.3,
+        "nearest_m": 130.0
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "mta_entrance_exposure",
+      "ok": false,
+      "elapsed_s": 0.0,
+      "result": null,
+      "err": "no entrances within radius"
+    },
+    {
+      "kind": "step",
+      "step": "prithvi_eo_v2",
+      "ok": true,
+      "elapsed_s": 0.0,
+      "result": {
+        "inside_water_polygon": false,
+        "nearest_distance_m": 4026.3,
+        "n_polygons_within_500m": 0
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "rag_granite_embedding",
+      "ok": true,
+      "elapsed_s": 4.63,
+      "result": {
+        "hits": 1,
+        "top": [
+          [
+            "rag_nycha",
+            0.84
+          ]
+        ]
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "gliner_extract",
+      "ok": true,
+      "elapsed_s": 2.22,
+      "result": {
+        "sources": 1,
+        "totals_by_label": {
+          "nyc_location": 2,
+          "date_range": 1,
+          "agency": 1,
+          "infrastructure_project": 1
+        }
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "mellea_reconcile_address",
+      "ok": true,
+      "elapsed_s": 76.67,
+      "result": {
+        "rerolls": 0,
+        "passed": "4/4",
+        "paragraph_chars": 1512
+      },
+      "err": null
+    }
+  ],
+  "mellea_attempts": [
+    {
+      "kind": "mellea_attempt",
+      "attempt": 0,
+      "passed": [
+        "numerics_grounded",
+        "no_placeholder_tokens",
+        "citations_dense",
+        "citations_resolve"
+      ],
+      "failed": []
+    }
+  ],
+  "final": {
+    "kind": "final",
+    "geocode": {
+      "address": "80 PIONEER STREET, Brooklyn, NY, USA",
+      "borough": "Brooklyn",
+      "lat": 40.678113,
+      "lon": -74.009514,
+      "bbl": "3005310031",
+      "bin": "3336517"
+    },
+    "sandy": true,
+    "dep": {
+      "dep_extreme_2080": {
+        "depth_class": 0,
+        "depth_label": "outside",
+        "citation": "NYC DEP Stormwater Flood Map \u2014 DEP Extreme Stormwater (3.66 in/hr, 2080 SLR)"
+      },
+      "dep_moderate_2050": {
+        "depth_class": 0,
+        "depth_label": "outside",
+        "citation": "NYC DEP Stormwater Flood Map \u2014 DEP Moderate Stormwater (2.13 in/hr, 2050 SLR)"
+      },
+      "dep_moderate_current": {
+        "depth_class": 0,
+        "depth_label": "outside",
+        "citation": "NYC DEP Stormwater Flood Map \u2014 DEP Moderate Stormwater (2.13 in/hr, current SLR)"
+      }
+    },
+    "floodnet": {
+      "n_sensors": 4,
+      "sensors": [
+        {
+          "deployment_id": "gladly_mint_snail",
+          "name": "BK - Pioneer St/Conover St",
+          "street": "Conover Street",
+          "borough": "Brooklyn",
+          "status": "good",
+          "deployed_at": "2022-02-18T00:00:00",
+          "lat": 40.67973354,
+          "lon": -74.01242208
+        },
+        {
+          "deployment_id": "jolly_tender_squid",
+          "name": "BK - Henry St/Mill St",
+          "street": "Henry Street",
+          "borough": "Brooklyn",
+          "status": "needs_sensor",
+          "deployed_at": "2022-02-18T00:00:00",
+          "lat": 40.67573424,
+          "lon": -74.00339626
+        },
+        {
+          "deployment_id": "openly_driven_tarpon",
+          "name": "BK - Dwight St/King St",
+          "street": "Dwight Street",
+          "borough": "Brooklyn",
+          "status": "good",
+          "deployed_at": "2022-02-18T00:00:00",
+          "lat": 40.67635238296315,
+          "lon": -74.00856096855905
+        },
+        {
+          "deployment_id": "vastly_saving_whale",
+          "name": "BK - Columbia St/Bay St",
+          "street": "Columbia Street",
+          "borough": "Brooklyn",
+          "status": "signal",
+          "deployed_at": "2022-02-18T00:00:00",
+          "lat": 40.6732672,
+          "lon": -74.0084181
+        }
+      ],
+      "n_flood_events_3y": 4,
+      "n_sensors_with_events": 2,
+      "peak_event": {
+        "deployment_id": "openly_driven_tarpon",
+        "start_time": "2025-10-30T18:37:35.11",
+        "end_time": "2025-10-30T19:16:40.865",
+        "max_depth_mm": 51,
+        "label": "flood"
+      },
+      "radius_m": 600
+    },
+    "nyc311": {
+      "n": 65,
+      "radius_m": 200,
+      "years": 5,
+      "by_year": {
+        "2021": 6,
+        "2022": 14,
+        "2023": 27,
+        "2024": 10,
+        "2025": 8
+      },
+      "by_descriptor": {
+        "Catch Basin Clogged/Flooding (Use Comments) (SC)": 24,
+        "Sewer Backup (Use Comments) (SA)": 22,
+        "Street Flooding (SJ)": 18,
+        "Flooding on Street": 1
+      },
+      "most_recent": [
+        {
+          "date": "2025-06-14",
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "address": "80 RICHARD STREET"
+        },
+        {
+          "date": "2025-06-11",
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "address": "81 RICHARDS STREET"
+        },
+        {
+          "date": "2025-06-10",
+          "descriptor": "Street Flooding (SJ)",
+          "address": "291 VAN BRUNT STREET"
+        },
+        {
+          "date": "2025-06-01",
+          "descriptor": "Street Flooding (SJ)",
+          "address": "293 VAN BRUNT STREET"
+        },
+        {
+          "date": "2025-05-14",
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "address": null
+        }
+      ],
+      "points": [
+        {
+          "lat": 40.67916327593135,
+          "lon": -74.00809395504784,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2025-06-14",
+          "address": "80 RICHARD STREET"
+        },
+        {
+          "lat": 40.67904798778535,
+          "lon": -74.00820210062442,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2025-06-11",
+          "address": "81 RICHARDS STREET"
+        },
+        {
+          "lat": 40.67883913801923,
+          "lon": -74.01114040069871,
+          "descriptor": "Street Flooding (SJ)",
+          "date": "2025-06-10",
+          "address": "291 VAN BRUNT STREET"
+        },
+        {
+          "lat": 40.678797961868064,
+          "lon": -74.01118726279125,
+          "descriptor": "Street Flooding (SJ)",
+          "date": "2025-06-01",
+          "address": "293 VAN BRUNT STREET"
+        },
+        {
+          "lat": 40.677897824182935,
+          "lon": -74.00954311469353,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2025-05-14",
+          "address": null
+        },
+        {
+          "lat": 40.67835614511628,
+          "lon": -74.0101993415242,
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "date": "2025-05-12",
+          "address": "102 PIONEER STREET"
+        },
+        {
+          "lat": 40.67808170251611,
+          "lon": -74.0097991149441,
+          "descriptor": "Street Flooding (SJ)",
+          "date": "2025-03-24",
+          "address": "80 PIONEER STREET"
+        },
+        {
+          "lat": 40.677897824182935,
+          "lon": -74.00954311469353,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2025-03-05",
+          "address": null
+        },
+        {
+          "lat": 40.67907804826365,
+          "lon": -74.00988218371882,
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "date": "2024-10-10",
+          "address": "93A VISITATION PLACE"
+        },
+        {
+          "lat": 40.67808170251611,
+          "lon": -74.0097991149441,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2024-04-03",
+          "address": "80 PIONEER STREET"
+        },
+        {
+          "lat": 40.67808170251611,
+          "lon": -74.0097991149441,
+          "descriptor": "Street Flooding (SJ)",
+          "date": "2024-04-03",
+          "address": "80 PIONEER STREET"
+        },
+        {
+          "lat": 40.67839443105709,
+          "lon": -74.0116811189583,
+          "descriptor": "Street Flooding (SJ)",
+          "date": "2024-02-13",
+          "address": null
+        },
+        {
+          "lat": 40.67846855015133,
+          "lon": -74.01158018388638,
+          "descriptor": "Street Flooding (SJ)",
+          "date": "2024-01-29",
+          "address": "309 VAN BRUNT STREET"
+        },
+        {
+          "lat": 40.67839443105709,
+          "lon": -74.0116811189583,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2024-01-28",
+          "address": null
+        },
+        {
+          "lat": 40.6783093342545,
+          "lon": -74.01176763075024,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2024-01-16",
+          "address": "311 VAN BRUNT STREET"
+        },
+        {
+          "lat": 40.6783093342545,
+          "lon": -74.01176763075024,
+          "descriptor": "Street Flooding (SJ)",
+          "date": "2024-01-14",
+          "address": "311 VAN BRUNT STREET"
+        },
+        {
+          "lat": 40.67839443105709,
+          "lon": -74.0116811189583,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2024-01-13",
+          "address": null
+        },
+        {
+          "lat": 40.67808170251611,
+          "lon": -74.0097991149441,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2024-01-10",
+          "address": "80 PIONEER STREET"
+        },
+        {
+          "lat": 40.67839443105709,
+          "lon": -74.0116811189583,
+          "descriptor": "Street Flooding (SJ)",
+          "date": "2023-12-13",
+          "address": null
+        },
+        {
+          "lat": 40.67813645871492,
+          "lon": -74.01131694153283,
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "date": "2023-12-12",
+          "address": "129 KING STREET"
+        },
+        {
+          "lat": 40.67810352638261,
+          "lon": -74.01126646219346,
+          "descriptor": "Street Flooding (SJ)",
+          "date": "2023-12-11",
+          "address": "127 KING STREET"
+        },
+        {
+          "lat": 40.67832031187365,
+          "lon": -74.01178205380586,
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "date": "2023-12-11",
+          "address": "338 VAN BRUNT STREET"
+        },
+        {
+          "lat": 40.67822698104491,
+          "lon": -74.0118649586329,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2023-12-04",
+          "address": "315 VAN BRUNT STREET"
+        },
+        {
+          "lat": 40.67839443105709,
+          "lon": -74.0116811189583,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2023-12-02",
+          "address": null
+        },
+        {
+          "lat": 40.677897824182935,
+          "lon": -74.00954311469353,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2023-11-22",
+          "address": null
+        },
+        {
+          "lat": 40.67839443105709,
+          "lon": -74.0116811189583,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2023-10-30",
+          "address": null
+        },
+        {
+          "lat": 40.67839443105709,
+          "lon": -74.0116811189583,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2023-10-21",
+          "address": null
+        },
+        {
+          "lat": 40.67822698104491,
+          "lon": -74.0118649586329,
+          "descriptor": "Street Flooding (SJ)",
+          "date": "2023-10-14",
+          "address": "315 VAN BRUNT STREET"
+        },
+        {
+          "lat": 40.67822698104491,
+          "lon": -74.0118649586329,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2023-10-14",
+          "address": "315 VAN BRUNT STREET"
+        },
+        {
+          "lat": 40.67751622591041,
+          "lon": -74.0104047115321,
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "date": "2023-10-03",
+          "address": "91 KING STREET"
+        },
+        {
+          "lat": 40.67839443105709,
+          "lon": -74.0116811189583,
+          "descriptor": "Street Flooding (SJ)",
+          "date": "2023-09-29",
+          "address": null
+        },
+        {
+          "lat": 40.67839443105709,
+          "lon": -74.0116811189583,
+          "descriptor": "Flooding on Street",
+          "date": "2023-09-29",
+          "address": "KING STREET"
+        },
+        {
+          "lat": 40.67808170251611,
+          "lon": -74.0097991149441,
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "date": "2023-09-29",
+          "address": "80 PIONEER STREET"
+        },
+        {
+          "lat": 40.67904227131728,
+          "lon": -74.01093132614933,
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "date": "2023-09-29",
+          "address": "318 VAN BRUNT STREET"
+        },
+        {
+          "lat": 40.67832869801785,
+          "lon": -74.01019212676631,
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "date": "2023-09-29",
+          "address": "103 PIONEER STREET"
+        },
+        {
+          "lat": 40.678592079748675,
+          "lon": -74.0114323882688,
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "date": "2023-09-11",
+          "address": "303 VAN BRUNT STREET"
+        },
+        {
+          "lat": 40.678592079748675,
+          "lon": -74.0114323882688,
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "date": "2023-09-11",
+          "address": "303 VAN BRUNT STREET"
+        },
+        {
+          "lat": 40.6786332560007,
+          "lon": -74.01138552647227,
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "date": "2023-09-11",
+          "address": "301 VAN BRUNT STREET"
+        },
+        {
+          "lat": 40.67839443105709,
+          "lon": -74.0116811189583,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2023-07-04",
+          "address": null
+        },
+        {
+          "lat": 40.67839443105709,
+          "lon": -74.0116811189583,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2023-07-02",
+          "address": null
+        },
+        {
+          "lat": 40.67865254084403,
+          "lon": -74.01063923316136,
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "date": "2023-04-30",
+          "address": "126 PIONEER STREET"
+        },
+        {
+          "lat": 40.67865254084403,
+          "lon": -74.01063923316136,
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "date": "2023-04-30",
+          "address": "126 PIONEER STREET"
+        },
+        {
+          "lat": 40.67865254084403,
+          "lon": -74.01063923316136,
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "date": "2023-04-30",
+          "address": "126 PIONEER STREET"
+        },
+        {
+          "lat": 40.6783093342545,
+          "lon": -74.01176763075024,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2023-04-30",
+          "address": "311 VAN BRUNT STREET"
+        },
+        {
+          "lat": 40.67846855015133,
+          "lon": -74.01158018388638,
+          "descriptor": "Street Flooding (SJ)",
+          "date": "2023-03-31",
+          "address": "309 VAN BRUNT STREET"
+        },
+        {
+          "lat": 40.67808170251611,
+          "lon": -74.0097991149441,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2022-12-23",
+          "address": "80 PIONEER STREET"
+        },
+        {
+          "lat": 40.67808170251611,
+          "lon": -74.0097991149441,
+          "descriptor": "Street Flooding (SJ)",
+          "date": "2022-12-23",
+          "address": "80 PIONEER STREET"
+        },
+        {
+          "lat": 40.67904227131728,
+          "lon": -74.01093132614933,
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "date": "2022-11-15",
+          "address": "318 VAN BRUNT STREET"
+        },
+        {
+          "lat": 40.67904227131728,
+          "lon": -74.01093132614933,
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "date": "2022-11-14",
+          "address": "318 VAN BRUNT STREET"
+        },
+        {
+          "lat": 40.67904227131728,
+          "lon": -74.01093132614933,
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "date": "2022-11-14",
+          "address": "318 VAN BRUNT STREET"
+        },
+        {
+          "lat": 40.67847964348765,
+          "lon": -74.01038323011252,
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "date": "2022-08-18",
+          "address": "112 PIONEER STREET"
+        },
+        {
+          "lat": 40.67847964348765,
+          "lon": -74.01038323011252,
+          "descriptor": "Street Flooding (SJ)",
+          "date": "2022-08-16",
+          "address": "112 PIONEER STREET"
+        },
+        {
+          "lat": 40.67847964348765,
+          "lon": -74.01038323011252,
+          "descriptor": "Street Flooding (SJ)",
+          "date": "2022-08-12",
+          "address": "112 PIONEER STREET"
+        },
+        {
+          "lat": 40.6783093342545,
+          "lon": -74.01176763075024,
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "date": "2022-06-09",
+          "address": "311 VAN BRUNT STREET"
+        },
+        {
+          "lat": 40.67813645871492,
+          "lon": -74.01131694153283,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2022-06-09",
+          "address": "129 KING STREET"
+        },
+        {
+          "lat": 40.6785097268255,
+          "lon": -74.01152971697809,
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "date": "2022-05-04",
+          "address": "307 VAN BRUNT STREET"
+        },
+        {
+          "lat": 40.67839443105709,
+          "lon": -74.0116811189583,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2022-04-30",
+          "address": null
+        },
+        {
+          "lat": 40.67839443105709,
+          "lon": -74.0116811189583,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2022-04-27",
+          "address": null
+        },
+        {
+          "lat": 40.6785784422357,
+          "lon": -74.01052745723872,
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "date": "2022-04-13",
+          "address": "120 PIONEER STREET"
+        },
+        {
+          "lat": 40.67839443105709,
+          "lon": -74.0116811189583,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2021-10-25",
+          "address": null
+        }
+      ]
+    },
+    "microtopo": {
+      "point_elev_m": 1.37,
+      "rel_elev_pct_750m": 23.8,
+      "rel_elev_pct_200m": 0.8,
+      "basin_relief_m": 13.27,
+      "aoi_min_m": -2.13,
+      "aoi_max_m": 14.64,
+      "aoi_radius_m": 750,
+      "resolution_m": 22,
+      "twi": 14.79,
+      "hand_m": 3.81
+    },
+    "ida_hwm": {
+      "n_within_radius": 1,
+      "radius_m": 800,
+      "max_elev_ft": 4.2,
+      "max_height_above_gnd_ft": 0.3,
+      "nearest_dist_m": 130.0,
+      "nearest_site": "Visitation Pl., between Van Brunt St. and Richards St., Red Hook, Brooklyn",
+      "nearest_elev_ft": 4.2,
+      "sample_sites": [
+        "Visitation Pl., between Van Brunt St. and Richards St., Red Hook, Brooklyn"
+      ],
+      "points": [
+        {
+          "lat": 40.679252,
+          "lon": -74.009158,
+          "site": "Visitation Pl., between Van Brunt St. and Richards St., Red Hook, Brooklyn",
+          "elev_ft": 4.2,
+          "height_above_gnd_ft": 0.3,
+          "distance_m": 130.2
+        }
+      ]
+    },
+    "prithvi_water": {
+      "inside_water_polygon": false,
+      "nearest_distance_m": 4026.3,
+      "n_polygons_within_500m": 0,
+      "scene_id": "pre HLS.S30.T18TWK.2021237T153809.v2.0 | post HLS.S30.T18TWK.2021245T154911.v2.0",
+      "scene_date": "pre 2021-08-25, post 2021-09-02"
+    },
+    "prithvi_live": null,
+    "terramind": null,
+    "terramind_lulc": null,
+    "terramind_buildings": null,
+    "noaa_tides": {
+      "station_id": "8518750",
+      "station_name": "The Battery, NY",
+      "station_lat": 40.7006,
+      "station_lon": -74.0142,
+      "distance_km": 2.5,
+      "observed_ft_mllw": 3.09,
+      "predicted_ft_mllw": 3.4,
+      "residual_ft": -0.31,
+      "obs_time": "2026-05-06 02:36",
+      "error": null
+    },
+    "nws_alerts": {
+      "n_active": 0,
+      "alerts": [],
+      "error": null
+    },
+    "nws_obs": {
+      "station_id": "KNYC",
+      "station_name": "Central Park, NY",
+      "distance_km": 11.8,
+      "obs_time": "2026-05-06T05:51:00+00:00",
+      "temp_c": 18.9,
+      "precip_last_hour_mm": null,
+      "precip_last_3h_mm": null,
+      "precip_last_6h_mm": null,
+      "error": null
+    },
+    "ttm_forecast": {
+      "available": true,
+      "interesting": true,
+      "station_id": "8518750",
+      "station_name": "The Battery, NY",
+      "distance_km": 2.5,
+      "context_length": 512,
+      "horizon_steps": 96,
+      "history_peak_abs_ft": 0.47,
+      "history_recent_ft": 0.21,
+      "forecast_peak_ft": 0.23,
+      "forecast_peak_minutes_ahead": 6,
+      "forecast_peak_time_utc": "2026-05-06T06:47Z",
+      "threshold_ft": 0.3
+    },
+    "ttm_311_forecast": {
+      "available": true,
+      "radius_m": 200,
+      "days_context": 512,
+      "days_horizon": 96,
+      "history_total_complaints": 8,
+      "history_mean_per_day": 0.016,
+      "history_recent_30d_mean": 0.0,
+      "history_weekly_equivalent": 0.11,
+      "forecast_total_next_horizon": 0.5,
+      "forecast_mean_per_day": 0.005,
+      "forecast_weekly_equivalent": 0.04,
+      "forecast_peak_day": 0.02,
+      "forecast_peak_day_offset": 6,
+      "accelerating": false,
+      "context_window_start": "2024-12-11",
+      "context_window_end": "2026-05-06"
+    },
+    "floodnet_forecast": null,
+    "ttm_battery_surge": {
+      "available": true,
+      "interesting": false,
+      "model": "msradam/Granite-TTM-r2-Battery-Surge",
+      "station_id": "8518750",
+      "station_name": "The Battery, NY",
+      "context_hours": 1024,
+      "horizon_hours": 96,
+      "history_recent_m": 0.044,
+      "history_peak_abs_m": 0.398,
+      "forecast_peak_m": 0.074,
+      "forecast_peak_hours_ahead": 96,
+      "forecast_peak_time_utc": "2026-05-10T06:00",
+      "forecast_array_m": [
+        0.0234,
+        0.019,
+        0.024,
+        0.0288,
+        0.0286,
+        0.0264,
+        0.0272,
+        0.0325,
+        0.0386,
+        0.0366,
+        0.0227,
+        0.0107,
+        0.0062,
+        0.0117,
+        0.0266,
+        0.0329,
+        0.0363,
+        0.0384,
+        0.0369,
+        0.0263,
+        0.0228,
+        0.0249,
+        0.0276,
+        0.0294,
+        0.0251,
+        0.0126,
+        0.0097,
+        0.0086,
+        0.0058,
+        0.0025,
+        0.005,
+        0.0111,
+        0.018,
+        0.0162,
+        0.0008,
+        -0.013,
+        -0.0193,
+        -0.015,
+        -0.0016,
+        0.0034,
+        0.007,
+        0.0125,
+        0.0155,
+        0.0078,
+        0.0055,
+        0.0069,
+        0.0073,
+        0.0078,
+        0.0035,
+        -0.0082,
+        -0.0102,
+        -0.0102,
+        -0.0107,
+        -0.0101,
+        -0.002,
+        0.0102,
+        0.021,
+        0.0213,
+        0.0072,
+        -0.0068,
+        -0.0174,
+        -0.0192,
+        -0.0109,
+        -0.0074,
+        -0.0027,
+        0.0051,
+        0.0127,
+        0.0122,
+        0.0169,
+        0.0238,
+        0.0306,
+        0.0352,
+        0.031,
+        0.0169,
+        0.0116,
+        0.0099,
+        0.0105,
+        0.0139,
+        0.0257,
+        0.0419,
+        0.0565,
+        0.0592,
+        0.0481,
+        0.0388,
+        0.0335,
+        0.0324,
+        0.0356,
+        0.0313,
+        0.0295,
+        0.0328,
+        0.0374,
+        0.0385,
+        0.0478,
+        0.058,
+        0.0664,
+        0.0735
+      ],
+      "compute": "local",
+      "elapsed_s": 1.55
+    },
+    "mta_entrances": null,
+    "nycha_developments": null,
+    "doe_schools": null,
+    "doh_hospitals": null,
+    "rag": [
+      {
+        "doc_id": "rag_nycha",
+        "title": "Flood Resilience at NYCHA \u2014 Lessons Learned",
+        "citation": "NYCHA, Flood Resilience: Lessons Learned",
+        "file": "nycha_lessons.pdf",
+        "page": 3,
+        "text": "Letter from the Vice President for Recovery & Resilience Dear New Yorkers, Hurricane Sandy devasted New York City in October 2012. Despite living in a city with 520 miles of coastline, residents had never grappled with storm surge at this scale. Salt water and debris covered huge swaths of the five boroughs, including many NYCHA campuses. Unlike prior major storms, the impacts didn\u2019t dissipate when the weather improved. Salt water corroded critical infrastructure that was stored below grade. The homes of tens of thousands of public housing residents\u2014most of whom couldn\u2019t evacuate before the storm\u2014were without water, power, heat, hot water, or elevator service for weeks.",
+        "score": 0.8406631946563721
+      }
+    ],
+    "gliner": {
+      "nycha": {
+        "rag_doc_id": "rag_nycha",
+        "title": "Flood Resilience at NYCHA \u2014 Lessons Learned",
+        "paragraph_excerpt": "Letter from the Vice President for Recovery & Resilience Dear New Yorkers, Hurricane Sandy devasted New York City in October 2012. Despite living in a city with 520 miles of coastline, residents had never grappled with storm surge at this s\u2026",
+        "n_entities": 5,
+        "entities": [
+          {
+            "label": "nyc_location",
+            "text": "New York City",
+            "score": 0.917
+          },
+          {
+            "label": "date_range",
+            "text": "October 2012",
+            "score": 0.831
+          },
+          {
+            "label": "nyc_location",
+            "text": "five boroughs",
+            "score": 0.651
+          },
+          {
+            "label": "agency",
+            "text": "NYCHA",
+            "score": 0.575
+          },
+          {
+            "label": "infrastructure_project",
+            "text": "critical infrastructure",
+            "score": 0.821
+          }
+        ]
+      }
+    },
+    "paragraph": "**Status.**\nThe address at 80 PIONEER STREET, Brooklyn, NY (BBL: 3005310031) is **exposed to higher flood risk than comparable inland locations**, as it was **flooded by Hurricane Sandy in 2012** ([sandy]) and sits at a **topographic low point** with a **Topographic Wetness Index (TWI) of 14.79**, indicating very high saturation propensity ([microtopo]). \n\n**Empirical evidence.**\nThe address is **within the empirical 2012 inundation extent of Hurricane Sandy** ([sandy]), confirming direct flooding during that event. Additionally, there have been **65 flood-related complaints within a 200\u202fm radius over the past five years**, with the most common descriptors being \"Catch Basin Clogged/Flooding\" (24) and \"Sewer Backup\" (22) ([nyc311]). Nearby FloodNet sensors recorded **4 total flood events in the last three years**, including a peak depth of 51\u202fmm at one sensor on 2025\u201110\u201130 ([floodnet]).\n\n**Modeled scenarios.**\nThe location's elevation is **1.37\u202fm above sea level**, and it functions as a **topographic low point** where **80\u202f% of surrounding cells within 200\u202fm are lower** ([microtopo]). The **Fraction of cells within 750\u202fm that are lower** is **23.8\u202f%** ([microtopo]), indicating moderate relief with the basin's maximum elevation being **13.27\u202fm higher** than the address ([microtopo]). The **Height Above Nearest Drainage (HAND) value of 3.81\u202fm** suggests a typical urban\u2011block elevation above drainage, while the **TWI of 14.79** denotes very high saturation potential ([microtopo]).\n\n**Policy",
+    "audit": {
+      "raw": "**Status.**\nThe address at 80 PIONEER STREET, Brooklyn, NY (BBL: 3005310031) is **exposed to higher flood risk than comparable inland locations**, as it was **flooded by Hurricane Sandy in 2012** ([sandy]) and sits at a **topographic low point** with a **Topographic Wetness Index (TWI) of 14.79**, indicating very high saturation propensity ([microtopo]). \n\n**Empirical evidence.**\nThe address is **within the empirical 2012 inundation extent of Hurricane Sandy** ([sandy]), confirming direct flooding during that event. Additionally, there have been **65 flood-related complaints within a 200\u202fm radius over the past five years**, with the most common descriptors being \"Catch Basin Clogged/Flooding\" (24) and \"Sewer Backup\" (22) ([nyc311]). Nearby FloodNet sensors recorded **4 total flood events in the last three years**, including a peak depth of 51\u202fmm at one sensor on 2025\u201110\u201130 ([floodnet]).\n\n**Modeled scenarios.**\nThe location's elevation is **1.37\u202fm above sea level**, and it functions as a **topographic low point** where **80\u202f% of surrounding cells within 200\u202fm are lower** ([microtopo]). The **Fraction of cells within 750\u202fm that are lower** is **23.8\u202f%** ([microtopo]), indicating moderate relief with the basin's maximum elevation being **13.27\u202fm higher** than the address ([microtopo]). The **Height Above Nearest Drainage (HAND) value of 3.81\u202fm** suggests a typical urban\u2011block elevation above drainage, while the **TWI of 14.79** denotes very high saturation potential ([microtopo]).\n\n**Policy",
+      "dropped": []
+    },
+    "mellea": {
+      "rerolls": 0,
+      "n_attempts": 1,
+      "requirements_passed": [
+        "numerics_grounded",
+        "no_placeholder_tokens",
+        "citations_dense",
+        "citations_resolve"
+      ],
+      "requirements_failed": [],
+      "requirements_total": 4,
+      "model": "granite4.1:8b",
+      "loop_budget": 2
+    },
+    "energy": null,
+    "trace": [],
+    "intent": "single_address",
+    "plan": {
+      "intent": "single_address",
+      "targets": [
+        {
+          "type": "address",
+          "text": "80 Pioneer Street, Brooklyn"
+        },
+        {
+          "type": "address",
+          "text": "504 Grand Street, Manhattan"
+        }
+      ],
+      "specialists": [
+        "sandy",
+        "dep_stormwater",
+        "floodnet",
+        "nyc311",
+        "noaa_tides",
+        "nws_alerts",
+        "ttm_forecast",
+        "geocode",
+        "microtopo"
+      ],
+      "rationale": "We need to compare flood exposure for two specific addresses in different boroughs, so we must resolve each address geographically and then query historic Sandy inundation extents, DEP stormwater modeling layers, live sensor data, NYC 311 complaints, tide levels, NWS alerts, and TTM forecast nowcasts."
+    }
+  },
+  "stone_timings": {
+    "Cornerstone": {
+      "n_steps": 5,
+      "n_ok": 5,
+      "n_err": 0,
+      "wall_clock_s": 4.06
+    },
+    "Touchstone": {
+      "n_steps": 4,
+      "n_ok": 4,
+      "n_err": 0,
+      "wall_clock_s": 1.58
+    },
+    "Lodestone": {
+      "n_steps": 5,
+      "n_ok": 4,
+      "n_err": 1,
+      "wall_clock_s": 2.32
+    },
+    "Keystone": {
+      "n_steps": 1,
+      "n_ok": 0,
+      "n_err": 1,
+      "wall_clock_s": 0.0
+    },
+    "Capstone": {
+      "n_steps": 1,
+      "n_ok": 1,
+      "n_err": 0,
+      "wall_clock_s": 0.0
+    }
+  },
+  "error": null,
+  "timed_out": false,
+  "transport_error": null,
+  "framing_score": 2,
+  "framing_rationale": "on-topic exposure language but no question-aware framing",
+  "wall_clock_s": 102.08,
+  "mellea": {
+    "passed": 4,
+    "total": 4,
+    "rerolls": 0,
+    "n_attempts": 1,
+    "requirements_passed": [
+      "numerics_grounded",
+      "no_placeholder_tokens",
+      "citations_dense",
+      "citations_resolve"
+    ],
+    "requirements_failed": []
+  },
+  "citations": [
+    "[floodnet]",
+    "[microtopo]",
+    "[nyc311]",
+    "[sandy]"
+  ],
+  "citation_count": 4
+}

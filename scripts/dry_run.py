@@ -52,7 +52,7 @@ def stream_one(query: str) -> tuple[bool, str]:
                 elif d.get("kind") == "final": final = d
         if not final:
             return False, f"no final event (steps={steps})"
-        dropped = len(((final.get("audit") or {}).get("dropped") or []))
+        dropped = len((final.get("audit") or {}).get("dropped") or [])
         en = final.get("energy") or {}
         return True, (f"steps={steps}, dropped={dropped}, "
                       f"energy={en.get('local_mwh','?')} mWh local")

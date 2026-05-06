@@ -92,6 +92,7 @@ def _ensure_model():
         if _MODEL is not None:
             return _MODEL
         from huggingface_hub import snapshot_download
+
         # Force-import dispatched class names so the transformers lazy
         # registry can resolve `PreTrainedModel` / `TinyTimeMixerForPrediction`
         # under FSM worker threads. Same pattern as ttm_forecast._load_model.

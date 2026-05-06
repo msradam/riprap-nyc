@@ -8,7 +8,20 @@ parallelism for an address is bounded by Granite 4.1 reconcile time
 anyway."""
 from __future__ import annotations
 
+import re
+
 from app.fsm import run as run_linear
+
+_ADDRESS_SHAPE = re.compile(
+    r"^\d+\s+[A-Z][\w\s\.\-']+(St|Street|Ave|Avenue|Rd|Road|Blvd|"
+    r"Boulevard|Pl|Place|Ln|Lane|Dr|Drive|Way|Ct|Court|Pkwy|"
+    r"Parkway|Sq|Square|Ter|Terrace|Hwy|Highway)\.?",
+    re.IGNORECASE,
+)
+
+
+def _looks_like_address(s: str) -> bool:
+    return bool(s and _ADDRESS_SHAPE.search(s))
 
 
 def run(plan, query: str, progress_q=None, strict: bool = False) -> dict:
@@ -23,16 +36,20 @@ def run(plan, query: str, progress_q=None, strict: bool = False) -> dict:
         iter_steps,
         set_mellea_attempt_callback,
         set_planned_specialists,
+        set_planner_intent,
         set_strict_mode,
         set_token_callback,
+        set_user_query,
     )
     planner_addr = next(
         (t["text"] for t in plan.targets if t.get("type") == "address"),
         None,
     )
-    addr = planner_addr if (planner_addr and len(planner_addr) >= len(query) * 0.7) else query
+    addr = planner_addr if _looks_like_address(planner_addr) else query
     set_strict_mode(strict)
     set_planned_specialists(plan.specialists or [])
+    set_user_query(query)
+    set_planner_intent(plan.intent)
     if progress_q is not None:
         def _on_token(delta: str):
             progress_q.put({"kind": "token", "delta": delta})
@@ -57,12 +74,16 @@ def run(plan, query: str, progress_q=None, strict: bool = False) -> dict:
             set_mellea_attempt_callback(None)
             set_strict_mode(False)
             set_planned_specialists(None)
+            set_user_query(None)
+            set_planner_intent(None)
     else:
         try:
             out = run_linear(addr)
         finally:
             set_strict_mode(False)
             set_planned_specialists(None)
+            set_user_query(None)
+            set_planner_intent(None)
     out["intent"] = "single_address"
     out["plan"] = {
         "intent": plan.intent,

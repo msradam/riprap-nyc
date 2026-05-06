@@ -1,0 +1,918 @@
+{
+  "qid": "04",
+  "slug": "underwriter-houston",
+  "query": "442 East Houston Street, Manhattan",
+  "persona": "Insurance underwriter (Houston)",
+  "question_type": "underwriting",
+  "expected_intent": "single_address",
+  "anchor": "verbatim",
+  "started_at": 1778048935.8062239,
+  "ended_at": 1778049026.46811,
+  "plan": {
+    "kind": "plan",
+    "intent": "single_address",
+    "targets": [
+      {
+        "type": "address",
+        "text": "442 East Houston Street, Manhattan"
+      }
+    ],
+    "specialists": [
+      "geocode",
+      "sandy",
+      "dep_stormwater",
+      "floodnet",
+      "nyc311",
+      "noaa_tides",
+      "nws_alerts",
+      "nws_obs",
+      "ttm_forecast",
+      "microtopo",
+      "ida_hwm",
+      "prithvi"
+    ],
+    "rationale": "The query specifies a precise street address, so we need to resolve it geographically and then assess historical Sandy flood risk, current DEP stormwater modeling, live sensor data, tide levels, NWS alerts/observations, nowcast forecasts, terrain metrics, and Hurricane Ida high\u2011water marks for that location."
+  },
+  "intent": "single_address",
+  "paragraph": "**Status.**\nThe address at 442 EAST HOUSTON STREET, Manhattan is **exposed to historical flood events from Hurricane Sandy** and recent localized flooding incidents, as evidenced by its inclusion within the empirical 2012 inundation zone [sandy] and multiple 311 flood-related complaints in the past five years [nyc311].\n\n**Empirical evidence.**\nHurricane Sandy directly flooded this location on October 29\u201130, 2012, confirming it was within the storm's inundation extent [sandy]. Over the last five years, there have been **19 flood-related 311 service requests** within a 200\u202fm radius, with the majority (14) describing clogged catch basins causing flooding [nyc311]. Additionally, three sensors within 600\u202fm of the address recorded labeled flood events in the past three years, totaling five flood occurrences, indicating recurring localized flooding [floodnet].\n\n**Modeled scenarios.**\nThe terrain analysis shows the point elevation at this address is **3.0\u202fm above sea level**, situated on a mid\u2011slope with 48.8\u202f% of surrounding cells within a 200\u202fm radius being lower in elevation, and 52.9\u202f% within a 750\u202fm radius [microtopo]. The Topographic Wetness Index (TWI) is **8.92**, indicating moderate saturation propensity, while the Height Above Nearest Drainage (HAND) is **3.0\u202fm**, reflecting typical urban\u2011block elevation above drainage [microtopo].\n\n**Policy context.**\nThe NOAA tide gauge at The Battery, 3.8\u202fkm from the address, recorded a residual of **0.19\u202fft** relative to astronomical predictions at the time of observation, suggesting minimal wind-driven setup or storm surge components affecting this inland location [noaa_tides]. No specific RAG documents are cited for this address; however",
+  "steps": [
+    {
+      "kind": "step",
+      "step": "geocode",
+      "ok": true,
+      "elapsed_s": 0.13,
+      "result": {
+        "address": "442 EAST HOUSTON STREET, New York, NY, USA",
+        "lat": 40.719896,
+        "lon": -73.977378
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "sandy_inundation",
+      "ok": true,
+      "elapsed_s": 0.08,
+      "result": {
+        "inside": true
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "dep_stormwater",
+      "ok": true,
+      "elapsed_s": 0.45,
+      "result": {
+        "dep_extreme_2080": "outside",
+        "dep_moderate_2050": "outside",
+        "dep_moderate_current": "outside"
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "floodnet",
+      "ok": true,
+      "elapsed_s": 0.2,
+      "result": {
+        "n_sensors": 5,
+        "n_events_3y": 5
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "nyc311",
+      "ok": true,
+      "elapsed_s": 0.36,
+      "result": {
+        "n": 19
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "noaa_tides",
+      "ok": true,
+      "elapsed_s": 0.39,
+      "result": {
+        "station": "8518750",
+        "observed_ft_mllw": 3.28,
+        "residual_ft": -0.32
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "nws_alerts",
+      "ok": true,
+      "elapsed_s": 0.86,
+      "result": {
+        "n_active": 0
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "nws_obs",
+      "ok": true,
+      "elapsed_s": 0.07,
+      "result": {
+        "station": "KNYC",
+        "p1h_mm": null,
+        "p6h_mm": null
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "ttm_forecast",
+      "ok": true,
+      "elapsed_s": 0.29,
+      "result": {
+        "context": 512,
+        "horizon": 96,
+        "forecast_peak_ft": 0.2,
+        "forecast_peak_min_ahead": 6,
+        "interesting": true
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "ttm_311_forecast",
+      "ok": true,
+      "elapsed_s": 0.23,
+      "result": {
+        "history_total": 6,
+        "history_recent_mean": null,
+        "forecast_mean": null,
+        "forecast_peak": null,
+        "accelerating": false
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "floodnet_forecast",
+      "ok": false,
+      "elapsed_s": 0.14,
+      "result": null,
+      "err": "sensor has only 1 historical events (<5); forecast omitted"
+    },
+    {
+      "kind": "step",
+      "step": "ttm_battery_surge",
+      "ok": true,
+      "elapsed_s": 1.47,
+      "result": {
+        "context_h": 1024,
+        "horizon_h": 96,
+        "forecast_peak_m": 0.074,
+        "forecast_peak_hours_ahead": 96,
+        "interesting": false
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "microtopo_lidar",
+      "ok": true,
+      "elapsed_s": 0.01,
+      "result": {
+        "elev_m": 3.0,
+        "pct_200m": 48.8,
+        "relief_m": 6.7
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "ida_hwm_2021",
+      "ok": true,
+      "elapsed_s": 0.0,
+      "result": {
+        "n_within_800m": 0,
+        "max_height_above_gnd_ft": null,
+        "nearest_m": 2013.0
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "mta_entrance_exposure",
+      "ok": false,
+      "elapsed_s": 0.0,
+      "result": null,
+      "err": "no entrances within radius"
+    },
+    {
+      "kind": "step",
+      "step": "prithvi_eo_v2",
+      "ok": true,
+      "elapsed_s": 0.0,
+      "result": {
+        "inside_water_polygon": false,
+        "nearest_distance_m": 9397.7,
+        "n_polygons_within_500m": 0
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "rag_granite_embedding",
+      "ok": true,
+      "elapsed_s": 4.45,
+      "result": {
+        "hits": 1,
+        "top": [
+          [
+            "rag_nycha",
+            0.86
+          ]
+        ]
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "gliner_extract",
+      "ok": true,
+      "elapsed_s": 1.63,
+      "result": {
+        "sources": 1,
+        "totals_by_label": {
+          "nyc_location": 2,
+          "date_range": 1,
+          "agency": 1,
+          "infrastructure_project": 1
+        }
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "mellea_reconcile_address",
+      "ok": true,
+      "elapsed_s": 69.9,
+      "result": {
+        "rerolls": 0,
+        "passed": "4/4",
+        "paragraph_chars": 1707
+      },
+      "err": null
+    }
+  ],
+  "mellea_attempts": [
+    {
+      "kind": "mellea_attempt",
+      "attempt": 0,
+      "passed": [
+        "numerics_grounded",
+        "no_placeholder_tokens",
+        "citations_dense",
+        "citations_resolve"
+      ],
+      "failed": []
+    }
+  ],
+  "final": {
+    "kind": "final",
+    "geocode": {
+      "address": "442 EAST HOUSTON STREET, New York, NY, USA",
+      "borough": "Manhattan",
+      "lat": 40.719896,
+      "lon": -73.977378,
+      "bbl": "1003560100",
+      "bin": "1004349"
+    },
+    "sandy": true,
+    "dep": {
+      "dep_extreme_2080": {
+        "depth_class": 0,
+        "depth_label": "outside",
+        "citation": "NYC DEP Stormwater Flood Map \u2014 DEP Extreme Stormwater (3.66 in/hr, 2080 SLR)"
+      },
+      "dep_moderate_2050": {
+        "depth_class": 0,
+        "depth_label": "outside",
+        "citation": "NYC DEP Stormwater Flood Map \u2014 DEP Moderate Stormwater (2.13 in/hr, 2050 SLR)"
+      },
+      "dep_moderate_current": {
+        "depth_class": 0,
+        "depth_label": "outside",
+        "citation": "NYC DEP Stormwater Flood Map \u2014 DEP Moderate Stormwater (2.13 in/hr, current SLR)"
+      }
+    },
+    "floodnet": {
+      "n_sensors": 5,
+      "sensors": [
+        {
+          "deployment_id": "likely_prompt_gibbon",
+          "name": "M - Mangin St/Stanton St",
+          "street": "Stanton Street, A New Street",
+          "borough": "Manhattan",
+          "status": "good",
+          "deployed_at": "2024-05-10T00:00:00",
+          "lat": 40.71785239613586,
+          "lon": -73.9762469854909
+        },
+        {
+          "deployment_id": "lively_stable_gannet",
+          "name": "M - E 6th St/FDR Dr",
+          "street": "East 6th Street",
+          "borough": "Manhattan",
+          "status": "good",
+          "deployed_at": "2024-05-10T00:00:00",
+          "lat": 40.721652,
+          "lon": -73.975084
+        },
+        {
+          "deployment_id": "hugely_huge_bird",
+          "name": "M - Avenue C/E 5th St",
+          "street": "East 5th Street",
+          "borough": "Manhattan",
+          "status": "good",
+          "deployed_at": "2024-07-24T03:38:00",
+          "lat": 40.72297268734593,
+          "lon": -73.97980046691033
+        },
+        {
+          "deployment_id": "purely_trusty_hare",
+          "name": "M - E Houston St/Baruch Dr",
+          "street": "East Houston Street",
+          "borough": "Manhattan",
+          "status": "good",
+          "deployed_at": "2024-07-24T03:38:00",
+          "lat": 40.719530921295984,
+          "lon": -73.97739832529513
+        },
+        {
+          "deployment_id": "nationally-simple-peacock",
+          "name": "M - Delancey St/FDR Dr",
+          "street": "FDR Drive, FDR Drive West Lane, East River Drive",
+          "borough": "Manhattan",
+          "status": "good",
+          "deployed_at": "2026-02-12T12:31:00",
+          "lat": 40.7146700799633,
+          "lon": -73.97688066140685
+        }
+      ],
+      "n_flood_events_3y": 5,
+      "n_sensors_with_events": 3,
+      "peak_event": {
+        "deployment_id": "nationally-simple-peacock",
+        "start_time": "2026-03-12T11:00:00.039",
+        "end_time": "2026-03-12T11:25:00.585",
+        "max_depth_mm": 17,
+        "label": "flood"
+      },
+      "radius_m": 600
+    },
+    "nyc311": {
+      "n": 19,
+      "radius_m": 200,
+      "years": 5,
+      "by_year": {
+        "2021": 4,
+        "2022": 5,
+        "2023": 4,
+        "2025": 6
+      },
+      "by_descriptor": {
+        "Catch Basin Clogged/Flooding (Use Comments) (SC)": 14,
+        "Sewer Backup (Use Comments) (SA)": 3,
+        "Street Flooding (SJ)": 1,
+        "Flooding on Street": 1
+      },
+      "most_recent": [
+        {
+          "date": "2025-10-31",
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "address": "450 LILLIAN WALD DRIVE"
+        },
+        {
+          "date": "2025-10-31",
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "address": "442 EAST HOUSTON STREET"
+        },
+        {
+          "date": "2025-10-30",
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "address": "525 EAST HOUSTON STREET"
+        },
+        {
+          "date": "2025-10-27",
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "address": "442 EAST HOUSTON STREET"
+        },
+        {
+          "date": "2025-06-20",
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "address": "525 EAST HOUSTON STREET"
+        }
+      ],
+      "points": [
+        {
+          "lat": 40.72015434462738,
+          "lon": -73.97697666279456,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2025-10-31",
+          "address": "450 LILLIAN WALD DRIVE"
+        },
+        {
+          "lat": 40.71959734020397,
+          "lon": -73.97790398594327,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2025-10-31",
+          "address": "442 EAST HOUSTON STREET"
+        },
+        {
+          "lat": 40.71902877110436,
+          "lon": -73.9758911995906,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2025-10-30",
+          "address": "525 EAST HOUSTON STREET"
+        },
+        {
+          "lat": 40.71959734020397,
+          "lon": -73.97790398594327,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2025-10-27",
+          "address": "442 EAST HOUSTON STREET"
+        },
+        {
+          "lat": 40.71902877110436,
+          "lon": -73.9758911995906,
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "date": "2025-06-20",
+          "address": "525 EAST HOUSTON STREET"
+        },
+        {
+          "lat": 40.71902877110436,
+          "lon": -73.9758911995906,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2025-05-23",
+          "address": "525 EAST HOUSTON STREET"
+        },
+        {
+          "lat": 40.71902877110436,
+          "lon": -73.9758911995906,
+          "descriptor": "Street Flooding (SJ)",
+          "date": "2023-09-29",
+          "address": "525 EAST HOUSTON STREET"
+        },
+        {
+          "lat": 40.71902877110436,
+          "lon": -73.9758911995906,
+          "descriptor": "Flooding on Street",
+          "date": "2023-09-29",
+          "address": "525 EAST HOUSTON STREET"
+        },
+        {
+          "lat": 40.71993510515809,
+          "lon": -73.97875164371303,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2023-08-21",
+          "address": null
+        },
+        {
+          "lat": 40.72050594245566,
+          "lon": -73.97836184505007,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2023-04-27",
+          "address": "15 AVENUE D"
+        },
+        {
+          "lat": 40.71959734020397,
+          "lon": -73.97790398594327,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2022-07-02",
+          "address": "442 EAST HOUSTON STREET"
+        },
+        {
+          "lat": 40.71913316846886,
+          "lon": -73.97635652771054,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2022-06-24",
+          "address": null
+        },
+        {
+          "lat": 40.71973189662086,
+          "lon": -73.9782358331601,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2022-05-16",
+          "address": "432 EAST HOUSTON STREET"
+        },
+        {
+          "lat": 40.71959734020397,
+          "lon": -73.97790398594327,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2022-05-02",
+          "address": "442 EAST HOUSTON STREET"
+        },
+        {
+          "lat": 40.72113415153961,
+          "lon": -73.9766191723337,
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "date": "2022-03-24",
+          "address": "105 BARUCH DRIVE"
+        },
+        {
+          "lat": 40.72015465982786,
+          "lon": -73.9786108795485,
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "date": "2021-11-13",
+          "address": "3R D AVENUE"
+        },
+        {
+          "lat": 40.71959734020397,
+          "lon": -73.97790398594327,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2021-09-02",
+          "address": "442 EAST HOUSTON STREET"
+        },
+        {
+          "lat": 40.72078860967276,
+          "lon": -73.97813447592229,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2021-09-02",
+          "address": "24 AVENUE D"
+        },
+        {
+          "lat": 40.71959734020397,
+          "lon": -73.97790398594327,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2021-07-12",
+          "address": "442 EAST HOUSTON STREET"
+        }
+      ]
+    },
+    "microtopo": {
+      "point_elev_m": 3.0,
+      "rel_elev_pct_750m": 52.9,
+      "rel_elev_pct_200m": 48.8,
+      "basin_relief_m": 6.7,
+      "aoi_min_m": 0.0,
+      "aoi_max_m": 9.69,
+      "aoi_radius_m": 750,
+      "resolution_m": 22,
+      "twi": 8.92,
+      "hand_m": 3.0
+    },
+    "ida_hwm": {
+      "n_within_radius": 0,
+      "radius_m": 800,
+      "max_elev_ft": null,
+      "max_height_above_gnd_ft": null,
+      "nearest_dist_m": 2013.0,
+      "nearest_site": "South of Bedford Ave., between north 12th St. and Lorimer Ave., in McCarren Park, Brooklyn",
+      "nearest_elev_ft": 12.0,
+      "sample_sites": [],
+      "points": []
+    },
+    "prithvi_water": {
+      "inside_water_polygon": false,
+      "nearest_distance_m": 9397.7,
+      "n_polygons_within_500m": 0,
+      "scene_id": "pre HLS.S30.T18TWK.2021237T153809.v2.0 | post HLS.S30.T18TWK.2021245T154911.v2.0",
+      "scene_date": "pre 2021-08-25, post 2021-09-02"
+    },
+    "prithvi_live": null,
+    "terramind": null,
+    "terramind_lulc": null,
+    "terramind_buildings": null,
+    "noaa_tides": {
+      "station_id": "8518750",
+      "station_name": "The Battery, NY",
+      "station_lat": 40.7006,
+      "station_lon": -74.0142,
+      "distance_km": 3.8,
+      "observed_ft_mllw": 3.28,
+      "predicted_ft_mllw": 3.6,
+      "residual_ft": -0.32,
+      "obs_time": "2026-05-06 02:24",
+      "error": null
+    },
+    "nws_alerts": {
+      "n_active": 0,
+      "alerts": [],
+      "error": null
+    },
+    "nws_obs": {
+      "station_id": "KNYC",
+      "station_name": "Central Park, NY",
+      "distance_km": 6.7,
+      "obs_time": "2026-05-06T05:51:00+00:00",
+      "temp_c": 18.9,
+      "precip_last_hour_mm": null,
+      "precip_last_3h_mm": null,
+      "precip_last_6h_mm": null,
+      "error": null
+    },
+    "ttm_forecast": {
+      "available": true,
+      "interesting": true,
+      "station_id": "8518750",
+      "station_name": "The Battery, NY",
+      "distance_km": 3.8,
+      "context_length": 512,
+      "horizon_steps": 96,
+      "history_peak_abs_ft": 0.47,
+      "history_recent_ft": 0.19,
+      "forecast_peak_ft": 0.2,
+      "forecast_peak_minutes_ahead": 6,
+      "forecast_peak_time_utc": "2026-05-06T06:35Z",
+      "threshold_ft": 0.3
+    },
+    "ttm_311_forecast": {
+      "available": true,
+      "radius_m": 200,
+      "days_context": 512,
+      "days_horizon": 96,
+      "history_total_complaints": 6,
+      "history_mean_per_day": 0.012,
+      "history_recent_30d_mean": 0.0,
+      "history_weekly_equivalent": 0.08,
+      "forecast_total_next_horizon": 0.4,
+      "forecast_mean_per_day": 0.004,
+      "forecast_weekly_equivalent": 0.03,
+      "forecast_peak_day": 0.04,
+      "forecast_peak_day_offset": 5,
+      "accelerating": false,
+      "context_window_start": "2024-12-11",
+      "context_window_end": "2026-05-06"
+    },
+    "floodnet_forecast": null,
+    "ttm_battery_surge": {
+      "available": true,
+      "interesting": false,
+      "model": "msradam/Granite-TTM-r2-Battery-Surge",
+      "station_id": "8518750",
+      "station_name": "The Battery, NY",
+      "context_hours": 1024,
+      "horizon_hours": 96,
+      "history_recent_m": 0.044,
+      "history_peak_abs_m": 0.398,
+      "forecast_peak_m": 0.074,
+      "forecast_peak_hours_ahead": 96,
+      "forecast_peak_time_utc": "2026-05-10T06:00",
+      "forecast_array_m": [
+        0.0234,
+        0.019,
+        0.024,
+        0.0288,
+        0.0286,
+        0.0264,
+        0.0272,
+        0.0325,
+        0.0386,
+        0.0366,
+        0.0227,
+        0.0107,
+        0.0062,
+        0.0117,
+        0.0266,
+        0.0329,
+        0.0363,
+        0.0384,
+        0.0369,
+        0.0263,
+        0.0228,
+        0.0249,
+        0.0276,
+        0.0294,
+        0.0251,
+        0.0126,
+        0.0097,
+        0.0086,
+        0.0058,
+        0.0025,
+        0.005,
+        0.0111,
+        0.018,
+        0.0162,
+        0.0008,
+        -0.013,
+        -0.0193,
+        -0.015,
+        -0.0016,
+        0.0034,
+        0.007,
+        0.0125,
+        0.0155,
+        0.0078,
+        0.0055,
+        0.0069,
+        0.0073,
+        0.0078,
+        0.0035,
+        -0.0082,
+        -0.0102,
+        -0.0102,
+        -0.0107,
+        -0.0101,
+        -0.002,
+        0.0102,
+        0.021,
+        0.0213,
+        0.0072,
+        -0.0068,
+        -0.0174,
+        -0.0192,
+        -0.0109,
+        -0.0074,
+        -0.0027,
+        0.0051,
+        0.0127,
+        0.0122,
+        0.0169,
+        0.0238,
+        0.0306,
+        0.0352,
+        0.031,
+        0.0169,
+        0.0116,
+        0.0099,
+        0.0105,
+        0.0139,
+        0.0257,
+        0.0419,
+        0.0565,
+        0.0592,
+        0.0481,
+        0.0388,
+        0.0335,
+        0.0324,
+        0.0356,
+        0.0313,
+        0.0295,
+        0.0328,
+        0.0374,
+        0.0385,
+        0.0478,
+        0.058,
+        0.0664,
+        0.0735
+      ],
+      "compute": "local",
+      "elapsed_s": 1.47
+    },
+    "mta_entrances": null,
+    "nycha_developments": null,
+    "doe_schools": null,
+    "doh_hospitals": null,
+    "rag": [
+      {
+        "doc_id": "rag_nycha",
+        "title": "Flood Resilience at NYCHA \u2014 Lessons Learned",
+        "citation": "NYCHA, Flood Resilience: Lessons Learned",
+        "file": "nycha_lessons.pdf",
+        "page": 3,
+        "text": "Letter from the Vice President for Recovery & Resilience Dear New Yorkers, Hurricane Sandy devasted New York City in October 2012. Despite living in a city with 520 miles of coastline, residents had never grappled with storm surge at this scale. Salt water and debris covered huge swaths of the five boroughs, including many NYCHA campuses. Unlike prior major storms, the impacts didn\u2019t dissipate when the weather improved. Salt water corroded critical infrastructure that was stored below grade. The homes of tens of thousands of public housing residents\u2014most of whom couldn\u2019t evacuate before the storm\u2014were without water, power, heat, hot water, or elevator service for weeks.",
+        "score": 0.8648742437362671
+      }
+    ],
+    "gliner": {
+      "nycha": {
+        "rag_doc_id": "rag_nycha",
+        "title": "Flood Resilience at NYCHA \u2014 Lessons Learned",
+        "paragraph_excerpt": "Letter from the Vice President for Recovery & Resilience Dear New Yorkers, Hurricane Sandy devasted New York City in October 2012. Despite living in a city with 520 miles of coastline, residents had never grappled with storm surge at this s\u2026",
+        "n_entities": 5,
+        "entities": [
+          {
+            "label": "nyc_location",
+            "text": "New York City",
+            "score": 0.917
+          },
+          {
+            "label": "date_range",
+            "text": "October 2012",
+            "score": 0.831
+          },
+          {
+            "label": "nyc_location",
+            "text": "five boroughs",
+            "score": 0.651
+          },
+          {
+            "label": "agency",
+            "text": "NYCHA",
+            "score": 0.575
+          },
+          {
+            "label": "infrastructure_project",
+            "text": "critical infrastructure",
+            "score": 0.821
+          }
+        ]
+      }
+    },
+    "paragraph": "**Status.**\nThe address at 442 EAST HOUSTON STREET, Manhattan is **exposed to historical flood events from Hurricane Sandy** and recent localized flooding incidents, as evidenced by its inclusion within the empirical 2012 inundation zone [sandy] and multiple 311 flood-related complaints in the past five years [nyc311].\n\n**Empirical evidence.**\nHurricane Sandy directly flooded this location on October 29\u201130, 2012, confirming it was within the storm's inundation extent [sandy]. Over the last five years, there have been **19 flood-related 311 service requests** within a 200\u202fm radius, with the majority (14) describing clogged catch basins causing flooding [nyc311]. Additionally, three sensors within 600\u202fm of the address recorded labeled flood events in the past three years, totaling five flood occurrences, indicating recurring localized flooding [floodnet].\n\n**Modeled scenarios.**\nThe terrain analysis shows the point elevation at this address is **3.0\u202fm above sea level**, situated on a mid\u2011slope with 48.8\u202f% of surrounding cells within a 200\u202fm radius being lower in elevation, and 52.9\u202f% within a 750\u202fm radius [microtopo]. The Topographic Wetness Index (TWI) is **8.92**, indicating moderate saturation propensity, while the Height Above Nearest Drainage (HAND) is **3.0\u202fm**, reflecting typical urban\u2011block elevation above drainage [microtopo].\n\n**Policy context.**\nThe NOAA tide gauge at The Battery, 3.8\u202fkm from the address, recorded a residual of **0.19\u202fft** relative to astronomical predictions at the time of observation, suggesting minimal wind-driven setup or storm surge components affecting this inland location [noaa_tides]. No specific RAG documents are cited for this address; however",
+    "audit": {
+      "raw": "**Status.**\nThe address at 442 EAST HOUSTON STREET, Manhattan is **exposed to historical flood events from Hurricane Sandy** and recent localized flooding incidents, as evidenced by its inclusion within the empirical 2012 inundation zone [sandy] and multiple 311 flood-related complaints in the past five years [nyc311].\n\n**Empirical evidence.**\nHurricane Sandy directly flooded this location on October 29\u201130, 2012, confirming it was within the storm's inundation extent [sandy]. Over the last five years, there have been **19 flood-related 311 service requests** within a 200\u202fm radius, with the majority (14) describing clogged catch basins causing flooding [nyc311]. Additionally, three sensors within 600\u202fm of the address recorded labeled flood events in the past three years, totaling five flood occurrences, indicating recurring localized flooding [floodnet].\n\n**Modeled scenarios.**\nThe terrain analysis shows the point elevation at this address is **3.0\u202fm above sea level**, situated on a mid\u2011slope with 48.8\u202f% of surrounding cells within a 200\u202fm radius being lower in elevation, and 52.9\u202f% within a 750\u202fm radius [microtopo]. The Topographic Wetness Index (TWI) is **8.92**, indicating moderate saturation propensity, while the Height Above Nearest Drainage (HAND) is **3.0\u202fm**, reflecting typical urban\u2011block elevation above drainage [microtopo].\n\n**Policy context.**\nThe NOAA tide gauge at The Battery, 3.8\u202fkm from the address, recorded a residual of **0.19\u202fft** relative to astronomical predictions at the time of observation, suggesting minimal wind-driven setup or storm surge components affecting this inland location [noaa_tides]. No specific RAG documents are cited for this address; however",
+      "dropped": []
+    },
+    "mellea": {
+      "rerolls": 0,
+      "n_attempts": 1,
+      "requirements_passed": [
+        "numerics_grounded",
+        "no_placeholder_tokens",
+        "citations_dense",
+        "citations_resolve"
+      ],
+      "requirements_failed": [],
+      "requirements_total": 4,
+      "model": "granite4.1:8b",
+      "loop_budget": 2
+    },
+    "energy": null,
+    "trace": [],
+    "intent": "single_address",
+    "plan": {
+      "intent": "single_address",
+      "targets": [
+        {
+          "type": "address",
+          "text": "442 East Houston Street, Manhattan"
+        }
+      ],
+      "specialists": [
+        "geocode",
+        "sandy",
+        "dep_stormwater",
+        "floodnet",
+        "nyc311",
+        "noaa_tides",
+        "nws_alerts",
+        "nws_obs",
+        "ttm_forecast",
+        "microtopo",
+        "ida_hwm",
+        "prithvi"
+      ],
+      "rationale": "The query specifies a precise street address, so we need to resolve it geographically and then assess historical Sandy flood risk, current DEP stormwater modeling, live sensor data, tide levels, NWS alerts/observations, nowcast forecasts, terrain metrics, and Hurricane Ida high\u2011water marks for that location."
+    }
+  },
+  "stone_timings": {
+    "Cornerstone": {
+      "n_steps": 5,
+      "n_ok": 5,
+      "n_err": 0,
+      "wall_clock_s": 4.49
+    },
+    "Touchstone": {
+      "n_steps": 4,
+      "n_ok": 4,
+      "n_err": 0,
+      "wall_clock_s": 1.69
+    },
+    "Lodestone": {
+      "n_steps": 5,
+      "n_ok": 4,
+      "n_err": 1,
+      "wall_clock_s": 2.2
+    },
+    "Keystone": {
+      "n_steps": 1,
+      "n_ok": 0,
+      "n_err": 1,
+      "wall_clock_s": 0.0
+    },
+    "Capstone": {
+      "n_steps": 1,
+      "n_ok": 1,
+      "n_err": 0,
+      "wall_clock_s": 0.0
+    }
+  },
+  "error": null,
+  "timed_out": false,
+  "transport_error": null,
+  "framing_score": 2,
+  "framing_rationale": "on-topic exposure language but no question-aware framing",
+  "wall_clock_s": 90.66,
+  "mellea": {
+    "passed": 4,
+    "total": 4,
+    "rerolls": 0,
+    "n_attempts": 1,
+    "requirements_passed": [
+      "numerics_grounded",
+      "no_placeholder_tokens",
+      "citations_dense",
+      "citations_resolve"
+    ],
+    "requirements_failed": []
+  },
+  "citations": [
+    "[floodnet]",
+    "[microtopo]",
+    "[noaa_tides]",
+    "[nyc311]",
+    "[sandy]"
+  ],
+  "citation_count": 5
+}

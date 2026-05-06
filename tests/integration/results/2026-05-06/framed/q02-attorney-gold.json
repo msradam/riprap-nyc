@@ -1,0 +1,1135 @@
+{
+  "qid": "02",
+  "slug": "attorney-gold",
+  "query": "Does 100 Gold Street, Manhattan need to disclose flood risk under RPL \u00a7462(2)?",
+  "persona": "Real-estate attorney (Gold)",
+  "question_type": "legal_disclosure",
+  "expected_intent": "single_address",
+  "anchor": "verbatim",
+  "started_at": 1778048733.891412,
+  "ended_at": 1778048867.4187992,
+  "plan": {
+    "kind": "plan",
+    "intent": "single_address",
+    "targets": [
+      {
+        "type": "address",
+        "text": "100 Gold Street, Manhattan"
+      }
+    ],
+    "specialists": [
+      "sandy",
+      "dep_stormwater",
+      "floodnet",
+      "nyc311",
+      "ida_hwm",
+      "rag",
+      "geocode",
+      "microtopo"
+    ],
+    "rationale": "The query asks about flood\u2011risk disclosure for a specific Manhattan address, so we need to resolve the location (single_address) and then check historic Sandy inundation, DEP stormwater modeling, live sensor data, NYC 311 complaints, Hurricane Ida high\u2011water marks, and relevant regulatory guidance."
+  },
+  "intent": "single_address",
+  "paragraph": "**Status.**\nDisclosure is warranted because the site experiences moderate flood exposure as indicated by 56.6% of surrounding cells being lower in elevation within a 750\u202fm radius, suggesting susceptibility to surface water accumulation during heavy rainfall events [microtopo].\n\n**Empirical evidence.**\nWithin a 200\u202fm radius, there have been 26 flood-related complaints over the past five years, with the majority (14) related to clogged catch basins causing localized flooding [nyc311]. Additionally, one FloodNet sensor within 600\u202fm recorded a peak depth of 14\u202fmm during a recent flood event on March 12, 2026 [floodnet].\n\n**Modeled scenarios.**\nThe terrain analysis shows that the address sits at a moderate elevation relative to its surroundings, with a Topographic Wetness Index (TWI) value of 9.52, indicating moderate saturation propensity [microtopo]. The Height Above Nearest Drainage (HAND) is 6.42\u202fm, placing it in the moderate range typical for urban blocks [microtopo].\n\n**Policy context.**\nNYCHA's flood resilience efforts include passive barriers and dry flood proofing measures across multiple sites, reflecting a city-wide strategy to mitigate flood impacts on public housing [rag_nycha]. The NYC Comptroller\u2019s report highlights ongoing preparedness assessments and the need for enhanced flash flood readiness in response to recent extreme weather events [rag_comptroller].\n\n```",
+  "steps": [
+    {
+      "kind": "step",
+      "step": "geocode",
+      "ok": true,
+      "elapsed_s": 0.11,
+      "result": {
+        "address": "100 GOLD STREET, New York, NY, USA",
+        "lat": 40.710156,
+        "lon": -74.00324
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "sandy_inundation",
+      "ok": true,
+      "elapsed_s": 0.12,
+      "result": {
+        "inside": false
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "dep_stormwater",
+      "ok": true,
+      "elapsed_s": 0.07,
+      "result": {
+        "dep_extreme_2080": "outside",
+        "dep_moderate_2050": "outside",
+        "dep_moderate_current": "outside"
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "floodnet",
+      "ok": true,
+      "elapsed_s": 0.16,
+      "result": {
+        "n_sensors": 2,
+        "n_events_3y": 1
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "nyc311",
+      "ok": true,
+      "elapsed_s": 0.55,
+      "result": {
+        "n": 26
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "noaa_tides",
+      "ok": true,
+      "elapsed_s": 0.22,
+      "result": {
+        "station": "8518750",
+        "observed_ft_mllw": 3.39,
+        "residual_ft": -0.21
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "nws_alerts",
+      "ok": true,
+      "elapsed_s": 0.91,
+      "result": {
+        "n_active": 0
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "nws_obs",
+      "ok": true,
+      "elapsed_s": 0.06,
+      "result": {
+        "station": "KNYC",
+        "p1h_mm": null,
+        "p6h_mm": null
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "ttm_forecast",
+      "ok": true,
+      "elapsed_s": 0.31,
+      "result": {
+        "context": 512,
+        "horizon": 96,
+        "forecast_peak_ft": 0.19,
+        "forecast_peak_min_ahead": 6,
+        "interesting": true
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "ttm_311_forecast",
+      "ok": true,
+      "elapsed_s": 0.26,
+      "result": {
+        "history_total": 5,
+        "history_recent_mean": null,
+        "forecast_mean": null,
+        "forecast_peak": null,
+        "accelerating": false
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "floodnet_forecast",
+      "ok": false,
+      "elapsed_s": 0.17,
+      "result": null,
+      "err": "sensor has only 1 historical events (<5); forecast omitted"
+    },
+    {
+      "kind": "step",
+      "step": "ttm_battery_surge",
+      "ok": true,
+      "elapsed_s": 1.74,
+      "result": {
+        "context_h": 1024,
+        "horizon_h": 96,
+        "forecast_peak_m": 0.074,
+        "forecast_peak_hours_ahead": 96,
+        "interesting": false
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "microtopo_lidar",
+      "ok": true,
+      "elapsed_s": 0.0,
+      "result": {
+        "elev_m": 5.19,
+        "pct_200m": 38.2,
+        "relief_m": 13.06
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "ida_hwm_2021",
+      "ok": true,
+      "elapsed_s": 0.0,
+      "result": {
+        "n_within_800m": 0,
+        "max_height_above_gnd_ft": null,
+        "nearest_m": 3472.0
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "mta_entrance_exposure",
+      "ok": true,
+      "elapsed_s": 1.36,
+      "result": {
+        "n_entrances": 8,
+        "n_inside_sandy_2012": 0,
+        "n_in_dep_extreme_2080": 0
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "prithvi_eo_v2",
+      "ok": true,
+      "elapsed_s": 0.0,
+      "result": {
+        "inside_water_polygon": false,
+        "nearest_distance_m": 7528.2,
+        "n_polygons_within_500m": 0
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "rag_granite_embedding",
+      "ok": true,
+      "elapsed_s": 6.18,
+      "result": {
+        "hits": 2,
+        "top": [
+          [
+            "rag_nycha",
+            0.82
+          ],
+          [
+            "rag_comptroller",
+            0.81
+          ]
+        ]
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "gliner_extract",
+      "ok": true,
+      "elapsed_s": 0.74,
+      "result": {
+        "sources": 2,
+        "totals_by_label": {
+          "agency": 2,
+          "nyc_location": 6
+        }
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "mellea_reconcile_address",
+      "ok": true,
+      "elapsed_s": 112.0,
+      "result": {
+        "rerolls": 1,
+        "passed": "4/4",
+        "paragraph_chars": 1395
+      },
+      "err": null
+    }
+  ],
+  "mellea_attempts": [
+    {
+      "kind": "mellea_attempt",
+      "attempt": 0,
+      "passed": [
+        "numerics_grounded",
+        "no_placeholder_tokens",
+        "citations_resolve"
+      ],
+      "failed": [
+        "citations_dense"
+      ]
+    },
+    {
+      "kind": "mellea_attempt",
+      "attempt": 1,
+      "passed": [
+        "numerics_grounded",
+        "no_placeholder_tokens",
+        "citations_dense",
+        "citations_resolve"
+      ],
+      "failed": []
+    }
+  ],
+  "final": {
+    "kind": "final",
+    "geocode": {
+      "address": "100 GOLD STREET, New York, NY, USA",
+      "borough": "Manhattan",
+      "lat": 40.710156,
+      "lon": -74.00324,
+      "bbl": "1000940025",
+      "bin": "1001289"
+    },
+    "sandy": false,
+    "dep": {
+      "dep_extreme_2080": {
+        "depth_class": 0,
+        "depth_label": "outside",
+        "citation": "NYC DEP Stormwater Flood Map \u2014 DEP Extreme Stormwater (3.66 in/hr, 2080 SLR)"
+      },
+      "dep_moderate_2050": {
+        "depth_class": 0,
+        "depth_label": "outside",
+        "citation": "NYC DEP Stormwater Flood Map \u2014 DEP Moderate Stormwater (2.13 in/hr, 2050 SLR)"
+      },
+      "dep_moderate_current": {
+        "depth_class": 0,
+        "depth_label": "outside",
+        "citation": "NYC DEP Stormwater Flood Map \u2014 DEP Moderate Stormwater (2.13 in/hr, current SLR)"
+      }
+    },
+    "floodnet": {
+      "n_sensors": 2,
+      "sensors": [
+        {
+          "deployment_id": "merely_fancy_sloth",
+          "name": "M - Peck Slip/Front St",
+          "street": "Peck Slip",
+          "borough": "Manhattan",
+          "status": "non-ota",
+          "deployed_at": "2024-07-24T03:38:00",
+          "lat": 40.70783273509167,
+          "lon": -74.0016968926549
+        },
+        {
+          "deployment_id": "briefly-model-hamster",
+          "name": "M - Catherine Slip/Catherine St",
+          "street": "Catherine Slip",
+          "borough": "Manhattan",
+          "status": "dead",
+          "deployed_at": "2026-02-12T12:08:00",
+          "lat": 40.71051893869114,
+          "lon": -73.99847476253193
+        }
+      ],
+      "n_flood_events_3y": 1,
+      "n_sensors_with_events": 1,
+      "peak_event": {
+        "deployment_id": "merely_fancy_sloth",
+        "start_time": "2026-03-12T11:41:04.061",
+        "end_time": "2026-03-12T11:58:04.103",
+        "max_depth_mm": 14,
+        "label": "flood"
+      },
+      "radius_m": 600
+    },
+    "nyc311": {
+      "n": 26,
+      "radius_m": 200,
+      "years": 5,
+      "by_year": {
+        "2021": 3,
+        "2022": 5,
+        "2023": 10,
+        "2024": 3,
+        "2025": 4,
+        "2026": 1
+      },
+      "by_descriptor": {
+        "Catch Basin Clogged/Flooding (Use Comments) (SC)": 14,
+        "Street Flooding (SJ)": 11,
+        "Sewer Backup (Use Comments) (SA)": 1
+      },
+      "most_recent": [
+        {
+          "date": "2026-01-15",
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "address": "1 PECK SLIP"
+        },
+        {
+          "date": "2025-05-05",
+          "descriptor": "Street Flooding (SJ)",
+          "address": "333 PEARL STREET"
+        },
+        {
+          "date": "2025-05-02",
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "address": "333 PEARL STREET"
+        },
+        {
+          "date": "2025-04-08",
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "address": null
+        },
+        {
+          "date": "2025-02-16",
+          "descriptor": "Street Flooding (SJ)",
+          "address": "333 PEARL STREET"
+        }
+      ],
+      "points": [
+        {
+          "lat": 40.708765862756145,
+          "lon": -74.00240581982342,
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "date": "2026-01-15",
+          "address": "1 PECK SLIP"
+        },
+        {
+          "lat": 40.70925169331099,
+          "lon": -74.0020162864813,
+          "descriptor": "Street Flooding (SJ)",
+          "date": "2025-05-05",
+          "address": "333 PEARL STREET"
+        },
+        {
+          "lat": 40.70925169331099,
+          "lon": -74.0020162864813,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2025-05-02",
+          "address": "333 PEARL STREET"
+        },
+        {
+          "lat": 40.71017669044868,
+          "lon": -74.00113620582324,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2025-04-08",
+          "address": null
+        },
+        {
+          "lat": 40.70925169331099,
+          "lon": -74.0020162864813,
+          "descriptor": "Street Flooding (SJ)",
+          "date": "2025-02-16",
+          "address": "333 PEARL STREET"
+        },
+        {
+          "lat": 40.70925169331099,
+          "lon": -74.0020162864813,
+          "descriptor": "Street Flooding (SJ)",
+          "date": "2024-06-30",
+          "address": "333 PEARL STREET"
+        },
+        {
+          "lat": 40.71017669044868,
+          "lon": -74.00113620582324,
+          "descriptor": "Street Flooding (SJ)",
+          "date": "2024-05-21",
+          "address": null
+        },
+        {
+          "lat": 40.71047848783348,
+          "lon": -74.0055151319697,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2024-01-14",
+          "address": "170 WILLIAM STREET"
+        },
+        {
+          "lat": 40.70952343044316,
+          "lon": -74.00166641887616,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2023-09-28",
+          "address": null
+        },
+        {
+          "lat": 40.70952343044316,
+          "lon": -74.00166641887616,
+          "descriptor": "Street Flooding (SJ)",
+          "date": "2023-09-20",
+          "address": null
+        },
+        {
+          "lat": 40.70952343044316,
+          "lon": -74.00166641887616,
+          "descriptor": "Street Flooding (SJ)",
+          "date": "2023-07-25",
+          "address": null
+        },
+        {
+          "lat": 40.70925169331099,
+          "lon": -74.0020162864813,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2023-07-18",
+          "address": "333 PEARL STREET"
+        },
+        {
+          "lat": 40.70925169331099,
+          "lon": -74.0020162864813,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2023-07-18",
+          "address": "333 PEARL STREET"
+        },
+        {
+          "lat": 40.71016563845293,
+          "lon": -74.00425265537771,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2023-07-16",
+          "address": null
+        },
+        {
+          "lat": 40.70925169331099,
+          "lon": -74.0020162864813,
+          "descriptor": "Street Flooding (SJ)",
+          "date": "2023-07-16",
+          "address": "333 PEARL STREET"
+        },
+        {
+          "lat": 40.70925169331099,
+          "lon": -74.0020162864813,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2023-07-10",
+          "address": "333 PEARL STREET"
+        },
+        {
+          "lat": 40.71035229111428,
+          "lon": -74.00400739046181,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2023-07-05",
+          "address": "100 GOLD STREET"
+        },
+        {
+          "lat": 40.70925169331099,
+          "lon": -74.0020162864813,
+          "descriptor": "Street Flooding (SJ)",
+          "date": "2023-01-19",
+          "address": "333 PEARL STREET"
+        },
+        {
+          "lat": 40.71033856553209,
+          "lon": -74.0040578877959,
+          "descriptor": "Street Flooding (SJ)",
+          "date": "2022-09-22",
+          "address": "101 GOLD STREET"
+        },
+        {
+          "lat": 40.71035229111428,
+          "lon": -74.00400739046181,
+          "descriptor": "Street Flooding (SJ)",
+          "date": "2022-09-19",
+          "address": "100 GOLD STREET"
+        },
+        {
+          "lat": 40.709734773493956,
+          "lon": -74.00190448475391,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2022-04-13",
+          "address": "1 FRANKFORT STREET"
+        },
+        {
+          "lat": 40.71017669044868,
+          "lon": -74.00113620582324,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2022-04-08",
+          "address": null
+        },
+        {
+          "lat": 40.71100830237145,
+          "lon": -74.0036142617108,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2022-03-07",
+          "address": null
+        },
+        {
+          "lat": 40.709100728248444,
+          "lon": -74.00218580830135,
+          "descriptor": "Street Flooding (SJ)",
+          "date": "2021-10-29",
+          "address": "304 PEARL STREET"
+        },
+        {
+          "lat": 40.71157100909558,
+          "lon": -74.00246002724069,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2021-05-11",
+          "address": null
+        },
+        {
+          "lat": 40.71157100909558,
+          "lon": -74.00246002724069,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2021-05-11",
+          "address": null
+        }
+      ]
+    },
+    "microtopo": {
+      "point_elev_m": 5.19,
+      "rel_elev_pct_750m": 56.6,
+      "rel_elev_pct_200m": 38.2,
+      "basin_relief_m": 13.06,
+      "aoi_min_m": -9.89,
+      "aoi_max_m": 18.25,
+      "aoi_radius_m": 750,
+      "resolution_m": 22,
+      "twi": 9.52,
+      "hand_m": 6.42
+    },
+    "ida_hwm": {
+      "n_within_radius": 0,
+      "radius_m": 800,
+      "max_elev_ft": null,
+      "max_height_above_gnd_ft": null,
+      "nearest_dist_m": 3472.0,
+      "nearest_site": "Visitation Pl., between Van Brunt St. and Richards St., Red Hook, Brooklyn",
+      "nearest_elev_ft": 4.2,
+      "sample_sites": [],
+      "points": []
+    },
+    "prithvi_water": {
+      "inside_water_polygon": false,
+      "nearest_distance_m": 7528.2,
+      "n_polygons_within_500m": 0,
+      "scene_id": "pre HLS.S30.T18TWK.2021237T153809.v2.0 | post HLS.S30.T18TWK.2021245T154911.v2.0",
+      "scene_date": "pre 2021-08-25, post 2021-09-02"
+    },
+    "prithvi_live": null,
+    "terramind": null,
+    "terramind_lulc": null,
+    "terramind_buildings": null,
+    "noaa_tides": {
+      "station_id": "8518750",
+      "station_name": "The Battery, NY",
+      "station_lat": 40.7006,
+      "station_lon": -74.0142,
+      "distance_km": 1.4,
+      "observed_ft_mllw": 3.39,
+      "predicted_ft_mllw": 3.6,
+      "residual_ft": -0.21,
+      "obs_time": "2026-05-06 02:18",
+      "error": null
+    },
+    "nws_alerts": {
+      "n_active": 0,
+      "alerts": [],
+      "error": null
+    },
+    "nws_obs": {
+      "station_id": "KNYC",
+      "station_name": "Central Park, NY",
+      "distance_km": 8.2,
+      "obs_time": "2026-05-06T05:51:00+00:00",
+      "temp_c": 18.9,
+      "precip_last_hour_mm": null,
+      "precip_last_3h_mm": null,
+      "precip_last_6h_mm": null,
+      "error": null
+    },
+    "ttm_forecast": {
+      "available": true,
+      "interesting": true,
+      "station_id": "8518750",
+      "station_name": "The Battery, NY",
+      "distance_km": 1.4,
+      "context_length": 512,
+      "horizon_steps": 96,
+      "history_peak_abs_ft": 0.47,
+      "history_recent_ft": 0.19,
+      "forecast_peak_ft": 0.19,
+      "forecast_peak_minutes_ahead": 6,
+      "forecast_peak_time_utc": "2026-05-06T06:31Z",
+      "threshold_ft": 0.3
+    },
+    "ttm_311_forecast": {
+      "available": true,
+      "radius_m": 200,
+      "days_context": 512,
+      "days_horizon": 96,
+      "history_total_complaints": 5,
+      "history_mean_per_day": 0.01,
+      "history_recent_30d_mean": 0.0,
+      "history_weekly_equivalent": 0.07,
+      "forecast_total_next_horizon": 0.3,
+      "forecast_mean_per_day": 0.003,
+      "forecast_weekly_equivalent": 0.02,
+      "forecast_peak_day": 0.02,
+      "forecast_peak_day_offset": 57,
+      "accelerating": false,
+      "context_window_start": "2024-12-11",
+      "context_window_end": "2026-05-06"
+    },
+    "floodnet_forecast": null,
+    "ttm_battery_surge": {
+      "available": true,
+      "interesting": false,
+      "model": "msradam/Granite-TTM-r2-Battery-Surge",
+      "station_id": "8518750",
+      "station_name": "The Battery, NY",
+      "context_hours": 1024,
+      "horizon_hours": 96,
+      "history_recent_m": 0.044,
+      "history_peak_abs_m": 0.398,
+      "forecast_peak_m": 0.074,
+      "forecast_peak_hours_ahead": 96,
+      "forecast_peak_time_utc": "2026-05-10T06:00",
+      "forecast_array_m": [
+        0.0234,
+        0.019,
+        0.024,
+        0.0288,
+        0.0286,
+        0.0264,
+        0.0272,
+        0.0325,
+        0.0386,
+        0.0366,
+        0.0227,
+        0.0107,
+        0.0062,
+        0.0117,
+        0.0266,
+        0.0329,
+        0.0363,
+        0.0384,
+        0.0369,
+        0.0263,
+        0.0228,
+        0.0249,
+        0.0276,
+        0.0294,
+        0.0251,
+        0.0126,
+        0.0097,
+        0.0086,
+        0.0058,
+        0.0025,
+        0.005,
+        0.0111,
+        0.018,
+        0.0162,
+        0.0008,
+        -0.013,
+        -0.0193,
+        -0.015,
+        -0.0016,
+        0.0034,
+        0.007,
+        0.0125,
+        0.0155,
+        0.0078,
+        0.0055,
+        0.0069,
+        0.0073,
+        0.0078,
+        0.0035,
+        -0.0082,
+        -0.0102,
+        -0.0102,
+        -0.0107,
+        -0.0101,
+        -0.002,
+        0.0102,
+        0.021,
+        0.0213,
+        0.0072,
+        -0.0068,
+        -0.0174,
+        -0.0192,
+        -0.0109,
+        -0.0074,
+        -0.0027,
+        0.0051,
+        0.0127,
+        0.0122,
+        0.0169,
+        0.0238,
+        0.0306,
+        0.0352,
+        0.031,
+        0.0169,
+        0.0116,
+        0.0099,
+        0.0105,
+        0.0139,
+        0.0257,
+        0.0419,
+        0.0565,
+        0.0592,
+        0.0481,
+        0.0388,
+        0.0335,
+        0.0324,
+        0.0356,
+        0.0313,
+        0.0295,
+        0.0328,
+        0.0374,
+        0.0385,
+        0.0478,
+        0.058,
+        0.0664,
+        0.0735
+      ],
+      "compute": "local",
+      "elapsed_s": 1.74
+    },
+    "mta_entrances": {
+      "available": true,
+      "n_entrances": 8,
+      "radius_m": 800,
+      "footprint_buffer_m": 8,
+      "n_inside_sandy_2012": 0,
+      "n_in_dep_extreme_2080": 0,
+      "n_ada_accessible": 0,
+      "entrances": [
+        {
+          "station_id": "411",
+          "station_name": "Brooklyn Bridge-City Hall/Chambers St",
+          "daytime_routes": "4 5 6 J Z",
+          "borough": "M",
+          "entrance_type": "Stair",
+          "entrance_lat": 40.7118104,
+          "entrance_lon": -74.005035,
+          "distance_m": 238.2,
+          "ada_accessible": false,
+          "elevation_m": 10.1,
+          "hand_m": 11.33,
+          "inside_sandy_2012": false,
+          "dep_extreme_2080_class": 0,
+          "dep_extreme_2080_label": "outside",
+          "dep_moderate_2050_class": 0,
+          "dep_moderate_2050_label": "outside"
+        },
+        {
+          "station_id": "332",
+          "station_name": "Fulton St",
+          "daytime_routes": "2 3 4 5 A C J Z",
+          "borough": "M",
+          "entrance_type": "Easement - Street",
+          "entrance_lat": 40.7094601,
+          "entrance_lon": -74.0060568,
+          "distance_m": 249.7,
+          "ada_accessible": false,
+          "elevation_m": 8.56,
+          "hand_m": 9.79,
+          "inside_sandy_2012": false,
+          "dep_extreme_2080_class": 0,
+          "dep_extreme_2080_label": "outside",
+          "dep_moderate_2050_class": 0,
+          "dep_moderate_2050_label": "outside"
+        },
+        {
+          "station_id": "411",
+          "station_name": "Brooklyn Bridge-City Hall/Chambers St",
+          "daytime_routes": "4 5 6 J Z",
+          "borough": "M",
+          "entrance_type": "Stair",
+          "entrance_lat": 40.7118958,
+          "entrance_lon": -74.0051917,
+          "distance_m": 253.9,
+          "ada_accessible": false,
+          "elevation_m": 11.66,
+          "hand_m": 12.89,
+          "inside_sandy_2012": false,
+          "dep_extreme_2080_class": 0,
+          "dep_extreme_2080_label": "outside",
+          "dep_moderate_2050_class": 0,
+          "dep_moderate_2050_label": "outside"
+        },
+        {
+          "station_id": "332",
+          "station_name": "Fulton St",
+          "daytime_routes": "2 3 4 5 A C J Z",
+          "borough": "M",
+          "entrance_type": "Easement - Street",
+          "entrance_lat": 40.7096858,
+          "entrance_lon": -74.0062209,
+          "distance_m": 256.6,
+          "ada_accessible": false,
+          "elevation_m": 9.39,
+          "hand_m": 10.62,
+          "inside_sandy_2012": false,
+          "dep_extreme_2080_class": 0,
+          "dep_extreme_2080_label": "outside",
+          "dep_moderate_2050_class": 0,
+          "dep_moderate_2050_label": "outside"
+        },
+        {
+          "station_id": "411",
+          "station_name": "Brooklyn Bridge-City Hall/Chambers St",
+          "daytime_routes": "4 5 6 J Z",
+          "borough": "M",
+          "entrance_type": "Stair",
+          "entrance_lat": 40.7123823,
+          "entrance_lon": -74.0043668,
+          "distance_m": 265.1,
+          "ada_accessible": false,
+          "elevation_m": 12.49,
+          "hand_m": 9.05,
+          "inside_sandy_2012": false,
+          "dep_extreme_2080_class": 0,
+          "dep_extreme_2080_label": "outside",
+          "dep_moderate_2050_class": 0,
+          "dep_moderate_2050_label": "outside"
+        },
+        {
+          "station_id": "332",
+          "station_name": "Fulton St",
+          "daytime_routes": "2 3 4 5 A C J Z",
+          "borough": "M",
+          "entrance_type": "Stair",
+          "entrance_lat": 40.7094436,
+          "entrance_lon": -74.0063618,
+          "distance_m": 274.8,
+          "ada_accessible": false,
+          "elevation_m": 8.78,
+          "hand_m": 10.01,
+          "inside_sandy_2012": false,
+          "dep_extreme_2080_class": 0,
+          "dep_extreme_2080_label": "outside",
+          "dep_moderate_2050_class": 0,
+          "dep_moderate_2050_label": "outside"
+        },
+        {
+          "station_id": "332",
+          "station_name": "Fulton St",
+          "daytime_routes": "2 3 4 5 A C J Z",
+          "borough": "M",
+          "entrance_type": "Easement - Street",
+          "entrance_lat": 40.7095225,
+          "entrance_lon": -74.0065758,
+          "distance_m": 289.9,
+          "ada_accessible": false,
+          "elevation_m": 9.15,
+          "hand_m": 10.38,
+          "inside_sandy_2012": false,
+          "dep_extreme_2080_class": 0,
+          "dep_extreme_2080_label": "outside",
+          "dep_moderate_2050_class": 0,
+          "dep_moderate_2050_label": "outside"
+        },
+        {
+          "station_id": "332",
+          "station_name": "Fulton St",
+          "daytime_routes": "2 3 4 5 A C J Z",
+          "borough": "M",
+          "entrance_type": "Easement - Street",
+          "entrance_lat": 40.7095561,
+          "entrance_lon": -74.0065915,
+          "distance_m": 290.3,
+          "ada_accessible": false,
+          "elevation_m": 9.15,
+          "hand_m": 10.38,
+          "inside_sandy_2012": false,
+          "dep_extreme_2080_class": 0,
+          "dep_extreme_2080_label": "outside",
+          "dep_moderate_2050_class": 0,
+          "dep_moderate_2050_label": "outside"
+        }
+      ],
+      "citation": "MTA Open Data subway entrances + NYC OEM Sandy 2012 Inundation Zone (5xsi-dfpx) + NYC DEP Stormwater Flood Maps + USGS 3DEP DEM"
+    },
+    "nycha_developments": null,
+    "doe_schools": null,
+    "doh_hospitals": null,
+    "rag": [
+      {
+        "doc_id": "rag_nycha",
+        "title": "Flood Resilience at NYCHA \u2014 Lessons Learned",
+        "citation": "NYCHA, Flood Resilience: Lessons Learned",
+        "file": "nycha_lessons.pdf",
+        "page": 74,
+        "text": "Flood Resilience at NYCHA: Memorializing Lessons Learned Through the Hurricane Sandy Disaster Recovery Program 74 Appendix Recovery and Resilience Scope Overview ASTORIA BARUCH BEACH 41ST STREET CAMPOS PLAZA II CAREY GARDENS CARLTON MANOR CONEY ISLAND (SITE 8) CONEY ISLAND HOUSES CONEY ISLAND IB CONEY ISLAND 4&5 EAST RIVER GOWANUS GRAVESEND HABER HAMMEL ISAACS LA GUARDIA LAVANBURG HOMES LINCOLN HOUSES LOWER EAST SIDE REHAB 5 METRO NORTH NEW LANE OCEAN BAY APARTMENTS (BAYSIDE) OCEAN BAY APARTMENTS (OCEANSIDE) O'DWYER RANGEL REDFERN RED HOOK EAST RED HOOK WEST RIIS RIIS II SMITH SURFSIDE TWO BRIDGES WALD Total SiTE IMPROVEMENT Electrical Feeders Replacement \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf Only Slope Stabilization Scope \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 35 Upgraded Site Lighting \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 30 Upgraded Playground Areas \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 25 Green Infrastructure Implementation \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 9 FACILITIES Roof Replacement \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 28 Fa\u00e7ade Repair \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 11 Lobby Upgrade \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 15 Community Center Upgrade \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 7 Community Center Addition \u25cf \u25cf 2 Child Care Center Upgrade/Addition \u25cf \u25cf \u25cf 3 Boiler Room Addition \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 18 MEP Building Annexes \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 23 FLOOD PROOFING Development Flood Wall \u25cf \u25cf 2 Wet flood proofing \u25cf \u25cf \u25cf \u25cf \u25cf 5 Dry flood proofing \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 32 Passive barriers \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 11 Manually deployed barriers \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 22 ELECTRICAL SYSTEMS Upgraded Switchgears \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 34 Relocating all Panels above Project Flood Elevation \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 27 Centralized Back-up Power \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 15 Localized Back-up Power \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 21 HEAT AND HOT WATER SYSTEMS Boiler Replacement \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 20 Upgraded heat/hot water system \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 31 Steam & Condensate Piping Replacement \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 12 Dry flood proofed H/HW system \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 21 Elevated H/HW system \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 16 Flood Resilience at NYCHA: Memorializing Lessons Learned Through the Hurricane Sandy Disaster Recovery Program 74 = Partial use",
+        "score": 0.8151097297668457
+      },
+      {
+        "doc_id": "rag_comptroller",
+        "title": "NYC Comptroller \u2014 Is NYC Ready for Rain? (2024)",
+        "citation": "NYC Comptroller, \"Is New York City Ready for Rain?\" (2024)",
+        "file": "comptroller_rain_2024.pdf",
+        "page": 40,
+        "text": "40 Is New York City Ready for Rain? An Investigation into the City\u2019s Flash Flood Preparedness 41 Interview with NYC Department of Environmental Protection. (February 8, 2024). 42 ibid 43 ibid 44 Commissioner Rohit Aggarwala. (December 22, 2023). Response to Comptroller\u2019s Request for Information on 9/29 Flash Flood Event, Exhibit B Attachment 9A FloodNet Sensor Locations. 45 FloodNet NYC. (2023). Data from Tropical Storm Ophelia. Response to Comptroller\u2019s Request for Information on 9/29 Flash Flood Event, Attachment B Exhibit 1A. 46 City of New York. (March 8, 2024).",
+        "score": 0.8108027577400208
+      }
+    ],
+    "gliner": {
+      "nycha": {
+        "rag_doc_id": "rag_nycha",
+        "title": "Flood Resilience at NYCHA \u2014 Lessons Learned",
+        "paragraph_excerpt": "Flood Resilience at NYCHA: Memorializing Lessons Learned Through the Hurricane Sandy Disaster Recovery Program 74 Appendix Recovery and Resilience Scope Overview ASTORIA BARUCH BEACH 41ST STREET CAMPOS PLAZA II CAREY GARDENS CARLTON MANOR C\u2026",
+        "n_entities": 6,
+        "entities": [
+          {
+            "label": "agency",
+            "text": "NYCHA",
+            "score": 0.918
+          },
+          {
+            "label": "nyc_location",
+            "text": "CAMPOS PLAZA II",
+            "score": 0.457
+          },
+          {
+            "label": "nyc_location",
+            "text": "CONEY ISLAND",
+            "score": 0.702
+          },
+          {
+            "label": "nyc_location",
+            "text": "EAST RIVER",
+            "score": 0.503
+          },
+          {
+            "label": "nyc_location",
+            "text": "OCEANSIDE",
+            "score": 0.476
+          },
+          {
+            "label": "nyc_location",
+            "text": "RED HOOK EAST",
+            "score": 0.477
+          }
+        ]
+      },
+      "comptroller": {
+        "rag_doc_id": "rag_comptroller",
+        "title": "NYC Comptroller \u2014 Is NYC Ready for Rain? (2024)",
+        "paragraph_excerpt": "40 Is New York City Ready for Rain? An Investigation into the City\u2019s Flash Flood Preparedness 41 Interview with NYC Department of Environmental Protection. (February 8, 2024). 42 ibid 43 ibid 44 Commissioner Rohit Aggarwala. (December 22, 2\u2026",
+        "n_entities": 2,
+        "entities": [
+          {
+            "label": "nyc_location",
+            "text": "New York City",
+            "score": 0.546
+          },
+          {
+            "label": "agency",
+            "text": "NYC Department of Environmental Protection",
+            "score": 0.832
+          }
+        ]
+      }
+    },
+    "paragraph": "**Status.**\nDisclosure is warranted because the site experiences moderate flood exposure as indicated by 56.6% of surrounding cells being lower in elevation within a 750\u202fm radius, suggesting susceptibility to surface water accumulation during heavy rainfall events [microtopo].\n\n**Empirical evidence.**\nWithin a 200\u202fm radius, there have been 26 flood-related complaints over the past five years, with the majority (14) related to clogged catch basins causing localized flooding [nyc311]. Additionally, one FloodNet sensor within 600\u202fm recorded a peak depth of 14\u202fmm during a recent flood event on March 12, 2026 [floodnet].\n\n**Modeled scenarios.**\nThe terrain analysis shows that the address sits at a moderate elevation relative to its surroundings, with a Topographic Wetness Index (TWI) value of 9.52, indicating moderate saturation propensity [microtopo]. The Height Above Nearest Drainage (HAND) is 6.42\u202fm, placing it in the moderate range typical for urban blocks [microtopo].\n\n**Policy context.**\nNYCHA's flood resilience efforts include passive barriers and dry flood proofing measures across multiple sites, reflecting a city-wide strategy to mitigate flood impacts on public housing [rag_nycha]. The NYC Comptroller\u2019s report highlights ongoing preparedness assessments and the need for enhanced flash flood readiness in response to recent extreme weather events [rag_comptroller].\n\n```",
+    "audit": {
+      "raw": "**Status.**\nDisclosure is warranted because the site experiences moderate flood exposure as indicated by 56.6% of surrounding cells being lower in elevation within a 750\u202fm radius, suggesting susceptibility to surface water accumulation during heavy rainfall events [microtopo].\n\n**Empirical evidence.**\nWithin a 200\u202fm radius, there have been 26 flood-related complaints over the past five years, with the majority (14) related to clogged catch basins causing localized flooding [nyc311]. Additionally, one FloodNet sensor within 600\u202fm recorded a peak depth of 14\u202fmm during a recent flood event on March 12, 2026 [floodnet].\n\n**Modeled scenarios.**\nThe terrain analysis shows that the address sits at a moderate elevation relative to its surroundings, with a Topographic Wetness Index (TWI) value of 9.52, indicating moderate saturation propensity [microtopo]. The Height Above Nearest Drainage (HAND) is 6.42\u202fm, placing it in the moderate range typical for urban blocks [microtopo].\n\n**Policy context.**\nNYCHA's flood resilience efforts include passive barriers and dry flood proofing measures across multiple sites, reflecting a city-wide strategy to mitigate flood impacts on public housing [rag_nycha]. The NYC Comptroller\u2019s report highlights ongoing preparedness assessments and the need for enhanced flash flood readiness in response to recent extreme weather events [rag_comptroller].\n\n```",
+      "dropped": []
+    },
+    "mellea": {
+      "rerolls": 1,
+      "n_attempts": 2,
+      "requirements_passed": [
+        "numerics_grounded",
+        "no_placeholder_tokens",
+        "citations_dense",
+        "citations_resolve"
+      ],
+      "requirements_failed": [],
+      "requirements_total": 4,
+      "model": "granite4.1:8b",
+      "loop_budget": 2
+    },
+    "energy": null,
+    "trace": [],
+    "intent": "single_address",
+    "plan": {
+      "intent": "single_address",
+      "targets": [
+        {
+          "type": "address",
+          "text": "100 Gold Street, Manhattan"
+        }
+      ],
+      "specialists": [
+        "sandy",
+        "dep_stormwater",
+        "floodnet",
+        "nyc311",
+        "ida_hwm",
+        "rag",
+        "geocode",
+        "microtopo"
+      ],
+      "rationale": "The query asks about flood\u2011risk disclosure for a specific Manhattan address, so we need to resolve the location (single_address) and then check historic Sandy inundation, DEP stormwater modeling, live sensor data, NYC 311 complaints, Hurricane Ida high\u2011water marks, and relevant regulatory guidance."
+    }
+  },
+  "stone_timings": {
+    "Cornerstone": {
+      "n_steps": 5,
+      "n_ok": 5,
+      "n_err": 0,
+      "wall_clock_s": 5.82
+    },
+    "Touchstone": {
+      "n_steps": 4,
+      "n_ok": 4,
+      "n_err": 0,
+      "wall_clock_s": 1.73
+    },
+    "Lodestone": {
+      "n_steps": 5,
+      "n_ok": 4,
+      "n_err": 1,
+      "wall_clock_s": 2.53
+    },
+    "Keystone": {
+      "n_steps": 1,
+      "n_ok": 1,
+      "n_err": 0,
+      "wall_clock_s": 0.0
+    },
+    "Capstone": {
+      "n_steps": 1,
+      "n_ok": 1,
+      "n_err": 0,
+      "wall_clock_s": 0.0
+    }
+  },
+  "error": null,
+  "timed_out": false,
+  "transport_error": null,
+  "framing_score": 5,
+  "framing_rationale": "verdict marker matched: /\\b(disclosure|disclose) (is )?(required|not required|triggered|warranted)/",
+  "wall_clock_s": 133.53,
+  "mellea": {
+    "passed": 4,
+    "total": 4,
+    "rerolls": 1,
+    "n_attempts": 2,
+    "requirements_passed": [
+      "numerics_grounded",
+      "no_placeholder_tokens",
+      "citations_dense",
+      "citations_resolve"
+    ],
+    "requirements_failed": []
+  },
+  "citations": [
+    "[floodnet]",
+    "[microtopo]",
+    "[nyc311]",
+    "[rag_comptroller]",
+    "[rag_nycha]"
+  ],
+  "citation_count": 5
+}

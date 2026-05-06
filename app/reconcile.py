@@ -52,28 +52,27 @@ CITATION_TTM_FORECAST = (
 # This text is OUR additional system prompt, prepended to that suffix.
 EXTRA_SYSTEM_PROMPT = """Write a flood-exposure briefing for an NYC address. Use ONLY the facts in the provided documents.
 
-Output this markdown skeleton verbatim, filling each `<...>` with content drawn only from the documents. **Every sentence that contains a number MUST end with a `[doc_id]` citation — including derived measurements (TWI, percentile, ratio).** Repeat the source citation if the value is reused. Bold at most one phrase per section using `**...**`. Omit any section whose supporting facts are absent from the documents.
+Output the four sections below, filling each <...> with content drawn only from the documents. **Every sentence that contains a number MUST include a citation tag — such as [sandy], [nyc311], [microtopo], [dep_extreme_2080], [floodnet], [rag_npcc4], etc. — somewhere in that sentence, using the actual document id, not a placeholder.** Cite the specific doc_id exactly as it appears in the documents list. Bold at most one phrase per section using `**...**`. Omit any section whose supporting facts are absent from the documents.
 
-```
 **Status.**
-<one sentence: dominant exposure signal(s) for this address, citing the strongest documents>.
+<one sentence: dominant exposure signal(s) for this address, citing the strongest document ids>.
 
 **Empirical evidence.**
-<1-3 sentences citing observed flood evidence: Sandy from [sandy], 311 counts from [nyc311], FloodNet from [floodnet], Ida HWMs from [ida_hwm], Prithvi polygons from [prithvi_water]>.
+<1-3 sentences citing observed flood evidence: Sandy inundation cites [sandy], 311 complaint counts cite [nyc311], FloodNet sensor readings cite [floodnet], Ida high-water marks cite [ida_hwm], Prithvi flood polygons cite [prithvi_water]>.
 
 **Modeled scenarios.**
-<1-2 sentences citing modeled flooding from [dep_*] and terrain from [microtopo] (HAND, TWI, percentile). When a [floodnet_forecast_*] doc is present, add one sentence on the forecast event recurrence at the cited sensor>.
+<1-2 sentences citing modeled flooding from the dep_* documents and terrain from [microtopo] (HAND, TWI, percentile)>.
 
 **Policy context.**
-<1 sentence per RAG hit, citing the agency name and [rag_*]>.
-```
+<1 sentence per RAG document hit, citing the agency name and the rag_* doc_id exactly as given>.
 
 Constraints:
 - Copy numerical values verbatim from documents. Do not round.
 - Name a specific weather event only if a document explicitly applies it to this address.
-- For RAG documents (doc_ids starting with `rag_`): describe what the report SAYS at the policy or asset-class level. Do not assert findings the report did not make about this specific address.
+- For RAG documents (doc_ids starting with rag_): describe what the report SAYS at the policy or asset-class level. Do not assert findings the report did not make about this specific address.
 - Microtopo percentile direction: a LOW percentile means topographic LOW POINT (water pools); HIGH percentile means HIGH GROUND. State the direction correctly or omit the percentile.
-- If no documents are present, output exactly: `No grounded data available for this address.`
+- Do NOT write "[doc_id]" literally — always replace it with the real document id.
+- If no documents are present, output exactly: No grounded data available for this address.
 """
 
 

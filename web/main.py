@@ -144,6 +144,19 @@ def _warm_caches():
     for scen in ["dep_extreme_2080", "dep_moderate_2050", "dep_moderate_current"]:
         dep_stormwater.load(scen)
     print("[startup] flood layers ready", flush=True)
+    if os.environ.get("RIPRAP_NYCHA_REGISTERS", "0").lower() in ("1", "true", "yes"):
+        print("[startup] pre-warming NYCHA registers (may take 60–120 s)...", flush=True)
+        try:
+            from app.registers import nycha as _r_nycha
+            from app.registers import doe_schools as _r_schools
+            from app.registers import doh_hospitals as _r_hospitals
+            _r_nycha._load_nycha()
+            _r_nycha._load_sandy_2263()
+            _r_schools._load_schools()
+            _r_hospitals._load_hospitals()
+            print("[startup] NYCHA registers ready", flush=True)
+        except Exception as _e:
+            print(f"[startup] NYCHA register warm failed (non-fatal): {_e}", flush=True)
     print("[startup] warming RAG (Granite Embedding 278M + 5 PDFs)...", flush=True)
     # RAG warm loads sentence-transformers, which on some HF Space rebuilds
     # has hit transformers-lazy-import edge cases (CodeCarbonCallback). The
@@ -218,12 +231,14 @@ def _warm_caches():
         import sklearn  # noqa: F401  prime sklearn first
         import terratorch  # noqa: F401
         import tsfm_public  # noqa: F401
+
         # Transformers does lazy-loading via __getattr__; touching
         # PreTrainedModel forces the lazy-init to complete on the main
         # thread. Otherwise FSM worker threads race the lazy loader and
         # surface ModuleNotFoundError("Could not import module
         # 'PreTrainedModel'") under load.
         from transformers import PreTrainedModel  # noqa: F401
+
         # tsfm_public's TinyTimeMixerForPrediction import path triggers
         # the granite-tsfm side of the lazy chain — pre-warm here too.
         from tsfm_public import TinyTimeMixerForPrediction  # noqa: F401
@@ -500,6 +515,14 @@ def api_agent(q: str):
     from app.intents import single_address as i_addr
     from app.planner import plan as run_planner
     p = run_planner(q)
+    if p.intent == "not_implemented":
+        return JSONResponse({
+            "paragraph": p.rationale,
+            "mellea": {"rerolls": 0, "n_attempts": 0,
+                       "requirements_passed": [], "requirements_failed": [],
+                       "requirements_total": 0},
+            "status": "not_implemented",
+        })
     if p.intent == "development_check":
         out = i_dev.run(p, q, strict=True)
     elif p.intent == "neighborhood":
@@ -536,7 +559,16 @@ async def api_agent_stream(q: str):
                        "targets": p.targets,
                        "specialists": p.specialists,
                        "rationale": p.rationale})
-            if p.intent == "development_check":
+            if p.intent == "not_implemented":
+                final = {
+                    "paragraph": p.rationale,
+                    "mellea": {"rerolls": 0, "n_attempts": 0,
+                               "requirements_passed": [],
+                               "requirements_failed": [],
+                               "requirements_total": 0},
+                    "status": "not_implemented",
+                }
+            elif p.intent == "development_check":
                 final = i_dev.run(p, q, progress_q=out_q, strict=True)
             elif p.intent == "neighborhood":
                 final = i_nbhd.run(p, q, progress_q=out_q, strict=True)

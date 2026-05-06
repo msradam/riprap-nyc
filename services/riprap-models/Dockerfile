@@ -16,7 +16,12 @@
 # Build:    docker build -t riprap-models:latest -f Dockerfile ../..
 # Layout:   the build context is the project root so the COPY lines
 #           below can reach `services/riprap-models/`.
-FROM rocm/pytorch:rocm7.2.3_ubuntu24.04_py3.12_pytorch_release_2.9.1
+# Use the vLLM ROCm image as base — it ships torch 2.9.1+git8907517
+# (the actual AMD bespoke build) and is already cached on DigitalOcean
+# AMD GPU droplets, so no download is needed during bring-up.
+# The public rocm/pytorch release image is a fallback if this image is
+# not available; see the comment block above for background.
+FROM vllm/vllm-openai-rocm:v0.17.1
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
@@ -47,7 +52,12 @@ WORKDIR /workspace/riprap-models
 # kornia / albumentations chain, granite-tsfm's tsfm_public, etc.).
 COPY services/riprap-models/requirements-full.txt /tmp/req-full.txt
 RUN pip install --upgrade pip && \
-    pip install -r /tmp/req-full.txt
+    # Freeze the ROCm torch/torchvision/torchaudio at whatever version
+    # the vLLM base image ships, so transitive deps (peft, torchgeo, etc.)
+    # don't pull a CUDA build from PyPI and replace the ROCm one.
+    pip freeze | grep -E "^(torch|torchvision|torchaudio)==" > /tmp/torch-lock.txt && \
+    cat /tmp/torch-lock.txt && \
+    pip install -r /tmp/req-full.txt --constraint /tmp/torch-lock.txt
 
 # Service code itself. Cheap to invalidate; lands last.
 COPY services/riprap-models/main.py /workspace/riprap-models/main.py
