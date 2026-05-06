@@ -55,7 +55,7 @@ Constraints:
 """
 
 
-def run(plan, query: str, progress_q=None) -> dict[str, Any]:
+def run(plan, query: str, progress_q=None) -> dict[str, Any]:  # TODO(cleanup): cc-grade-E (32)
     t0 = time.time()
     trace: list[dict] = []
 

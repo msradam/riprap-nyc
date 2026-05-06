@@ -12,7 +12,6 @@ contends with the batch for Ollama).
 from __future__ import annotations
 
 import json
-import re
 import sys
 import time
 import warnings
@@ -90,7 +89,7 @@ def find_event_leaks(paragraph: str, doc_corpus: str) -> list[str]:
     return leaks
 
 
-def main() -> int:
+def main() -> int:  # TODO(cleanup): cc-grade-D (24)
     if OUT.exists():
         OUT.unlink()
     print(f"running audit on {len(ADDRESSES)} addresses; logging to {OUT}",

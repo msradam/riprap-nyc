@@ -81,10 +81,10 @@ def main() -> int:
     framed_total = sum(f.get("framing_score", 0) for f in framed.values())
     base_n = len(baseline)
     framed_n = len(framed)
-    rows.append(f"## Aggregate")
+    rows.append("## Aggregate")
     rows.append("")
-    rows.append(f"| Metric | Baseline | Framed | Δ |")
-    rows.append(f"|--------|---------:|-------:|---:|")
+    rows.append("| Metric | Baseline | Framed | Δ |")
+    rows.append("|--------|---------:|-------:|---:|")
     if base_n:
         rows.append(f"| n queries | {base_n} | {framed_n} | — |")
         rows.append(f"| sum framing | {base_total} | {framed_total} | "

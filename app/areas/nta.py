@@ -162,7 +162,7 @@ def polygon_for(code: str) -> Polygon | None:
     return hit["geometry"] if hit else None
 
 
-def resolve_from_text(text: str) -> list[dict[str, Any]]:
+def resolve_from_text(text: str) -> list[dict[str, Any]]:  # TODO(cleanup): cc-grade-D (25)
     """Scan free-text (e.g. a full natural-language query) for any known NTA
     name, alias, or borough. Returns the first match. This is the fallback
     when the planner failed to extract a clean target.

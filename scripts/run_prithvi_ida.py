@@ -130,7 +130,6 @@ def main() -> int:
 
     # ---- diff: NEW water in post that wasn't in pre = Ida-attributable ----
     import geopandas as gpd
-    import numpy as np
     import rasterio
     from rasterio.features import shapes
     from shapely.geometry import mapping, shape
