@@ -158,9 +158,26 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
       <span style="font-family: var(--font-mono); font-size: 9px; color: var(--ink-3);">live</span>
     </div>
     <div style="font-size: 13px; font-weight: 600; color: var(--ink); line-height: 1.2; margin-bottom: 4px;">Flood complaints · 200 m buffer</div>
-    <div style="margin: 6px 0;">
-      <div style="font-family: var(--font-mono); font-size: 30px; font-weight: 700; color: #0E7490; line-height: 1;">19</div>
-      <div style="font-family: var(--font-mono); font-size: 10px; color: var(--ink-3); margin-top: 3px;">service requests &middot; 5-yr lookback</div>
+    <div style="margin: 4px 0;">
+      <svg viewBox="0 0 220 60" style="width:100%; display:block;">
+        <rect x="8" y="52" width="212" height="1" fill="#CBD5E1"/>
+        <rect x="12" y="35" width="28" height="17" fill="#0E7490" rx="1"/>
+        <rect x="54" y="18" width="28" height="34" fill="#0E7490" rx="1"/>
+        <rect x="96" y="10" width="28" height="42" fill="#0E7490" rx="1"/>
+        <rect x="138" y="10" width="28" height="42" fill="#0E7490" rx="1"/>
+        <rect x="180" y="27" width="28" height="25" fill="#0E7490" rx="1"/>
+        <text x="26" y="32" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="8" fill="#0E7490">2</text>
+        <text x="68" y="15" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="8" fill="#0E7490">4</text>
+        <text x="110" y="7" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="8" fill="#0E7490">5</text>
+        <text x="152" y="7" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="8" fill="#0E7490">5</text>
+        <text x="194" y="24" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="8" fill="#0E7490">3</text>
+        <text x="26" y="59" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="7" fill="#94A3B8">'19</text>
+        <text x="68" y="59" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="7" fill="#94A3B8">'20</text>
+        <text x="110" y="59" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="7" fill="#94A3B8">'21</text>
+        <text x="152" y="59" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="7" fill="#94A3B8">'22</text>
+        <text x="194" y="59" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="7" fill="#94A3B8">'23</text>
+      </svg>
+      <div style="font-family: var(--font-mono); font-size: 10px; color: var(--ink-3);">19 requests &middot; 5-yr lookback</div>
     </div>
     <div style="margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--rule-soft); font-family: var(--font-mono); font-size: 10px; color: #0E7490; font-weight: 600;">[nyc311]</div>
   </div>
@@ -171,9 +188,20 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
       <span style="font-family: var(--font-mono); font-size: 9px; color: var(--ink-3);">live</span>
     </div>
     <div style="font-size: 13px; font-weight: 600; color: var(--ink); line-height: 1.2; margin-bottom: 4px;">Surge residual nowcast</div>
-    <div style="margin: 6px 0;">
-      <div style="font-family: var(--font-mono); font-size: 30px; font-weight: 700; color: #92400E; line-height: 1;">0.22 <span style="font-size: 16px;">ft</span></div>
-      <div style="font-family: var(--font-mono); font-size: 10px; color: var(--ink-3); margin-top: 3px;">peak surge residual &middot; 9.6 h horizon</div>
+    <div style="margin: 4px 0;">
+      <svg viewBox="0 0 220 60" style="width:100%; display:block;">
+        <path d="M10,40 35,30 60,19 85,16 110,21 135,27 160,34 185,40 210,45 L210,52 L10,52 Z" fill="#92400E" opacity="0.12"/>
+        <rect x="8" y="52" width="212" height="1" fill="#CBD5E1"/>
+        <line x1="60" y1="19" x2="60" y2="52" stroke="#92400E" stroke-width="1" stroke-dasharray="3,2" opacity="0.6"/>
+        <polyline points="10,40 35,30 60,19 85,16 110,21 135,27 160,34 185,40 210,45" fill="none" stroke="#92400E" stroke-width="2" stroke-linejoin="round"/>
+        <circle cx="60" cy="19" r="3" fill="#92400E"/>
+        <text x="65" y="17" font-family="IBM Plex Mono,monospace" font-size="8" fill="#92400E" font-weight="700">0.22 ft</text>
+        <text x="10" y="59" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="7" fill="#94A3B8">0h</text>
+        <text x="60" y="59" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="7" fill="#92400E">NOW</text>
+        <text x="110" y="59" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="7" fill="#94A3B8">4.8h</text>
+        <text x="210" y="59" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="7" fill="#94A3B8">9.6h</text>
+      </svg>
+      <div style="font-family: var(--font-mono); font-size: 10px; color: var(--ink-3);">peak surge residual &middot; 9.6 h horizon</div>
     </div>
     <div style="margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--rule-soft); font-family: var(--font-mono); font-size: 10px; color: #92400E; font-weight: 600;">[ttm_surge]</div>
   </div>
