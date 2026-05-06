@@ -207,7 +207,7 @@
             ['==', ['get', 'inside_sandy_2012'], true], '#0B5394',
             '#6B6B6B'
           ],
-          'circle-stroke-color': '#FAFAF7',
+          'circle-stroke-color': '#F4F6F9',
           'circle-stroke-width': 1.25,
           'circle-radius': [
             'match', ['get', 'kind'],
@@ -241,14 +241,14 @@
         const docId = String(p.doc_id ?? '');
         const html = `
           <div style="font-family: 'IBM Plex Sans', system-ui; font-size: 12px;">
-            <div style="font-weight: 600; color: #1A1A1A;">${name}</div>
+            <div style="font-weight: 600; color: #0F172A;">${name}</div>
             <div style="color: #6B6B6B; font-size: 11px; margin-top: 2px;">${kind}</div>
             <div style="margin-top: 6px;">
               <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: ${inside ? '#0B5394' : '#6B6B6B'};">
                 inside_sandy_2012=${inside}
               </span>
             </div>
-            ${docId ? `<div style="margin-top: 4px; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: #B8620A;">[${docId}]</div>` : ''}
+            ${docId ? `<div style="margin-top: 4px; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: #005EA2;">[${docId}]</div>` : ''}
           </div>`;
         // @ts-expect-error: maplibre captured in outer onMount scope
         const popup = new maplibre.Popup({ closeButton: true, offset: 12 });
@@ -256,7 +256,7 @@
         popup.setLngLat(coords).setHTML(html).addTo(map);
       });
 
-      // queried-address pin: warm orange halo + dot, dominant
+      // queried-address pin: federal-blue halo + dot, dominant
       map.addLayer({
         id: 'queried-halo', type: 'circle', source: 'queried-address',
         paint: {
@@ -267,8 +267,8 @@
       map.addLayer({
         id: 'queried-pin', type: 'circle', source: 'queried-address',
         paint: {
-          'circle-color': '#D17C00',
-          'circle-stroke-color': '#FAFAF7',
+          'circle-color': '#005EA2',
+          'circle-stroke-color': '#F4F6F9',
           'circle-stroke-width': 2,
           'circle-radius': 7
         }
@@ -283,8 +283,8 @@
           'text-anchor': 'bottom'
         },
         paint: {
-          'text-color': '#1A1A1A',
-          'text-halo-color': '#FAFAF7',
+          'text-color': '#0F172A',
+          'text-halo-color': '#F4F6F9',
           'text-halo-width': 1.5
         }
       });

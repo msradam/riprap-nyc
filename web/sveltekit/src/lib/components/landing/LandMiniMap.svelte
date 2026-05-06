@@ -146,13 +146,13 @@
         paint: {
           'circle-radius': 9,
           'circle-color': 'transparent',
-          'circle-stroke-color': '#1A1A1A',
+          'circle-stroke-color': '#0F172A',
           'circle-stroke-width': 1.4,
         },
       });
       map.addLayer({
           id: 'addr-dot', type: 'circle', source: 'addr',
-          paint: { 'circle-radius': 3, 'circle-color': '#1A1A1A' },
+          paint: { 'circle-radius': 3, 'circle-color': '#0F172A' },
         });
       });
     })();

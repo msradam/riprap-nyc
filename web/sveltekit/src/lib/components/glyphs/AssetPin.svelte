@@ -17,7 +17,7 @@
     color?: string;
   }
 
-  let { kind, size = 12, color = '#1A1A1A' }: Props = $props();
+  let { kind, size = 12, color = '#0F172A' }: Props = $props();
   let half = $derived(size / 2);
 </script>
 

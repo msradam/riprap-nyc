@@ -101,12 +101,12 @@
     @top-left {
       content: "riprap · " var(--print-address, "flood-exposure briefing");
       font: 9pt "IBM Plex Mono";
-      color: #4A4A4A;
+      color: #334155;
     }
     @top-right {
       content: "Generated " var(--print-date, "today") " · v0.4.2";
       font: 9pt "IBM Plex Mono";
-      color: #4A4A4A;
+      color: #334155;
     }
     @bottom-left {
       content: var(--print-url, "riprap.nyc");

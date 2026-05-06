@@ -1,40 +1,50 @@
 /* @theme riprap
  *
  * Marp theme that mirrors the SvelteKit UI's design tokens 1:1.
- * IBM Plex (Sans / Mono / Serif), paper register, Stone palette,
- * the orange accent block from the wordmark. The same CSS variables
- * defined in web/sveltekit/src/lib/tokens.css live here so a print
- * of a slide and a screenshot of the app feel like one document.
+ * Civic Hydrology palette (v0.4.6, 2026-05-06): USWDS federal blue,
+ * cool slate register, deep navy synthesis. Replaces the warm-paper +
+ * burnt-orange register that read as editorial / Anthropic-adjacent.
+ * IBM Plex Sans drives display + body; serif retained only for the
+ * single hero quote-mark on slide 7. Layouts are box/grid framed —
+ * the deck reads like a dashboard, not an essay.
  */
 
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Serif:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Serif:wght@400;600&display=swap');
 
 :root {
-  /* Tier (epistemic) — verified WCAG AA against paper. */
-  --tier-empirical: #0B5394;
-  --tier-modeled:   #2A6FA8;
-  --tier-proxy:     #6B6B6B;
-  --tier-synthetic: #2A6FA8;
+  /* USWDS-aligned tier palette. */
+  --tier-empirical: #005EA2;
+  --tier-modeled:   #1A4480;
+  --tier-proxy:     #475569;
+  --tier-synthetic: #1A4480;
 
-  /* Stone accents — five muted hint-colors keyed to the FSM stones. */
-  --stone-cornerstone: #7C6F5E;
-  --stone-keystone:    #5E6E7C;
-  --stone-touchstone:  #6B7C66;
-  --stone-lodestone:   #7C6E5E;
-  --stone-capstone:    #5E5E6E;
+  /* Stones (water-themed). */
+  --stone-cornerstone: #475569;  /* slate (hazard ground) */
+  --stone-keystone:    #1A4480;  /* federal navy (assets) */
+  --stone-touchstone:  #0E7490;  /* cyan (live water) */
+  --stone-lodestone:   #92400E;  /* amber (forecast / hazard) */
+  --stone-capstone:    #162E51;  /* deepest navy (synthesis) */
 
-  /* Neutrals — paper register from the SvelteKit UI. */
-  --paper:        #FAFAF7;
-  --paper-deep:   #F2F2EE;
-  --ink:          #1A1A1A;
-  --ink-2:        #4A4A4A;
-  --ink-3:        #6B6B6B;
-  --rule:         #1A1A1A;
-  --rule-soft:    #C9C9C5;
+  /* Cool register. */
+  --paper:        #F4F6F9;
+  --paper-deep:   #E8ECF2;
+  --paper-cool:   #DCE3EC;
+  --ink:          #0F172A;
+  --ink-2:        #334155;
+  --ink-3:        #64748B;
+  --rule:         #0F172A;
+  --rule-soft:    #CBD5E1;
 
-  /* Accent block (the riprap wordmark glyph). */
-  --accent:       #D17C00;
-  --accent-text:  #B8620A;
+  /* Accent — federal blue is the action. Amber + red used only for
+     warning / alert pills. */
+  --accent:       #005EA2;
+  --accent-text:  #005EA2;
+  --accent-warn:  #92400E;
+  --accent-alert: #B91C1C;
+
+  /* Inverted (dark slides). */
+  --paper-dark:   #0F172A;
+  --paper-darker: #0A0F1F;
 
   --font-sans:  "IBM Plex Sans", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   --font-mono:  "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -46,59 +56,53 @@
 section {
   width: 1280px;
   height: 720px;
-  padding: 56px 72px;
+  padding: 48px 64px;
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-sans);
-  font-size: 24px;
+  font-size: 22px;
   line-height: 1.45;
   letter-spacing: 0;
   position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
 }
 
-/* Persistent wordmark on every slide except title — bottom-left, mono. */
+/* Bottom-left wordmark on every slide except lead/cta. */
 section::before {
-  content: "▌ riprap";
+  content: "▌ riprap.nyc";
   position: absolute;
-  left: 72px;
-  bottom: 32px;
+  left: 64px;
+  bottom: 28px;
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: lowercase;
   color: var(--ink);
 }
-section::before {
-  /* the leading block ▌ inherits the accent color via this trick — split
-     into two pseudo elements isn't supported in Marp; instead we rely on
-     the orange ▌ glyph being colored at render via overprint. */
-}
 
-/* Slide number — bottom-right, mono. */
+/* Bottom-right slide counter. */
 section::after {
   content: attr(data-marpit-pagination) " / " attr(data-marpit-pagination-total);
   position: absolute;
-  right: 72px;
-  bottom: 32px;
+  right: 64px;
+  bottom: 28px;
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   color: var(--ink-3);
 }
 
-/* ── Headings ─────────────────────────────────────────────────────────── */
+/* ── Headings — sans-led civic-tech hierarchy ─────────────────────────── */
 
 h1 {
-  font-family: var(--font-serif);
-  font-weight: 600;
-  font-size: 64px;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 56px;
   line-height: 1.05;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
   margin: 0 0 16px;
   color: var(--ink);
 }
@@ -106,26 +110,29 @@ h1 {
 h2 {
   font-family: var(--font-mono);
   font-weight: 500;
-  font-size: 13px;
+  font-size: 12px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--ink-3);
-  margin: 0 0 24px;
+  color: var(--accent-text);
+  margin: 0 0 16px;
+  display: inline-block;
+  padding-bottom: 4px;
+  border-bottom: 2px solid var(--accent);
 }
 
 h3 {
   font-family: var(--font-sans);
   font-weight: 600;
-  font-size: 32px;
-  line-height: 1.2;
-  margin: 0 0 12px;
+  font-size: 24px;
+  line-height: 1.25;
+  margin: 0 0 8px;
   color: var(--ink);
 }
 
 /* ── Body ─────────────────────────────────────────────────────────────── */
 
 p {
-  margin: 0 0 16px;
+  margin: 0 0 14px;
   max-width: 60ch;
 }
 
@@ -136,21 +143,21 @@ strong {
 
 em {
   font-style: normal;
-  border-bottom: 2px solid var(--accent);
-  padding-bottom: 1px;
+  color: var(--accent-text);
+  font-weight: 600;
 }
 
 ul, ol {
-  margin: 0 0 16px;
+  margin: 0 0 14px;
   padding-left: 0;
   list-style: none;
 }
 
 ul li, ol li {
   position: relative;
-  padding-left: 28px;
-  margin: 0 0 14px;
-  font-size: 22px;
+  padding-left: 24px;
+  margin: 0 0 12px;
+  font-size: 20px;
   line-height: 1.4;
   max-width: 60ch;
 }
@@ -160,24 +167,20 @@ ul li::before {
   position: absolute;
   left: 0;
   top: 0.65em;
-  width: 14px;
+  width: 12px;
   height: 2px;
-  background: var(--ink);
+  background: var(--accent);
 }
 
-ol {
-  counter-reset: ol-num;
-}
-ol li {
-  counter-increment: ol-num;
-}
+ol { counter-reset: ol-num; }
+ol li { counter-increment: ol-num; }
 ol li::before {
   content: counter(ol-num, decimal-leading-zero);
   position: absolute;
   left: 0;
   top: 0;
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.04em;
   color: var(--accent-text);
@@ -190,42 +193,40 @@ ol li::before {
 
 code {
   font-family: var(--font-mono);
-  font-size: 0.9em;
+  font-size: 0.92em;
   background: var(--paper-deep);
   padding: 1px 6px;
   border-radius: 2px;
   color: var(--ink);
+  border: 1px solid var(--rule-soft);
 }
 
 pre {
   font-family: var(--font-mono);
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1.5;
   background: var(--paper-deep);
+  border: 1px solid var(--rule-soft);
   border-left: 3px solid var(--accent);
-  padding: 18px 22px;
-  margin: 12px 0;
+  padding: 14px 18px;
+  margin: 8px 0;
   color: var(--ink);
-  border-radius: 2px;
 }
 
-pre code {
-  background: transparent;
-  padding: 0;
-  font-size: inherit;
-}
+pre code { background: transparent; padding: 0; border: 0; }
 
-/* ── Quote / aside / strapline ────────────────────────────────────────── */
+/* ── Quote ────────────────────────────────────────────────────────────── */
 
 blockquote {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: 28px;
-  line-height: 1.35;
+  font-family: var(--font-sans);
+  font-style: normal;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1.3;
   color: var(--ink-2);
-  border-left: 3px solid var(--rule);
-  padding: 4px 0 4px 24px;
-  margin: 24px 0;
+  border-left: 3px solid var(--accent-warn);
+  padding: 4px 0 4px 18px;
+  margin: 16px 0;
   max-width: 56ch;
 }
 
@@ -234,170 +235,121 @@ blockquote {
 hr {
   border: 0;
   border-top: 1px solid var(--rule-soft);
-  margin: 24px 0;
+  margin: 16px 0;
 }
 
-/* ── Table ────────────────────────────────────────────────────────────── */
+/* ── Tables ───────────────────────────────────────────────────────────── */
 
 table {
   border-collapse: collapse;
   font-family: var(--font-sans);
-  font-size: 18px;
-  margin: 12px 0;
+  font-size: 17px;
+  margin: 8px 0;
   width: 100%;
+  border: 1px solid var(--rule-soft);
 }
 th {
   text-align: left;
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-3);
-  padding: 10px 12px;
+  padding: 10px 14px;
+  background: var(--paper-deep);
   border-bottom: 1px solid var(--rule);
 }
 td {
-  padding: 12px;
+  padding: 12px 14px;
   border-bottom: 1px solid var(--rule-soft);
   vertical-align: top;
 }
+tr:last-child td { border-bottom: 0; }
 
-/* ── Title slide variant (lead) ───────────────────────────────────────── */
+/* ── Title slide — bold sans display, dashboard frame ─────────────────── */
 
 section.lead {
   display: flex;
   flex-direction: column;
   justify-content: center;
   background: var(--paper);
-  padding-left: 96px;
+  padding-left: 88px;
+  padding-right: 88px;
 }
+
 section.lead::before {
   content: "▌";
   position: absolute;
-  left: 96px;
-  top: 80px;
+  left: 88px;
+  top: 64px;
   bottom: auto;
   font-family: var(--font-mono);
-  font-size: 64px;
+  font-size: 56px;
   font-weight: 600;
   color: var(--accent);
   line-height: 1;
 }
-section.lead h1 {
-  font-size: 96px;
-  line-height: 0.95;
-  letter-spacing: -0.025em;
-  margin: 0 0 8px;
+
+section.lead .eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+  margin-bottom: 24px;
+  margin-top: 0;
+  padding-top: 80px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
+section.lead .eyebrow::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--rule-soft);
+  max-width: 280px;
+}
+
+section.lead h1 {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 104px;
+  line-height: 0.92;
+  letter-spacing: -0.035em;
+  margin: 0 0 16px;
+}
+
 section.lead h2 {
-  font-family: var(--font-serif);
-  font-style: italic;
+  font-family: var(--font-sans);
   font-weight: 400;
-  font-size: 32px;
-  letter-spacing: 0;
+  font-size: 26px;
+  letter-spacing: -0.005em;
   text-transform: none;
   color: var(--ink-2);
   margin: 0 0 32px;
-  max-width: 28ch;
-}
-section.lead .meta {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-  margin-top: 32px;
-}
-section.lead .meta strong {
-  color: var(--ink);
-  font-weight: 600;
-}
-
-/* ── Closing slide variant ────────────────────────────────────────────── */
-
-section.cta {
-  background: var(--ink);
-  color: var(--paper);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding-left: 96px;
-}
-section.cta::before {
-  content: "▌";
-  color: var(--accent);
-  font-size: 64px;
-  position: absolute;
-  left: 96px;
-  top: 80px;
-  bottom: auto;
-}
-section.cta::after { color: rgba(250, 250, 247, 0.5); }
-section.cta h1 {
-  font-size: 80px;
-  color: var(--paper);
-  margin: 0 0 16px;
-}
-section.cta h2 {
-  color: rgba(250, 250, 247, 0.7);
-}
-section.cta p {
-  font-size: 22px;
-  color: rgba(250, 250, 247, 0.85);
-}
-section.cta a, section.cta code {
-  color: var(--accent);
-  background: transparent;
+  max-width: 30ch;
+  border: 0;
   padding: 0;
+  display: block;
 }
 
-/* ── Two-column variant ───────────────────────────────────────────────── */
-
-section.split {
-  padding-top: 64px;
-}
-section.split .columns {
+section.lead .meta {
+  margin-top: 24px;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 56px;
-  margin-top: 12px;
+  grid-template-columns: auto 1px auto auto;
+  gap: 16px;
+  align-items: center;
+  width: fit-content;
 }
-section.split .columns > div h3 {
-  font-size: 22px;
-  margin-bottom: 8px;
+section.lead .meta-divider {
+  width: 1px;
+  height: 14px;
+  background: var(--rule-soft);
 }
-section.split .columns > div p,
-section.split .columns > div li {
-  font-size: 18px;
-  line-height: 1.45;
-}
-
-/* ── Stone-tinted heading rules (subtle) ──────────────────────────────── */
-
-section[data-stone="cornerstone"] h1 { border-bottom: 4px solid var(--stone-cornerstone); padding-bottom: 8px; display: inline-block; }
-section[data-stone="keystone"]    h1 { border-bottom: 4px solid var(--stone-keystone);    padding-bottom: 8px; display: inline-block; }
-section[data-stone="touchstone"]  h1 { border-bottom: 4px solid var(--stone-touchstone);  padding-bottom: 8px; display: inline-block; }
-section[data-stone="lodestone"]   h1 { border-bottom: 4px solid var(--stone-lodestone);   padding-bottom: 8px; display: inline-block; }
-section[data-stone="capstone"]    h1 { border-bottom: 4px solid var(--stone-capstone);    padding-bottom: 8px; display: inline-block; }
-
-/* ── Big-stat panel ───────────────────────────────────────────────────── */
-
-.stat {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.stat-value {
-  font-family: var(--font-serif);
-  font-weight: 600;
-  font-size: 56px;
-  line-height: 1;
-  color: var(--ink);
-  letter-spacing: -0.02em;
-}
-.stat-label {
+section.lead .meta-label {
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 500;
@@ -405,89 +357,228 @@ section[data-stone="capstone"]    h1 { border-bottom: 4px solid var(--stone-caps
   text-transform: uppercase;
   color: var(--ink-3);
 }
-
-/* ── Stack diagram (slide 4 visual) ───────────────────────────────────── */
-
-.stack {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 8px;
-  margin-top: 8px;
+section.lead .meta-value {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink);
 }
-.stack-row {
-  background: var(--paper-deep);
-  border-left: 3px solid var(--rule);
-  padding: 14px 18px;
-  font-size: 18px;
-  display: grid;
-  grid-template-columns: 180px 1fr;
-  gap: 24px;
-  align-items: baseline;
+
+/* ── CTA / closing slide — dark inverted ─────────────────────────────── */
+
+section.cta {
+  background: var(--paper-dark);
+  color: var(--paper);
+  padding-left: 88px;
+  padding-right: 88px;
+  justify-content: center;
 }
-.stack-row .lbl {
+section.cta::before {
+  content: "▌";
+  color: var(--accent);
+  font-size: 56px;
+  position: absolute;
+  left: 88px;
+  top: 64px;
+  bottom: auto;
+}
+section.cta::after { color: rgba(244, 246, 249, 0.42); }
+section.cta h1 {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 96px;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  color: var(--paper);
+  margin: 80px 0 16px;
+}
+section.cta h2 {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 32px;
+  border: 0;
+  padding: 0;
+  display: block;
+}
+section.cta p {
+  font-size: 20px;
+  color: rgba(244, 246, 249, 0.85);
+  max-width: 70ch;
+}
+section.cta hr { border-top-color: rgba(203, 213, 225, 0.2); margin: 24px 0; }
+section.cta .pill { background: rgba(244, 246, 249, 0.08); color: rgba(244, 246, 249, 0.85); border-color: rgba(203, 213, 225, 0.2); }
+
+/* ── Slide chrome: eyebrow + heading frame ───────────────────────────── */
+
+.eyebrow {
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 500;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--ink-3);
+  color: var(--accent-text);
+  margin: 0 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
-.stack-row .body {
-  font-family: var(--font-sans);
-  color: var(--ink);
-}
-.stack-row.gpu  { border-left-color: var(--accent); }
-.stack-row.gpu .lbl { color: var(--accent-text); }
-.stack-row.app  { border-left-color: var(--tier-empirical); }
-
-/* ── Small caps utility ───────────────────────────────────────────────── */
-
-.smallcaps {
+.eyebrow::before {
+  content: "▌";
+  color: var(--accent);
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* ── Box / card primitives — the dashboard shape ─────────────────────── */
+
+.box {
+  border: 1px solid var(--rule-soft);
+  background: var(--paper);
+  padding: 18px 22px;
+  position: relative;
+}
+.box.tinted {
+  background: var(--paper-deep);
+}
+.box.dark {
+  background: var(--paper-dark);
+  color: var(--paper);
+  border: 0;
+}
+.box.dark .lbl,
+.box.dark .smallcaps {
+  color: rgba(244, 246, 249, 0.6);
+}
+.box.dark .stat-value {
+  color: var(--paper);
+}
+.box.dark .body {
+  color: var(--paper);
+  font-size: 17px;
+  line-height: 1.4;
+}
+.box.dark .body strong {
+  color: var(--paper);
+}
+
+.box-grid {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+.box-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+.box-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.box-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+.box .lbl {
+  font-family: var(--font-mono);
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ink-3);
+  margin-bottom: 6px;
 }
+.box .body {
+  font-size: 18px;
+  line-height: 1.4;
+  color: var(--ink);
+}
+.box .body strong { color: var(--ink); }
 
-/* ── Two-column layout (used on slides 2, 6) ─────────────────────────── */
+/* ── Track-flag stack (slide 4) ──────────────────────────────────────── */
 
-.two-col {
+.track-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 56px;
-  margin-top: 16px;
+  grid-template-columns: 28px 200px 1fr 90px;
+  gap: 16px;
+  align-items: center;
+  padding: 14px 18px;
+  border: 1px solid var(--rule-soft);
+  background: var(--paper);
+  margin-bottom: 8px;
 }
-.two-col > div p,
-.two-col > div li {
-  font-size: 20px;
-  line-height: 1.45;
-  max-width: none;
+.track-row.engaged {
+  background: var(--paper);
+  border-left: 3px solid var(--accent);
 }
-.two-col > div p:last-child,
-.two-col > div li:last-child {
-  margin-bottom: 0;
+.track-row.unengaged {
+  opacity: 0.55;
+  border-left: 3px solid transparent;
+}
+.track-row .check {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 16px;
+  text-align: center;
+  color: var(--accent);
+}
+.track-row.unengaged .check { color: var(--ink-3); }
+.track-row .name {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 17px;
+  color: var(--ink);
+}
+.track-row .detail {
+  font-size: 16px;
+  color: var(--ink-2);
+  line-height: 1.35;
+}
+.track-row .badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  text-align: right;
 }
 
-/* ── Pseudo-codeblock (HTML-rendered, so inline spans keep color) ─────── */
+/* ── Big stat / number card ──────────────────────────────────────────── */
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.stat-value {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 56px;
+  line-height: 1;
+  color: var(--ink);
+  letter-spacing: -0.025em;
+}
+.stat-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-top: 6px;
+}
+
+/* ── Codeblock (HTML-rendered, so inline spans keep color) ───────────── */
 
 .codeblock {
   font-family: var(--font-mono);
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.55;
   background: var(--paper-deep);
+  border: 1px solid var(--rule-soft);
   border-left: 3px solid var(--accent);
-  padding: 18px 22px;
-  margin: 12px 0;
+  padding: 16px 20px;
+  margin: 8px 0;
   color: var(--ink);
-  border-radius: 2px;
-}
-.codeblock p {
-  margin: 0 0 12px;
-}
-.codeblock p:last-child {
-  margin-bottom: 0;
 }
 .codeblock .cite {
   color: var(--accent-text);
@@ -495,21 +586,21 @@ section[data-stone="capstone"]    h1 { border-bottom: 4px solid var(--stone-caps
 }
 .codeblock .label {
   font-weight: 700;
+  color: var(--ink);
 }
 
-/* ── Highlight pill ───────────────────────────────────────────────────── */
+/* ── Pill ─────────────────────────────────────────────────────────────── */
 
 .pill {
   display: inline-block;
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   background: var(--paper-deep);
   border: 1px solid var(--rule-soft);
   padding: 4px 10px;
-  border-radius: 100px;
   color: var(--ink-2);
   margin-right: 6px;
 }
@@ -518,3 +609,43 @@ section[data-stone="capstone"]    h1 { border-bottom: 4px solid var(--stone-caps
   color: var(--paper);
   border-color: var(--accent);
 }
+.pill.warn {
+  background: var(--accent-warn);
+  color: var(--paper);
+  border-color: var(--accent-warn);
+}
+.pill.dim {
+  opacity: 0.55;
+}
+
+/* ── Small caps utility ──────────────────────────────────────────────── */
+
+.smallcaps {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* ── Two-column layout (slides 2, 6) ─────────────────────────────────── */
+
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 36px;
+  margin-top: 8px;
+}
+.two-col > div p,
+.two-col > div li { font-size: 18px; line-height: 1.45; max-width: none; }
+.two-col > div p:last-child,
+.two-col > div li:last-child { margin-bottom: 0; }
+
+/* ── Stone-tinted heading rules ──────────────────────────────────────── */
+
+section[data-stone="cornerstone"] h2 { color: var(--stone-cornerstone); border-bottom-color: var(--stone-cornerstone); }
+section[data-stone="keystone"]    h2 { color: var(--stone-keystone);    border-bottom-color: var(--stone-keystone); }
+section[data-stone="touchstone"]  h2 { color: var(--stone-touchstone);  border-bottom-color: var(--stone-touchstone); }
+section[data-stone="lodestone"]   h2 { color: var(--stone-lodestone);   border-bottom-color: var(--stone-lodestone); }
+section[data-stone="capstone"]    h2 { color: var(--stone-capstone);    border-bottom-color: var(--stone-capstone); }

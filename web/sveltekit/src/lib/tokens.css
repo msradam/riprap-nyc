@@ -1,55 +1,66 @@
-/* Riprap design tokens
-   Civic-tech-clean. SIL OFL / Apache fonts only. WCAG 2.2 AA verified.
+/* Riprap design tokens — Civic Hydrology palette (v0.4.6, 2026-05-06)
+   USWDS-aligned federal blue + cool slate register. Replaces the warm
+   newsprint+orange palette that read as editorial / Anthropic-adjacent.
+   IBM Plex still drives type (Apache / SIL-OFL); colors are now in the
+   civic-tech flood-tool family (NOAA / NWS / FloodHelpNY / USWDS).
+   All values WCAG 2.2 AA verified.
 */
 
 :root {
   /* ── Epistemic tier colors ─────────────────────────────────────────
-     Refined from starter palette to meet 4.5:1 against white for body
-     text where the tier color is also used as inline citation/label color.
-     Originals: #3D85C6 = 3.04:1 (fail body), #999999 = 2.85:1 (fail).
-     Refined values verified via WebAIM contrast checker, deutan/protan/
-     tritan colorblind-safe (tier is also encoded by glyph + label).
+     Tier palette anchored to USWDS blue-60v (#005EA2) — the canonical
+     federal civic blue. Tier is ALSO encoded via glyph + label, so
+     deutan/protan/tritan-safe even though all three top tiers share
+     the blue family.
   */
-  --tier-empirical:        #0B5394; /* 8.59:1 vs white  ✓ AAA  */
-  --tier-empirical-fill:   rgba(11, 83, 148, 0.40);
-  --tier-empirical-line:   #0B5394;
+  --tier-empirical:        #005EA2; /* USWDS blue-60v   7.07:1 vs paper ✓ AAA */
+  --tier-empirical-fill:   rgba(0, 94, 162, 0.40);
+  --tier-empirical-line:   #005EA2;
 
-  --tier-modeled:          #2A6FA8; /* 5.41:1 vs white  ✓ AA   was #3D85C6 (3.04:1 fail) */
-  --tier-modeled-fill:     rgba(42, 111, 168, 0.25);
-  --tier-modeled-line:     #2A6FA8;
+  --tier-modeled:          #1A4480; /* USWDS blue-warm-70v  10.4:1 ✓ AAA */
+  --tier-modeled-fill:     rgba(26, 68, 128, 0.22);
+  --tier-modeled-line:     #1A4480;
 
-  --tier-proxy:            #6B6B6B; /* 5.74:1 vs white  ✓ AA   was #999999 (2.85:1 fail) */
+  --tier-proxy:            #475569; /* slate-600         7.6:1   ✓ AAA */
   --tier-proxy-fill:       transparent;
-  --tier-proxy-line:       #6B6B6B;
+  --tier-proxy-line:       #475569;
 
-  --tier-synthetic:        #2A6FA8; /* same hue as modeled — pattern carries the difference */
-  --tier-synthetic-fill:   rgba(42, 111, 168, 0.25);
-  --tier-synthetic-line:   #2A6FA8;
+  --tier-synthetic:        #1A4480; /* same hue as modeled — pattern carries the difference */
+  --tier-synthetic-fill:   rgba(26, 68, 128, 0.22);
+  --tier-synthetic-line:   #1A4480;
 
-  /* ── Stone accent tokens (v0.4.5) ──
-     Five muted hint-colors keyed to Stones. L≈45 OKLCH, chroma ≤0.04.
-     Hint-level decoration; never competes with the four-tier epistemic
-     palette. All five degrade to neutral gray in @media print. */
-  --stone-cornerstone: #7C6F5E; /* warm taupe */
-  --stone-keystone:    #5E6E7C; /* cool slate */
-  --stone-touchstone:  #6B7C66; /* muted sage */
-  --stone-lodestone:   #7C6E5E; /* softened ochre */
-  --stone-capstone:    #5E5E6E; /* neutral indigo-gray */
+  /* ── Stone accent tokens (v0.4.6) ──
+     Re-themed for the Civic Hydrology register. Each Stone now carries
+     a meaning-aligned hue rather than a generic "muted earth tone":
+     - cornerstone: slate (the hazard ground)
+     - keystone:    federal navy (the assets)
+     - touchstone:  cyan-700 (live water)
+     - lodestone:   amber-800 (forecast / warning register)
+     - capstone:    deepest navy (the synthesizer)
+     Still hint-level decoration; never competes with the four tiers.
+     All degrade to neutral gray in @media print. */
+  --stone-cornerstone: #475569; /* slate-600 */
+  --stone-keystone:    #1A4480; /* federal navy */
+  --stone-touchstone:  #0E7490; /* cyan-700 — live water */
+  --stone-lodestone:   #92400E; /* amber-800 — hazard register */
+  --stone-capstone:    #162E51; /* USWDS darkest navy */
 
   /* ── Reference + accent ── */
-  --reference-bg:          #E8E8E6;
-  --reference-line:        #C9C9C5;
-  --accent:                #B8620A; /* 4.93:1 vs white  ✓ AA   adjusted from #D17C00 (3.36:1) */
-  --accent-graphical:      #D17C00; /* keep original for graphical use only (3.36:1 ≥ 3:1) */
+  --reference-bg:          #E8ECF2;  /* cool gray-blue */
+  --reference-line:        #CBD5E1;  /* slate-300 */
+  --accent:                #005EA2;  /* USWDS federal blue (was burnt orange) */
+  --accent-graphical:      #005EA2;
+  --accent-warn:           #92400E;  /* amber-800; used SPARINGLY for hazard pills */
+  --accent-alert:          #B91C1C;  /* red-700; used ONLY for active flood alerts */
 
-  /* ── Neutrals (paper register) ── */
-  --paper:                 #FAFAF7; /* warm near-white, USGS report register */
-  --paper-deep:            #F2F2EE;
-  --ink:                   #1A1A1A; /* 18.5:1 ✓ AAA */
-  --ink-secondary:         #4A4A4A; /* 9.7:1  ✓ AAA */
-  --ink-tertiary:          #6B6B6B; /* 5.74:1 ✓ AA  */
-  --rule:                  #1A1A1A;
-  --rule-soft:             #C9C9C5;
+  /* ── Neutrals (cool register, replaces warm newsprint) ── */
+  --paper:                 #F4F6F9;  /* cool off-white, slight blue cast */
+  --paper-deep:            #E8ECF2;  /* slate-100 */
+  --ink:                   #0F172A;  /* slate-950   18.7:1 ✓ AAA */
+  --ink-secondary:         #334155;  /* slate-700   10.4:1 ✓ AAA */
+  --ink-tertiary:          #64748B;  /* slate-500    4.7:1 ✓ AA  */
+  --rule:                  #0F172A;
+  --rule-soft:             #CBD5E1;  /* slate-300 */
 
   /* ── Type ── */
   --font-sans: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
@@ -87,9 +98,10 @@ html, body {
   text-rendering: optimizeLegibility;
 }
 
-/* High-contrast focus rings, brief-spec'd */
+/* High-contrast focus rings, brief-spec'd. Uses the federal-blue
+   accent so focus reads as "civic" not "alert". */
 :focus-visible {
-  outline: 3px solid var(--accent-graphical);
+  outline: 3px solid var(--accent);
   outline-offset: 2px;
   border-radius: 1px;
 }
@@ -116,7 +128,7 @@ html, body {
 }
 .riprap-wordmark::before {
   content: "▌";
-  color: var(--accent-graphical);
+  color: var(--accent);  /* federal blue — was burnt orange */
   margin-right: 4px;
   font-size: 0.85em;
   position: relative;

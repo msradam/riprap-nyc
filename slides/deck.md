@@ -10,90 +10,111 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 <!-- _class: lead -->
 <!-- _paginate: false -->
 
+<div class="eyebrow">
+  AMD &times; lablab.ai &nbsp;·&nbsp; Developer Hackathon
+</div>
+
 # Riprap
 
 ## Citation-grounded NYC flood-exposure briefings, on AMD MI300X.
 
 <div class="meta">
-AMD &times; lablab.ai Developer Hackathon &nbsp;·&nbsp; <strong>May 4&ndash;10, 2026</strong>
+  <div>
+    <div class="meta-label">Engine</div>
+    <div class="meta-value">vLLM &middot; Granite 4.1 8B</div>
+  </div>
+  <div class="meta-divider"></div>
+  <div>
+    <div class="meta-label">Hardware</div>
+    <div class="meta-value">AMD MI300X</div>
+  </div>
+  <div>
+    <div class="meta-label">Date</div>
+    <div class="meta-value">May 4&ndash;10 2026</div>
+  </div>
 </div>
 
 ---
 
-## the problem
+<div class="eyebrow">01 &middot; The problem</div>
 
 # Climate risk data is a black box.
 
-<div class="two-col">
-<div>
+<div class="box-grid cols-2">
 
-**First Street.** Score 1–10.
-**ClimateCheck.** Score 1–100.
-**Jupiter.** Enterprise SaaS.
-
-A number. A bar chart. A black box.
-
-</div>
-<div>
-
-> *"Zillow removed flood-risk data from listings in December 2025 after pressure from the real-estate industry."*
-
-— CNN, Dec 2 2025
-
-</div>
+<div class="box">
+  <div class="lbl">The market</div>
+  <div class="body">
+    <strong>First Street.</strong> Score 1&ndash;10.<br>
+    <strong>ClimateCheck.</strong> Score 1&ndash;100.<br>
+    <strong>Jupiter.</strong> Enterprise SaaS.<br>
+    <br>
+    A number. A bar chart. A black box.
+  </div>
 </div>
 
-When a number meets resistance, **the only defense is the audit trail**.
+<div class="box tinted">
+  <div class="lbl">Dec 2&middot;2025 &middot; CNN</div>
+  <div class="body" style="font-size: 19px; line-height: 1.4;">
+    "Zillow removed flood-risk data from listings in December 2025 after pressure from the real-estate industry."
+  </div>
+</div>
+
+</div>
+
+<p style="margin-top: 24px; font-size: 22px;">When a number meets resistance, <strong>the only defense is the audit trail.</strong></p>
 
 ---
 
-## what riprap is
+<div class="eyebrow">02 &middot; What riprap is</div>
 
 # Every number cites its source. Or it doesn't appear.
 
-Type a NYC address &rarr; **17 specialists fan out** &rarr; one paragraph back, with **`[doc_id]` citations** on every numeric claim. If the model can't cite it, it's silent.
+<p style="margin-bottom: 12px;">Type a NYC address &rarr; <strong>17 specialists fan out</strong> &rarr; one paragraph back, with <code>[doc_id]</code> citations on every numeric claim.</p>
 
 <div class="codeblock"><span class="label">Status.</span> 442 East Houston Street, Manhattan, is exposed to flood risk: flooded by Hurricane Sandy in 2012, with recurrent localized flooding evidenced by 19 311 complaints and multiple FloodNet sensor events <span class="cite">[sandy], [nyc311], [floodnet]</span>.
 
 <span class="label">Empirical evidence.</span> Sandy flooded this address Oct 29-30, 2012 <span class="cite">[sandy]</span>. 19 flood-related 311 service requests within 200 m over five years <span class="cite">[nyc311]</span>. Three of five FloodNet sensors within 600 m documented events in the past three years <span class="cite">[floodnet]</span>.</div>
 
-<span class="smallcaps">Mellea rejection sampling &middot; 4 grounding checks &middot; 4/4 pass = ship</span>
+<p style="margin-top: 8px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3);">Mellea rejection sampling &middot; 4 grounding checks &middot; 4/4 pass = ship</p>
 
 ---
 
-## the stack
+<div class="eyebrow">03 &middot; The stack</div>
 
 # Three of four hackathon tracks. One project.
 
-<div class="stack">
-  <div class="stack-row gpu">
-    <div class="lbl">MI300X &middot; vLLM</div>
-    <div class="body"><strong>IBM Granite 4.1 8B</strong> &mdash; planner + reconciler. ROCm 7. AMD-served.</div>
-  </div>
-  <div class="stack-row gpu">
-    <div class="lbl">MI300X &middot; ROCm</div>
-    <div class="body"><strong>Three Apache-2.0 NYC fine-tunes</strong> trained on AMD Developer Cloud:
-      <code>Prithvi-EO-2.0-NYC-Pluvial</code>,
-      <code>TerraMind-NYC-Adapters</code>,
-      <code>Granite-TTM-r2-Battery-Surge</code>.</div>
-  </div>
-  <div class="stack-row gpu">
-    <div class="lbl">MI300X &middot; ROCm</div>
-    <div class="body"><strong>Multimodal specialists.</strong> Sentinel-2 chip &rarr; Prithvi pluvial seg &middot; TerraMind LULC + Buildings adapters &middot; Granite Embedding 278M &middot; GLiNER typed extraction.</div>
-  </div>
-  <div class="stack-row app">
-    <div class="lbl">FastAPI</div>
-    <div class="body"><strong>Burr FSM agent.</strong> 17 specialists fuse FEMA, NYC DEP, NYC 311, FloodNet, NOAA, NWS, USGS HWMs, Sentinel-2. Streamed via SSE.</div>
-  </div>
+<div class="track-row engaged">
+  <div class="check">▸</div>
+  <div class="name">Agents &amp; Agentic Workflows</div>
+  <div class="detail">Burr FSM &middot; 17 specialists fanned across 5 Stones &middot; Mellea rejection sampling on every reconcile</div>
+  <div class="badge">Engaged</div>
 </div>
 
-<div style="margin-top: 18px;">
-  <span class="pill accent">Agents</span><span class="pill accent">Fine-tuning</span><span class="pill accent">Vision/Multimodal</span><span class="pill">Build-in-public</span>
+<div class="track-row engaged">
+  <div class="check">▸</div>
+  <div class="name">Fine-Tuning</div>
+  <div class="detail">3 Apache-2.0 NYC fine-tunes trained on AMD MI300X: Prithvi-EO-2.0-NYC-Pluvial &middot; TerraMind-NYC-Adapters &middot; Granite-TTM-r2-Battery-Surge</div>
+  <div class="badge">Engaged</div>
+</div>
+
+<div class="track-row engaged">
+  <div class="check">▸</div>
+  <div class="name">Vision &amp; Multimodal</div>
+  <div class="detail">Sentinel-2 chip &rarr; Prithvi pluvial seg &middot; TerraMind LULC + Buildings adapters &middot; Granite Embedding 278M &middot; GLiNER typed extraction</div>
+  <div class="badge">Engaged</div>
+</div>
+
+<div class="track-row unengaged">
+  <div class="check">·</div>
+  <div class="name">Build in Public</div>
+  <div class="detail">Documentation track &middot; not the focus this round</div>
+  <div class="badge">Skipped</div>
 </div>
 
 ---
 
-## the receipts
+<div class="eyebrow">04 &middot; The receipts</div>
 
 # 5 of 5 NYC addresses. Mellea 4/4 every run.
 
@@ -110,61 +131,88 @@ Type a NYC address &rarr; **17 specialists fan out** &rarr; one paragraph back, 
   </tbody>
 </table>
 
-<span class="smallcaps">scripts/probe_addresses.py &middot; vLLM on MI300X &middot; <strong style="color: var(--accent-text);">5.8&ndash;13.1 s end-to-end</strong></span>
+<div class="box-grid cols-3" style="margin-top: 16px;">
+  <div class="box">
+    <div class="lbl">Wall-clock</div>
+    <div class="stat-value">5.8&ndash;13.1<span style="font-size: 22px; color: var(--ink-3); font-weight: 400; letter-spacing: 0;"> s</span></div>
+    <div class="stat-label">vLLM on MI300X</div>
+  </div>
+  <div class="box">
+    <div class="lbl">Specialists</div>
+    <div class="stat-value">17</div>
+    <div class="stat-label">fused per address-intent</div>
+  </div>
+  <div class="box">
+    <div class="lbl">Grounding</div>
+    <div class="stat-value">4 / 4</div>
+    <div class="stat-label">Mellea checks every run</div>
+  </div>
+</div>
 
 ---
 
-## why it matters
+<div class="eyebrow">05 &middot; Why it matters</div>
 
 # The civic-tech case.
 
-<div class="two-col">
-<div>
+<div class="box-grid cols-2">
 
-**NY Property Disclosure Law &middot; March 2024.** Sellers must disclose flood history. Riprap is the citable narrative.
-
-**NYC DEP Stormwater Plan &middot; 2024.** $30B priority list, 86 sites. Riprap is the per-NTA evidence layer.
-
-**EJNYC Flood Vulnerability Index &middot; 2024.** 35% of state climate spend goes to "disadvantaged communities." Riprap stays open-source so advocacy can audit.
-
+<div class="box">
+  <div class="lbl">NY Property Disclosure Law</div>
+  <div class="body">March 2024. Sellers must disclose flood history. <strong>Riprap is the citable narrative.</strong></div>
 </div>
-<div>
 
-<p style="font-family: var(--font-serif); font-style: italic; font-size: 24px; color: var(--ink); line-height: 1.4;">No commercial APIs. No closed models. No black-box scores.</p>
-
-<p style="font-size: 18px; color: var(--ink-2); margin-top: 16px;">Every dataset is public-record federal, state, or city. Every foundation model is Apache-2.0. Every claim cites its source.</p>
-
+<div class="box">
+  <div class="lbl">NYC DEP Stormwater Plan</div>
+  <div class="body">2024. $30B priority list, 86 sites. <strong>Riprap is the per-NTA evidence layer.</strong></div>
 </div>
+
+<div class="box">
+  <div class="lbl">EJNYC Flood Vulnerability Index</div>
+  <div class="body">2024. 35% of state climate spend goes to "disadvantaged communities." <strong>Riprap stays open-source so advocacy can audit.</strong></div>
+</div>
+
+<div class="box dark">
+  <div class="lbl">No commercial APIs</div>
+  <div class="body">Every dataset is public-record federal, state, or city. Every foundation model is Apache-2.0. <strong>Every claim cites its source.</strong></div>
+</div>
+
 </div>
 
 ---
 
-## now
+<div class="eyebrow">06 &middot; Now</div>
 
 # Live demo.
 
-<div style="margin-top: 24px; font-family: var(--font-mono); font-size: 18px; line-height: 1.6;">
-
-<span style="color: var(--accent-text);">▶</span> &nbsp; <code>https://lablab-ai-amd-developer-hackathon-riprap-nyc.hf.space</code>
-
-<span style="color: var(--accent-text);">▶</span> &nbsp; query: <em style="font-family: var(--font-serif); font-style: italic; color: var(--ink); border: none; padding: 0;">442 East Houston Street, Manhattan</em>
-
+<div class="box tinted" style="margin-top: 16px;">
+  <div class="lbl">Endpoint</div>
+  <div class="body" style="font-family: var(--font-mono); font-size: 16px; color: var(--accent-text);">https://lablab-ai-amd-developer-hackathon-riprap-nyc.hf.space</div>
 </div>
 
-<div style="margin-top: 36px;">
-<blockquote>17 specialists, ~10 seconds, audit-grade prose. Watch the Stones light up.</blockquote>
+<div class="box" style="margin-top: 12px;">
+  <div class="lbl">Query</div>
+  <div class="body" style="font-size: 28px; color: var(--ink); font-weight: 500;">442 East Houston Street, Manhattan</div>
 </div>
+
+<blockquote style="margin-top: 32px;">17 specialists, ~10 seconds, audit-grade prose. Watch the Stones light up.</blockquote>
 
 ---
 
 <!-- _class: cta -->
 
-# riprap
+<div class="eyebrow" style="margin-top: 80px; color: var(--accent); border: 0; padding: 0;">Riprap &middot; flood briefings on AMD</div>
+
+# riprap.nyc
 
 ## github.com/msradam/riprap-nyc
 
-Apache-2.0 &middot; public data &middot; AMD MI300X &middot; IBM Granite 4.1 &middot; Mellea grounding
+<hr>
 
-<p style="margin-top: 32px; font-family: var(--font-mono); font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(250,250,247,0.6);">
+<p style="font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase;">
+Apache-2.0 &middot; public data &middot; AMD MI300X &middot; IBM Granite 4.1 &middot; Mellea grounding
+</p>
+
+<p style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(244,246,249,0.55); margin-top: 16px;">
 AMD &times; lablab.ai &middot; May 4&ndash;10 2026
 </p>

@@ -663,7 +663,7 @@
 .glyph-sizes, .glyph-mono { display: flex; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-tertiary); border-top: 1px dashed var(--rule-soft); padding-top: 10px; }
 .glyph-sizes-label { min-width: 80px; }
 .glyph-sizes-mono { color: var(--ink-tertiary); margin-left: auto; }
-.glyph-mono > svg:last-of-type { background: #1A1A1A; padding: 2px; border-radius: 1px; }
+.glyph-mono > svg:last-of-type { background: #0F172A; padding: 2px; border-radius: 1px; }
 
 /* Map spec */
 .map-spec-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 24px; align-items: stretch; }
@@ -829,7 +829,7 @@
 /* §14 syn-stripe */
 .stripe-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 22px; }
 .stripe-cell { display: flex; flex-direction: column; gap: 8px; padding: 18px; background: white; border: 1px solid var(--rule-soft); }
-.stripe-preview { width: 100%; height: 180px; border: 1px solid var(--rule-soft); background-color: #FAFAF7; overflow: hidden; }
+.stripe-preview { width: 100%; height: 180px; border: 1px solid var(--rule-soft); background-color: #F4F6F9; overflow: hidden; }
 .stripe-preview > div { background-repeat: repeat; background-size: 12px 12px !important; }
 .stripe-code { font-family: var(--font-mono); font-size: 10px; line-height: 1.5; color: var(--ink-secondary); background: #FBF8EF; padding: 10px 12px; border: 1px solid var(--rule-soft); white-space: pre-wrap; overflow-x: auto; max-height: 180px; overflow-y: auto; }
 .stripe-code-wide { max-height: 360px; }

@@ -14,7 +14,7 @@
   </svg>
 {:else if status === 'error'}
   <svg width="9" height="9" viewBox="0 0 9 9" aria-label="error">
-    <rect x="0.75" y="0.75" width="7.5" height="7.5" fill="#B8620A" />
+    <rect x="0.75" y="0.75" width="7.5" height="7.5" fill="#005EA2" />
   </svg>
 {:else}
   <svg width="9" height="9" viewBox="0 0 9 9" aria-label="ok">
