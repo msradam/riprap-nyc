@@ -23,15 +23,58 @@ export interface PrintSnapshot {
   attempts: number | null;
 }
 
+/** Coarse pipeline phase, surfaced in the AppHeader status indicator
+ *  so a user staring at a half-rendered page knows what's happening.
+ *  Phases are picked from the SSE event stream in /q/[queryId]/+page.svelte. */
+export type RunPhase =
+  | 'idle'
+  | 'planning'      // planner JSON is streaming
+  | 'specialists'   // FSM is firing data Stones (cornerstone → lodestone)
+  | 'reconciling'   // Granite + Mellea is composing the briefing
+  | 'streaming'     // first reconcile token has arrived; paragraph is materialising
+  | 'done'
+  | 'error';
+
 class BriefingState {
   ready = $state(false);
 
+  /** Live phase indicator. AppHeader reads these to render the status
+   *  pill. /q/[queryId]/+page.svelte is the canonical writer; the
+   *  prerendered /q/sample route ignores them (it's complete on mount).
+   */
+  phase = $state<RunPhase>('idle');
+  /** The most recent step name the FSM emitted — e.g. `floodnet`,
+   *  `terramind_lulc`. Pretty-printed by AppHeader via STEP_LABELS. */
+  activeStep = $state<string | null>(null);
+  /** How many specialists have fired (any non-error status) so far. */
+  firedCount = $state(0);
+  /** Total specialists registered for this run. Set when the planner
+   *  resolves an intent or when the FSM trace settles. */
+  totalSpecialists = $state(0);
+  /** Mellea attempt counter (1-indexed once tokens start streaming). */
+  attempt = $state(0);
+  /** Last error message — shown in the header status when phase = error. */
+  errorMessage = $state<string | null>(null);
+
   reset() {
     this.ready = false;
+    this.phase = 'idle';
+    this.activeStep = null;
+    this.firedCount = 0;
+    this.totalSpecialists = 0;
+    this.attempt = 0;
+    this.errorMessage = null;
   }
 
   markReady() {
     this.ready = true;
+    this.phase = 'done';
+    this.activeStep = null;
+  }
+
+  markError(msg: string) {
+    this.phase = 'error';
+    this.errorMessage = msg;
   }
 }
 

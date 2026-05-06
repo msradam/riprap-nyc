@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from '$app/state';
   import { briefingState } from '$lib/stores/briefingState.svelte';
+  import StatusPill from './StatusPill.svelte';
 
   interface Props {
     query?: string | null;
@@ -54,10 +55,7 @@
           aria-label="Open curated PDF view of completed briefing in new tab"
         >export PDF</button>
       {/if}
-      <span class="app-header-status" aria-live="polite">
-        <span class="app-header-status-dot" aria-hidden="true"></span>
-        live
-      </span>
+      <StatusPill />
     </div>
   </div>
 </header>

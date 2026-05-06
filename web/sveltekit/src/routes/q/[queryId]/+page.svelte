@@ -377,10 +377,32 @@
     briefingState.reset();
     if (!queryText()) return;
     runStartedAt = Date.now();
+    // v0.4.5 — drive the AppHeader status pill from SSE events. The
+    // store resets to phase=idle in briefingState.reset() above; we
+    // flip phases here as the pipeline advances.
+    briefingState.phase = 'planning';
     const stream = openAgentStream(queryText(), {
       onPlanToken: (d) => (planTokens += d),
-      onPlan: (p) => (plan = p),
+      onPlan: (p) => {
+        plan = p;
+        briefingState.phase = 'specialists';
+        briefingState.totalSpecialists = p.specialists?.length ?? 0;
+      },
       onStep: (s) => {
+        // Drive the header status pill — show the current step name and
+        // increment the fired count for any specialist that returned
+        // (any non-error). Reconciler steps roll up under the
+        // "reconciling" phase set by onAttemptStart / onToken below.
+        const reconcileNames = new Set([
+          'reconcile_granite41', 'mellea_reconcile_address',
+          'reconcile_neighborhood', 'reconcile_development',
+          'reconcile_live_now',
+        ]);
+        if (!reconcileNames.has(s.step)) {
+          briefingState.activeStep = s.step;
+          if (s.ok) briefingState.firedCount = briefingState.firedCount + 1;
+        }
+
         // Mirror the step's slim result into liveResults so Findings cards
         // can stream in as specialists complete. The card adapter is
         // tolerant of partial summaries — at the end of the stream the
@@ -477,6 +499,9 @@
       },
       onAttemptStart: (n) => {
         attempt = n;
+        briefingState.phase = 'reconciling';
+        briefingState.attempt = n;
+        briefingState.activeStep = 'granite4.1 + mellea';
         if (n > 1) {
           // v0.4.2 §11 reroll: keep the prior draft to render dimmed
           // beneath the banner; reset the live buffer for the new attempt.
@@ -489,11 +514,20 @@
         if (!firstTokenSeen) {
           firstTokenSeen = true;
           if (attempt === 0) attempt = 1;
+          // First reconcile token landed — flip phase from "reconciling"
+          // (waiting on the LLM to start) to "streaming" (paragraph is
+          // materialising). Lets the header swap "reconciling..." for
+          // "writing briefing..." with a visible token-count or progress.
+          briefingState.phase = 'streaming';
+          briefingState.attempt = Math.max(1, briefingState.attempt);
         }
         markdown += delta;
       },
       onMelleaAttempt: (m) => {
-        if (m.attempt > 0) attempt = m.attempt;
+        if (m.attempt > 0) {
+          attempt = m.attempt;
+          briefingState.attempt = m.attempt;
+        }
       },
       onFinal: (f) => {
         finalResult = f;
@@ -523,6 +557,7 @@
             lower.includes('timeout') || lower.includes('routing')) {
           errorState = 'backend';
         }
+        briefingState.markError(err);
       },
       onDone: () => {
         streamDone = true;
