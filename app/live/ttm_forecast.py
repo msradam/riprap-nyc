@@ -92,6 +92,15 @@ def _load_model(context_length: int = CONTEXT_LENGTH,
         return None
     try:
         import torch  # noqa: F401
+        # Force-import the registered class names BEFORE get_model so that
+        # transformers' lazy registry can resolve them by string. Without
+        # this, AutoModel-style dispatch raises
+        #   ModuleNotFoundError("Could not import module 'PreTrainedModel'")
+        # under the FSM worker thread (the lazy import path races with
+        # other model loads). See web/main.py startup for the same
+        # pre-import on the main thread.
+        from transformers import PreTrainedModel  # noqa: F401
+        from tsfm_public import TinyTimeMixerForPrediction  # noqa: F401
         from tsfm_public.toolkit.get_model import get_model
         m = get_model(
             "ibm-granite/granite-timeseries-ttm-r2",
@@ -191,14 +200,23 @@ def _run_ttm(history: np.ndarray,
     remote service stays a thin "given a series, give me a forecast"
     contract.
     """
+    global _MODEL_LOAD_ERROR
     mu = float(history.mean())
     sigma = float(history.std() + 1e-6)
     normed = (history - mu) / sigma
 
-    # Try remote first
+    # Try remote first. When remote is configured we bias HARD toward it:
+    # if the remote returns non-ok we surface that error rather than
+    # silently falling through to a local model load (which on cpu-basic
+    # surfaces would 502 with a cryptic transformers-internal
+    # ModuleNotFoundError). Local fallback is only used when the remote
+    # is unreachable (transport-level), which is what a degraded droplet
+    # actually looks like.
+    remote_attempted = False
     try:
         from app import inference as _inf
         if _inf.remote_enabled():
+            remote_attempted = True
             remote = _inf.ttm_forecast(
                 "zero_shot_battery", normed.tolist(),
                 context_length=context_length,
@@ -208,21 +226,40 @@ def _run_ttm(history: np.ndarray,
             if remote.get("ok"):
                 pred = np.asarray(remote["forecast"], dtype=np.float32)
                 return pred * sigma + mu
+            _MODEL_LOAD_ERROR = (
+                f"remote ttm-forecast returned non-ok: {remote.get('error') or remote}"
+            )
+            log.warning("TTM zero-shot: remote returned non-ok: %s", remote)
+            return None
     except _inf.RemoteUnreachable as e:
         log.info("TTM zero-shot: remote unreachable (%s); local fallback", e)
-    except Exception:
-        log.exception("TTM zero-shot remote call failed; local fallback")
+    except Exception as e:
+        log.exception("TTM zero-shot remote call failed: %r", e)
+        if remote_attempted:
+            _MODEL_LOAD_ERROR = f"remote ttm-forecast errored: {type(e).__name__}: {e}"
+            return None
 
-    # Local fallback
-    model = _load_model(context_length, prediction_length)
+    # Local fallback (only reached when remote isn't configured or is
+    # unreachable at the transport level).
+    try:
+        model = _load_model(context_length, prediction_length)
+    except Exception as e:
+        _MODEL_LOAD_ERROR = f"{type(e).__name__}: {e}"
+        log.exception("TTM model load raised: %r", e)
+        return None
     if model is None:
         return None
-    import torch
+    try:
+        import torch
+    except ImportError:
+        _MODEL_LOAD_ERROR = "torch not available on this deployment"
+        return None
     x = torch.from_numpy(normed.astype(np.float32))[None, :, None]
     try:
         with torch.no_grad():
             out = model(past_values=x)
     except Exception as e:
+        _MODEL_LOAD_ERROR = f"{type(e).__name__}: {e}"
         log.exception("TTM inference failed: %r", e)
         return None
     pred = out.prediction_outputs[0, :, 0].cpu().numpy()

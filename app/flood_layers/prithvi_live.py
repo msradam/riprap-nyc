@@ -353,11 +353,16 @@ def fetch(lat: float, lon: float, timeout_s: float = 60.0) -> dict[str, Any]:
 
         # v0.4.5 — try the MI300X inference service first if configured.
         # On RemoteUnreachable (service down / not configured / 5xx) fall
-        # through to the local terratorch path. The 4-band slice the
-        # service expects is the same shape the local path uses.
+        # through to the local terratorch path. When remote is configured
+        # but returns non-ok we surface that signal directly: the local
+        # path on this machine has been brittle (v2 datamodule
+        # `test_transform=None` race), so a configured remote is more
+        # reliable than the fallback.
+        remote_attempted = False
         try:
             from app import inference as _inf
             if _inf.remote_enabled():
+                remote_attempted = True
                 remote = _inf.prithvi_pluvial(
                     img, scene_id=item.id,
                     scene_datetime=str(item.datetime),
@@ -381,10 +386,19 @@ def fetch(lat: float, lon: float, timeout_s: float = 60.0) -> dict[str, Any]:
                         "compute": f"remote · {remote.get('device', 'gpu')}",
                         "elapsed_s": round(time.time() - t0, 2),
                     }
+                return {"ok": False,
+                        "skipped": f"remote prithvi-pluvial non-ok: "
+                                   f"{remote.get('error') or 'unknown'}",
+                        "elapsed_s": round(time.time() - t0, 2)}
         except _inf.RemoteUnreachable as e:
             log.info("prithvi_live: remote unreachable (%s); falling back to local", e)
-        except Exception:
-            log.exception("prithvi_live: remote call failed; falling back to local")
+        except Exception as e:
+            log.exception("prithvi_live: remote call failed")
+            if remote_attempted:
+                return {"ok": False,
+                        "skipped": f"remote prithvi-pluvial error: "
+                                   f"{type(e).__name__}: {e}",
+                        "elapsed_s": round(time.time() - t0, 2)}
 
         # Local fallback — the path that's been live since v0.4.4.
         model, run_model = _ensure_model()

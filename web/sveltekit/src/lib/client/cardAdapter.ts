@@ -572,16 +572,27 @@ function buildNwsAlerts(state: Final): Card | null {
 
 function buildCapstoneMeta(final: FinalResult, wallSeconds?: number): Card {
   // v0.4.5 §2 — wire the four metrics to the reconciler's actual state.
-  // The Mellea attempts field is one-indexed by the reconciler (initial
-  // attempt + N rerolls). A clean run with one reroll arrives as
-  // attempts=2, which we surface as "1 reroll" — the human-meaningful
-  // count. attempts=1 renders as "0 rerolls" (initial pass only).
-  const m = final.mellea;
-  const passed = m?.passed?.length ?? 0;
-  const failed = m?.failed?.length ?? 0;
-  const totalChecks = passed + failed > 0 ? passed + failed : 4;
-  const attempts = m?.attempts ?? 0;
-  const rerolls = Math.max(0, attempts - 1);
+  // The FSM emits `mellea` as `{ rerolls, n_attempts, requirements_passed,
+  // requirements_failed, requirements_total }` (the mellea_validator
+  // shape). Earlier UI types used `{ passed, failed, attempts }`; we
+  // accept both so cards keep rendering across backend versions.
+  const m = (final.mellea ?? {}) as Record<string, unknown>;
+  const passedArr = Array.isArray(m.requirements_passed)
+    ? (m.requirements_passed as unknown[])
+    : Array.isArray(m.passed) ? (m.passed as unknown[]) : [];
+  const failedArr = Array.isArray(m.requirements_failed)
+    ? (m.requirements_failed as unknown[])
+    : Array.isArray(m.failed) ? (m.failed as unknown[]) : [];
+  const passed = passedArr.length;
+  const failed = failedArr.length;
+  const totalChecks = (typeof m.requirements_total === 'number'
+    ? (m.requirements_total as number)
+    : (passed + failed)) || 4;
+  const attempts = (typeof m.n_attempts === 'number'
+    ? (m.n_attempts as number)
+    : (typeof m.attempts === 'number' ? (m.attempts as number) : 0));
+  const rerollsField = typeof m.rerolls === 'number' ? (m.rerolls as number) : null;
+  const rerolls = rerollsField ?? Math.max(0, attempts - 1);
   const cites = final.citations?.length ?? 0;
   return {
     id: 'fsm-capstone-meta',

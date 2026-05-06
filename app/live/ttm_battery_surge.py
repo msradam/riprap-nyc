@@ -92,6 +92,10 @@ def _ensure_model():
         if _MODEL is not None:
             return _MODEL
         from huggingface_hub import snapshot_download
+        # Force-import dispatched class names so the transformers lazy
+        # registry can resolve `PreTrainedModel` / `TinyTimeMixerForPrediction`
+        # under FSM worker threads. Same pattern as ttm_forecast._load_model.
+        from transformers import PreTrainedModel  # noqa: F401
         from tsfm_public import TinyTimeMixerForPrediction
         log.info("ttm_battery_surge: downloading %s", REPO)
         local_dir = snapshot_download(REPO)
@@ -247,12 +251,17 @@ def fetch(timeout_s: float = 60.0) -> dict[str, Any]:
         # v0.4.5 — try the MI300X service first. The remote handles its
         # own model loading; if it's reachable we never need local
         # tsfm_public, which lets the HF Space drop the granite-tsfm
-        # bake from the image.
+        # bake from the image. When the remote is configured but returns
+        # non-ok we surface the remote error rather than try a local
+        # load — the local code path can ModuleNotFoundError on transient
+        # transformers-registry races and that's a worse user signal.
         forecast = None
         compute = "local"
+        remote_attempted = False
         try:
             from app import inference as _inf
             if _inf.remote_enabled():
+                remote_attempted = True
                 remote = _inf.ttm_forecast(
                     "fine_tune_battery", residuals.tolist(),
                     context_length=CONTEXT_LENGTH,
@@ -264,8 +273,20 @@ def fetch(timeout_s: float = 60.0) -> dict[str, Any]:
                     import numpy as np
                     forecast = np.asarray(remote["forecast"], dtype="float32")
                     compute = f"remote · {remote.get('device', 'gpu')}"
+                else:
+                    return {"available": False,
+                            "reason": f"remote ttm-forecast non-ok: "
+                                      f"{remote.get('error') or 'unknown'}",
+                            "elapsed_s": round(time.time() - t0, 2)}
         except _inf.RemoteUnreachable as e:
             log.info("ttm_battery_surge: remote unreachable (%s); local", e)
+        except Exception as e:
+            log.exception("ttm_battery_surge: remote call failed")
+            if remote_attempted:
+                return {"available": False,
+                        "reason": f"remote ttm-forecast error: "
+                                  f"{type(e).__name__}: {e}",
+                        "elapsed_s": round(time.time() - t0, 2)}
 
         if forecast is None:
             if not _DEPS_OK:

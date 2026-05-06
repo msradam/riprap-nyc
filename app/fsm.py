@@ -1035,9 +1035,26 @@ import os as _os  # noqa: E402
 # Default OFF on local-Ollama so the demo briefing returns in well under
 # 90 s. Enable explicitly with RIPRAP_HEAVY_SPECIALISTS=1 (e.g. on the
 # AMD-vLLM path, where the reconciler's ~5 s leaves room for the joins).
+#
+# Remote ML lift: when RIPRAP_ML_BACKEND=remote (or auto with a base URL
+# set) the heavy specialists' GPU work runs on the droplet, so the local
+# wall-clock cost drops from ~60 s to ~5 s. Default ON in that case so
+# the public demo never silently disables them.
+def _remote_ml_configured() -> bool:
+    backend = _os.environ.get("RIPRAP_ML_BACKEND", "auto").lower()
+    if backend == "local":
+        return False
+    return bool(_os.environ.get("RIPRAP_ML_BASE_URL", "").strip())
+
+
+_HEAVY_DEFAULT = (
+    "1" if (
+        _os.environ.get("RIPRAP_LLM_PRIMARY", "ollama").lower() != "ollama"
+        or _remote_ml_configured()
+    ) else "0"
+)
 _HEAVY_SPECIALISTS_ENABLED = _os.environ.get(
-    "RIPRAP_HEAVY_SPECIALISTS",
-    "0" if _os.environ.get("RIPRAP_LLM_PRIMARY", "ollama").lower() == "ollama" else "1",
+    "RIPRAP_HEAVY_SPECIALISTS", _HEAVY_DEFAULT,
 ).lower() in ("1", "true", "yes")
 
 
