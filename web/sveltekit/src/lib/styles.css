@@ -750,7 +750,10 @@
 .app-footer-inner { max-width: 1600px; margin: 0 auto; padding: 32px 28px; display: flex; flex-direction: column; gap: 12px; }
 .app-footer-guard { font-size: 14px; line-height: 1.5; max-width: 70ch; margin: 0; }
 .app-footer-guard a { color: var(--accent-graphical); border-bottom: 1px solid var(--accent-graphical); text-decoration: none; }
-.app-footer-build { font-family: var(--font-mono); font-size: 11px; color: rgba(250,250,247,0.55); margin: 0; letter-spacing: 0.04em; }
+.app-footer-build { font-family: var(--font-mono); font-size: 11px; color: rgba(244,246,249,0.55); margin: 0; letter-spacing: 0.04em; }
+.app-footer-credits { font-family: var(--font-mono); font-size: 11px; color: rgba(244,246,249,0.4); margin: 0; letter-spacing: 0.04em; }
+.app-footer-credits a { color: rgba(244,246,249,0.7); text-decoration: none; border-bottom: 1px dotted rgba(244,246,249,0.3); }
+.app-footer-credits a:hover { color: rgba(244,246,249,0.9); border-bottom-color: rgba(244,246,249,0.6); }
 
 /* Dark mode — deferred to v0.5 (see §17). Partial styles removed in v0.4.2. */
 

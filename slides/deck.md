@@ -10,7 +10,9 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 <!-- _class: lead -->
 <!-- _paginate: false -->
 
-<div class="eyebrow">
+<img class="lead-mark" src="logo.svg" alt="Riprap dam mark" />
+
+<div class="eyebrow" style="padding-top: 132px;">
   AMD &times; lablab.ai &nbsp;·&nbsp; Developer Hackathon
 </div>
 
@@ -201,7 +203,9 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 
 <!-- _class: cta -->
 
-<div class="eyebrow" style="margin-top: 80px; color: var(--accent); border: 0; padding: 0;">Riprap &middot; flood briefings on AMD</div>
+<img class="cta-mark" src="logo-paper.svg" alt="Riprap dam mark" />
+
+<div class="eyebrow" style="margin-top: 124px; color: var(--accent); border: 0; padding: 0;">Riprap &middot; flood briefings on AMD</div>
 
 # riprap.nyc
 
@@ -215,4 +219,8 @@ Apache-2.0 &middot; public data &middot; AMD MI300X &middot; IBM Granite 4.1 &mi
 
 <p style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(244,246,249,0.55); margin-top: 16px;">
 AMD &times; lablab.ai &middot; May 4&ndash;10 2026
+</p>
+
+<p style="font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.08em; color: rgba(244,246,249,0.4); margin-top: 24px; text-transform: none;">
+Dam mark: "Dam" by Chintuza via the Noun Project, CC-BY 3.0.
 </p>

@@ -1,0 +1,22 @@
+<!-- Riprap dam mark.
+     Source: "Dam" by Chintuza via the Noun Project (CC-BY 3.0).
+     Original SVG had embedded "Created by Chintuza / from the Noun
+     Project" text and an Arial-rendered placeholder; that attribution
+     has been stripped from the artwork and is carried in body copy
+     instead (see README.md, web/sveltekit/src/lib/components/shell/
+     AppFooter.svelte, slides/deck.md credits line).
+
+     Uses fill=currentColor so the mark inherits its color from the
+     containing element's CSS — federal blue on light surfaces, paper
+     on dark CTA slides, etc. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" fill="currentColor"
+     role="img" aria-label="Riprap">
+  <rect x="2.16669" y="3"        width="9.99998" height="3.33333"/>
+  <rect x="2.16669" y="9.66665"  width="9.99998" height="3.33333"/>
+  <rect x="2.16669" y="16.3333"  width="9.99998" height="3.3334"/>
+  <rect x="2.16669" y="23.00002" width="9.99998" height="3.33333"/>
+  <rect x="2.16669" y="29.66667" width="9.99998" height="3.33333"/>
+  <rect x="23.83334" y="23.00002" width="9.99998" height="3.33333"/>
+  <rect x="23.83334" y="29.66667" width="9.99998" height="3.33333"/>
+  <path d="M13.83336,3V33h8.33335V11.33335A8.33337,8.33337,0,0,0,13.83336,3Z"/>
+</svg>

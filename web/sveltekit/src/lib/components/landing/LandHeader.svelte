@@ -2,10 +2,11 @@
   /** Landing-page header. Wordmark · slash · context line · nav links.
    *  Subtly different from the in-app AppHeader so the marketing surface
    *  reads as a separate page. */
+  import RipMark from '$lib/components/shell/RipMark.svelte';
 </script>
 
 <header class="land-header">
-  <span class="riprap-wordmark">riprap</span>
+  <span class="riprap-wordmark"><RipMark size={22} />riprap</span>
   <span class="land-header-sep">/</span>
   <span class="land-header-context">Flood Exposure Briefing · NYC</span>
   <nav class="land-header-nav">

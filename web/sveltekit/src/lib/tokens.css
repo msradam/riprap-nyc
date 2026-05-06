@@ -115,6 +115,10 @@ html, body {
 }
 
 /* ── Wordmark ─────────────────────────────────────────────────────── */
+/* Dam-mark prefix is now an inline SVG component (RipMark.svelte)
+   mounted next to the text in AppHeader / LandHeader, replacing the
+   earlier ▌ block-glyph. The mark inherits color via currentColor;
+   the wordmark text picks up its own ink color from the cascade. */
 .riprap-wordmark {
   font-family: var(--font-mono);
   font-weight: 600;
@@ -123,16 +127,9 @@ html, body {
   text-transform: lowercase;
   color: var(--ink);
   display: inline-flex;
-  align-items: baseline;
-  gap: 0;
-}
-.riprap-wordmark::before {
-  content: "▌";
-  color: var(--accent);  /* federal blue — was burnt orange */
-  margin-right: 4px;
-  font-size: 0.85em;
-  position: relative;
-  top: 1px;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
 }
 
 /* ── Skip link ── */

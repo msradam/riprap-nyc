@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from '$app/state';
   import { briefingState } from '$lib/stores/briefingState.svelte';
+  import RipMark from './RipMark.svelte';
   import StatusPill from './StatusPill.svelte';
 
   interface Props {
@@ -27,7 +28,7 @@
 <header class="app-header no-print" data-screen-label="App header">
   <div class="app-header-inner">
     <div class="app-header-left">
-      <a href="/" class="riprap-wordmark" aria-label="Riprap — home">riprap</a>
+      <a href="/" class="riprap-wordmark" aria-label="Riprap — home"><RipMark size={20} />riprap</a>
       <span class="app-header-sep">/</span>
       <span class="app-header-context">flood-exposure briefing</span>
     </div>

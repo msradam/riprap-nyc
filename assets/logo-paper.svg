@@ -1,0 +1,13 @@
+<!-- Riprap dam mark, paper-cream variant for dark CTA slides.
+     "Dam" by Chintuza via Noun Project (CC-BY 3.0). -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" fill="#F4F6F9"
+     role="img" aria-label="Riprap">
+  <rect x="2.16669" y="3"        width="9.99998" height="3.33333"/>
+  <rect x="2.16669" y="9.66665"  width="9.99998" height="3.33333"/>
+  <rect x="2.16669" y="16.3333"  width="9.99998" height="3.3334"/>
+  <rect x="2.16669" y="23.00002" width="9.99998" height="3.33333"/>
+  <rect x="2.16669" y="29.66667" width="9.99998" height="3.33333"/>
+  <rect x="23.83334" y="23.00002" width="9.99998" height="3.33333"/>
+  <rect x="23.83334" y="29.66667" width="9.99998" height="3.33333"/>
+  <path d="M13.83336,3V33h8.33335V11.33335A8.33337,8.33337,0,0,0,13.83336,3Z"/>
+</svg>

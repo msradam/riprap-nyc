@@ -279,16 +279,19 @@ section.lead {
 }
 
 section.lead::before {
-  content: "▌";
+  /* Mark is now an inline <img> sitting at the top-left of the slide
+     content (see deck.md). Pseudo-element no longer renders the
+     ▌ block — kept as a no-op so the bottom-left wordmark on
+     non-lead slides still wins via the base section::before. */
+  content: none;
+}
+section.lead .lead-mark {
   position: absolute;
   left: 88px;
-  top: 64px;
-  bottom: auto;
-  font-family: var(--font-mono);
-  font-size: 56px;
-  font-weight: 600;
-  color: var(--accent);
-  line-height: 1;
+  top: 56px;
+  width: 64px;
+  height: 64px;
+  display: block;
 }
 
 section.lead .eyebrow {
@@ -376,13 +379,16 @@ section.cta {
   justify-content: center;
 }
 section.cta::before {
-  content: "▌";
-  color: var(--accent);
-  font-size: 56px;
+  /* Replaced by inline mark in deck.md (.cta-mark). */
+  content: none;
+}
+section.cta .cta-mark {
   position: absolute;
   left: 88px;
-  top: 64px;
-  bottom: auto;
+  top: 56px;
+  width: 56px;
+  height: 56px;
+  display: block;
 }
 section.cta::after { color: rgba(244, 246, 249, 0.42); }
 section.cta h1 {

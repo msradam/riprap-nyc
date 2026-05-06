@@ -7,6 +7,10 @@ sdk: docker
 pinned: false
 ---
 
+<p align="left">
+  <img src="assets/logo@2x.png" width="72" height="72" alt="Riprap dam mark" />
+</p>
+
 # Riprap — citation-grounded NYC flood-exposure briefings
 
 Riprap takes any NYC address (or neighborhood, or development-permit query)
@@ -21,7 +25,7 @@ sampling. Sentences that fail one of four grounding checks
 `citations_resolve`) are rerolled with surgical feedback until the
 budget is exhausted.
 
-Live demo: <https://msradam-riprap-nyc.hf.space>
+Live demo: <https://lablab-ai-amd-developer-hackathon-riprap-nyc.hf.space>
 
 ---
 
@@ -120,3 +124,13 @@ permissive licences (see each `MODEL_CARD.md`).
 
 Check out the HF Space configuration reference at
 <https://huggingface.co/docs/hub/spaces-config-reference>.
+
+---
+
+## Credits
+
+The Riprap dam mark is ["Dam" by Chintuza](https://thenounproject.com/icon/dam-4516918/)
+via the Noun Project, licensed CC-BY 3.0. The original SVG embedded
+the attribution as on-canvas text; Riprap's `assets/logo*.svg` strips
+the embedded text and carries the credit here in body copy instead,
+per the Creative Commons attribution requirement.

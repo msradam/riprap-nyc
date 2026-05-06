@@ -11,7 +11,7 @@
     <span class="land-footer-tier"><span class="lm-sw lm-sw-prx"></span>proxy</span>
     <span class="land-footer-tier"><span class="lm-sw lm-sw-syn"></span>synthetic</span>
   </span>
-  <span class="land-footer-build">Riprap v0.4.5 · NYC OpenData · FEMA NFHL · USGS · NPCC4</span>
+  <span class="land-footer-build">Riprap v0.4.6 · NYC OpenData · FEMA NFHL · USGS · NPCC4 · Dam mark by Chintuza, Noun Project (CC-BY)</span>
 </footer>
 
 <style>
