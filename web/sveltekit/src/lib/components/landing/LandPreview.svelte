@@ -1,7 +1,15 @@
 <script lang="ts">
   /** "What you'll get back" three-pane preview: briefing excerpt with
-   *  inline citations · 2x2 evidence-card grid · mini SVG map.
-   *  Lifted as-is from docs/design_handoff/design_files/Riprap Landing.html. */
+   *  inline citations · 2x2 evidence-card grid · live mini-map.
+   *
+   *  v0.4.5 update: the third pane was originally a hand-drawn SVG
+   *  mockup of Red Hook from the design-handoff prototype. Replaced
+   *  with a real MapLibre instance pinned to 80 Pioneer Street so
+   *  visitors land on a working map at the same scale, with the same
+   *  stylized FEMA AE polygon / HWM contour / FloodNet pin / 311
+   *  cluster / address pin overlays. Kept inside the same 6:5
+   *  container so the layout doesn't shift. */
+  import LandMiniMap from './LandMiniMap.svelte';
 </script>
 
 <section class="land-section">
@@ -80,47 +88,11 @@
       </div>
     </div>
 
-    <!-- Pane 3 — mini SVG map -->
+    <!-- Pane 3 — real MapLibre mini-map (v0.4.5) -->
     <div class="land-preview-pane land-preview-pane-map">
       <div class="land-preview-eyebrow">Map</div>
-      <div class="land-mapmini" role="img" aria-label="Sample exposure map of Red Hook">
-        <svg viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice"
-             style="display: block; width: 100%; height: 100%;">
-          <rect width="240" height="200" fill="#F2F2EE" />
-          <path d="M0,150 Q60,140 120,148 T240,140 L240,200 L0,200 Z" fill="#D6DDE0" />
-          <path d="M0,90 Q40,82 90,88 L120,86 L120,150 L0,150 Z" fill="#D6DDE0" />
-          <path d="M30,80 L130,76 L160,140 L40,148 Z"
-                fill="rgba(42,111,168,0.22)" stroke="#2A6FA8"
-                stroke-width="0.8" stroke-dasharray="3 2" />
-          <path d="M50,90 Q90,84 130,90 T200,108"
-                fill="none" stroke="#0B5394" stroke-width="1.2" />
-          <g stroke="#B8B5AE" stroke-width="0.5" fill="none">
-            <path d="M0,60 L240,52" />
-            <path d="M0,110 L240,102" />
-            <path d="M60,0 L72,200" />
-            <path d="M120,0 L132,200" />
-            <path d="M180,0 L192,200" />
-          </g>
-          <g transform="translate(108 92)">
-            <rect x="-3" y="-3" width="6" height="6" fill="#0B5394" stroke="white" stroke-width="0.8" />
-          </g>
-          <g fill="none" stroke="#6B6B6B" stroke-width="0.8">
-            <circle cx="80" cy="120" r="3" />
-            <circle cx="86" cy="124" r="3" />
-            <circle cx="92" cy="118" r="3" />
-          </g>
-          <g transform="translate(118 112)">
-            <circle r="8" fill="none" stroke="#1A1A1A" stroke-width="1.2" />
-            <circle r="2.4" fill="#1A1A1A" />
-          </g>
-        </svg>
-        <div class="land-mapmini-legend">
-          <span><span class="lm-sw lm-sw-emp"></span>empirical</span>
-          <span><span class="lm-sw lm-sw-mod"></span>modeled</span>
-          <span><span class="lm-sw lm-sw-prx"></span>proxy</span>
-        </div>
-      </div>
-      <div class="land-preview-mapmeta">Red Hook · z16 · Carto Positron</div>
+      <LandMiniMap />
+      <div class="land-preview-mapmeta">80 Pioneer St, Red Hook · z14.5 · Carto Positron</div>
     </div>
 
   </div>
@@ -255,44 +227,9 @@
     color: var(--ink-tertiary);
   }
 
-  /* Map pane */
+  /* Map pane — the LandMiniMap component owns its own styling
+     (.land-mapmini, .land-mapmini-legend, tier-swatch primitives). */
   .land-preview-pane-map { padding: 16px 18px; }
-  .land-mapmini {
-    position: relative;
-    aspect-ratio: 6 / 5;
-    border: 1px solid var(--rule-soft);
-    overflow: hidden;
-  }
-  .land-mapmini-legend {
-    position: absolute;
-    left: 6px;
-    bottom: 6px;
-    right: 6px;
-    display: flex;
-    gap: 10px;
-    padding: 4px 6px;
-    background: rgba(255, 255, 255, 0.92);
-    font-family: var(--font-mono);
-    font-size: 9.5px;
-    letter-spacing: 0.04em;
-    color: var(--ink-secondary);
-  }
-  .land-mapmini-legend span {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-  }
-  .lm-sw { display: inline-block; width: 8px; height: 8px; }
-  .lm-sw-emp { background: var(--tier-empirical); }
-  .lm-sw-mod {
-    background: rgba(42, 111, 168, 0.4);
-    border: 1px dashed var(--tier-modeled);
-  }
-  .lm-sw-prx {
-    background: transparent;
-    border: 1px solid #6B6B6B;
-    border-radius: 50%;
-  }
   .land-preview-mapmeta {
     font-family: var(--font-mono);
     font-size: 10.5px;
