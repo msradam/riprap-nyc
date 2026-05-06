@@ -53,8 +53,8 @@
       { label: 'TerraMind Buildings (current)', source: 'msradam/TerraMind-NYC-Adapters', tier: 'synthetic', wired: false },
     ],
     touchstone: [
-      { label: '311 flood complaints',           source: 'NYC 311',  tier: 'proxy',     wired: true  },
-      { label: 'FloodNet sensors',               source: 'FloodNet NYC', tier: 'empirical', wired: false },
+      { label: '311 flood complaints',           source: 'NYC 311',  tier: 'proxy',     wired: false },
+      { label: 'FloodNet sensors',               source: 'FloodNet NYC', tier: 'proxy',     wired: true  },
       { label: 'TerraMind LULC (current)',       source: 'msradam/TerraMind-NYC-Adapters', tier: 'synthetic', wired: false },
       { label: 'Prithvi-NYC-Pluvial flood pred.', source: 'msradam/Prithvi-EO-2.0-NYC-Pluvial', tier: 'modeled', wired: false },
     ],
