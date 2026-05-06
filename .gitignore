@@ -34,3 +34,8 @@ experiments/**/*.jpg
 experiments/**/*.parquet
 experiments/**/*.npy
 pitch/screenshots-*/
+
+# Marp deck render artefacts (regenerable via `make` in slides/)
+slides/deck.pdf
+slides/deck.html
+slides/deck.pptx

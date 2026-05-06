@@ -1,0 +1,520 @@
+/* @theme riprap
+ *
+ * Marp theme that mirrors the SvelteKit UI's design tokens 1:1.
+ * IBM Plex (Sans / Mono / Serif), paper register, Stone palette,
+ * the orange accent block from the wordmark. The same CSS variables
+ * defined in web/sveltekit/src/lib/tokens.css live here so a print
+ * of a slide and a screenshot of the app feel like one document.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Serif:wght@400;600;700&display=swap');
+
+:root {
+  /* Tier (epistemic) — verified WCAG AA against paper. */
+  --tier-empirical: #0B5394;
+  --tier-modeled:   #2A6FA8;
+  --tier-proxy:     #6B6B6B;
+  --tier-synthetic: #2A6FA8;
+
+  /* Stone accents — five muted hint-colors keyed to the FSM stones. */
+  --stone-cornerstone: #7C6F5E;
+  --stone-keystone:    #5E6E7C;
+  --stone-touchstone:  #6B7C66;
+  --stone-lodestone:   #7C6E5E;
+  --stone-capstone:    #5E5E6E;
+
+  /* Neutrals — paper register from the SvelteKit UI. */
+  --paper:        #FAFAF7;
+  --paper-deep:   #F2F2EE;
+  --ink:          #1A1A1A;
+  --ink-2:        #4A4A4A;
+  --ink-3:        #6B6B6B;
+  --rule:         #1A1A1A;
+  --rule-soft:    #C9C9C5;
+
+  /* Accent block (the riprap wordmark glyph). */
+  --accent:       #D17C00;
+  --accent-text:  #B8620A;
+
+  --font-sans:  "IBM Plex Sans", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono:  "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-serif: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+}
+
+/* ── Section ──────────────────────────────────────────────────────────── */
+
+section {
+  width: 1280px;
+  height: 720px;
+  padding: 56px 72px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 24px;
+  line-height: 1.45;
+  letter-spacing: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+/* Persistent wordmark on every slide except title — bottom-left, mono. */
+section::before {
+  content: "▌ riprap";
+  position: absolute;
+  left: 72px;
+  bottom: 32px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: lowercase;
+  color: var(--ink);
+}
+section::before {
+  /* the leading block ▌ inherits the accent color via this trick — split
+     into two pseudo elements isn't supported in Marp; instead we rely on
+     the orange ▌ glyph being colored at render via overprint. */
+}
+
+/* Slide number — bottom-right, mono. */
+section::after {
+  content: attr(data-marpit-pagination) " / " attr(data-marpit-pagination-total);
+  position: absolute;
+  right: 72px;
+  bottom: 32px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+}
+
+/* ── Headings ─────────────────────────────────────────────────────────── */
+
+h1 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 64px;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin: 0 0 16px;
+  color: var(--ink);
+}
+
+h2 {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin: 0 0 24px;
+}
+
+h3 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 32px;
+  line-height: 1.2;
+  margin: 0 0 12px;
+  color: var(--ink);
+}
+
+/* ── Body ─────────────────────────────────────────────────────────────── */
+
+p {
+  margin: 0 0 16px;
+  max-width: 60ch;
+}
+
+strong {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+em {
+  font-style: normal;
+  border-bottom: 2px solid var(--accent);
+  padding-bottom: 1px;
+}
+
+ul, ol {
+  margin: 0 0 16px;
+  padding-left: 0;
+  list-style: none;
+}
+
+ul li, ol li {
+  position: relative;
+  padding-left: 28px;
+  margin: 0 0 14px;
+  font-size: 22px;
+  line-height: 1.4;
+  max-width: 60ch;
+}
+
+ul li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.65em;
+  width: 14px;
+  height: 2px;
+  background: var(--ink);
+}
+
+ol {
+  counter-reset: ol-num;
+}
+ol li {
+  counter-increment: ol-num;
+}
+ol li::before {
+  content: counter(ol-num, decimal-leading-zero);
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--accent-text);
+  width: auto;
+  height: auto;
+  background: transparent;
+}
+
+/* ── Code ─────────────────────────────────────────────────────────────── */
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--paper-deep);
+  padding: 1px 6px;
+  border-radius: 2px;
+  color: var(--ink);
+}
+
+pre {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  line-height: 1.5;
+  background: var(--paper-deep);
+  border-left: 3px solid var(--accent);
+  padding: 18px 22px;
+  margin: 12px 0;
+  color: var(--ink);
+  border-radius: 2px;
+}
+
+pre code {
+  background: transparent;
+  padding: 0;
+  font-size: inherit;
+}
+
+/* ── Quote / aside / strapline ────────────────────────────────────────── */
+
+blockquote {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 28px;
+  line-height: 1.35;
+  color: var(--ink-2);
+  border-left: 3px solid var(--rule);
+  padding: 4px 0 4px 24px;
+  margin: 24px 0;
+  max-width: 56ch;
+}
+
+/* ── Rules ────────────────────────────────────────────────────────────── */
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--rule-soft);
+  margin: 24px 0;
+}
+
+/* ── Table ────────────────────────────────────────────────────────────── */
+
+table {
+  border-collapse: collapse;
+  font-family: var(--font-sans);
+  font-size: 18px;
+  margin: 12px 0;
+  width: 100%;
+}
+th {
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--rule);
+}
+td {
+  padding: 12px;
+  border-bottom: 1px solid var(--rule-soft);
+  vertical-align: top;
+}
+
+/* ── Title slide variant (lead) ───────────────────────────────────────── */
+
+section.lead {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: var(--paper);
+  padding-left: 96px;
+}
+section.lead::before {
+  content: "▌";
+  position: absolute;
+  left: 96px;
+  top: 80px;
+  bottom: auto;
+  font-family: var(--font-mono);
+  font-size: 64px;
+  font-weight: 600;
+  color: var(--accent);
+  line-height: 1;
+}
+section.lead h1 {
+  font-size: 96px;
+  line-height: 0.95;
+  letter-spacing: -0.025em;
+  margin: 0 0 8px;
+}
+section.lead h2 {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 32px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-2);
+  margin: 0 0 32px;
+  max-width: 28ch;
+}
+section.lead .meta {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-top: 32px;
+}
+section.lead .meta strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* ── Closing slide variant ────────────────────────────────────────────── */
+
+section.cta {
+  background: var(--ink);
+  color: var(--paper);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-left: 96px;
+}
+section.cta::before {
+  content: "▌";
+  color: var(--accent);
+  font-size: 64px;
+  position: absolute;
+  left: 96px;
+  top: 80px;
+  bottom: auto;
+}
+section.cta::after { color: rgba(250, 250, 247, 0.5); }
+section.cta h1 {
+  font-size: 80px;
+  color: var(--paper);
+  margin: 0 0 16px;
+}
+section.cta h2 {
+  color: rgba(250, 250, 247, 0.7);
+}
+section.cta p {
+  font-size: 22px;
+  color: rgba(250, 250, 247, 0.85);
+}
+section.cta a, section.cta code {
+  color: var(--accent);
+  background: transparent;
+  padding: 0;
+}
+
+/* ── Two-column variant ───────────────────────────────────────────────── */
+
+section.split {
+  padding-top: 64px;
+}
+section.split .columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 56px;
+  margin-top: 12px;
+}
+section.split .columns > div h3 {
+  font-size: 22px;
+  margin-bottom: 8px;
+}
+section.split .columns > div p,
+section.split .columns > div li {
+  font-size: 18px;
+  line-height: 1.45;
+}
+
+/* ── Stone-tinted heading rules (subtle) ──────────────────────────────── */
+
+section[data-stone="cornerstone"] h1 { border-bottom: 4px solid var(--stone-cornerstone); padding-bottom: 8px; display: inline-block; }
+section[data-stone="keystone"]    h1 { border-bottom: 4px solid var(--stone-keystone);    padding-bottom: 8px; display: inline-block; }
+section[data-stone="touchstone"]  h1 { border-bottom: 4px solid var(--stone-touchstone);  padding-bottom: 8px; display: inline-block; }
+section[data-stone="lodestone"]   h1 { border-bottom: 4px solid var(--stone-lodestone);   padding-bottom: 8px; display: inline-block; }
+section[data-stone="capstone"]    h1 { border-bottom: 4px solid var(--stone-capstone);    padding-bottom: 8px; display: inline-block; }
+
+/* ── Big-stat panel ───────────────────────────────────────────────────── */
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.stat-value {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 56px;
+  line-height: 1;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+.stat-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* ── Stack diagram (slide 4 visual) ───────────────────────────────────── */
+
+.stack {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+.stack-row {
+  background: var(--paper-deep);
+  border-left: 3px solid var(--rule);
+  padding: 14px 18px;
+  font-size: 18px;
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 24px;
+  align-items: baseline;
+}
+.stack-row .lbl {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.stack-row .body {
+  font-family: var(--font-sans);
+  color: var(--ink);
+}
+.stack-row.gpu  { border-left-color: var(--accent); }
+.stack-row.gpu .lbl { color: var(--accent-text); }
+.stack-row.app  { border-left-color: var(--tier-empirical); }
+
+/* ── Small caps utility ───────────────────────────────────────────────── */
+
+.smallcaps {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* ── Two-column layout (used on slides 2, 6) ─────────────────────────── */
+
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 56px;
+  margin-top: 16px;
+}
+.two-col > div p,
+.two-col > div li {
+  font-size: 20px;
+  line-height: 1.45;
+  max-width: none;
+}
+.two-col > div p:last-child,
+.two-col > div li:last-child {
+  margin-bottom: 0;
+}
+
+/* ── Pseudo-codeblock (HTML-rendered, so inline spans keep color) ─────── */
+
+.codeblock {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  line-height: 1.55;
+  background: var(--paper-deep);
+  border-left: 3px solid var(--accent);
+  padding: 18px 22px;
+  margin: 12px 0;
+  color: var(--ink);
+  border-radius: 2px;
+}
+.codeblock p {
+  margin: 0 0 12px;
+}
+.codeblock p:last-child {
+  margin-bottom: 0;
+}
+.codeblock .cite {
+  color: var(--accent-text);
+  font-weight: 600;
+}
+.codeblock .label {
+  font-weight: 700;
+}
+
+/* ── Highlight pill ───────────────────────────────────────────────────── */
+
+.pill {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: var(--paper-deep);
+  border: 1px solid var(--rule-soft);
+  padding: 4px 10px;
+  border-radius: 100px;
+  color: var(--ink-2);
+  margin-right: 6px;
+}
+.pill.accent {
+  background: var(--accent);
+  color: var(--paper);
+  border-color: var(--accent);
+}
