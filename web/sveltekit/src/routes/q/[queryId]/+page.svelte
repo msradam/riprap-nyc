@@ -2,6 +2,7 @@
   import { page } from '$app/state';
   import { onMount } from 'svelte';
   import Briefing from '$lib/components/briefing/Briefing.svelte';
+  import CompareBriefing from '$lib/components/briefing/CompareBriefing.svelte';
   import CitationDrawer from '$lib/components/briefing/CitationDrawer.svelte';
   import TraceUI from '$lib/components/trace/TraceUI.svelte';
   import RipMap from '$lib/components/map/RipMap.svelte';
@@ -640,7 +641,16 @@
             {/if}
           {/if}
 
-          {#if blocks.length}
+          {#if plan?.intent === 'compare' && finalResult?.targets?.length === 2}
+            <!-- Compare intent: two-column layout with delta summary row.
+                 Shown only after the final event lands so the streaming path
+                 (which renders PLACE A then PLACE B sequentially) stays intact. -->
+            <CompareBriefing
+              paragraph={finalResult.paragraph}
+              {citations}
+              targets={finalResult.targets}
+            />
+          {:else if blocks.length}
             <Briefing {blocks} {citations} streaming={false} />
             {#if !streamDone}
               <span class="streaming-caret" aria-hidden="true">▍</span>
