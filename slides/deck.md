@@ -76,11 +76,9 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 
 <p style="margin-bottom: 14px; font-size: 20px; max-width: 72ch; color: var(--ink-2);">Type an address or neighborhood. Get a written briefing in 5&ndash;13 seconds, fusing four temporal modes &mdash; Sandy 2012 inundation, current 311 history, FloodNet sensor reads, NPCC4 projections &mdash; into one cited paragraph.</p>
 
-<div style="border: 2px solid #94A3B8; border-radius: 2px; margin-bottom: 10px; overflow: hidden; height: 280px;">
+<div style="border: 2px solid #94A3B8; border-radius: 2px; overflow: hidden; height: 400px;">
   <img src="../assets/screenshots/hero.png" style="width: 100%; height: 100%; object-fit: cover; object-position: top;" />
 </div>
-
-<p style="font-size: 15px; color: var(--ink-3); margin: 0;">Behind the prose: every numeric claim links to its primary public-record source. Mellea rejection sampling refuses to publish what it can&rsquo;t cite.</p>
 
 ---
 
@@ -257,10 +255,6 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 
 <div style="margin: 48px 0 32px; text-align: center;">
   <p style="font-family: var(--font-mono); font-size: 28px; font-weight: 700; color: var(--ink); margin: 0 auto; max-width: 860px; line-height: 1.35;">&ldquo;I&rsquo;m thinking about renting an apartment at 80 Pioneer Street, Brooklyn. Should I worry?&rdquo;</p>
-</div>
-
-<div style="text-align: center; margin-bottom: 40px;">
-  <span style="font-family: var(--font-mono); font-size: 20px; letter-spacing: 0.06em; color: var(--accent); font-weight: 700;">riprap.nyc</span>
 </div>
 
 <p style="text-align: center; font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); margin: 0 auto; max-width: none;">13 seconds end-to-end &nbsp;&middot;&nbsp; 4/4 grounding checks &nbsp;&middot;&nbsp; all sources public-record</p>
