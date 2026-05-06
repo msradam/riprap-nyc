@@ -70,7 +70,7 @@ section {
 
 /* Bottom-left wordmark on every slide except lead/cta. */
 section::before {
-  content: "▌ riprap.nyc";
+  content: "▌ riprap";
   position: absolute;
   left: 64px;
   bottom: 28px;

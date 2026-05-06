@@ -74,9 +74,7 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 
 # A flood-exposure briefing for any place in New York City.
 
-<p style="margin-bottom: 14px; font-size: 20px; max-width: 72ch; color: var(--ink-2);">Type an address or neighborhood. Get a written briefing in 5&ndash;13 seconds, fusing four temporal modes &mdash; Sandy 2012 inundation, current 311 history, FloodNet sensor reads, NPCC4 projections &mdash; into one cited paragraph.</p>
-
-<div style="border: 2px solid #94A3B8; border-radius: 2px; overflow: hidden; height: 400px;">
+<div style="border: 2px solid #94A3B8; border-radius: 2px; overflow: hidden; height: 470px;">
   <img src="../assets/screenshots/hero.png" style="width: 100%; height: 100%; object-fit: cover; object-position: top;" />
 </div>
 

@@ -88,9 +88,7 @@ description: ASCE NY State Convention, Albany, May 13, 2026
 
 # A flood-exposure briefing for any place in New York City.
 
-<p style="margin-bottom: 14px; font-size: 20px; max-width: 72ch; color: var(--ink-2);">Type an address or neighborhood. Get a written briefing in 5&ndash;13 seconds, fusing four temporal modes (historical inundation, current observations, modeled scenarios, projections) into one cited paragraph.</p>
-
-<div style="border: 2px solid #94A3B8; border-radius: 2px; overflow: hidden; height: 380px;">
+<div style="border: 2px solid #94A3B8; border-radius: 2px; overflow: hidden; height: 450px;">
   <img src="../../assets/screenshots/hero.png" style="width: 100%; height: 100%; object-fit: cover; object-position: top;" />
 </div>
 
