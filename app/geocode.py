@@ -166,7 +166,13 @@ def geocode_one(text: str) -> GeocodeHit | None:
             return hit
 
     hint = _detect_borough(text)
-    hits = geocode(text, limit=8)
+    try:
+        hits = geocode(text, limit=8)
+    except Exception as e:
+        # Geosearch is unreachable or returned a server error — fall back to
+        # Nominatim rather than surfacing a 503 to every downstream specialist.
+        log.warning("Geosearch unavailable (%r) — falling back to Nominatim", e)
+        return geocode_nominatim(text)
     if hint:
         in_boro = [h for h in hits if h.borough and h.borough.lower() == hint.lower()]
         if in_boro:

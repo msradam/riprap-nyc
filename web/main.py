@@ -144,6 +144,19 @@ def _warm_caches():
     for scen in ["dep_extreme_2080", "dep_moderate_2050", "dep_moderate_current"]:
         dep_stormwater.load(scen)
     print("[startup] flood layers ready", flush=True)
+    if os.environ.get("RIPRAP_NYCHA_REGISTERS", "0").lower() in ("1", "true", "yes"):
+        print("[startup] pre-warming NYCHA registers (may take 60–120 s)...", flush=True)
+        try:
+            from app.registers import nycha as _r_nycha
+            from app.registers import doe_schools as _r_schools
+            from app.registers import doh_hospitals as _r_hospitals
+            _r_nycha._load_nycha()
+            _r_nycha._load_sandy_2263()
+            _r_schools._load_schools()
+            _r_hospitals._load_hospitals()
+            print("[startup] NYCHA registers ready", flush=True)
+        except Exception as _e:
+            print(f"[startup] NYCHA register warm failed (non-fatal): {_e}", flush=True)
     print("[startup] warming RAG (Granite Embedding 278M + 5 PDFs)...", flush=True)
     # RAG warm loads sentence-transformers, which on some HF Space rebuilds
     # has hit transformers-lazy-import edge cases (CodeCarbonCallback). The

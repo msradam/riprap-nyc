@@ -24,6 +24,7 @@ License: Apache-2.0. See experiments/shared/licenses.md.
 
 from __future__ import annotations
 
+import concurrent.futures
 import logging
 import os
 import threading
@@ -319,25 +320,8 @@ def _polygonize_mask(pred, ref_da, epsg: int) -> dict | None:
         return None
 
 
-def fetch(lat: float, lon: float, timeout_s: float = 60.0) -> dict[str, Any]:
-    """Run the specialist. Returns a dict with at minimum:
-        { "ok": bool,
-          "skipped": str | None,    # reason if no observation
-          "item_id": str | None,
-          "item_datetime": str | None,
-          "cloud_cover": float | None,
-          "pct_water_within_500m": float | None,
-          "pct_water_full": float | None }
-    Designed to never raise; failures show up as ok=False with an `err`.
-    """
-    if not ENABLE:
-        return {"ok": False, "skipped": "RIPRAP_PRITHVI_LIVE_ENABLE=0"}
-    if not _DEPS_OK:
-        # Clean "not deployed here" signal instead of a ModuleNotFoundError
-        # surfaced as an exception. Same trace-card layout as ENABLE=0.
-        return {"ok": False,
-                "skipped": f"deps unavailable on this deployment: "
-                           f"{_DEPS_MISSING}"}
+def _fetch_inner(lat: float, lon: float, timeout_s: float) -> dict[str, Any]:
+    """Core fetch logic — run inside a bounded thread via fetch()."""
     t0 = time.time()
     try:
         item = _search_recent_scene(lat, lon)
@@ -428,3 +412,31 @@ def fetch(lat: float, lon: float, timeout_s: float = 60.0) -> dict[str, Any]:
         log.exception("prithvi_live: fetch failed")
         return {"ok": False, "err": f"{type(e).__name__}: {e}",
                 "elapsed_s": round(time.time() - t0, 2)}
+
+
+def fetch(lat: float, lon: float, timeout_s: float = 60.0) -> dict[str, Any]:
+    """Run the specialist. Wraps _fetch_inner in a bounded thread so that
+    STAC searches and COG band reads (which lack per-request HTTP timeouts)
+    cannot hang the FSM indefinitely.
+
+    Returns a dict with at minimum:
+        { "ok": bool, "skipped": str | None, "item_id": str | None,
+          "cloud_cover": float | None, "pct_water_within_500m": float | None }
+    Designed to never raise; failures show up as ok=False with an `err`.
+    """
+    if not ENABLE:
+        return {"ok": False, "skipped": "RIPRAP_PRITHVI_LIVE_ENABLE=0"}
+    if not _DEPS_OK:
+        return {"ok": False,
+                "skipped": f"deps unavailable on this deployment: "
+                           f"{_DEPS_MISSING}"}
+    hard_timeout = timeout_s + 15.0
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+        future = pool.submit(_fetch_inner, lat, lon, timeout_s)
+        try:
+            return future.result(timeout=hard_timeout)
+        except concurrent.futures.TimeoutError:
+            log.warning("prithvi_live: hard timeout after %.0fs (STAC/COG hung)",
+                        hard_timeout)
+            return {"ok": False,
+                    "skipped": f"prithvi_live timed out after {hard_timeout:.0f}s"}

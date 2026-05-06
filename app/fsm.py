@@ -1087,6 +1087,15 @@ _HEAVY_SPECIALISTS_ENABLED = _os.environ.get(
     "RIPRAP_HEAVY_SPECIALISTS", _HEAVY_DEFAULT,
 ).lower() in ("1", "true", "yes")
 
+# NYCHA / DOE / DOH registers load a 91 MB sandy_inundation.geojson via
+# geopandas on first call.  On machines with slow I/O or single-threaded
+# Python GIL contention (M3 local dev) this takes 3–5 min and makes the
+# first single_address query appear hung.  Disable by default; enable on
+# the AMD droplet where the server pre-warms these at startup.
+_NYCHA_REGISTERS_ENABLED = _os.environ.get(
+    "RIPRAP_NYCHA_REGISTERS", "0",
+).lower() in ("1", "true", "yes")
+
 
 def build_app(query: str):
     """Linear, single-action-per-step Burr application.
@@ -1120,10 +1129,11 @@ def build_app(query: str):
         "mta_entrances": step_mta_entrances,
         "prithvi": step_prithvi,  # baked GeoJSON polygons for Ida; cheap
     }
-    if _HEAVY_SPECIALISTS_ENABLED:
+    if _HEAVY_SPECIALISTS_ENABLED and _NYCHA_REGISTERS_ENABLED:
         actions["nycha"] = step_nycha
         actions["doe_schools"] = step_doe_schools
         actions["doh_hospitals"] = step_doh_hospitals
+    if _HEAVY_SPECIALISTS_ENABLED:
         actions["prithvi_live"] = step_prithvi_live
         actions["terramind"] = step_terramind
         # New TerraMind-NYC LoRA family — one chip fetch feeds two
