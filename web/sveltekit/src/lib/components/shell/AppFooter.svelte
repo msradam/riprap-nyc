@@ -7,7 +7,7 @@
       · <a href="https://www.floodnet.nyc">FloodNet NYC</a>.
     </p>
     <p class="app-footer-build">
-      All foundation models Apache-2.0 · All data from public-record federal, state, and city sources · No commercial APIs contacted at runtime · Riprap v0.4.2 · build 2026-05-03
+      All foundation models Apache-2.0 · All data from public-record federal, state, and city sources · No commercial APIs contacted at runtime · Riprap v0.4.5 · build 2026-05-05
     </p>
   </div>
 </footer>

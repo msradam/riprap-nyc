@@ -213,13 +213,44 @@ def _warm_caches():
                           flush=True)
         except Exception as e:
             print(f"[startup] LLM warm skipped: {e}", flush=True)
-    print("[startup] pre-importing terratorch + tsfm_public...", flush=True)
+    print("[startup] pre-importing terratorch + tsfm_public + transformers...", flush=True)
     try:
         import sklearn  # noqa: F401  prime sklearn first
         import terratorch  # noqa: F401
         import tsfm_public  # noqa: F401
+        # Transformers does lazy-loading via __getattr__; touching
+        # PreTrainedModel forces the lazy-init to complete on the main
+        # thread. Otherwise FSM worker threads race the lazy loader and
+        # surface ModuleNotFoundError("Could not import module
+        # 'PreTrainedModel'") under load.
+        from transformers import PreTrainedModel  # noqa: F401
+        # tsfm_public's TinyTimeMixerForPrediction import path triggers
+        # the granite-tsfm side of the lazy chain — pre-warm here too.
+        from tsfm_public import TinyTimeMixerForPrediction  # noqa: F401
+        from tsfm_public.toolkit.get_model import get_model  # noqa: F401
     except Exception as e:
         print(f"[startup] heavy-EO pre-import skipped: {e}", flush=True)
+    # Force-import every specialist module that does heavy ML at runtime
+    # so its module-level deps probe + lazy transformers chain runs on
+    # the main thread, deterministic order, before any FSM worker fans
+    # out. Modules whose deps genuinely aren't installed will set their
+    # own `_DEPS_OK = False` here and gracefully no-op at request time;
+    # what we're avoiding is the "_DEPS_OK = False because of an import
+    # race" failure mode that fired on the live PS-188 query.
+    for mod_path in (
+        "app.live.ttm_forecast",
+        "app.live.ttm_battery_surge",
+        "app.live.floodnet_forecast",
+        "app.context.gliner_extract",
+        "app.context.terramind_nyc",
+        "app.context.eo_chip_cache",
+        "app.flood_layers.prithvi_live",
+    ):
+        try:
+            __import__(mod_path)
+        except Exception as e:
+            print(f"[startup] {mod_path} pre-import skipped: "
+                  f"{type(e).__name__}: {e}", flush=True)
     # Warm the TerraMind specialist so first per-query call is just
     # the diffusion (~3 s), not model load (~30 s). No-ops if deps
     # are missing on this deployment.
