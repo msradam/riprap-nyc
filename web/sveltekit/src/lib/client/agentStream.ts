@@ -51,6 +51,9 @@ export interface FinalResult {
   tier?: string;
   score?: number;
   citations?: Array<{ doc_id: string; source?: string; title?: string; url?: string; vintage?: string }>;
+  /** Present when intent === "compare". */
+  intent?: string;
+  targets?: Array<{ label: string; address: string }>;
 }
 
 export interface AgentStreamHandlers {
