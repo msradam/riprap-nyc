@@ -497,6 +497,85 @@ async def stream(q: str, request: Request):
                                       "X-Accel-Buffering": "no"})
 
 
+def _run_compare(p, raw_query: str, out_q, i_addr) -> dict:
+    """Run the compare intent: execute the full single_address specialist
+    suite sequentially for each target, then merge the two paragraphs into
+    one Markdown document clearly labelled PLACE A and PLACE B.
+
+    Sequential execution is required because the FSM uses thread-local hooks
+    (set_strict_mode, set_token_callback) — concurrent runs on the same
+    thread would corrupt the hooks. See app/intents/single_address.py.
+
+    Step events from each target are forwarded to out_q tagged with a
+    `target_label` key so the trace UI can optionally group them, but the
+    existing trace UI ignores unknown keys gracefully."""
+    from app.planner import Plan
+
+    addr_targets = [t for t in p.targets if t.get("type") == "address"]
+    if len(addr_targets) < 2:
+        # Fallback: only one (or zero) address extracted — run as single_address
+        return i_addr.run(p, raw_query, progress_q=out_q, strict=True)
+
+    results = []
+    for idx, target in enumerate(addr_targets[:2]):
+        label = "PLACE A" if idx == 0 else "PLACE B"
+        addr_text = target["text"]
+        # Synthetic single-address plan for this target
+        sub_plan = Plan(
+            intent="single_address",
+            targets=[{"type": "address", "text": addr_text}],
+            specialists=p.specialists,
+            rationale=p.rationale,
+        )
+
+        if out_q is not None:
+            # Wrap out_q to tag step events with the target label so the
+            # trace UI can optionally group them; token/mellea_attempt pass
+            # through untagged so the SvelteKit briefing buffer works.
+            _label = label
+            _q = out_q
+            class _TaggedQ:
+                def put(self, ev):
+                    if ev.get("kind") == "step":
+                        _q.put({**ev, "target_label": _label})
+                    else:
+                        _q.put(ev)
+            effective_q = _TaggedQ()
+        else:
+            effective_q = None
+
+        result = i_addr.run(sub_plan, addr_text, progress_q=effective_q, strict=True)
+        results.append((label, addr_text, result))
+
+    # Merge: produce one paragraph with both place sections.
+    parts = []
+    for label, addr_text, res in results:
+        para = (res.get("paragraph") or "").strip()
+        parts.append(f"## {label}: {addr_text}\n\n{para}")
+    merged_paragraph = "\n\n---\n\n".join(parts)
+
+    # Combine Mellea metadata: sum attempts, union passed/failed.
+    def _merge_mellea(a, b):
+        def _lst(m, k): return m.get(k) or []
+        return {
+            "rerolls": (a.get("rerolls") or 0) + (b.get("rerolls") or 0),
+            "n_attempts": (a.get("n_attempts") or 0) + (b.get("n_attempts") or 0),
+            "requirements_passed": list(set(_lst(a, "requirements_passed") + _lst(b, "requirements_passed"))),
+            "requirements_failed": list(set(_lst(a, "requirements_failed") + _lst(b, "requirements_failed"))),
+            "requirements_total": max(a.get("requirements_total") or 0, b.get("requirements_total") or 0),
+        }
+
+    mellea_a = results[0][2].get("mellea") or {}
+    mellea_b = results[1][2].get("mellea") or {}
+    return {
+        "paragraph": merged_paragraph,
+        "mellea": _merge_mellea(mellea_a, mellea_b),
+        "intent": "compare",
+        "targets": [{"label": lbl, "address": addr} for lbl, addr, _ in results],
+        "tier": results[0][2].get("tier"),
+    }
+
+
 @app.get("/api/agent")
 def api_agent(q: str):
     """Agentic endpoint: take a natural-language query, plan it via
@@ -523,7 +602,9 @@ def api_agent(q: str):
                        "requirements_total": 0},
             "status": "not_implemented",
         })
-    if p.intent == "development_check":
+    if p.intent == "compare":
+        out = _run_compare(p, q, None, i_addr)
+    elif p.intent == "development_check":
         out = i_dev.run(p, q, strict=True)
     elif p.intent == "neighborhood":
         out = i_nbhd.run(p, q, strict=True)
@@ -568,6 +649,8 @@ async def api_agent_stream(q: str):
                                "requirements_total": 0},
                     "status": "not_implemented",
                 }
+            elif p.intent == "compare":
+                final = _run_compare(p, q, out_q, i_addr)
             elif p.intent == "development_check":
                 final = i_dev.run(p, q, progress_q=out_q, strict=True)
             elif p.intent == "neighborhood":
