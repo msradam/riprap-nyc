@@ -1,0 +1,65 @@
+# Riprap Models — full runtime requirements
+#
+# Pinned to the exact versions the bootstrap MI300X container ran with,
+# captured via `pip freeze` inside the running `terramind` container on
+# 2026-05-05. Keep these pins until something in the spec needs to
+# change — the AMD ROCm + terratorch + tsfm_public stack has narrow
+# version compatibility windows.
+#
+# Torch / torchvision / torchaudio are NOT pinned here because they
+# come from the base image (rocm/pytorch ROCm 7.2.3 + torch 2.9.1
+# release). Pinning them again would cause pip to attempt a re-install
+# of a different ABI and break the build.
+
+# ---- Core HF / transformers stack ----------------------------------------
+transformers==4.57.6
+peft==0.18.1
+accelerate==1.13.0
+safetensors==0.8.0rc0
+huggingface_hub==0.36.2
+sentence-transformers==5.4.1
+gliner==0.2.26
+
+# ---- IBM Granite TimeSeries TTM r2 (TTM forecast specialists) ------------
+granite-tsfm==0.3.6
+
+# ---- Prithvi-EO / TerraMind serving stack --------------------------------
+# terratorch pulls torchgeo, lightning, jsonargparse, kornia, timm, einops,
+# albumentations, etc. Pinning the leaves explicitly so transitive bumps
+# don't drift the FSM specialists' behaviour silently.
+terratorch==1.2.7
+torchgeo==0.9.0
+torchmetrics==1.9.0
+lightning==2.6.1
+jsonargparse==4.48.0
+albumentations==2.0.8
+albucore==0.0.24
+kornia==0.8.2
+timm==1.0.25
+einops==0.8.2
+
+# ---- Geospatial I/O (used by the NYC-cropping helpers) -------------------
+rasterio==1.5.0
+pyproj==3.7.2
+geopandas==1.1.3
+shapely==2.1.2
+pystac==1.14.3
+pystac-client==0.9.0
+rioxarray==0.22.0
+xarray==2026.4.0
+tifffile==2026.5.2
+ImageIO==2.37.3
+
+# ---- Numeric core --------------------------------------------------------
+numpy==2.4.4
+pandas==3.0.0
+scipy==1.17.1
+scikit-learn==1.8.0
+pillow==12.1.1
+
+# ---- Web / IO ------------------------------------------------------------
+fastapi==0.135.1
+uvicorn==0.41.0
+pydantic==2.12.5
+httpx==0.28.1
+requests==2.32.5

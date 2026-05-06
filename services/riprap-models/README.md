@@ -22,35 +22,119 @@ Auth: bearer token on every `/v1/*` route via `RIPRAP_MODELS_API_KEY`.
 Same shape as vLLM. `/healthz` is open so liveness probes don't need
 auth.
 
-## Deploy
+## Deploy — fresh droplet (recommended)
 
-The droplet's existing `terramind` container already has
-`torch+ROCm 7.0`, `terratorch 1.2.7`, `granite-tsfm 0.3.6`,
-`transformers 4.57`, `peft`, `safetensors`, `fastapi`, `uvicorn`. The
-service code lands under `/workspace/riprap-models/`; only deltas
-need installing.
+Use the one-shot bring-up script. Works on any AMD ROCm GPU droplet
+with Docker + GPU device files (`/dev/kfd`, `/dev/dri`) and SSH root
+access. No prior container state required.
 
 ```bash
-# Copy code (run from project root)
-ssh root@129.212.181.238 'mkdir -p /workspace/riprap-models'
-rsync -av --delete services/riprap-models/ \
-    root@129.212.181.238:/workspace/riprap-models/
+scripts/deploy_droplet.sh <droplet-ip> <bearer-token>
+```
 
-# Install deltas + start uvicorn inside the terramind container
-ssh root@129.212.181.238 bash <<'REMOTE'
+What it does, in order:
+
+1. Verifies SSH + AMD GPU device files on the droplet
+2. Pulls `vllm/vllm-openai-rocm:v0.17.1`
+3. Tar-streams `services/riprap-models/` to `/workspace/riprap-build`
+4. Builds `riprap-models:latest` from `services/riprap-models/Dockerfile`
+   (base: `rocm/pytorch:rocm7.2.3_ubuntu24.04_py3.12_pytorch_release_2.9.1`,
+   ~10–20 min on first build, < 1 min on rebuild)
+5. Starts both containers (`vllm` on host port 8001, `riprap-models`
+   on host port 7860) with `--restart unless-stopped` so they survive
+   reboots
+6. Waits up to 90 s for vLLM `/v1/models` and 60 s for
+   riprap-models `/healthz`, exits non-zero if either misses
+
+Re-running on the same droplet is idempotent — existing containers
+get `docker rm -f`'d and recreated.
+
+Env knobs:
+
+| Var | Default | Purpose |
+|---|---|---|
+| `SSH_USER` | `root` | SSH login |
+| `SSH_KEY` | (ssh-agent) | path to private key |
+| `VLLM_PORT` | `8001` | host port mapping for vLLM |
+| `MODELS_PORT` | `7860` | host port mapping for riprap-models |
+| `MODEL_REPO` | `ibm-granite/granite-4.1-8b` | LLM repo |
+| `HF_CACHE_HOST` | `/root/hf-cache` | HF cache mount on droplet |
+| `SKIP_BUILD` | `0` | set `1` to skip Dockerfile build |
+
+After it returns, set the printed env vars in your local shell or HF
+Space variables, run `scripts/probe_addresses.py` to verify, and
+you're live.
+
+## Deploy — extend an existing container (legacy)
+
+If you already have a `terramind` container with the heavy ML deps
+baked in (the bootstrap-droplet path), you can skip the Dockerfile
+build and install the runtime deltas only:
+
+```bash
+ssh root@<ip> 'mkdir -p /workspace/riprap-models'
+rsync -av --delete services/riprap-models/ root@<ip>:/workspace/riprap-models/
+ssh root@<ip> bash <<'REMOTE'
 docker cp /workspace/riprap-models terramind:/workspace/
-docker exec -d -e RIPRAP_MODELS_API_KEY="$RIPRAP_MODELS_API_KEY" terramind \
+docker exec -d -e RIPRAP_MODELS_API_KEY="$TOKEN" terramind \
   bash -c "cd /workspace/riprap-models && \
            pip install --no-cache-dir -r requirements.txt && \
-           uvicorn main:app --host 0.0.0.0 --port 7860 --log-level info \
-                  > /workspace/riprap-models.log 2>&1"
+           uvicorn main:app --host 0.0.0.0 --port 7860"
 REMOTE
 ```
 
-Service binds inside the container at `:7860`; the host port
-mapping was set when the `terramind` container was created
-(`docker run -p 7860:7860 ...`), so externally the service is at
-`http://129.212.181.238:7860`.
+This path uses `requirements.txt` (deltas only); the Dockerfile path
+above uses `requirements-full.txt` (everything). Service is
+externally reachable at `http://<droplet-ip>:7860` once the host port
+mapping was set when the container was created.
+
+## Destroy + redeploy runbook
+
+What survives a droplet destruction:
+
+- `services/riprap-models/Dockerfile` + `requirements-full.txt` —
+  every pinned dep, captured from the bootstrap droplet on 2026-05-05
+- `scripts/deploy_droplet.sh` — the bring-up script
+- HF Hub model artefacts — every fine-tune lives at
+  `msradam/Prithvi-EO-2.0-NYC-Pluvial`,
+  `msradam/TerraMind-NYC-Adapters`,
+  `msradam/Granite-TTM-r2-Battery-Surge`. The Dockerfile pulls them
+  fresh on first request
+
+What does NOT survive:
+
+- The HF cache at `${HF_CACHE_HOST}` (default `/root/hf-cache`) on
+  the droplet — every redeploy re-downloads ~12 GB of weights
+  (Granite 4.1 8b for vLLM ~16 GB, Prithvi v2 ~1.3 GB, TerraMind
+  adapters ~600 MB, Granite Embedding ~600 MB, GLiNER ~400 MB,
+  Granite TTM r2 ~6 MB). First query after redeploy takes ~30 s
+  longer than steady-state because of the lazy model load
+- The bearer token — generate a fresh one when re-deploying
+
+To redeploy:
+
+```bash
+# 1. Spin up a new GPU droplet (DigitalOcean / AMD Developer Cloud)
+# 2. Copy your SSH key to it (DO usually does this for you)
+# 3. Run:
+TOKEN=$(openssl rand -base64 24)
+scripts/deploy_droplet.sh <new-ip> "$TOKEN"
+
+# 4. Update HF Space env vars to point at the new IP
+huggingface-cli space variables \
+  lablab-ai-amd-developer-hackathon/riprap-nyc \
+  RIPRAP_LLM_BASE_URL=http://<new-ip>:8001/v1 \
+  RIPRAP_LLM_API_KEY=$TOKEN \
+  RIPRAP_ML_BASE_URL=http://<new-ip>:7860 \
+  RIPRAP_ML_API_KEY=$TOKEN
+
+# 5. Restart the HF Space so it picks up the new env vars
+huggingface-cli space restart lablab-ai-amd-developer-hackathon/riprap-nyc
+
+# 6. Verify end-to-end against the redeployed stack
+.venv/bin/python scripts/probe_addresses.py \
+  --base https://lablab-ai-amd-developer-hackathon-riprap-nyc.hf.space
+```
 
 ## Local app config
 
