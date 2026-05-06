@@ -197,7 +197,7 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
   <div class="body" style="font-size: 28px; color: var(--ink); font-weight: 500;">442 East Houston Street, Manhattan</div>
 </div>
 
-<blockquote style="margin-top: 32px;">17 specialists, ~10 seconds, audit-grade prose. Watch the Stones light up.</blockquote>
+<blockquote style="margin-top: 32px;">Five Stones, around ten seconds, audit-grade prose. Watch the evidence light up.</blockquote>
 
 ---
 
