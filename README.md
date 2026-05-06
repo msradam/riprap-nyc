@@ -29,6 +29,14 @@ Live demo: <https://lablab-ai-amd-developer-hackathon-riprap-nyc.hf.space>
 
 ---
 
+## What it looks like
+
+![Riprap flood-exposure briefing for 80 Pioneer Street, Brooklyn](assets/screenshots/hero.png)
+
+*A citation-grounded flood-exposure briefing for 80 Pioneer Street in Red Hook. Generated in ~7 seconds against AMD MI300X. Every numeric claim cites a primary public-record source.*
+
+---
+
 ## How Riprap works: the Five Stones
 
 Behind every briefing, around 25 atomic data probes fan out across NYC

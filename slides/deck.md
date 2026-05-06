@@ -76,10 +76,8 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 
 <p style="margin-bottom: 14px; font-size: 20px; max-width: 72ch; color: var(--ink-2);">Type an address or neighborhood. Get a written briefing in 5&ndash;13 seconds, fusing four temporal modes &mdash; Sandy 2012 inundation, current 311 history, FloodNet sensor reads, NPCC4 projections &mdash; into one cited paragraph.</p>
 
-<div style="border: 2px dashed #94A3B8; background: #E8ECF2; display: flex; align-items: center; justify-content: center; height: 280px; border-radius: 2px; margin-bottom: 10px;">
-  <p style="font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); text-align: center; margin: 0; padding: 24px;">
-    [ screenshot of riprap.nyc landing &mdash; to be added ]
-  </p>
+<div style="border: 2px solid #94A3B8; border-radius: 2px; margin-bottom: 10px; overflow: hidden; height: 280px;">
+  <img src="../assets/screenshots/hero.png" style="width: 100%; height: 100%; object-fit: cover; object-position: top;" />
 </div>
 
 <p style="font-size: 15px; color: var(--ink-3); margin: 0;">Behind the prose: every numeric claim links to its primary public-record source. Mellea rejection sampling refuses to publish what it can&rsquo;t cite.</p>
