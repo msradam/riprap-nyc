@@ -57,7 +57,7 @@ Constraints:
 """
 
 
-def run(plan, query: str, progress_q=None, strict: bool = False) -> dict[str, Any]:
+def run(plan, query: str, progress_q=None, strict: bool = False) -> dict[str, Any]:  # TODO(cleanup): cc-grade-F (73)
     """Execute the planner's neighborhood Plan.
 
     Resolves all targets to NTAs, picks the largest matching NTA (or the

@@ -127,7 +127,7 @@ def _stone_for_step(step: str) -> str | None:
     return None
 
 
-def stream_one(query: str, base: str, timeout_s: float) -> RunResult:
+def stream_one(query: str, base: str, timeout_s: float) -> RunResult:  # TODO(cleanup): cc-grade-D (21)
     """Drive one SSE run, accumulate every event into a RunResult."""
     url = f"{base}/api/agent/stream?q={quote(query)}"
     res = RunResult(query=query)
@@ -214,7 +214,7 @@ _REQUIRED_HEADINGS = (
 _OPTIONAL_HEADINGS = ("Policy context",)
 
 
-def assert_run(spec: dict[str, Any], r: RunResult) -> list[str]:
+def assert_run(spec: dict[str, Any], r: RunResult) -> list[str]:  # TODO(cleanup): cc-grade-F (42)
     """Return a list of failures (empty list if the run passes)."""
     fails: list[str] = []
     if r.errors:
@@ -307,7 +307,7 @@ def assert_run(spec: dict[str, Any], r: RunResult) -> list[str]:
 
 # ---- Entry point ---------------------------------------------------------
 
-def main() -> int:
+def main() -> int:  # TODO(cleanup): cc-grade-D (28)
     ap = argparse.ArgumentParser()
     ap.add_argument("--base", default="http://127.0.0.1:7860",
                     help="Riprap server base URL")

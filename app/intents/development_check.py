@@ -56,7 +56,7 @@ Constraints:
 """
 
 
-def run(plan, query: str, progress_q=None, strict: bool = False) -> dict[str, Any]:
+def run(plan, query: str, progress_q=None, strict: bool = False) -> dict[str, Any]:  # TODO(cleanup): cc-grade-D (27)
     """Execute the development_check Plan. If progress_q is provided
     (a queue.Queue), each finalized step record is put on it so a
     streaming endpoint can render the trace live.

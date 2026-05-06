@@ -49,16 +49,6 @@
   let errorState = $state<ErrorKey | null>(null);
   let registers = $state<RegisterData[]>([]);
 
-  // Per-tier feature counts for the map legend. Layers with 0 are
-  // dropped from the legend display per the silence-over-confabulation
-  // rule (handoff hard rule #3).
-  let mapFeatureCounts = $derived({
-    empirical: (sandyFc?.features.length ?? 0) + (idaHwmFc?.features.length ?? 0),
-    modeled: depFc?.features.length ?? 0,
-    synthetic: (synFc?.features.length ?? 0) + (terramindLulcFc?.features.length ?? 0),
-    proxy: proxyFc?.features.length ?? 0
-  });
-
   let traceRoot = $state<TraceNode>({
     id: 'root', name: 'briefing.run', status: 'ok', ms: 0, tier: null, children: []
   });
@@ -301,6 +291,16 @@
   let proxyFc = $state<FeatureCollection | undefined>(undefined);
   let terramindLulcFc = $state<FeatureCollection | undefined>(undefined);
   let idaHwmFc = $state<FeatureCollection | undefined>(undefined);
+
+  // Per-tier feature counts for the map legend. Layers with 0 are
+  // dropped from the legend display per the silence-over-confabulation
+  // rule (handoff hard rule #3).
+  let mapFeatureCounts = $derived({
+    empirical: (sandyFc?.features.length ?? 0) + (idaHwmFc?.features.length ?? 0),
+    modeled: depFc?.features.length ?? 0,
+    synthetic: (synFc?.features.length ?? 0) + (terramindLulcFc?.features.length ?? 0),
+    proxy: proxyFc?.features.length ?? 0
+  });
 
   let blocks = $state<BriefingBlock[]>([]);
   let citations = $state<Record<string, Citation>>({});

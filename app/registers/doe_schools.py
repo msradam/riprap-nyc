@@ -26,6 +26,12 @@ from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 
+from app.registers._footprint import (
+    BUFFER_DOE_SCHOOL_M,
+    dep_class_buffered,
+    inside_sandy_buffered,
+)
+
 _ROOT = Path(__file__).resolve().parents[2]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
@@ -108,13 +114,6 @@ def _sample_raster(raster_path: Path, lat: float, lon: float) -> float | None:
     except Exception:
         log.exception("raster sample failed for %s", raster_path)
         return None
-
-
-from app.registers._footprint import (
-    BUFFER_DOE_SCHOOL_M,
-    dep_class_buffered,
-    inside_sandy_buffered,
-)
 
 
 def _inside_sandy(lat: float, lon: float) -> bool:

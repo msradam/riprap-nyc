@@ -42,6 +42,12 @@ from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 
+from app.registers._footprint import (
+    BUFFER_MTA_ENTRANCE_M,
+    dep_class_buffered,
+    inside_sandy_buffered,
+)
+
 # Ensure `app/` is importable when this experiment is invoked directly
 # from its own subdir.
 _ROOT = Path(__file__).resolve().parents[2]
@@ -144,13 +150,6 @@ def _sample_raster(raster_path: Path, lat: float, lon: float) -> float | None:
     except Exception:
         log.exception("raster sample failed for %s", raster_path)
         return None
-
-
-from app.registers._footprint import (
-    BUFFER_MTA_ENTRANCE_M,
-    dep_class_buffered,
-    inside_sandy_buffered,
-)
 
 
 def _inside_sandy(lat: float, lon: float) -> bool:

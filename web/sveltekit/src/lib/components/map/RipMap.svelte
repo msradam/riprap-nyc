@@ -268,7 +268,6 @@
               ${dist}
             </div>
           </div>`;
-        // @ts-expect-error: maplibre captured in outer onMount scope
         const popup = new maplibre.Popup({ closeButton: true, offset: 12 });
         const coords = (f.geometry as GeoJSON.Point).coordinates as [number, number];
         popup.setLngLat(coords).setHTML(html).addTo(map);
@@ -329,7 +328,6 @@
             </div>
             ${docId ? `<div style="margin-top: 4px; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: #005EA2;">[${docId}]</div>` : ''}
           </div>`;
-        // @ts-expect-error: maplibre captured in outer onMount scope
         const popup = new maplibre.Popup({ closeButton: true, offset: 12 });
         const coords = (f.geometry as GeoJSON.Point).coordinates as [number, number];
         popup.setLngLat(coords).setHTML(html).addTo(map);

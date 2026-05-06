@@ -243,7 +243,7 @@ def plan(query: str, model: str = OLLAMA_MODEL, on_token=None) -> Plan:
     return _validate(d, raw_query=query)
 
 
-def _validate(d: dict[str, Any], raw_query: str) -> Plan:
+def _validate(d: dict[str, Any], raw_query: str) -> Plan:  # TODO(cleanup): cc-grade-D (23)
     """Defensive parse + sanitize. The model might pick an invalid intent
     or a specialist that isn't applicable; fall back to single_address
     with the raw query as the address (the most common case)."""
