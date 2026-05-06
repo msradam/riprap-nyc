@@ -95,6 +95,29 @@ def _current_planned_specialists():
     return getattr(_FSM_LOCAL, "planned_specialists", None)
 
 
+def set_user_query(query: str | None):
+    """Install the user's original natural-language query for question-aware
+    framing in step_reconcile. The FSM's state["query"] is the geocoder
+    input (often just the street address), which doesn't carry the
+    user's question shape — set this separately so Capstone can detect
+    'should I worry' / 'is disclosure required' / etc."""
+    _FSM_LOCAL.user_query = query
+
+
+def _current_user_query() -> str | None:
+    return getattr(_FSM_LOCAL, "user_query", None)
+
+
+def set_planner_intent(intent: str | None):
+    """Install the planner's classified intent so step_reconcile can pass
+    it to the framing detector as a tiebreaker on bare-place queries."""
+    _FSM_LOCAL.planner_intent = intent
+
+
+def _current_planner_intent() -> str | None:
+    return getattr(_FSM_LOCAL, "planner_intent", None)
+
+
 # Canonical Burr: one action per specialist, sequential transitions.
 # A previous version of this module wrapped 16 specialists in a single
 # fan-out action that ran them concurrently in a ThreadPoolExecutor;
@@ -969,6 +992,7 @@ def step_reconcile(state: State) -> State:
             "doh_hospitals": state.get("doh_hospitals"),
         }
         if is_strict:
+            from app.framing import augment_system_prompt
             from app.mellea_validator import DEFAULT_LOOP_BUDGET, reconcile_strict_streaming
             from app.reconcile import EXTRA_SYSTEM_PROMPT, build_documents, trim_docs_to_plan
             doc_msgs = build_documents(snap)
@@ -979,8 +1003,13 @@ def step_reconcile(state: State) -> State:
             else:
                 token_cb = _current_token_callback()
                 attempt_cb = _current_mellea_attempt_callback()
+                framed_prompt = augment_system_prompt(
+                    EXTRA_SYSTEM_PROMPT,
+                    query=_current_user_query() or state.get("query") or "",
+                    intent=_current_planner_intent() or "single_address",
+                )
                 mres = reconcile_strict_streaming(
-                    doc_msgs, EXTRA_SYSTEM_PROMPT,
+                    doc_msgs, framed_prompt,
                     user_prompt="Write the cited paragraph now.",
                     loop_budget=DEFAULT_LOOP_BUDGET,
                     on_token=(lambda d, _ai: token_cb(d)) if token_cb else None,
@@ -1023,6 +1052,7 @@ def step_reconcile(state: State) -> State:
 
 
 import os as _os  # noqa: E402
+
 
 # Specialists that involve large spatial joins (every NYCHA development
 # overlapped against multiple flood layers, every DOE school footprint

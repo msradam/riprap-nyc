@@ -18,7 +18,6 @@ sys.path.insert(0, str(ROOT))
 from app.assets import mta_entrances  # noqa: E402
 from app.register_builder import build_register  # noqa: E402
 
-
 if __name__ == "__main__":
     build_register("mta_entrances", mta_entrances.load,
                    meta_keys=("name", "address", "borough", "entrance_type"))

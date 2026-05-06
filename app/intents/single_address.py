@@ -23,8 +23,10 @@ def run(plan, query: str, progress_q=None, strict: bool = False) -> dict:
         iter_steps,
         set_mellea_attempt_callback,
         set_planned_specialists,
+        set_planner_intent,
         set_strict_mode,
         set_token_callback,
+        set_user_query,
     )
     planner_addr = next(
         (t["text"] for t in plan.targets if t.get("type") == "address"),
@@ -33,6 +35,8 @@ def run(plan, query: str, progress_q=None, strict: bool = False) -> dict:
     addr = planner_addr if (planner_addr and len(planner_addr) >= len(query) * 0.7) else query
     set_strict_mode(strict)
     set_planned_specialists(plan.specialists or [])
+    set_user_query(query)
+    set_planner_intent(plan.intent)
     if progress_q is not None:
         def _on_token(delta: str):
             progress_q.put({"kind": "token", "delta": delta})
@@ -57,12 +61,16 @@ def run(plan, query: str, progress_q=None, strict: bool = False) -> dict:
             set_mellea_attempt_callback(None)
             set_strict_mode(False)
             set_planned_specialists(None)
+            set_user_query(None)
+            set_planner_intent(None)
     else:
         try:
             out = run_linear(addr)
         finally:
             set_strict_mode(False)
             set_planned_specialists(None)
+            set_user_query(None)
+            set_planner_intent(None)
     out["intent"] = "single_address"
     out["plan"] = {
         "intent": plan.intent,

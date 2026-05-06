@@ -218,12 +218,14 @@ def _warm_caches():
         import sklearn  # noqa: F401  prime sklearn first
         import terratorch  # noqa: F401
         import tsfm_public  # noqa: F401
+
         # Transformers does lazy-loading via __getattr__; touching
         # PreTrainedModel forces the lazy-init to complete on the main
         # thread. Otherwise FSM worker threads race the lazy loader and
         # surface ModuleNotFoundError("Could not import module
         # 'PreTrainedModel'") under load.
         from transformers import PreTrainedModel  # noqa: F401
+
         # tsfm_public's TinyTimeMixerForPrediction import path triggers
         # the granite-tsfm side of the lazy chain — pre-warm here too.
         from tsfm_public import TinyTimeMixerForPrediction  # noqa: F401

@@ -1,0 +1,1086 @@
+{
+  "qid": "11",
+  "slug": "doe-ps188",
+  "query": "PS 188, Lower East Side",
+  "persona": "DOE school siting (PS 188)",
+  "question_type": "development_siting",
+  "expected_intent": null,
+  "anchor": "adapted",
+  "started_at": 1778049414.974155,
+  "ended_at": 1778049526.3745291,
+  "plan": {
+    "kind": "plan",
+    "intent": "single_address",
+    "targets": [
+      {
+        "type": "address",
+        "text": "PS 188"
+      }
+    ],
+    "specialists": [
+      "geocode",
+      "sandy",
+      "dep_stormwater",
+      "floodnet",
+      "nyc311",
+      "noaa_tides",
+      "nws_alerts",
+      "ttm_forecast",
+      "microtopo"
+    ],
+    "rationale": "The query specifies a particular street address (PS 188) in the Lower East Side, so we need to geocode it and then retrieve historic Sandy flood extents, DEP stormwater modeling, live sensor data, NYC 311 complaints, tide levels, NWS alerts, surge nowcasts, terrain info, and relevant agency reports for that exact location."
+  },
+  "intent": "single_address",
+  "paragraph": "**Status.**\nThe address at 188 PO MASONE WAY, Brooklyn, NY experiences moderate flood exposure due to its location on a mid-slope with significant surrounding lower elevations; **54.8%** of cells within a 200\u202fm radius are lower, indicating potential drainage challenges [doc_id: microtopo].\n\n**Empirical evidence.**\nIn the past five years, there have been **14** flood-related 311 service requests within a 200\u202fm radius, primarily due to sewer backups (**10** instances) and catch basin clogging (**3** instances), with occasional street flooding (**1** instance) [doc_id: nyc311].\n\n**Modeled scenarios.**\nThe Topographic Wetness Index (TWI) is **8.77**, classified as moderate, suggesting susceptibility to saturation under certain hydrological conditions [doc_id: microtopo]. The Height Above Nearest Drainage (HAND) of **18.86\u202fm** indicates the address sits well above the local drainage network, reducing immediate flood risk from surface runoff [doc_id: microtopo].\n\n**Policy context.**\nNo RAG documents are present for this specific address; however, NYC 311 data suggests ongoing maintenance needs related to sewer and catch basin issues, which may be addressed by municipal infrastructure programs [doc_id: nyc311].",
+  "steps": [
+    {
+      "kind": "step",
+      "step": "geocode",
+      "ok": true,
+      "elapsed_s": 0.13,
+      "result": {
+        "address": "188 PO MASONE WAY, Brooklyn, NY, USA",
+        "lat": 40.692887,
+        "lon": -73.967076
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "sandy_inundation",
+      "ok": true,
+      "elapsed_s": 0.05,
+      "result": {
+        "inside": false
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "dep_stormwater",
+      "ok": true,
+      "elapsed_s": 0.03,
+      "result": {
+        "dep_extreme_2080": "outside",
+        "dep_moderate_2050": "outside",
+        "dep_moderate_current": "outside"
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "floodnet",
+      "ok": true,
+      "elapsed_s": 0.09,
+      "result": {
+        "n_sensors": 0,
+        "n_events_3y": 0
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "nyc311",
+      "ok": true,
+      "elapsed_s": 0.31,
+      "result": {
+        "n": 14
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "noaa_tides",
+      "ok": true,
+      "elapsed_s": 0.38,
+      "result": {
+        "station": "8518750",
+        "observed_ft_mllw": 3.18,
+        "residual_ft": -0.22
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "nws_alerts",
+      "ok": true,
+      "elapsed_s": 1.3,
+      "result": {
+        "n_active": 0
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "nws_obs",
+      "ok": true,
+      "elapsed_s": 0.06,
+      "result": {
+        "station": "KNYC",
+        "p1h_mm": null,
+        "p6h_mm": null
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "ttm_forecast",
+      "ok": true,
+      "elapsed_s": 0.37,
+      "result": {
+        "context": 512,
+        "horizon": 96,
+        "forecast_peak_ft": 0.21,
+        "forecast_peak_min_ahead": 6,
+        "interesting": true
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "ttm_311_forecast",
+      "ok": true,
+      "elapsed_s": 0.39,
+      "result": {
+        "history_total": 6,
+        "history_recent_mean": null,
+        "forecast_mean": null,
+        "forecast_peak": null,
+        "accelerating": false
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "floodnet_forecast",
+      "ok": false,
+      "elapsed_s": 0.17,
+      "result": null,
+      "err": "sensor has only 0 historical events (<5); forecast omitted"
+    },
+    {
+      "kind": "step",
+      "step": "ttm_battery_surge",
+      "ok": true,
+      "elapsed_s": 1.24,
+      "result": {
+        "context_h": 1024,
+        "horizon_h": 96,
+        "forecast_peak_m": 0.074,
+        "forecast_peak_hours_ahead": 96,
+        "interesting": false
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "microtopo_lidar",
+      "ok": true,
+      "elapsed_s": 0.01,
+      "result": {
+        "elev_m": 18.86,
+        "pct_200m": 54.8,
+        "relief_m": 13.27
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "ida_hwm_2021",
+      "ok": true,
+      "elapsed_s": 0.0,
+      "result": {
+        "n_within_800m": 0,
+        "max_height_above_gnd_ft": null,
+        "nearest_m": 1570.0
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "mta_entrance_exposure",
+      "ok": true,
+      "elapsed_s": 1.1,
+      "result": {
+        "n_entrances": 7,
+        "n_inside_sandy_2012": 0,
+        "n_in_dep_extreme_2080": 0
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "prithvi_eo_v2",
+      "ok": true,
+      "elapsed_s": 0.05,
+      "result": {
+        "inside_water_polygon": false,
+        "nearest_distance_m": 7519.7,
+        "n_polygons_within_500m": 0
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "rag_granite_embedding",
+      "ok": true,
+      "elapsed_s": 6.55,
+      "result": {
+        "hits": 3,
+        "top": [
+          [
+            "rag_nycha",
+            0.8
+          ],
+          [
+            "rag_comptroller",
+            0.8
+          ],
+          [
+            "rag_mta",
+            0.79
+          ]
+        ]
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "gliner_extract",
+      "ok": true,
+      "elapsed_s": 2.23,
+      "result": {
+        "sources": 3,
+        "totals_by_label": {
+          "agency": 5,
+          "nyc_location": 15
+        }
+      },
+      "err": null
+    },
+    {
+      "kind": "step",
+      "step": "mellea_reconcile_address",
+      "ok": true,
+      "elapsed_s": 84.97,
+      "result": {
+        "rerolls": 1,
+        "passed": "3/4",
+        "paragraph_chars": 1223
+      },
+      "err": null
+    }
+  ],
+  "mellea_attempts": [
+    {
+      "kind": "mellea_attempt",
+      "attempt": 0,
+      "passed": [
+        "numerics_grounded",
+        "no_placeholder_tokens",
+        "citations_resolve"
+      ],
+      "failed": [
+        "citations_dense"
+      ]
+    },
+    {
+      "kind": "mellea_attempt",
+      "attempt": 1,
+      "passed": [
+        "numerics_grounded",
+        "no_placeholder_tokens",
+        "citations_resolve"
+      ],
+      "failed": [
+        "citations_dense"
+      ]
+    }
+  ],
+  "final": {
+    "kind": "final",
+    "geocode": {
+      "address": "188 PO MASONE WAY, Brooklyn, NY, USA",
+      "borough": "Brooklyn",
+      "lat": 40.692887,
+      "lon": -73.967076,
+      "bbl": "3019030032",
+      "bin": "3054822"
+    },
+    "sandy": false,
+    "dep": {
+      "dep_extreme_2080": {
+        "depth_class": 0,
+        "depth_label": "outside",
+        "citation": "NYC DEP Stormwater Flood Map \u2014 DEP Extreme Stormwater (3.66 in/hr, 2080 SLR)"
+      },
+      "dep_moderate_2050": {
+        "depth_class": 0,
+        "depth_label": "outside",
+        "citation": "NYC DEP Stormwater Flood Map \u2014 DEP Moderate Stormwater (2.13 in/hr, 2050 SLR)"
+      },
+      "dep_moderate_current": {
+        "depth_class": 0,
+        "depth_label": "outside",
+        "citation": "NYC DEP Stormwater Flood Map \u2014 DEP Moderate Stormwater (2.13 in/hr, current SLR)"
+      }
+    },
+    "floodnet": {
+      "n_sensors": 0,
+      "sensors": [],
+      "n_flood_events_3y": 0,
+      "n_sensors_with_events": 0,
+      "peak_event": null,
+      "radius_m": 600
+    },
+    "nyc311": {
+      "n": 14,
+      "radius_m": 200,
+      "years": 5,
+      "by_year": {
+        "2021": 2,
+        "2022": 1,
+        "2023": 2,
+        "2024": 3,
+        "2025": 5,
+        "2026": 1
+      },
+      "by_descriptor": {
+        "Sewer Backup (Use Comments) (SA)": 10,
+        "Catch Basin Clogged/Flooding (Use Comments) (SC)": 3,
+        "Street Flooding (SJ)": 1
+      },
+      "most_recent": [
+        {
+          "date": "2026-03-06",
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "address": "132 WILLOUGHBY AVENUE"
+        },
+        {
+          "date": "2025-11-06",
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "address": "179 WAVERLY AVENUE"
+        },
+        {
+          "date": "2025-09-16",
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "address": "410 MYRTLE AVENUE"
+        },
+        {
+          "date": "2025-08-26",
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "address": "123 WAVERLY AVENUE"
+        },
+        {
+          "date": "2025-05-09",
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "address": "478 MYRTLE AVENUE"
+        }
+      ],
+      "points": [
+        {
+          "lat": 40.69168598992932,
+          "lon": -73.96708441010607,
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "date": "2026-03-06",
+          "address": "132 WILLOUGHBY AVENUE"
+        },
+        {
+          "lat": 40.69261115479122,
+          "lon": -73.96771140653141,
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "date": "2025-11-06",
+          "address": "179 WAVERLY AVENUE"
+        },
+        {
+          "lat": 40.69311939618948,
+          "lon": -73.96939159371745,
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "date": "2025-09-16",
+          "address": "410 MYRTLE AVENUE"
+        },
+        {
+          "lat": 40.69423065877145,
+          "lon": -73.96803517485618,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2025-08-26",
+          "address": "123 WAVERLY AVENUE"
+        },
+        {
+          "lat": 40.69339847059574,
+          "lon": -73.96620367746723,
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "date": "2025-05-09",
+          "address": "478 MYRTLE AVENUE"
+        },
+        {
+          "lat": 40.69403275265516,
+          "lon": -73.96703276573997,
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "date": "2025-01-08",
+          "address": "160 WASHINGTON AVENUE"
+        },
+        {
+          "lat": 40.69184210166538,
+          "lon": -73.96591598546856,
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "date": "2024-10-17",
+          "address": "157 WILLOUGHBY AVENUE"
+        },
+        {
+          "lat": 40.69159838752494,
+          "lon": -73.96789940886045,
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "date": "2024-06-11",
+          "address": "116 WILLOUGHBY AVENUE"
+        },
+        {
+          "lat": 40.694035769205186,
+          "lon": -73.9679956008644,
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "date": "2024-02-29",
+          "address": "133 WAVERLY AVENUE"
+        },
+        {
+          "lat": 40.69159838752494,
+          "lon": -73.96789940886045,
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "date": "2023-09-29",
+          "address": "116 WILLOUGHBY AVENUE"
+        },
+        {
+          "lat": 40.692701737215764,
+          "lon": -73.96772939295272,
+          "descriptor": "Sewer Backup (Use Comments) (SA)",
+          "date": "2023-09-27",
+          "address": "175 WAVERLY AVENUE"
+        },
+        {
+          "lat": 40.69311924031272,
+          "lon": -73.96881101490041,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2022-05-09",
+          "address": null
+        },
+        {
+          "lat": 40.69430146009803,
+          "lon": -73.96606979241858,
+          "descriptor": "Street Flooding (SJ)",
+          "date": "2021-07-01",
+          "address": "119 HALL STREET"
+        },
+        {
+          "lat": 40.69305830289211,
+          "lon": -73.96683491333206,
+          "descriptor": "Catch Basin Clogged/Flooding (Use Comments) (SC)",
+          "date": "2021-06-14",
+          "address": "180 WASHINGTON AVENUE"
+        }
+      ]
+    },
+    "microtopo": {
+      "point_elev_m": 18.86,
+      "rel_elev_pct_750m": 59.4,
+      "rel_elev_pct_200m": 54.8,
+      "basin_relief_m": 13.27,
+      "aoi_min_m": 0.0,
+      "aoi_max_m": 32.12,
+      "aoi_radius_m": 750,
+      "resolution_m": 22,
+      "twi": 8.77,
+      "hand_m": 18.86
+    },
+    "ida_hwm": {
+      "n_within_radius": 0,
+      "radius_m": 800,
+      "max_elev_ft": null,
+      "max_height_above_gnd_ft": null,
+      "nearest_dist_m": 1570.0,
+      "nearest_site": "Flushing Ave., between Marcy Ave. and Lee Ave., Williamsburg, Brooklyn",
+      "nearest_elev_ft": 13.9,
+      "sample_sites": [],
+      "points": []
+    },
+    "prithvi_water": {
+      "inside_water_polygon": false,
+      "nearest_distance_m": 7519.7,
+      "n_polygons_within_500m": 0,
+      "scene_id": "pre HLS.S30.T18TWK.2021237T153809.v2.0 | post HLS.S30.T18TWK.2021245T154911.v2.0",
+      "scene_date": "pre 2021-08-25, post 2021-09-02"
+    },
+    "prithvi_live": null,
+    "terramind": null,
+    "terramind_lulc": null,
+    "terramind_buildings": null,
+    "noaa_tides": {
+      "station_id": "8518750",
+      "station_name": "The Battery, NY",
+      "station_lat": 40.7006,
+      "station_lon": -74.0142,
+      "distance_km": 4.1,
+      "observed_ft_mllw": 3.18,
+      "predicted_ft_mllw": 3.4,
+      "residual_ft": -0.22,
+      "obs_time": "2026-05-06 02:30",
+      "error": null
+    },
+    "nws_alerts": {
+      "n_active": 0,
+      "alerts": [],
+      "error": null
+    },
+    "nws_obs": {
+      "station_id": "KNYC",
+      "station_name": "Central Park, NY",
+      "distance_km": 9.6,
+      "obs_time": "2026-05-06T05:51:00+00:00",
+      "temp_c": 18.9,
+      "precip_last_hour_mm": null,
+      "precip_last_3h_mm": null,
+      "precip_last_6h_mm": null,
+      "error": null
+    },
+    "ttm_forecast": {
+      "available": true,
+      "interesting": true,
+      "station_id": "8518750",
+      "station_name": "The Battery, NY",
+      "distance_km": 4.1,
+      "context_length": 512,
+      "horizon_steps": 96,
+      "history_peak_abs_ft": 0.47,
+      "history_recent_ft": 0.19,
+      "forecast_peak_ft": 0.21,
+      "forecast_peak_minutes_ahead": 6,
+      "forecast_peak_time_utc": "2026-05-06T06:43Z",
+      "threshold_ft": 0.3
+    },
+    "ttm_311_forecast": {
+      "available": true,
+      "radius_m": 200,
+      "days_context": 512,
+      "days_horizon": 96,
+      "history_total_complaints": 6,
+      "history_mean_per_day": 0.012,
+      "history_recent_30d_mean": 0.0,
+      "history_weekly_equivalent": 0.08,
+      "forecast_total_next_horizon": 0.7,
+      "forecast_mean_per_day": 0.007,
+      "forecast_weekly_equivalent": 0.05,
+      "forecast_peak_day": 0.06,
+      "forecast_peak_day_offset": 83,
+      "accelerating": false,
+      "context_window_start": "2024-12-11",
+      "context_window_end": "2026-05-06"
+    },
+    "floodnet_forecast": null,
+    "ttm_battery_surge": {
+      "available": true,
+      "interesting": false,
+      "model": "msradam/Granite-TTM-r2-Battery-Surge",
+      "station_id": "8518750",
+      "station_name": "The Battery, NY",
+      "context_hours": 1024,
+      "horizon_hours": 96,
+      "history_recent_m": 0.044,
+      "history_peak_abs_m": 0.398,
+      "forecast_peak_m": 0.074,
+      "forecast_peak_hours_ahead": 96,
+      "forecast_peak_time_utc": "2026-05-10T06:00",
+      "forecast_array_m": [
+        0.0234,
+        0.019,
+        0.024,
+        0.0288,
+        0.0286,
+        0.0264,
+        0.0272,
+        0.0325,
+        0.0385,
+        0.0366,
+        0.0227,
+        0.0107,
+        0.0062,
+        0.0117,
+        0.0266,
+        0.0329,
+        0.0363,
+        0.0384,
+        0.0369,
+        0.0263,
+        0.0228,
+        0.0249,
+        0.0276,
+        0.0294,
+        0.0251,
+        0.0126,
+        0.0097,
+        0.0086,
+        0.0058,
+        0.0025,
+        0.005,
+        0.0111,
+        0.018,
+        0.0162,
+        0.0007,
+        -0.013,
+        -0.0193,
+        -0.015,
+        -0.0016,
+        0.0034,
+        0.007,
+        0.0125,
+        0.0155,
+        0.0078,
+        0.0055,
+        0.0069,
+        0.0073,
+        0.0078,
+        0.0035,
+        -0.0082,
+        -0.0102,
+        -0.0102,
+        -0.0107,
+        -0.0101,
+        -0.002,
+        0.0102,
+        0.021,
+        0.0213,
+        0.0072,
+        -0.0068,
+        -0.0174,
+        -0.0192,
+        -0.0109,
+        -0.0074,
+        -0.0027,
+        0.0051,
+        0.0127,
+        0.0122,
+        0.0169,
+        0.0238,
+        0.0306,
+        0.0352,
+        0.031,
+        0.0169,
+        0.0116,
+        0.0099,
+        0.0105,
+        0.0139,
+        0.0257,
+        0.0419,
+        0.0565,
+        0.0592,
+        0.0481,
+        0.0388,
+        0.0335,
+        0.0324,
+        0.0356,
+        0.0313,
+        0.0295,
+        0.0328,
+        0.0374,
+        0.0385,
+        0.0478,
+        0.058,
+        0.0664,
+        0.0735
+      ],
+      "compute": "local",
+      "elapsed_s": 1.24
+    },
+    "mta_entrances": {
+      "available": true,
+      "n_entrances": 7,
+      "radius_m": 800,
+      "footprint_buffer_m": 8,
+      "n_inside_sandy_2012": 0,
+      "n_in_dep_extreme_2080": 0,
+      "n_ada_accessible": 0,
+      "entrances": [
+        {
+          "station_id": "291",
+          "station_name": "Clinton-Washington Avs",
+          "daytime_routes": "G",
+          "borough": "B",
+          "entrance_type": "Stair",
+          "entrance_lat": 40.68846,
+          "entrance_lon": -73.965749,
+          "distance_m": 504.8,
+          "ada_accessible": false,
+          "elevation_m": 23.98,
+          "hand_m": 3.4,
+          "inside_sandy_2012": false,
+          "dep_extreme_2080_class": 0,
+          "dep_extreme_2080_label": "outside",
+          "dep_moderate_2050_class": 0,
+          "dep_moderate_2050_label": "outside"
+        },
+        {
+          "station_id": "291",
+          "station_name": "Clinton-Washington Avs",
+          "daytime_routes": "G",
+          "borough": "B",
+          "entrance_type": "Stair",
+          "entrance_lat": 40.6881201,
+          "entrance_lon": -73.9675187,
+          "distance_m": 531.4,
+          "ada_accessible": false,
+          "elevation_m": 27.76,
+          "hand_m": 7.17,
+          "inside_sandy_2012": false,
+          "dep_extreme_2080_class": 0,
+          "dep_extreme_2080_label": "outside",
+          "dep_moderate_2050_class": 0,
+          "dep_moderate_2050_label": "outside"
+        },
+        {
+          "station_id": "291",
+          "station_name": "Clinton-Washington Avs",
+          "daytime_routes": "G",
+          "borough": "B",
+          "entrance_type": "Stair",
+          "entrance_lat": 40.688157,
+          "entrance_lon": -73.965579,
+          "distance_m": 540.9,
+          "ada_accessible": false,
+          "elevation_m": 23.18,
+          "hand_m": 2.6,
+          "inside_sandy_2012": false,
+          "dep_extreme_2080_class": 0,
+          "dep_extreme_2080_label": "outside",
+          "dep_moderate_2050_class": 0,
+          "dep_moderate_2050_label": "outside"
+        },
+        {
+          "station_id": "291",
+          "station_name": "Clinton-Washington Avs",
+          "daytime_routes": "G",
+          "borough": "B",
+          "entrance_type": "Stair",
+          "entrance_lat": 40.687875,
+          "entrance_lon": -73.967931,
+          "distance_m": 562.0,
+          "ada_accessible": false,
+          "elevation_m": 28.07,
+          "hand_m": 28.07,
+          "inside_sandy_2012": false,
+          "dep_extreme_2080_class": 0,
+          "dep_extreme_2080_label": "outside",
+          "dep_moderate_2050_class": 0,
+          "dep_moderate_2050_label": "outside"
+        },
+        {
+          "station_id": "290",
+          "station_name": "Classon Av",
+          "daytime_routes": "G",
+          "borough": "B",
+          "entrance_type": "Stair",
+          "entrance_lat": 40.6889585,
+          "entrance_lon": -73.9602224,
+          "distance_m": 724.4,
+          "ada_accessible": false,
+          "elevation_m": 20.97,
+          "hand_m": 0.39,
+          "inside_sandy_2012": false,
+          "dep_extreme_2080_class": 0,
+          "dep_extreme_2080_label": "outside",
+          "dep_moderate_2050_class": 0,
+          "dep_moderate_2050_label": "outside"
+        },
+        {
+          "station_id": "290",
+          "station_name": "Classon Av",
+          "daytime_routes": "G",
+          "borough": "B",
+          "entrance_type": "Stair",
+          "entrance_lat": 40.6887778,
+          "entrance_lon": -73.9601944,
+          "distance_m": 738.5,
+          "ada_accessible": false,
+          "elevation_m": 20.97,
+          "hand_m": 0.39,
+          "inside_sandy_2012": false,
+          "dep_extreme_2080_class": 0,
+          "dep_extreme_2080_label": "outside",
+          "dep_moderate_2050_class": 0,
+          "dep_moderate_2050_label": "outside"
+        },
+        {
+          "station_id": "290",
+          "station_name": "Classon Av",
+          "daytime_routes": "G",
+          "borough": "B",
+          "entrance_type": "Stair",
+          "entrance_lat": 40.688781,
+          "entrance_lon": -73.959871,
+          "distance_m": 759.9,
+          "ada_accessible": false,
+          "elevation_m": 21.37,
+          "hand_m": 0.79,
+          "inside_sandy_2012": false,
+          "dep_extreme_2080_class": 0,
+          "dep_extreme_2080_label": "outside",
+          "dep_moderate_2050_class": 0,
+          "dep_moderate_2050_label": "outside"
+        }
+      ],
+      "citation": "MTA Open Data subway entrances + NYC OEM Sandy 2012 Inundation Zone (5xsi-dfpx) + NYC DEP Stormwater Flood Maps + USGS 3DEP DEM"
+    },
+    "nycha_developments": null,
+    "doe_schools": null,
+    "doh_hospitals": null,
+    "rag": [
+      {
+        "doc_id": "rag_nycha",
+        "title": "Flood Resilience at NYCHA \u2014 Lessons Learned",
+        "citation": "NYCHA, Flood Resilience: Lessons Learned",
+        "file": "nycha_lessons.pdf",
+        "page": 74,
+        "text": "Flood Resilience at NYCHA: Memorializing Lessons Learned Through the Hurricane Sandy Disaster Recovery Program 74 Appendix Recovery and Resilience Scope Overview ASTORIA BARUCH BEACH 41ST STREET CAMPOS PLAZA II CAREY GARDENS CARLTON MANOR CONEY ISLAND (SITE 8) CONEY ISLAND HOUSES CONEY ISLAND IB CONEY ISLAND 4&5 EAST RIVER GOWANUS GRAVESEND HABER HAMMEL ISAACS LA GUARDIA LAVANBURG HOMES LINCOLN HOUSES LOWER EAST SIDE REHAB 5 METRO NORTH NEW LANE OCEAN BAY APARTMENTS (BAYSIDE) OCEAN BAY APARTMENTS (OCEANSIDE) O'DWYER RANGEL REDFERN RED HOOK EAST RED HOOK WEST RIIS RIIS II SMITH SURFSIDE TWO BRIDGES WALD Total SiTE IMPROVEMENT Electrical Feeders Replacement \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf Only Slope Stabilization Scope \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 35 Upgraded Site Lighting \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 30 Upgraded Playground Areas \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 25 Green Infrastructure Implementation \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 9 FACILITIES Roof Replacement \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 28 Fa\u00e7ade Repair \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 11 Lobby Upgrade \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 15 Community Center Upgrade \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 7 Community Center Addition \u25cf \u25cf 2 Child Care Center Upgrade/Addition \u25cf \u25cf \u25cf 3 Boiler Room Addition \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 18 MEP Building Annexes \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 23 FLOOD PROOFING Development Flood Wall \u25cf \u25cf 2 Wet flood proofing \u25cf \u25cf \u25cf \u25cf \u25cf 5 Dry flood proofing \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 32 Passive barriers \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 11 Manually deployed barriers \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 22 ELECTRICAL SYSTEMS Upgraded Switchgears \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 34 Relocating all Panels above Project Flood Elevation \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 27 Centralized Back-up Power \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 15 Localized Back-up Power \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 21 HEAT AND HOT WATER SYSTEMS Boiler Replacement \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 20 Upgraded heat/hot water system \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 31 Steam & Condensate Piping Replacement \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 12 Dry flood proofed H/HW system \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 21 Elevated H/HW system \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf \u25cf 16 Flood Resilience at NYCHA: Memorializing Lessons Learned Through the Hurricane Sandy Disaster Recovery Program 74 = Partial use",
+        "score": 0.8007165193557739
+      },
+      {
+        "doc_id": "rag_comptroller",
+        "title": "NYC Comptroller \u2014 Is NYC Ready for Rain? (2024)",
+        "citation": "NYC Comptroller, \"Is New York City Ready for Rain?\" (2024)",
+        "file": "comptroller_rain_2024.pdf",
+        "page": 38,
+        "text": "Response to Comptroller\u2019s Request for Information on 9/29 Flash Flood Event, Attachment B Exhibit 2D. 16 ibid 17 MTA. (October 2023). Ophelia After-Action Report: Service Response & Resilience Planning. https://new.mta.info/document/124996. 18 NY State Weather Risk Communication Center. 19 ibid 20 MTA. (October 2023). Ophelia After-Action Report: Service Response & Resilience Planning. https://new.mta.info/document/124996. 21 NY State Weather Risk Communication Center, using data compiled from UAlbany's NYS Mesonet and Con Edison Micronet. 22 MTA. (October 2023). Ophelia After-Action Report: Service Response & Resilience Planning. https://new.mta.info/document/124996. 23 Farrell, Christina.",
+        "score": 0.7951111793518066
+      },
+      {
+        "doc_id": "rag_mta",
+        "title": "MTA Climate Resilience Roadmap (October 2025 update)",
+        "citation": "MTA Climate Resilience Roadmap, October 2025 update",
+        "file": "mta_resilience_2025.pdf",
+        "page": 11,
+        "text": "II. Adapting to Extreme Weather Threats 17 Climate Resilience Roadmap - 2025 Update16 4 Ave between Union St and 36 St, Brooklyn \u2013 This stretch of 4 Avenue Brooklyn is served by five stations that have been impacted by heavy rainfall: Union St r , 4 Av-9 St r , Prospect Av r , 25 St r , and 36 St d nr . Why City action is needed: This area of the Gowanus neighborhood is prone to chronic flooding and is also under-sewered. NYCDEP has made investments in the Gowanus neighborhood and we urge additional investment to further alleviate flooding. What the MTA is doing: We have installed elevated steps at entrances to help mitigate flooding impacts from street and sidewalk stormwater runoff.",
+        "score": 0.7923813462257385
+      }
+    ],
+    "gliner": {
+      "nycha": {
+        "rag_doc_id": "rag_nycha",
+        "title": "Flood Resilience at NYCHA \u2014 Lessons Learned",
+        "paragraph_excerpt": "Flood Resilience at NYCHA: Memorializing Lessons Learned Through the Hurricane Sandy Disaster Recovery Program 74 Appendix Recovery and Resilience Scope Overview ASTORIA BARUCH BEACH 41ST STREET CAMPOS PLAZA II CAREY GARDENS CARLTON MANOR C\u2026",
+        "n_entities": 6,
+        "entities": [
+          {
+            "label": "agency",
+            "text": "NYCHA",
+            "score": 0.918
+          },
+          {
+            "label": "nyc_location",
+            "text": "CAMPOS PLAZA II",
+            "score": 0.457
+          },
+          {
+            "label": "nyc_location",
+            "text": "CONEY ISLAND",
+            "score": 0.702
+          },
+          {
+            "label": "nyc_location",
+            "text": "EAST RIVER",
+            "score": 0.503
+          },
+          {
+            "label": "nyc_location",
+            "text": "OCEANSIDE",
+            "score": 0.476
+          },
+          {
+            "label": "nyc_location",
+            "text": "RED HOOK EAST",
+            "score": 0.477
+          }
+        ]
+      },
+      "comptroller": {
+        "rag_doc_id": "rag_comptroller",
+        "title": "NYC Comptroller \u2014 Is NYC Ready for Rain? (2024)",
+        "paragraph_excerpt": "Response to Comptroller\u2019s Request for Information on 9/29 Flash Flood Event, Attachment B Exhibit 2D. 16 ibid 17 MTA. (October 2023). Ophelia After-Action Report: Service Response & Resilience Planning. https://new.mta.info/document/124996.\u2026",
+        "n_entities": 2,
+        "entities": [
+          {
+            "label": "agency",
+            "text": "MTA",
+            "score": 0.955
+          },
+          {
+            "label": "agency",
+            "text": "NY State Weather Risk Communication Center",
+            "score": 0.912
+          }
+        ]
+      },
+      "mta": {
+        "rag_doc_id": "rag_mta",
+        "title": "MTA Climate Resilience Roadmap (October 2025 update)",
+        "paragraph_excerpt": "II. Adapting to Extreme Weather Threats 17 Climate Resilience Roadmap - 2025 Update16 4 Ave between Union St and 36 St, Brooklyn \u2013 This stretch of 4 Avenue Brooklyn is served by five stations that have been impacted by heavy rainfall: Union\u2026",
+        "n_entities": 12,
+        "entities": [
+          {
+            "label": "nyc_location",
+            "text": "4 Ave",
+            "score": 0.772
+          },
+          {
+            "label": "nyc_location",
+            "text": "Union St",
+            "score": 0.688
+          },
+          {
+            "label": "nyc_location",
+            "text": "36 St",
+            "score": 0.666
+          },
+          {
+            "label": "nyc_location",
+            "text": "Brooklyn",
+            "score": 0.869
+          },
+          {
+            "label": "nyc_location",
+            "text": "4 Avenue",
+            "score": 0.678
+          },
+          {
+            "label": "nyc_location",
+            "text": "Union St r",
+            "score": 0.688
+          },
+          {
+            "label": "nyc_location",
+            "text": "4 Av-9 St r",
+            "score": 0.571
+          },
+          {
+            "label": "nyc_location",
+            "text": "Prospect Av r",
+            "score": 0.702
+          },
+          {
+            "label": "nyc_location",
+            "text": "25 St r",
+            "score": 0.658
+          },
+          {
+            "label": "nyc_location",
+            "text": "Gowanus neighborhood",
+            "score": 0.771
+          },
+          {
+            "label": "agency",
+            "text": "NYCDEP",
+            "score": 0.902
+          },
+          {
+            "label": "agency",
+            "text": "MTA",
+            "score": 0.745
+          }
+        ]
+      }
+    },
+    "paragraph": "**Status.**\nThe address at 188 PO MASONE WAY, Brooklyn, NY experiences moderate flood exposure due to its location on a mid-slope with significant surrounding lower elevations; **54.8%** of cells within a 200\u202fm radius are lower, indicating potential drainage challenges [doc_id: microtopo].\n\n**Empirical evidence.**\nIn the past five years, there have been **14** flood-related 311 service requests within a 200\u202fm radius, primarily due to sewer backups (**10** instances) and catch basin clogging (**3** instances), with occasional street flooding (**1** instance) [doc_id: nyc311].\n\n**Modeled scenarios.**\nThe Topographic Wetness Index (TWI) is **8.77**, classified as moderate, suggesting susceptibility to saturation under certain hydrological conditions [doc_id: microtopo]. The Height Above Nearest Drainage (HAND) of **18.86\u202fm** indicates the address sits well above the local drainage network, reducing immediate flood risk from surface runoff [doc_id: microtopo].\n\n**Policy context.**\nNo RAG documents are present for this specific address; however, NYC 311 data suggests ongoing maintenance needs related to sewer and catch basin issues, which may be addressed by municipal infrastructure programs [doc_id: nyc311].",
+    "audit": {
+      "raw": "**Status.**\nThe address at 188 PO MASONE WAY, Brooklyn, NY experiences moderate flood exposure due to its location on a mid-slope with significant surrounding lower elevations; **54.8%** of cells within a 200\u202fm radius are lower, indicating potential drainage challenges [doc_id: microtopo].\n\n**Empirical evidence.**\nIn the past five years, there have been **14** flood-related 311 service requests within a 200\u202fm radius, primarily due to sewer backups (**10** instances) and catch basin clogging (**3** instances), with occasional street flooding (**1** instance) [doc_id: nyc311].\n\n**Modeled scenarios.**\nThe Topographic Wetness Index (TWI) is **8.77**, classified as moderate, suggesting susceptibility to saturation under certain hydrological conditions [doc_id: microtopo]. The Height Above Nearest Drainage (HAND) of **18.86\u202fm** indicates the address sits well above the local drainage network, reducing immediate flood risk from surface runoff [doc_id: microtopo].\n\n**Policy context.**\nNo RAG documents are present for this specific address; however, NYC 311 data suggests ongoing maintenance needs related to sewer and catch basin issues, which may be addressed by municipal infrastructure programs [doc_id: nyc311].",
+      "dropped": []
+    },
+    "mellea": {
+      "rerolls": 1,
+      "n_attempts": 2,
+      "requirements_passed": [
+        "numerics_grounded",
+        "no_placeholder_tokens",
+        "citations_resolve"
+      ],
+      "requirements_failed": [
+        "citations_dense"
+      ],
+      "requirements_total": 4,
+      "model": "granite4.1:8b",
+      "loop_budget": 2
+    },
+    "energy": null,
+    "trace": [],
+    "intent": "single_address",
+    "plan": {
+      "intent": "single_address",
+      "targets": [
+        {
+          "type": "address",
+          "text": "PS 188"
+        }
+      ],
+      "specialists": [
+        "geocode",
+        "sandy",
+        "dep_stormwater",
+        "floodnet",
+        "nyc311",
+        "noaa_tides",
+        "nws_alerts",
+        "ttm_forecast",
+        "microtopo"
+      ],
+      "rationale": "The query specifies a particular street address (PS 188) in the Lower East Side, so we need to geocode it and then retrieve historic Sandy flood extents, DEP stormwater modeling, live sensor data, NYC 311 complaints, tide levels, NWS alerts, surge nowcasts, terrain info, and relevant agency reports for that exact location."
+    }
+  },
+  "stone_timings": {
+    "Cornerstone": {
+      "n_steps": 5,
+      "n_ok": 5,
+      "n_err": 0,
+      "wall_clock_s": 5.53
+    },
+    "Touchstone": {
+      "n_steps": 4,
+      "n_ok": 4,
+      "n_err": 0,
+      "wall_clock_s": 2.05
+    },
+    "Lodestone": {
+      "n_steps": 5,
+      "n_ok": 4,
+      "n_err": 1,
+      "wall_clock_s": 2.24
+    },
+    "Keystone": {
+      "n_steps": 1,
+      "n_ok": 1,
+      "n_err": 0,
+      "wall_clock_s": 0.0
+    },
+    "Capstone": {
+      "n_steps": 1,
+      "n_ok": 1,
+      "n_err": 0,
+      "wall_clock_s": 0.0
+    }
+  },
+  "error": null,
+  "timed_out": false,
+  "transport_error": null,
+  "framing_score": 2,
+  "framing_rationale": "on-topic exposure language but no question-aware framing",
+  "wall_clock_s": 111.4,
+  "mellea": {
+    "passed": 3,
+    "total": 4,
+    "rerolls": 1,
+    "n_attempts": 2,
+    "requirements_passed": [
+      "numerics_grounded",
+      "no_placeholder_tokens",
+      "citations_resolve"
+    ],
+    "requirements_failed": [
+      "citations_dense"
+    ]
+  },
+  "citations": [],
+  "citation_count": 0
+}

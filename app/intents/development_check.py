@@ -202,6 +202,7 @@ def run(plan, query: str, progress_q=None, strict: bool = False) -> dict[str, An
         # validation failure we emit a mellea_attempt event and reroll.
         rec_step["step"] = "mellea_reconcile_development"
         try:
+            from app.framing import augment_system_prompt
             from app.mellea_validator import DEFAULT_LOOP_BUDGET, reconcile_strict_streaming
             from app.reconcile import trim_docs_to_plan as _trim
             docs = _trim(docs, set(plan.specialists or []))
@@ -214,8 +215,11 @@ def run(plan, query: str, progress_q=None, strict: bool = False) -> dict[str, An
                     progress_q.put({"kind": "mellea_attempt",
                                     "attempt": attempt_idx,
                                     "passed": passed, "failed": failed})
+            framed_prompt = augment_system_prompt(
+                EXTRA_SYSTEM_PROMPT, query=query, intent=plan.intent,
+            )
             mres = reconcile_strict_streaming(
-                docs, EXTRA_SYSTEM_PROMPT,
+                docs, framed_prompt,
                 user_prompt="Write the development briefing now.",
                 model=OLLAMA_MODEL, loop_budget=DEFAULT_LOOP_BUDGET,
                 on_token=_on_token if progress_q else None,

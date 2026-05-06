@@ -56,15 +56,17 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 </div>
 
 <div class="box tinted">
-  <div class="lbl">Dec 2&middot;2025 &middot; CNN</div>
+  <div class="lbl">Nov 14&middot;2025 &middot; CNN / TechCrunch (paraphrase)</div>
   <div class="body" style="font-size: 19px; line-height: 1.4;">
-    "Zillow removed flood-risk data from listings in December 2025 after pressure from the real-estate industry."
+    Zillow removed climate risk scores from listings under pressure from the real-estate industry. In their place: a link, far less visible.
   </div>
 </div>
 
 </div>
 
-<p style="margin-top: 24px; font-size: 22px;">When a number meets resistance, <strong>the only defense is the audit trail.</strong></p>
+<p style="margin-top: 20px; font-size: 22px;">When a number meets resistance, <strong>the only defense is the audit trail.</strong></p>
+
+<p style="margin-top: 4px; font-size: 18px; color: var(--ink-3);">Riprap is not a property-risk score. It is the audit trail behind one.</p>
 
 ---
 
@@ -82,41 +84,88 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 
 ---
 
-<div class="eyebrow">03 &middot; The stack</div>
+<div class="eyebrow">03 &middot; Architecture</div>
 
-# Three of four hackathon tracks. One project.
+# Five Stones fan out. One cited briefing comes back.
 
-<div class="track-row engaged">
-  <div class="check">▸</div>
-  <div class="name">Agents &amp; Agentic Workflows</div>
-  <div class="detail">Burr FSM &middot; five-Stone evidence taxonomy &middot; planner classifies intent and routes to the right roster &middot; hallucination guard on every reconcile</div>
-  <div class="badge">Engaged</div>
+<div style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px;">
+
+<div style="display: flex; gap: 12px; align-items: center;">
+  <div class="box" style="padding: 10px 16px; flex: 0 0 180px; font-family: var(--font-mono); font-size: 13px; text-align: center;">free-text query</div>
+  <div style="font-family: var(--font-mono); color: var(--ink-3); font-size: 18px;">&rarr;</div>
+  <div class="box tinted" style="padding: 10px 16px; flex: 1; font-family: var(--font-mono); font-size: 13px;"><strong>Planner</strong> &middot; Granite 4.1 3B &nbsp;&middot;&nbsp; classifies intent: single_address · neighborhood · development_check · live_now</div>
 </div>
+
+<div style="font-family: var(--font-mono); color: var(--ink-3); font-size: 14px; padding-left: 84px;">&#9660; routes to Stone roster</div>
+
+<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+  <div style="border: 1px solid var(--rule-soft); border-top: 3px solid var(--stone-cornerstone); padding: 10px 14px; background: var(--paper);">
+    <div style="font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--stone-cornerstone); margin-bottom: 4px;">Cornerstone</div>
+    <div style="font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 4px;">Hazard Reader</div>
+    <div style="font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); line-height: 1.4;">Sandy 2012<br>DEP scenarios<br>Ida USGS HWMs<br>Prithvi-EO · LiDAR</div>
+  </div>
+  <div style="border: 1px solid var(--rule-soft); border-top: 3px solid var(--stone-keystone); padding: 10px 14px; background: var(--paper);">
+    <div style="font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--stone-keystone); margin-bottom: 4px;">Keystone</div>
+    <div style="font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 4px;">Asset Register</div>
+    <div style="font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); line-height: 1.4;">NYCHA · DOE<br>MTA · hospitals<br>TerraMind-NYC<br>Buildings adapter</div>
+  </div>
+  <div style="border: 1px solid var(--rule-soft); border-top: 3px solid var(--stone-touchstone); padding: 10px 14px; background: var(--paper);">
+    <div style="font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--stone-touchstone); margin-bottom: 4px;">Touchstone</div>
+    <div style="font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 4px;">Live Observer</div>
+    <div style="font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); line-height: 1.4;">FloodNet sensors<br>NYC 311 history<br>NOAA gauge<br>NWS METAR</div>
+  </div>
+  <div style="border: 1px solid var(--rule-soft); border-top: 3px solid var(--stone-lodestone); padding: 10px 14px; background: var(--paper);">
+    <div style="font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--stone-lodestone); margin-bottom: 4px;">Lodestone</div>
+    <div style="font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 4px;">Projector</div>
+    <div style="font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); line-height: 1.4;">NWS alerts<br>Granite TTM r2<br>surge nowcast<br>311 recurrence</div>
+  </div>
+</div>
+
+<div style="font-family: var(--font-mono); color: var(--ink-3); font-size: 14px; padding-left: 84px;">&#9660;</div>
+
+<div style="display: flex; gap: 12px; align-items: center;">
+  <div style="border: 1px solid var(--rule-soft); border-top: 3px solid var(--stone-capstone); padding: 10px 16px; flex: 1; background: var(--paper);">
+    <span style="font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--stone-capstone);">Capstone</span>
+    <span style="font-size: 14px; color: var(--ink-2); margin-left: 12px;">Granite 4.1 8B + Mellea &nbsp;&middot;&nbsp; <code>numerics_grounded</code> &middot; <code>no_placeholder_tokens</code> &middot; <code>citations_dense</code> &middot; <code>citations_resolve</code> &nbsp;&middot;&nbsp; reroll until resolved</span>
+  </div>
+  <div style="font-family: var(--font-mono); color: var(--ink-3); font-size: 18px;">&rarr;</div>
+  <div class="box" style="padding: 10px 16px; flex: 0 0 220px; font-family: var(--font-mono); font-size: 12px; text-align: center; border-left: 3px solid var(--accent);">cited 4-section briefing<br><code>[doc_id]</code> on every number</div>
+</div>
+
+</div>
+
+---
+
+<div class="eyebrow">04 &middot; The track</div>
+
+# Submitted to Fine-Tuning on AMD GPUs.
+
+<p style="margin-bottom: 8px; font-size: 20px;">The work spans three tracks. The Fine-Tuning evidence is the strongest: three Apache-2.0 NYC models trained on AMD MI300X, published on HF Hub.</p>
 
 <div class="track-row engaged">
   <div class="check">▸</div>
   <div class="name">Fine-Tuning</div>
-  <div class="detail">3 Apache-2.0 NYC fine-tunes trained on AMD MI300X: Prithvi-EO-2.0-NYC-Pluvial &middot; TerraMind-NYC-Adapters &middot; Granite-TTM-r2-Battery-Surge</div>
-  <div class="badge">Engaged</div>
+  <div class="detail"><strong>Submitting here.</strong> Prithvi-EO-2.0-NYC-Pluvial &middot; TerraMind-NYC-Adapters &middot; Granite-TTM-r2-Battery-Surge &middot; trained on MI300X &middot; Apache-2.0 &middot; live on HF Hub</div>
+  <div class="badge">Primary</div>
+</div>
+
+<div class="track-row engaged">
+  <div class="check">▸</div>
+  <div class="name">Agents &amp; Agentic Workflows</div>
+  <div class="detail">Burr FSM &middot; five-Stone evidence taxonomy &middot; Planner classifies intent and routes to the right Stone roster &middot; Mellea rejection-sampling guard on every reconcile</div>
+  <div class="badge">Supporting</div>
 </div>
 
 <div class="track-row engaged">
   <div class="check">▸</div>
   <div class="name">Vision &amp; Multimodal</div>
-  <div class="detail">Sentinel-2 chip &rarr; Prithvi pluvial seg &middot; TerraMind LULC + Buildings adapters &middot; Granite Embedding 278M &middot; GLiNER typed extraction</div>
-  <div class="badge">Engaged</div>
-</div>
-
-<div class="track-row unengaged">
-  <div class="check">·</div>
-  <div class="name">Build in Public</div>
-  <div class="detail">Documentation track &middot; not the focus this round</div>
-  <div class="badge">Skipped</div>
+  <div class="detail">Sentinel-2 chip &rarr; Prithvi pluvial segmentation &middot; TerraMind LULC + Buildings adapters &middot; Granite Embedding 278M retrieval &middot; GLiNER typed extraction</div>
+  <div class="badge">Supporting</div>
 </div>
 
 ---
 
-<div class="eyebrow">04 &middot; The receipts</div>
+<div class="eyebrow">05 &middot; The receipts</div>
 
 # 5 of 5 NYC addresses. Every claim verified, every run.
 
@@ -153,7 +202,7 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 
 ---
 
-<div class="eyebrow">05 &middot; Why it matters</div>
+<div class="eyebrow">06 &middot; Why it matters</div>
 
 # The civic-tech case.
 
@@ -183,21 +232,30 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 
 ---
 
-<div class="eyebrow">06 &middot; Now</div>
+<div class="eyebrow">07 &middot; What's next</div>
 
-# Live demo.
+# The longer arc.
 
-<div class="box tinted" style="margin-top: 16px;">
-  <div class="lbl">Endpoint</div>
-  <div class="body" style="font-family: var(--font-mono); font-size: 16px; color: var(--accent-text);">https://lablab-ai-amd-developer-hackathon-riprap-nyc.hf.space</div>
+<div class="box-grid cols-3" style="margin-top: 16px;">
+
+<div class="box">
+  <div class="lbl">Ida calibration &middot; ASCE NY</div>
+  <div class="body">Run the FSM backward against August 31, 2021 snapshot data. Validate Cornerstone + Lodestone outputs against measured Ida inundation. Presentation target: ASCE NY section, May 2026.</div>
 </div>
 
-<div class="box" style="margin-top: 12px;">
-  <div class="lbl">Query</div>
-  <div class="body" style="font-size: 28px; color: var(--ink); font-weight: 500;">442 East Houston Street, Manhattan</div>
+<div class="box">
+  <div class="lbl">Stones v1.1 &middot; standalone packages</div>
+  <div class="body">Publish Cornerstone, Touchstone, Keystone, Lodestone as independent Python packages. Any NYC civic-tech project can pull one Stone without the full Riprap stack.</div>
 </div>
 
-<blockquote style="margin-top: 32px;">Five Stones, around ten seconds, audit-grade prose. Watch the evidence light up.</blockquote>
+<div class="box tinted">
+  <div class="lbl">Methodology paper</div>
+  <div class="body">The citation-grounding pipeline (Mellea rejection sampling + four invariants + reroll feedback) as a replicable pattern for any geospatial LLM. Targets MDPI Sustainability or similar open-access venue.</div>
+</div>
+
+</div>
+
+<p style="margin-top: 20px; font-size: 20px; color: var(--ink-2);">The architecture is NYC-specific by data choice, not by code. Houston (Harvey + Beryl 2024), Miami (king tides), Boston (CSO floods) are the next cities.</p>
 
 ---
 

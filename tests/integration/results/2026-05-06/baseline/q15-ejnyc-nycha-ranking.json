@@ -1,0 +1,81 @@
+{
+  "qid": "15",
+  "slug": "ejnyc-nycha-ranking",
+  "query": "Rank the top 5 NYCHA developments by flood exposure, intersected with DAC designation.",
+  "persona": "EJNYC \u00d7 Riprap pairing",
+  "question_type": "comparison",
+  "expected_intent": null,
+  "anchor": "lateral",
+  "started_at": 1778048211.100111,
+  "ended_at": 1778048217.358644,
+  "plan": {
+    "kind": "plan",
+    "intent": "development_check",
+    "targets": [
+      {
+        "type": "nta",
+        "text": "NYC"
+      }
+    ],
+    "specialists": [
+      "dob_permits",
+      "nta_resolve",
+      "sandy",
+      "dep_stormwater"
+    ],
+    "rationale": "We need to evaluate NYCHA developments within NYC, so we resolve the whole city as a neighborhood. The relevant specialists are dob_permits (to get active construction permits for NYCHA projects) and Sandy/DEP flood layers to assess exposure."
+  },
+  "intent": "development_check",
+  "paragraph": "Could not resolve target to an NTA: no NTA match in target='NYC' or query='Rank the top 5 NYCHA developments by flood exposure, intersected with DAC designation.'",
+  "steps": [],
+  "mellea_attempts": [],
+  "final": {
+    "kind": "final",
+    "intent": "development_check",
+    "query": "Rank the top 5 NYCHA developments by flood exposure, intersected with DAC designation.",
+    "error": "no NTA match in target='NYC' or query='Rank the top 5 NYCHA developments by flood exposure, intersected with DAC designation.'",
+    "plan": {
+      "intent": "development_check",
+      "targets": [
+        {
+          "type": "nta",
+          "text": "NYC"
+        }
+      ],
+      "specialists": [
+        "dob_permits",
+        "nta_resolve",
+        "sandy",
+        "dep_stormwater"
+      ],
+      "rationale": "We need to evaluate NYCHA developments within NYC, so we resolve the whole city as a neighborhood. The relevant specialists are dob_permits (to get active construction permits for NYCHA projects) and Sandy/DEP flood layers to assess exposure."
+    },
+    "trace": [
+      {
+        "step": "nta_resolve",
+        "started_at": 1778048217.3478248,
+        "ok": false,
+        "err": "no NTA match in target='NYC' or query='Rank the top 5 NYCHA developments by flood exposure, intersected with DAC designation.'",
+        "elapsed_s": 0.01
+      }
+    ],
+    "paragraph": "Could not resolve target to an NTA: no NTA match in target='NYC' or query='Rank the top 5 NYCHA developments by flood exposure, intersected with DAC designation.'"
+  },
+  "stone_timings": {},
+  "error": null,
+  "timed_out": false,
+  "transport_error": null,
+  "framing_score": 2,
+  "framing_rationale": "on-topic exposure language but no question-aware framing",
+  "wall_clock_s": 6.26,
+  "mellea": {
+    "passed": 0,
+    "total": 4,
+    "rerolls": 0,
+    "n_attempts": 0,
+    "requirements_passed": [],
+    "requirements_failed": []
+  },
+  "citations": [],
+  "citation_count": 0
+}

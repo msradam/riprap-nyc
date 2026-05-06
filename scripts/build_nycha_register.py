@@ -15,7 +15,6 @@ sys.path.insert(0, str(ROOT))
 from app.assets import nycha  # noqa: E402
 from app.register_builder import build_register  # noqa: E402
 
-
 if __name__ == "__main__":
     build_register("nycha", nycha.load,
                    meta_keys=("name", "address", "borough", "tds_num"))

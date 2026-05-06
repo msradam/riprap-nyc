@@ -39,7 +39,10 @@ PRITHVI_BAND_NAMES = ["B02", "B03", "B04", "B8A", "B11", "B12"]
 def _stage_stack(out_path: Path, scene_id: str = SCENE_ID) -> bool:
     if out_path.exists():
         return True
-    import pystac_client, planetary_computer, rasterio, numpy as np
+    import numpy as np
+    import planetary_computer
+    import pystac_client
+    import rasterio
     print(f"fetching scene {scene_id}...", file=sys.stderr)
     catalog = pystac_client.Client.open(
         "https://planetarycomputer.microsoft.com/api/stac/v1",
@@ -110,10 +113,10 @@ def _process_one(scene_id: str, scene_date: str) -> list[dict]:
         print(f"  no prediction tiff for {scene_id}", file=sys.stderr)
         return []
 
+    import geopandas as gpd
     import rasterio
     from rasterio.features import shapes
-    from shapely.geometry import shape, mapping
-    import geopandas as gpd
+    from shapely.geometry import mapping, shape
 
     with rasterio.open(pred_path) as ds:
         pred = ds.read(1); transform = ds.transform; src_crs = ds.crs

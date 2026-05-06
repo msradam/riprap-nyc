@@ -92,6 +92,7 @@ def _load_model(context_length: int = CONTEXT_LENGTH,
         return None
     try:
         import torch  # noqa: F401
+
         # Force-import the registered class names BEFORE get_model so that
         # transformers' lazy registry can resolve them by string. Without
         # this, AutoModel-style dispatch raises

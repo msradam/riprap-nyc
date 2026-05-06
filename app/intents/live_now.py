@@ -153,7 +153,14 @@ def run(plan, query: str, progress_q=None) -> dict[str, Any]:
             if progress_q is not None:
                 progress_q.put({"kind": "token", "delta": delta})
         try:
-            paragraph, audit = _reconcile(docs, on_token=_on_token if progress_q else None)
+            from app.framing import augment_system_prompt
+            framed_prompt = augment_system_prompt(
+                EXTRA_SYSTEM_PROMPT, query=query, intent=plan.intent,
+            )
+            paragraph, audit = _reconcile(
+                docs, on_token=_on_token if progress_q else None,
+                system_prompt=framed_prompt,
+            )
             rec_step["ok"] = True
         except Exception as e:
             paragraph = "Could not produce a live-conditions report."
@@ -206,10 +213,11 @@ def _doc(doc_id: str, body_lines: list[str]) -> dict:
     return {"role": f"document {doc_id}", "content": "\n".join(body_lines)}
 
 
-def _reconcile(docs: list[dict], on_token=None) -> tuple[str, dict]:
+def _reconcile(docs: list[dict], on_token=None,
+                system_prompt: str = EXTRA_SYSTEM_PROMPT) -> tuple[str, dict]:
     from app.reconcile import verify_paragraph
     messages = docs + [
-        {"role": "system", "content": EXTRA_SYSTEM_PROMPT},
+        {"role": "system", "content": system_prompt},
         {"role": "user", "content": "Write the live-conditions briefing now."},
     ]
     # live_now is the smallest intent: ~4 live docs, short briefing.
