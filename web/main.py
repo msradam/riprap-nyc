@@ -147,9 +147,9 @@ def _warm_caches():
     if os.environ.get("RIPRAP_NYCHA_REGISTERS", "0").lower() in ("1", "true", "yes"):
         print("[startup] pre-warming NYCHA registers (may take 60–120 s)...", flush=True)
         try:
-            from app.registers import nycha as _r_nycha
             from app.registers import doe_schools as _r_schools
             from app.registers import doh_hospitals as _r_hospitals
+            from app.registers import nycha as _r_nycha
             _r_nycha._load_nycha()
             _r_nycha._load_sandy_2263()
             _r_schools._load_schools()
@@ -509,8 +509,8 @@ def _run_compare(p, raw_query: str, out_q, i_addr) -> dict:
     Step events from each target are forwarded to out_q tagged with a
     `target_label` key so the trace UI can optionally group them, but the
     existing trace UI ignores unknown keys gracefully."""
-    from app.planner import Plan
     from app.intents import neighborhood as i_nbhd
+    from app.planner import Plan
 
     addr_targets = [t for t in p.targets if t.get("type") in ("address", "nta")]
     if len(addr_targets) < 2:
