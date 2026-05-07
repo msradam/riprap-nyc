@@ -1,0 +1,52 @@
+# Riprap — local + self-hosted orchestration.
+#
+# Default `docker compose up` starts only the app container, which
+# expects RIPRAP_LLM_BASE_URL / RIPRAP_ML_BASE_URL to point at an
+# external inference backend (the live HF Space, your own
+# self-hosted instance, etc. — see .env.example).
+#
+# Full self-host (requires an AMD ROCm or NVIDIA CUDA GPU):
+#
+#     docker compose --profile with-models up
+#
+# This adds the riprap-models GPU specialist service; you still need
+# a separate vLLM serving Granite 4.1 8B for the Capstone reconciler
+# (see docs/DROPLET-RUNBOOK.md for the canonical bring-up).
+
+services:
+  riprap-app:
+    image: msradam/riprap-nyc:v0.5.0
+    build:
+      context: .
+      dockerfile: Dockerfile.app
+    ports:
+      - "7860:7860"
+    environment:
+      - RIPRAP_LLM_PRIMARY=${RIPRAP_LLM_PRIMARY:-vllm}
+      - RIPRAP_LLM_BASE_URL=${RIPRAP_LLM_BASE_URL}
+      - RIPRAP_LLM_API_KEY=${RIPRAP_LLM_API_KEY}
+      - RIPRAP_ML_BASE_URL=${RIPRAP_ML_BASE_URL}
+      - RIPRAP_ML_API_KEY=${RIPRAP_ML_API_KEY}
+      - RIPRAP_HARDWARE_LABEL=${RIPRAP_HARDWARE_LABEL:-Self-hosted}
+      - RIPRAP_ENGINE_LABEL=${RIPRAP_ENGINE_LABEL:-Granite 4.1 / vLLM}
+    restart: unless-stopped
+
+  riprap-models:
+    image: msradam/riprap-models:v0.5.0
+    build:
+      context: .
+      dockerfile: services/riprap-models/Dockerfile
+    ports:
+      - "7861:7860"
+    environment:
+      - RIPRAP_MODELS_API_KEY=${RIPRAP_ML_API_KEY}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: amd
+              count: 1
+              capabilities: [gpu]
+    profiles:
+      - with-models
+    restart: unless-stopped
