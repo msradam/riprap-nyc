@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { POSITRON_NO_LABELS } from '$lib/components/map/baseStyle';
+  import { POSITRON } from '$lib/components/map/baseStyle';
   import 'maplibre-gl/dist/maplibre-gl.css';
 
   /** Tiny MapLibre instance for the landing-page "What you'll get back"
@@ -10,8 +10,8 @@
    *  queried-address pin. Centered on 80 Pioneer Street, Red Hook. */
 
   // 80 Pioneer Street, Red Hook, Brooklyn — same anchor the briefing
-  // and sample fixture use. Zoom 15 keeps a few blocks in frame.
-  const ADDR: [number, number] = [-74.0096, 40.6776];
+  // and sample fixture use. Zoom 14.5 keeps the neighborhood context.
+  const ADDR: [number, number] = [-74.0095, 40.6781];
 
   let container: HTMLDivElement | null = $state(null);
 
@@ -30,7 +30,7 @@
       if (cancelled || !container) return;
       map = new maplibre.Map({
         container,
-        style: POSITRON_NO_LABELS,
+        style: POSITRON,
         center: ADDR,
         zoom: 14.5,
         interactive: false,
