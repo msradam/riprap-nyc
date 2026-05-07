@@ -1,0 +1,788 @@
+[
+  {
+    "id": "q001",
+    "query": "I'm thinking about renting an apartment at 80 Pioneer Street, Brooklyn. Should I worry?",
+    "intent": "address",
+    "persona": "Renter evaluating a move to Red Hook \u2014 canonical Sandy turf",
+    "borough": "Brooklyn",
+    "expected_specialists": [
+      "sandy_inundation",
+      "dep_stormwater",
+      "nyc311",
+      "floodnet",
+      "noaa_tides",
+      "microtopo_lidar",
+      "ida_hwm_2021",
+      "ttm_forecast",
+      "prithvi_eo_v2",
+      "gliner_extract"
+    ],
+    "expected_silent": [
+      "prithvi_eo_live"
+    ],
+    "fragility_notes": "Cleanest result in suite, 0 rerolls historically. Geocoder resolves to Red Hook every time.",
+    "verified": true
+  },
+  {
+    "id": "q002",
+    "query": "Hollis, Queens",
+    "intent": "neighborhood",
+    "persona": "NYC OEM/DEP capital planner looking at sewer backlog by NTA",
+    "borough": "Queens",
+    "expected_specialists": [
+      "nyc311",
+      "dep_stormwater",
+      "microtopo_lidar"
+    ],
+    "expected_silent": [
+      "prithvi_eo_live",
+      "prithvi_eo_v2"
+    ],
+    "fragility_notes": "Bare NTA name \u2014 relies on planner routing neighborhood correctly. Stable across all probe runs.",
+    "verified": true
+  },
+  {
+    "id": "q003",
+    "query": "Compare 80 Pioneer Street Brooklyn to 100 Gold Street Manhattan",
+    "intent": "compare",
+    "persona": "Real-estate attorney comparing a Sandy-zone lease to a lower-risk mid-Manhattan address",
+    "borough": "multi",
+    "expected_specialists": [
+      "sandy_inundation",
+      "nyc311",
+      "microtopo_lidar",
+      "ida_hwm_2021"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Verified stable post-bugfix. Planner must parse two addresses. If returns single_address, PLACE B is dropped.",
+    "verified": true
+  },
+  {
+    "id": "q004",
+    "query": "442 East Houston Street, Manhattan",
+    "intent": "address",
+    "persona": "NYC DOE facilities planner evaluating PS 188 LES flood exposure",
+    "borough": "Manhattan",
+    "expected_specialists": [
+      "sandy_inundation",
+      "nyc311",
+      "noaa_tides",
+      "microtopo_lidar",
+      "gliner_extract"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "2 rerolls historically on live Space \u2014 acceptable for secondary demo, risky as opener.",
+    "verified": true
+  },
+  {
+    "id": "q005",
+    "query": "100 Gold Street, Manhattan",
+    "intent": "address",
+    "persona": "Insurance underwriter checking flood exposure for a Financial District property",
+    "borough": "Manhattan",
+    "expected_specialists": [
+      "nyc311",
+      "microtopo_lidar",
+      "noaa_tides"
+    ],
+    "expected_silent": [
+      "sandy_inundation"
+    ],
+    "fragility_notes": "Outside Sandy 2012 zone \u2014 negative control. Ida HWM 3.47 km away.",
+    "verified": true
+  },
+  {
+    "id": "q006",
+    "query": "Coney Island, Brooklyn",
+    "intent": "neighborhood",
+    "persona": "Community board member tracking coastal resilience investments",
+    "borough": "Brooklyn",
+    "expected_specialists": [
+      "nyc311",
+      "dep_stormwater",
+      "microtopo_lidar"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "87.5% of NTA inside Sandy 2012 extent. 4/4 0 rerolls on live Space.",
+    "verified": true
+  },
+  {
+    "id": "q007",
+    "query": "2940 Brighton 3rd St, Brooklyn",
+    "intent": "address",
+    "persona": "Resident in a flood-prone coastal area checking risk before lease renewal",
+    "borough": "Brooklyn",
+    "expected_specialists": [
+      "sandy_inundation",
+      "nyc311",
+      "floodnet",
+      "noaa_tides",
+      "microtopo_lidar",
+      "dep_stormwater"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Brighton Beach \u2014 Sandy inundation zone. Used as brighton fixture in integration tests.",
+    "verified": true
+  },
+  {
+    "id": "q008",
+    "query": "Red Hook, Brooklyn",
+    "intent": "neighborhood",
+    "persona": "Civil engineer evaluating stormwater drainage upgrade priorities",
+    "borough": "Brooklyn",
+    "expected_specialists": [
+      "nyc311",
+      "dep_stormwater",
+      "microtopo_lidar"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Heavy Sandy history. Neighborhood intent; 8-9 step FSM.",
+    "verified": true
+  },
+  {
+    "id": "q009",
+    "query": "What's the flood risk for 345 East 94th Street, Manhattan?",
+    "intent": "address",
+    "persona": "NYCHA asset manager assessing high-rise exposure on the Upper East Side",
+    "borough": "Manhattan",
+    "expected_specialists": [
+      "nyc311",
+      "microtopo_lidar",
+      "noaa_tides"
+    ],
+    "expected_silent": [
+      "sandy_inundation"
+    ],
+    "fragility_notes": "Upper East Side \u2014 lower Sandy exposure. Should return modest risk profile.",
+    "verified": true
+  },
+  {
+    "id": "q010",
+    "query": "Is 1 MetroTech Center in Brooklyn at risk during major storms?",
+    "intent": "address",
+    "persona": "MTA infrastructure planner evaluating transit hub flood resilience",
+    "borough": "Brooklyn",
+    "expected_specialists": [
+      "nyc311",
+      "microtopo_lidar",
+      "noaa_tides",
+      "sandy_inundation"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Downtown Brooklyn \u2014 partial Sandy exposure depending on exact geocode.",
+    "verified": true
+  },
+  {
+    "id": "q011",
+    "query": "Howard Beach, Queens",
+    "intent": "neighborhood",
+    "persona": "HUD CDBG-DR grant writer documenting unmet need in a Sandy-affected NTA",
+    "borough": "Queens",
+    "expected_specialists": [
+      "nyc311",
+      "dep_stormwater",
+      "microtopo_lidar"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Howard Beach was severely flooded in Sandy 2012. NTA-level specialists surface strong signal.",
+    "verified": true
+  },
+  {
+    "id": "q012",
+    "query": "Canarsie, Brooklyn",
+    "intent": "neighborhood",
+    "persona": "Journalist covering FEMA FIRMette map updates post-Sandy",
+    "borough": "Brooklyn",
+    "expected_specialists": [
+      "nyc311",
+      "dep_stormwater",
+      "microtopo_lidar"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Canarsie was inundated in Sandy. Strong neighborhood-level flood signal expected.",
+    "verified": true
+  },
+  {
+    "id": "q013",
+    "query": "Compare Canarsie Brooklyn to Park Slope Brooklyn",
+    "intent": "compare",
+    "persona": "Real estate developer comparing coastal vs inland Brooklyn sites for climate resilience",
+    "borough": "Brooklyn",
+    "expected_specialists": [
+      "nyc311",
+      "dep_stormwater",
+      "microtopo_lidar"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Both Brooklyn neighborhoods but very different flood profiles. Strong expected delta.",
+    "verified": true
+  },
+  {
+    "id": "q014",
+    "query": "Should I worry about flooding at 520 West 145th Street in Manhattan?",
+    "intent": "address",
+    "persona": "Resident in Washington Heights evaluating apartment flood risk",
+    "borough": "Manhattan",
+    "expected_specialists": [
+      "nyc311",
+      "microtopo_lidar",
+      "noaa_tides"
+    ],
+    "expected_silent": [
+      "sandy_inundation"
+    ],
+    "fragility_notes": "Washington Heights \u2014 far from Sandy zone. Low risk expected.",
+    "verified": true
+  },
+  {
+    "id": "q015",
+    "query": "Mott Haven, Bronx",
+    "intent": "neighborhood",
+    "persona": "Community board member tracking 311 flood complaints in a low-income NTA",
+    "borough": "Bronx",
+    "expected_specialists": [
+      "nyc311",
+      "dep_stormwater",
+      "microtopo_lidar"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Mott Haven is near the Harlem River and has chronic flooding complaints.",
+    "verified": true
+  },
+  {
+    "id": "q016",
+    "query": "What was the flood situation at 750 Baychester Avenue, Bronx during Ida?",
+    "intent": "address",
+    "persona": "Civil engineer evaluating Ida HWM data near a USGS gauge site",
+    "borough": "Bronx",
+    "expected_specialists": [
+      "ida_hwm_2021",
+      "nyc311",
+      "microtopo_lidar"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Ida HWM should fire \u2014 Bronx near Hutchinson River had gauge hits. Ida specialist exercises.",
+    "verified": true
+  },
+  {
+    "id": "q017",
+    "query": "Is the NYCHA Gowanus Houses at risk from sea level rise?",
+    "intent": "address",
+    "persona": "NYCHA asset manager assessing long-term sea level risk for a large development",
+    "borough": "Brooklyn",
+    "expected_specialists": [
+      "sandy_inundation",
+      "dep_stormwater",
+      "nyc311",
+      "microtopo_lidar"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Gowanus Houses \u2014 Sandy zone, known flood risk. Should surface NYCHA development context.",
+    "verified": true
+  },
+  {
+    "id": "q018",
+    "query": "Compare 750 Baychester Avenue Bronx to 150 Riverside Drive Manhattan",
+    "intent": "compare",
+    "persona": "Insurance underwriter comparing two river-adjacent properties",
+    "borough": "multi",
+    "expected_specialists": [
+      "nyc311",
+      "microtopo_lidar"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Cross-borough compare. Baychester near Hutchinson River; Riverside Drive near Hudson. Both riverine.",
+    "verified": true
+  },
+  {
+    "id": "q019",
+    "query": "Tottenville, Staten Island",
+    "intent": "neighborhood",
+    "persona": "NYC OEM planner evaluating Staten Island's most flood-exposed southern tip",
+    "borough": "Staten Island",
+    "expected_specialists": [
+      "nyc311",
+      "dep_stormwater",
+      "microtopo_lidar"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Tottenville was among the hardest hit areas in Sandy. Strong NTA-level signal expected.",
+    "verified": true
+  },
+  {
+    "id": "q020",
+    "query": "What's the flood risk at 151 West 34th Street, Manhattan? It's near Penn Station.",
+    "intent": "address",
+    "persona": "MTA infrastructure planner evaluating subway entrance flood exposure near Penn Station",
+    "borough": "Manhattan",
+    "expected_specialists": [
+      "nyc311",
+      "microtopo_lidar",
+      "noaa_tides"
+    ],
+    "expected_silent": [
+      "sandy_inundation"
+    ],
+    "fragility_notes": "Midtown Manhattan \u2014 outside Sandy zone. MTA subway entrance exposure specialist should fire.",
+    "verified": true
+  },
+  {
+    "id": "q021",
+    "query": "Compare Red Hook Brooklyn to the Financial District Manhattan for flood risk",
+    "intent": "compare",
+    "persona": "Journalist writing a before/after story on Sandy's unequal recovery",
+    "borough": "multi",
+    "expected_specialists": [
+      "sandy_inundation",
+      "nyc311",
+      "microtopo_lidar"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Strong expected delta \u2014 Red Hook was deeply flooded, FiDi has mixed exposure. Cross-borough compare.",
+    "verified": true
+  },
+  {
+    "id": "q022",
+    "query": "Is 595 Dean Street in Brooklyn at risk of flooding?",
+    "intent": "address",
+    "persona": "Real estate developer evaluating a new Prospect Heights / Gowanus site",
+    "borough": "Brooklyn",
+    "expected_specialists": [
+      "dep_stormwater",
+      "nyc311",
+      "microtopo_lidar"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Near Gowanus Canal drainage area. DEP stormwater and 311 should fire.",
+    "verified": true
+  },
+  {
+    "id": "q023",
+    "query": "South Beach, Staten Island",
+    "intent": "neighborhood",
+    "persona": "HUD CDBG-DR grant writer for a Staten Island Sandy recovery project",
+    "borough": "Staten Island",
+    "expected_specialists": [
+      "nyc311",
+      "dep_stormwater",
+      "microtopo_lidar"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "South Beach was heavily impacted by Sandy. Strong 311 and DEP signal expected.",
+    "verified": true
+  },
+  {
+    "id": "q024",
+    "query": "How exposed is 1 Fulton Street Manhattan to surge from a major hurricane?",
+    "intent": "address",
+    "persona": "Hospital facility manager evaluating evacuation route risk for a Lower Manhattan location",
+    "borough": "Manhattan",
+    "expected_specialists": [
+      "sandy_inundation",
+      "noaa_tides",
+      "nyc311",
+      "microtopo_lidar"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Fulton Street FiDi \u2014 near Sandy zone boundary. NOAA tide gauge should fire (East River gauge).",
+    "verified": true
+  },
+  {
+    "id": "q025",
+    "query": "Compare Howard Beach Queens to Forest Hills Queens for flood risk",
+    "intent": "compare",
+    "persona": "NYC OEM planner comparing coastal vs inland Queens neighborhoods",
+    "borough": "Queens",
+    "expected_specialists": [
+      "nyc311",
+      "dep_stormwater",
+      "microtopo_lidar"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Strong expected delta \u2014 Howard Beach coastal vs Forest Hills upland. Same-borough neighborhood compare.",
+    "verified": true
+  },
+  {
+    "id": "q026",
+    "query": "What's the storm surge risk for 157-11 Rockaway Beach Blvd, Queens?",
+    "intent": "address",
+    "persona": "Resident in Far Rockaway evaluating whether to elevate their home",
+    "borough": "Queens",
+    "expected_specialists": [
+      "sandy_inundation",
+      "noaa_tides",
+      "floodnet",
+      "dep_stormwater",
+      "microtopo_lidar"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Far Rockaway was devastated in Sandy. High probability of all coastal specialists firing.",
+    "verified": true
+  },
+  {
+    "id": "q027",
+    "query": "Hunts Point, Bronx",
+    "intent": "neighborhood",
+    "persona": "Civil engineer assessing combined sewer overflow and flood risk in a food distribution hub",
+    "borough": "Bronx",
+    "expected_specialists": [
+      "nyc311",
+      "dep_stormwater",
+      "microtopo_lidar"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Hunts Point is low-lying and near the East River. Strong stormwater and 311 signal.",
+    "verified": true
+  },
+  {
+    "id": "q028",
+    "query": "Is 160 Conover Street in Red Hook still considered a flood zone?",
+    "intent": "address",
+    "persona": "Renter who lived through Sandy 2012 now returning to Red Hook",
+    "borough": "Brooklyn",
+    "expected_specialists": [
+      "sandy_inundation",
+      "dep_stormwater",
+      "nyc311",
+      "microtopo_lidar",
+      "ida_hwm_2021"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Deep Red Hook \u2014 within Sandy zone. Ida HWM nearby. Clean single_address intent expected.",
+    "verified": true
+  },
+  {
+    "id": "q029",
+    "query": "Compare 160 Conover Street Red Hook to 300 Flatbush Avenue Brooklyn",
+    "intent": "compare",
+    "persona": "Property insurance underwriter comparing two Brooklyn addresses for flood premium",
+    "borough": "Brooklyn",
+    "expected_specialists": [
+      "sandy_inundation",
+      "nyc311",
+      "microtopo_lidar"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Sandy-zone vs non-Sandy-zone within Brooklyn. Clear expected delta on Sandy field.",
+    "verified": true
+  },
+  {
+    "id": "q030",
+    "query": "What are the flood risks for the Two Bridges neighborhood in Manhattan?",
+    "intent": "neighborhood",
+    "persona": "HUD CDBG-DR grant writer documenting need in a Sandy-affected LES neighborhood",
+    "borough": "Manhattan",
+    "expected_specialists": [
+      "nyc311",
+      "dep_stormwater",
+      "microtopo_lidar"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Two Bridges NTA \u2014 lower Manhattan near East River. Sandy signal expected.",
+    "verified": true
+  },
+  {
+    "id": "q031",
+    "query": "Is there any construction or development activity at 640 Columbia Street in Red Hook?",
+    "intent": "planner",
+    "persona": "Community board member tracking post-Sandy redevelopment in Red Hook",
+    "borough": "Brooklyn",
+    "expected_specialists": [
+      "sandy_inundation",
+      "nyc311"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Development check intent. DOB filings + flood context. Planner should route development_check.",
+    "verified": true
+  },
+  {
+    "id": "q032",
+    "query": "What's the flood exposure at 30-30 Thomson Avenue, Long Island City, Queens?",
+    "intent": "address",
+    "persona": "Real estate developer evaluating an LIC industrial-to-residential conversion",
+    "borough": "Queens",
+    "expected_specialists": [
+      "nyc311",
+      "microtopo_lidar",
+      "dep_stormwater"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Long Island City is near Newtown Creek and the East River. Moderate flood exposure expected.",
+    "verified": true
+  },
+  {
+    "id": "q033",
+    "query": "Compare Long Island City Queens to Astoria Queens for flood risk",
+    "intent": "compare",
+    "persona": "NYC DOT planner comparing two Queens waterfront neighborhoods for infrastructure investment",
+    "borough": "Queens",
+    "expected_specialists": [
+      "nyc311",
+      "microtopo_lidar",
+      "dep_stormwater"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Same-borough neighborhood compare. Both near East River but different profiles.",
+    "verified": true
+  },
+  {
+    "id": "q034",
+    "query": "Is 55 Water Street Manhattan at risk from sea level rise and storm surge?",
+    "intent": "address",
+    "persona": "Hospital administrator at a large Lower Manhattan health system assessing long-term resilience",
+    "borough": "Manhattan",
+    "expected_specialists": [
+      "sandy_inundation",
+      "noaa_tides",
+      "nyc311",
+      "microtopo_lidar"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "55 Water Street FiDi \u2014 near East River. Sandy zone boundary. NOAA tide gauge should fire.",
+    "verified": true
+  },
+  {
+    "id": "q035",
+    "query": "What new buildings are going up in Gowanus and are they being built to handle flooding?",
+    "intent": "planner",
+    "persona": "Journalist investigating whether post-rezoning Gowanus development meets flood standards",
+    "borough": "Brooklyn",
+    "expected_specialists": [
+      "dep_stormwater",
+      "nyc311"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Development check intent. Gowanus rezoning context. DOB filings should surface.",
+    "verified": true
+  },
+  {
+    "id": "q036",
+    "query": "Greenpoint, Brooklyn",
+    "intent": "neighborhood",
+    "persona": "Civil engineer assessing Newtown Creek flooding and combined sewer overflow risk",
+    "borough": "Brooklyn",
+    "expected_specialists": [
+      "nyc311",
+      "dep_stormwater",
+      "microtopo_lidar"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Greenpoint near Newtown Creek. DEP and 311 stormwater signal expected.",
+    "verified": true
+  },
+  {
+    "id": "q037",
+    "query": "How at risk is 111 8th Avenue Manhattan from a 100-year storm?",
+    "intent": "address",
+    "persona": "Insurance underwriter evaluating a large Chelsea tech campus for flood coverage",
+    "borough": "Manhattan",
+    "expected_specialists": [
+      "nyc311",
+      "microtopo_lidar",
+      "dep_stormwater"
+    ],
+    "expected_silent": [
+      "sandy_inundation"
+    ],
+    "fragility_notes": "Chelsea inland address. Low Sandy exposure. DEP stormwater may flag sewer backup risk.",
+    "verified": true
+  },
+  {
+    "id": "q038",
+    "query": "Compare 157-11 Rockaway Beach Blvd Queens to 100 Gold Street Manhattan",
+    "intent": "compare",
+    "persona": "FEMA insurance analyst comparing a high-risk coastal address to a low-risk Manhattan baseline",
+    "borough": "multi",
+    "expected_specialists": [
+      "sandy_inundation",
+      "noaa_tides",
+      "nyc311"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Cross-borough, maximum expected delta. Far Rockaway vs FiDi. Strong Sandy signal for Rockaway.",
+    "verified": true
+  },
+  {
+    "id": "q039",
+    "query": "What's going on with the development at 421 Kent Avenue Williamsburg and how flood-safe is it?",
+    "intent": "planner",
+    "persona": "Real estate developer doing due diligence on a Williamsburg waterfront project",
+    "borough": "Brooklyn",
+    "expected_specialists": [
+      "sandy_inundation",
+      "dep_stormwater",
+      "nyc311"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Development check + flood context at Williamsburg waterfront. DOB and flood specialists.",
+    "verified": true
+  },
+  {
+    "id": "q040",
+    "query": "Stapleton, Staten Island",
+    "intent": "neighborhood",
+    "persona": "NYC OEM planner reviewing the SIRR resilience report findings for North Shore Staten Island",
+    "borough": "Staten Island",
+    "expected_specialists": [
+      "nyc311",
+      "dep_stormwater",
+      "microtopo_lidar"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Stapleton is on the North Shore of Staten Island \u2014 Sandy-affected area.",
+    "verified": true
+  },
+  {
+    "id": "q041",
+    "query": "Is 110 Livingston Street Brooklyn in a flood zone?",
+    "intent": "address",
+    "persona": "NYC DOE facilities planner evaluating the NYC DOE headquarters building",
+    "borough": "Brooklyn",
+    "expected_specialists": [
+      "nyc311",
+      "microtopo_lidar",
+      "sandy_inundation"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Downtown Brooklyn near Fulton Mall. Moderate Sandy exposure.",
+    "verified": true
+  },
+  {
+    "id": "q042",
+    "query": "Compare Mott Haven Bronx to Hunts Point Bronx for flood risk and 311 complaints",
+    "intent": "compare",
+    "persona": "NYC DOT infrastructure planner prioritizing drainage upgrades in the South Bronx",
+    "borough": "Bronx",
+    "expected_specialists": [
+      "nyc311",
+      "dep_stormwater",
+      "microtopo_lidar"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Same-borough NTA compare in South Bronx. Both low-lying near waterways.",
+    "verified": true
+  },
+  {
+    "id": "q043",
+    "query": "What's the flood risk at 325 Hudson Street, Manhattan?",
+    "intent": "address",
+    "persona": "Real estate developer evaluating a Hudson Square office conversion",
+    "borough": "Manhattan",
+    "expected_specialists": [
+      "nyc311",
+      "microtopo_lidar",
+      "dep_stormwater"
+    ],
+    "expected_silent": [
+      "sandy_inundation"
+    ],
+    "fragility_notes": "Hudson Square \u2014 near the Hudson River but likely outside Sandy zone. Moderate risk.",
+    "verified": true
+  },
+  {
+    "id": "q044",
+    "query": "Is anything being developed at 601 West 26th Street Manhattan and what's the flood exposure?",
+    "intent": "planner",
+    "persona": "NYC DOT planner evaluating Chelsea Piers area development near the Hudson River",
+    "borough": "Manhattan",
+    "expected_specialists": [
+      "nyc311",
+      "microtopo_lidar",
+      "dep_stormwater"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Development check near Hudson River. DOB filings + flood context.",
+    "verified": true
+  },
+  {
+    "id": "q045",
+    "query": "East New York, Brooklyn",
+    "intent": "neighborhood",
+    "persona": "HUD CDBG-DR grant writer assessing flood exposure in a low-income Brooklyn NTA",
+    "borough": "Brooklyn",
+    "expected_specialists": [
+      "nyc311",
+      "dep_stormwater",
+      "microtopo_lidar"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "East New York is inland but has chronic stormwater complaints. DEP and 311 should fire.",
+    "verified": true
+  },
+  {
+    "id": "q046",
+    "query": "What's the flood situation at 40 Rector Street Manhattan? I'm evaluating office space there.",
+    "intent": "address",
+    "persona": "Commercial tenant evaluating Lower Manhattan office flood risk post-Sandy",
+    "borough": "Manhattan",
+    "expected_specialists": [
+      "sandy_inundation",
+      "noaa_tides",
+      "nyc311",
+      "microtopo_lidar"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "40 Rector Street FiDi \u2014 near battery park, likely in Sandy zone. NOAA and Sandy should fire.",
+    "verified": true
+  },
+  {
+    "id": "q047",
+    "query": "Compare 40 Rector Street Manhattan to 345 East 94th Street Manhattan",
+    "intent": "compare",
+    "persona": "Corporate real estate manager comparing two Manhattan office options for flood resilience",
+    "borough": "Manhattan",
+    "expected_specialists": [
+      "sandy_inundation",
+      "nyc311",
+      "microtopo_lidar"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Within-borough Manhattan compare. Strong delta: Lower Manhattan vs Upper East Side.",
+    "verified": true
+  },
+  {
+    "id": "q048",
+    "query": "Is there any new development at 280 Richards Street Red Hook and how is it handling the flood risk?",
+    "intent": "planner",
+    "persona": "Community board member tracking post-Sandy redevelopment permits in Red Hook",
+    "borough": "Brooklyn",
+    "expected_specialists": [
+      "sandy_inundation",
+      "dep_stormwater",
+      "nyc311"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Red Hook development check. Sandy zone context. DOB filings + flood specialists.",
+    "verified": true
+  },
+  {
+    "id": "q049",
+    "query": "Astoria, Queens",
+    "intent": "neighborhood",
+    "persona": "NYC DOT planner assessing stormwater infrastructure needs in a growing Queens neighborhood",
+    "borough": "Queens",
+    "expected_specialists": [
+      "nyc311",
+      "dep_stormwater",
+      "microtopo_lidar"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Astoria near East River. Moderate flood exposure. DEP and 311 should fire.",
+    "verified": true
+  },
+  {
+    "id": "q050",
+    "query": "Compare Tottenville Staten Island to South Beach Staten Island for flood exposure",
+    "intent": "compare",
+    "persona": "NYC OEM planner prioritizing Staten Island coastal resilience investments",
+    "borough": "Staten Island",
+    "expected_specialists": [
+      "nyc311",
+      "dep_stormwater",
+      "microtopo_lidar"
+    ],
+    "expected_silent": [],
+    "fragility_notes": "Both Staten Island coastal neighborhoods \u2014 Sandy-exposed. Same-island compare.",
+    "verified": true
+  }
+]

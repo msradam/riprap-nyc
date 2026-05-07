@@ -1,7 +1,7 @@
 # Demo Query Shortlist
 
-_Generated: 2026-05-06. Based on live Space probe (AMD MI300X · vLLM) +
-framed-run session notes (2026-05-06 02:21 UTC, local Ollama)._
+_Last updated: 2026-05-06. Primary arc verified on live Space (AMD MI300X · vLLM).
+50-query validation sweep run post-bugfix: 50/50 PASS, avg 11.2 s, 36/50 Mellea 4/4._
 
 ---
 
@@ -19,8 +19,8 @@ and the new two-column compare layout.
 **Persona:** Renter evaluating a move to Red Hook — canonical Sandy turf.
 **Borough / neighborhood:** Red Hook, Brooklyn
 **Intent:** `single_address`
-**Verified wall-clock:** 5.7 s (live Space, AMD MI300X, 2026-05-06)
-**Mellea:** 4/4, 0 rerolls (cleanest result in the suite)
+**Verified wall-clock:** 5.7 s (2026-05-06); **9.8 s (50-query sweep, 2026-05-06)**
+**Mellea:** 4/4, 0 rerolls (cleanest result in the suite; confirmed clean in sweep)
 **Stones fired / silent / errored:**
 - Cornerstone (Sandy, DEP stormwater): fired — Sandy inside ✓, DEP outside (negative result is cited)
 - Touchstone (311, FloodNet, NOAA/NWS): fired — 65 complaints, 4 FloodNet events, NOAA gauge live
@@ -39,8 +39,8 @@ and the new two-column compare layout.
 **Persona:** NYC OEM/DEP capital planner looking at sewer backlog by NTA.
 **Borough / neighborhood:** Hollis, NTA QN1206, Queens
 **Intent:** `neighborhood`
-**Verified wall-clock:** 3.9 s (live Space, AMD MI300X, 2026-05-06); 68 s (local Ollama, framed run)
-**Mellea:** 4/4, 0 rerolls (live Space); 4/4, 1 reroll (framed Ollama run)
+**Verified wall-clock:** 3.9 s (2026-05-06); **7.0 s (50-query sweep, 2026-05-06)**
+**Mellea:** 4/4, 0 rerolls (confirmed clean in sweep)
 **Stones fired / silent / errored:**
 - 311, DEP stormwater, microtopo: all fired
 - NTA-level specialists run (8 steps total on cpu-basic Space)
@@ -56,8 +56,8 @@ and the new two-column compare layout.
 **Persona:** Real-estate attorney comparing a Sandy-zone lease to a lower-risk mid-Manhattan address; or a journalist showing the contrast.
 **Borough / neighborhood:** Red Hook, Brooklyn vs Financial District, Manhattan
 **Intent:** `compare` (verified routing on live Space post-28a77ae fix)
-**Verified wall-clock:** ~15 s (sequential PLACE A + PLACE B FSMs; estimated from step times — 5.7 s + 8.0 s + reconcile overhead; exact wall_s not captured)
-**Mellea:** 4/4 PLACE A (Pioneer, 0 rerolls) + 4/4 PLACE B (Gold, 0 rerolls)
+**Verified wall-clock:** ~15 s (estimated 2026-05-06); **20.7 s (50-query sweep, 2026-05-06)**
+**Mellea:** 4/4 combined (0 rerolls) — confirmed clean in sweep
 **Stones fired / silent / errored:** Full single_address FSM run for each target (24 steps each); same error pattern as Query 1 (torchvision::nms deterministic)
 **Fine-tunes invoked:** Granite TTM r2, Granite-TTM-r2-Battery-Surge, Prithvi-EO-2.0-NYC-Pluvial, Granite Embedding 278M, GLiNER (all for both targets)
 **Briefing verdict opener:** Two-column layout renders in the UI. PLACE A opener: "The address at 80 PIONEER STREET, Brooklyn, NY, is **significantly exposed to flood risk**…" PLACE B opener (Gold Street) contrasts — lower 311 count (26 vs 65), no Sandy inundation, Ida HWM 3.47 km away vs 130 m.
@@ -66,13 +66,49 @@ and the new two-column compare layout.
 
 ---
 
+## Verified clean queries (50-query sweep, 2026-05-06)
+
+Best queries per intent type from the sweep — 0 rerolls, Mellea 4/4, fast wall-clock.
+
+### Address (cleanest 3)
+
+| Query | Wall-clock | Mellea | Rerolls | Notes |
+|-------|-----------|--------|---------|-------|
+| `I'm thinking about renting an apartment at 80 Pioneer Street, Brooklyn. Should I worry?` | 9.8 s | 4/4 | 0 | Primary demo arc. All Stones fire. |
+| `Hollis, Queens` | 7.0 s | 4/4 | 0 | Also neighborhood intent — clean on both paths. |
+| `100 Gold Street, Manhattan` | 10.6 s | 4/4 | 0 | Negative control: outside Sandy zone; low reroll. |
+
+### Neighborhood (cleanest 3)
+
+| Query | Wall-clock | Mellea | Rerolls | Notes |
+|-------|-----------|--------|---------|-------|
+| `Coney Island, Brooklyn` | 5.5 s | 4/4 | 0 | Fastest neighborhood in suite. 87.5% NTA in Sandy. |
+| `Hunts Point, Bronx` | 5.3 s | 4/4 | 0 | Clean South Bronx probe; Bronx representation. |
+| `East New York, Brooklyn` | 7.0 s | 4/4 | 0 | Inland stormwater narrative, different from coastal arc. |
+
+### Compare (cleanest 3)
+
+| Query | Wall-clock | Mellea | Rerolls | Notes |
+|-------|-----------|--------|---------|-------|
+| `Compare 80 Pioneer Street Brooklyn to 100 Gold Street Manhattan` | 20.7 s | 4/4 | 0 | Primary demo arc. Maximum delta. Cross-borough. |
+| `Compare Red Hook Brooklyn to the Financial District Manhattan for flood risk` | 18.5 s | 4/4 | 0 | Neighborhood-vs-neighborhood cross-borough. |
+| `Compare 157-11 Rockaway Beach Blvd Queens to 100 Gold Street Manhattan` | 15.2 s | 4/4 | 0 | Far Rockaway vs FiDi — extreme delta. |
+
+### Planner / development check (cleanest)
+
+| Query | Wall-clock | Mellea | Rerolls | Notes |
+|-------|-----------|--------|---------|-------|
+| (see "Queries to avoid" — all planner queries in sweep had rr≥2 or 0/4) | — | — | — | Planner intent is fragile for demo; prefer address/neighborhood/compare. |
+
+---
+
 ## Backup queries
 
 | Primary | Backup | Reason |
 |---------|--------|--------|
-| Query 1 — 80 Pioneer Street, Brooklyn | `Coney Island, Brooklyn` | Neighborhood intent; 4/4 0rr 4.7s on live Space. Different Stones surface (NTA-level DEP, 87.5% NTA in Sandy zone). Swap if Pioneer geocoder drifts. |
-| Query 2 — Hollis, Queens | `Coney Island, Brooklyn` | Same neighborhood path; also 4/4 0rr 4.7s. Stronger Sandy narrative (87.5% of NTA inside Sandy 2012 extent). |
-| Query 3 compare — Pioneer vs Gold | `442 East Houston Street, Manhattan` + follow-up compare | Houston alone: PASS 11.9s 4/4 but rr=2 (higher risk). No verified clean compare backup; run Houston as a single_address if compare intent fails. |
+| Query 1 — 80 Pioneer Street, Brooklyn | `Coney Island, Brooklyn` | Neighborhood intent; 4/4 0rr 5.5 s in sweep. Different Stones surface (NTA-level DEP, 87.5% NTA in Sandy zone). Swap if Pioneer geocoder drifts. |
+| Query 2 — Hollis, Queens | `Hunts Point, Bronx` | 4/4 0rr 5.3 s in sweep. Shows Bronx coverage, different stormwater narrative. |
+| Query 3 compare — Pioneer vs Gold | `Compare Red Hook Brooklyn to the Financial District Manhattan` | 4/4 0rr 18.5 s. Neighborhood-vs-neighborhood; cleaner than address parsing if planner struggles. |
 
 ---
 
@@ -80,12 +116,16 @@ and the new two-column compare layout.
 
 | Query | Failure mode |
 |-------|-------------|
-| `Compare Hollis Queens to Red Hook Brooklyn` | Fragile — PLACE A (Hollis) failed `citations_resolve` 3 times, total 2 rerolls on live Space; will exceed RIPRAP_MELLEA_MAX_ATTEMPTS=3 under load |
-| `Compare the Two Bridges neighborhood to Battery Park City` | Hard failure — planner emitted `compare` but backend fell through to `single_address` with "No grounded data available"; neighborhood-vs-neighborhood compare not fully wired |
-| `Compare Two Bridges NTA…` (grant-writer CDBG-DR query, q13) | Safe as neighborhood solo (4/4 0rr 68s Ollama, not retested as compare target) but CDBG-DR framing not verified on live vLLM path |
-| `442 East Houston Street, Manhattan` (solo) | PASS but 2 rerolls on live Space — acceptable for secondary demo, risky as opener |
-| `504 Grand Street, Manhattan` (q07) | 0/4 Mellea in every session-note run; geocodes but reconcile fails |
-| `What would Riprap have said about Hollis on August 31, 2021…` | `not_implemented` — retrospective intent not wired; returns 0/4 in ~5 s |
-| `Court exhibit: flood-exposure narrative for 442 East Houston…` | Same `not_implemented` path; 0/4 |
-| Any `live_now` query (e.g. FloodNet BK-018) | 0/4 Mellea — live_now reconcile does not currently pass grounding checks |
-| `EJNYC × Riprap pairing` / BBMCR capital planning | 0/4 Mellea, 0 steps — planner routes to `development_check` but no DOB filings match; returns immediately empty |
+| `What was the flood situation at 750 Baychester Avenue, Bronx during Ida?` | `not_implemented` — "during Ida" triggers retrospective intent; returns 0/4 in 0.03 s. Confirmed in 50-query sweep. |
+| `What's the storm surge risk for 157-11 Rockaway Beach Blvd, Queens?` | All specialists errored (0.0s wall-clock per specialist); 0/4 Mellea, 1.6 s total. Geocoder likely fails on this address format; reword as neighborhood ("Far Rockaway, Queens") instead. |
+| `What's the flood risk at 325 Hudson Street, Manhattan?` | 2/4 Mellea with 2 rerolls — citations_resolve and numerics_grounded both failing. Hudson Square has sparse source data; risky for demo. |
+| All planner/development-check queries | rr≥2 across the board in sweep (q031, q035, q039, q044, q048). Development-check intent sparse on citations; reconciler hits MAX_ATTEMPTS. Avoid on demo. |
+| `Compare Canarsie Brooklyn to Park Slope Brooklyn` | 3/4 Mellea, 3 rerolls, 24.2 s — slowest same-borough compare in sweep. Use cross-borough compares instead. |
+| `Compare Mott Haven Bronx to Hunts Point Bronx` | 4/4 but 3 rerolls, 28.0 s — slowest query in sweep. Both NTAs have sparse sensor data. |
+| `Compare Hollis Queens to Red Hook Brooklyn` | Fragile (prior run) — PLACE A (Hollis) failed `citations_resolve`; will exceed MAX_ATTEMPTS under load. |
+| `Compare the Two Bridges neighborhood to Battery Park City` | Hard failure — planner fell through to `single_address`; neighborhood-vs-neighborhood compare fragile. |
+| `442 East Houston Street, Manhattan` (solo) | 2 rerolls historically — acceptable secondary, risky as opener. |
+| `504 Grand Street, Manhattan` | 0/4 Mellea in every run; geocodes but reconcile fails. |
+| Any `live_now` query (e.g. FloodNet BK-018) | 0/4 Mellea — live_now reconcile does not pass grounding checks. |
+| `What would Riprap have said about Hollis on August 31, 2021…` | `not_implemented` — retrospective intent not wired. |
+| `EJNYC × Riprap pairing` / BBMCR capital planning | 0/4 Mellea, 0 steps — planner routes to `development_check` but no DOB filings match. |
