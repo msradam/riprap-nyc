@@ -43,10 +43,10 @@ description: ASCE NY State Convention, Albany, May 13, 2026
 </div>
 
 <div style="display: flex; flex-direction: column; justify-content: center;">
-  <h1 style="margin: 0 0 14px; font-size: 52px;">Hi. I'm Adam.</h1>
-  <p style="font-size: 17px; color: var(--ink-2); margin: 0 0 12px; line-height: 1.55;">Staff Software Engineer at IBM Z. MS Computer Engineering at NYU Tandon.</p>
-  <p style="font-size: 17px; color: var(--ink-2); margin: 0 0 12px; line-height: 1.55;">I'm not a civil engineer. I'm a software engineer who builds civic-tech systems for places where infrastructure fails the people who live there. Riprap reads a place the way an engineer reads a site, but I'm here to learn from this room where it falls short of how a stamped deliverable would need to behave.</p>
-  <p style="font-size: 17px; color: var(--ink-2); margin: 0 0 20px; line-height: 1.55;">Andrew Hicks invited me. I'm grateful for the chance to show this work to civil engineers and hear what you'd change.</p>
+  <h1 style="margin: 0 0 14px; font-size: 52px;">Hi! I'm Adam. 👋</h1>
+  <p style="font-size: 17px; color: var(--ink-2); margin: 0 0 12px; line-height: 1.55;"><strong>Staff Software Engineer at IBM Z.</strong> <strong>MS Computer Engineering at NYU Tandon.</strong></p>
+  <p style="font-size: 17px; color: var(--ink-2); margin: 0 0 12px; line-height: 1.55;"><strong>I'm not a civil engineer.</strong> I'm a software engineer who builds civic-tech systems for places where infrastructure fails the people who live there. Riprap reads a place the way an engineer reads a site, but I'm here to learn from this room where it falls short of how a <strong>stamped deliverable</strong> would need to behave.</p>
+  <p style="font-size: 17px; color: var(--ink-2); margin: 0 0 20px; line-height: 1.55;"><strong>Andrew Hicks</strong> invited me. I'm grateful for the chance to show this work to civil engineers and hear what you'd change.</p>
   <p style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; color: var(--ink-3);">github.com/msradam/riprap-nyc &nbsp;&middot;&nbsp; linkedin.com/in/adamsrahman</p>
 </div>
 

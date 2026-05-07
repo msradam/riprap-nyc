@@ -49,10 +49,10 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 </div>
 
 <div style="display: flex; flex-direction: column; justify-content: center;">
-  <h1 style="margin: 0 0 14px; font-size: 52px;">Hi. I'm Adam.</h1>
-  <p style="font-size: 17px; color: var(--ink-2); margin: 0 0 12px; line-height: 1.55;">Staff Software Engineer at IBM. MS Computer Engineering at NYU.</p>
-  <p style="font-size: 17px; color: var(--ink-2); margin: 0 0 12px; line-height: 1.55;">I build civic-tech systems for places where infrastructure fails the people who live there. Previous projects ran AI locally for refugee field offices, accessibility routing in five boroughs, and offline geospatial analysis on Raspberry Pi.</p>
-  <p style="font-size: 17px; color: var(--ink-2); margin: 0 0 20px; line-height: 1.55;">Riprap is the third hackathon I've built civic-tech AI for in six months. The discipline carries: open-source, public-record, runs where the people are.</p>
+  <h1 style="margin: 0 0 14px; font-size: 52px;">Hi! I'm Adam. 👋</h1>
+  <p style="font-size: 17px; color: var(--ink-2); margin: 0 0 12px; line-height: 1.55;"><strong>Staff Software Engineer at IBM.</strong> <strong>MS Computer Engineering at NYU.</strong></p>
+  <p style="font-size: 17px; color: var(--ink-2); margin: 0 0 12px; line-height: 1.55;">I build <strong>civic-tech systems</strong> for places where infrastructure fails the people who live there. Previous projects ran AI locally for refugee field offices, accessibility routing in five boroughs, and offline geospatial analysis on Raspberry Pi.</p>
+  <p style="font-size: 17px; color: var(--ink-2); margin: 0 0 20px; line-height: 1.55;">Riprap is the <strong>third hackathon I've built civic-tech AI for in six months.</strong> The discipline carries: <strong>open-source, public-record, runs where the people are.</strong></p>
   <p style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; color: var(--ink-3);">github.com/msradam &nbsp;&middot;&nbsp; linkedin.com/in/adamsrahman</p>
 </div>
 
