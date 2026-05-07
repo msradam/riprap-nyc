@@ -9,7 +9,6 @@ Default base: https://lablab-ai-amd-developer-hackathon-riprap-nyc.hf.space
 import argparse
 import asyncio
 import json
-import re
 import time
 from pathlib import Path
 from urllib.parse import quote
@@ -254,20 +253,20 @@ def main():
 
     failures = [r for r in results if r["status"] != "PASS"]
     if failures:
-        print(f"\n--- FAILURES ---")
+        print("\n--- FAILURES ---")
         for r in failures:
             print(f"  [{r['id']}] {r['status']} — {r['query'][:60]}")
             if r.get("error"):
                 print(f"           err: {r['error'][:80]}")
 
     slowest = sorted([r for r in results if r.get("wall_clock_s")], key=lambda x: x["wall_clock_s"], reverse=True)[:5]
-    print(f"\n--- SLOWEST 5 ---")
+    print("\n--- SLOWEST 5 ---")
     for r in slowest:
         print(f"  [{r['id']}] {r['wall_clock_s']:.1f}s — {r['query'][:60]}")
 
     high_rr = [r for r in results if (r.get("mellea_rerolls") or 0) > 1]
     if high_rr:
-        print(f"\n--- HIGH REROLLS (>1) ---")
+        print("\n--- HIGH REROLLS (>1) ---")
         for r in high_rr:
             print(f"  [{r['id']}] rerolls={r['mellea_rerolls']} — {r['query'][:60]}")
 

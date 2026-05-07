@@ -59,6 +59,14 @@ slides/deck.pptx
 *.bak
 *.swp
 *.swo
+.playwright-mcp/
+
+# Demo recordings (large; not committed)
+assets/video/
+
+# Local env overlays
+.env.local
+*.local.env
 
 # Sensitive
 AMD_TOKEN
