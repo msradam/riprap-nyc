@@ -3,7 +3,7 @@ marp: true
 theme: riprap
 paginate: true
 size: 16:9
-title: Riprap. Citation-grounded NYC flood briefings.
+title: Riprap. Flood risk analysis for any NYC address.
 description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 ---
 
@@ -13,12 +13,14 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 <img class="lead-mark" src="logo.svg" alt="Riprap dam mark" />
 
 <div class="eyebrow" style="padding-top: 132px;">
-  AMD &times; lablab.ai &nbsp;·&nbsp; Developer Hackathon
+  AMD &times; LABLAB.AI &nbsp;·&nbsp; DEVELOPER HACKATHON
 </div>
 
 # Riprap
 
-## Citation-grounded NYC flood-exposure briefings, on AMD MI300X.
+## Flood risk analysis for any NYC address.
+
+<p style="font-size: 22px; color: var(--ink-2); max-width: 680px; margin: 0 0 32px;">Powered by a multi-agent AI system that reads satellites, watches sensors, forecasts surges, and refuses to stay silent.</p>
 
 <div class="meta">
   <div>
@@ -40,18 +42,17 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 
 <div class="eyebrow">01 &middot; The problem</div>
 
-# Climate risk data is a black box.
+# Sandy killed 43 New Yorkers in 2012. Ida killed 13 in basement apartments in 2021.
+
+<p style="font-size: 20px; color: var(--ink-2); max-width: 820px; margin: 8px 0 16px;">The flood evidence existed both times. Scattered across eight public-record sources: FEMA, USGS, NOAA, NYC DEP, FloodNet, NYC 311, NWS, NPCC4. None of it reached the people exposed in a form they could read.</p>
 
 <div class="box-grid cols-2">
 
 <div class="box">
-  <div class="lbl">The market</div>
+  <div class="lbl">Eight sources. Zero synthesis.</div>
   <div class="body">
-    <strong>First Street.</strong> Score 1&ndash;10.<br>
-    <strong>ClimateCheck.</strong> Score 1&ndash;100.<br>
-    <strong>Jupiter.</strong> Enterprise SaaS.<br>
-    <br>
-    A number. A bar chart. A black box.
+    Sandy inundation zones. Ida high-water marks. DEP stormwater scenarios. FloodNet sensor records. 311 flood complaints. NWS alerts. NOAA tide gauges. NPCC4 sea-level projections.<br><br>
+    Public record. Unread.
   </div>
 </div>
 
@@ -64,55 +65,25 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 
 </div>
 
-<p style="margin-top: 20px; font-size: 22px;">When a number meets resistance, <strong>the only defense is the audit trail.</strong></p>
-
-<p style="margin-top: 4px; font-size: 18px; color: var(--ink-3);">Riprap is not a property-risk score. It is the audit trail behind one.</p>
+<p style="margin-top: 20px; font-size: 22px;">When a number meets resistance, <strong>the only defense is the audit trail.</strong> Riprap is the audit trail.</p>
 
 ---
 
-<div class="eyebrow">02 &middot; SOLUTION</div>
+<div class="eyebrow">02 &middot; What Riprap does</div>
 
 # A flood-exposure briefing for any place in New York City.
 
-<div style="border: 2px solid #94A3B8; border-radius: 2px; overflow: hidden; height: 470px;">
+<p style="margin: 4px 0 10px; font-size: 20px; color: var(--ink-2);">Type an address. Get a written briefing in 5&ndash;13 seconds, fusing satellite imagery, sensor data, modeled scenarios, and projections into one cited paragraph.</p>
+
+<div style="border: 2px solid #94A3B8; border-radius: 2px; overflow: hidden; height: 430px;">
   <img src="../assets/screenshots/hero.png" style="width: 100%; height: 100%; object-fit: cover; object-position: top;" />
 </div>
 
 ---
 
-<div class="eyebrow">03 &middot; The civic-tech case</div>
+<div class="eyebrow">03 &middot; Architecture</div>
 
-# The civic-tech case.
-
-<div class="box-grid cols-2">
-
-<div class="box">
-  <div class="lbl">NY Property Disclosure Law</div>
-  <div class="body">March 2024. Sellers must disclose flood history. <strong>Riprap is the citable narrative.</strong></div>
-</div>
-
-<div class="box">
-  <div class="lbl">NYC DEP Stormwater Plan</div>
-  <div class="body">2024. $30B priority list, 86 sites. <strong>Riprap is the per-NTA evidence layer.</strong></div>
-</div>
-
-<div class="box">
-  <div class="lbl">EJNYC Flood Vulnerability Index</div>
-  <div class="body">2024. 35% of state climate spend goes to "disadvantaged communities." <strong>Riprap stays open-source so advocacy can audit.</strong></div>
-</div>
-
-<div class="box dark">
-  <div class="lbl">No commercial APIs</div>
-  <div class="body">Every dataset is public-record federal, state, or city. Every foundation model is Apache-2.0. <strong>Every claim cites its source.</strong></div>
-</div>
-
-</div>
-
----
-
-<div class="eyebrow">04 &middot; Architecture</div>
-
-# Five Stones fan out. One cited briefing comes back.
+# Five specialist agents fan out. One cited briefing comes back.
 
 <p style="margin: 4px 0 10px; font-size: 17px; color: var(--ink-3); font-family: var(--font-mono);">query &rarr; <strong style="color: var(--ink);">Planner</strong> (Granite 4.1 3B, intent classification) &rarr; Stone roster &rarr; <strong style="color: var(--ink);">Capstone</strong> (Granite 4.1 8B + Mellea) &rarr; briefing</p>
 
@@ -202,7 +173,7 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 
 </div>
 
-<p style="margin-top: 8px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3);">Real evidence cards rendered by the live system &nbsp;&middot;&nbsp; 442 East Houston Street, Manhattan.</p>
+<p style="margin-top: 8px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3);">Real evidence cards rendered by the live system &nbsp;&middot;&nbsp; 442 East Houston Street, Manhattan. These are the Five Stones.</p>
 
 <div class="box" style="border-top: 3px solid #162E51; margin-top: 10px; padding: 12px 18px;">
   <span style="font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #162E51;">Capstone</span>
@@ -211,33 +182,35 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 
 ---
 
-<div class="eyebrow">05 &middot; Fine-Tuning on AMD MI300X</div>
+<div class="eyebrow">04 &middot; Fine-Tuning on AMD MI300X</div>
 
 # Three Apache-2.0 NYC fine-tunes on MI300X.
+
+<p style="margin-bottom: 10px; font-size: 18px; color: var(--ink-2);">Built for the Fine-Tuning track. All three published. All three reproducible.</p>
 
 <div class="box-grid cols-3" style="margin-top: 12px; gap: 14px;">
 
 <div class="box" style="border-top: 3px solid #0E7490; padding: 18px 18px 16px;">
   <div class="lbl" style="color: #0E7490; margin-bottom: 6px;">Prithvi-EO-2.0-NYC-Pluvial</div>
   <div style="font-size: 14px; color: var(--ink-2); margin-bottom: 12px;">Hurricane Ida pluvial flood detection from Sentinel-2</div>
-  <div style="font-family: var(--font-mono); font-size: 22px; font-weight: 700; color: var(--ink); letter-spacing: -0.02em;">0.5979</div>
-  <div style="font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); margin-bottom: 10px;">test flood IoU &nbsp;·&nbsp; 6&times; lift over Sen1Floods11 baseline</div>
+  <div style="font-family: var(--font-mono); font-size: 22px; font-weight: 700; color: var(--ink); letter-spacing: -0.02em;">IoU 0.598</div>
+  <div style="font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); margin-bottom: 10px;">6&times; lift over Sen1Floods11 baseline</div>
   <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3);">MI300X &middot; AMD Developer Cloud</div>
 </div>
 
 <div class="box" style="border-top: 3px solid #1A4480; padding: 18px 18px 16px;">
   <div class="lbl" style="color: #1A4480; margin-bottom: 6px;">TerraMind-NYC-Adapters</div>
   <div style="font-size: 14px; color: var(--ink-2); margin-bottom: 12px;">LULC + Buildings + TiM LoRA adapters for NYC</div>
-  <div style="font-family: var(--font-mono); font-size: 22px; font-weight: 700; color: var(--ink); letter-spacing: -0.02em;">+6.13<span style="font-size: 15px;">pp</span></div>
-  <div style="font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); margin-bottom: 10px;">LULC mIoU over full-FT baseline &nbsp;·&nbsp; mIoU 0.5866</div>
-  <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3);">~18 min total &middot; MI300X</div>
+  <div style="font-family: var(--font-mono); font-size: 22px; font-weight: 700; color: var(--ink); letter-spacing: -0.02em;">mIoU 0.587</div>
+  <div style="font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); margin-bottom: 10px;">+6.13 pp over full-FT baseline &nbsp;·&nbsp; 18 min training</div>
+  <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3);">MI300X</div>
 </div>
 
 <div class="box" style="border-top: 3px solid #92400E; padding: 18px 18px 16px;">
   <div class="lbl" style="color: #92400E; margin-bottom: 6px;">Granite-TTM-r2-Battery-Surge</div>
   <div style="font-size: 14px; color: var(--ink-2); margin-bottom: 12px;">NOAA Battery tide gauge 96h surge residual nowcast</div>
-  <div style="font-family: var(--font-mono); font-size: 22px; font-weight: 700; color: var(--ink); letter-spacing: -0.02em;">0.157<span style="font-size: 15px;">m</span></div>
-  <div style="font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); margin-bottom: 10px;">RMSE &nbsp;·&nbsp; &minus;35% vs persistence baseline</div>
+  <div style="font-family: var(--font-mono); font-size: 22px; font-weight: 700; color: var(--ink); letter-spacing: -0.02em;">RMSE 0.157<span style="font-size: 15px;">m</span></div>
+  <div style="font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); margin-bottom: 10px;">&minus;35% vs persistence baseline</div>
   <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3);">MI300X &middot; Apache-2.0 &middot; HF Hub</div>
 </div>
 
@@ -247,15 +220,61 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 
 ---
 
-<div class="eyebrow">06 &middot; DEMO</div>
+<div class="eyebrow">05 &middot; DEMO</div>
 
 # Live demo.
 
-<div style="margin: 48px 0 32px; text-align: center;">
-  <p style="font-family: var(--font-mono); font-size: 28px; font-weight: 700; color: var(--ink); margin: 0 auto; max-width: 860px; line-height: 1.35;">&ldquo;I&rsquo;m thinking about renting an apartment at 80 Pioneer Street, Brooklyn. Should I worry?&rdquo;</p>
+<div style="margin: 20px 0 18px;">
+  <div style="font-family: var(--font-mono); font-size: 12px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 12px;">Three queries staged for the recording</div>
+  <div class="box-grid cols-3" style="gap: 14px;">
+    <div class="box" style="border-top: 3px solid #475569;">
+      <div class="lbl" style="color: #475569;">Query 1 &middot; single address</div>
+      <div class="body" style="font-size: 18px; line-height: 1.35; margin-top: 6px;">&ldquo;80 Pioneer Street, Brooklyn&rdquo;</div>
+    </div>
+    <div class="box" style="border-top: 3px solid #0E7490;">
+      <div class="lbl" style="color: #0E7490;">Query 2 &middot; neighborhood</div>
+      <div class="body" style="font-size: 18px; line-height: 1.35; margin-top: 6px;">&ldquo;Hollis, Queens&rdquo;</div>
+    </div>
+    <div class="box" style="border-top: 3px solid #1A4480;">
+      <div class="lbl" style="color: #1A4480;">Query 3 &middot; grant application</div>
+      <div class="body" style="font-size: 15px; line-height: 1.35; margin-top: 6px;">&ldquo;Generate the vulnerability assessment section for a HUD CDBG-DR application for the Two Bridges NTA, Manhattan.&rdquo;</div>
+    </div>
+  </div>
 </div>
 
-<p style="text-align: center; font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); margin: 0 auto; max-width: none;">13 seconds end-to-end &nbsp;&middot;&nbsp; 4/4 grounding checks &nbsp;&middot;&nbsp; all sources public-record</p>
+<p style="text-align: center; font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); margin: 0 auto; max-width: none;">5.8&ndash;13.1s end-to-end &nbsp;&middot;&nbsp; 4/4 grounding every run &nbsp;&middot;&nbsp; 8+ public-record sources</p>
+
+---
+
+<div class="eyebrow">06 &middot; Why this works</div>
+
+# It refuses to stay silent. It also refuses to make things up.
+
+<div class="box-grid cols-2" style="margin-top: 12px; gap: 18px;">
+
+<div>
+<p style="font-size: 19px; color: var(--ink-2); margin-bottom: 14px;">Mellea rejection sampling enforces four checks per briefing. All four must pass before the briefing ships.</p>
+
+<div style="display: flex; flex-direction: column; gap: 8px;">
+  <div style="font-family: var(--font-mono); font-size: 13px; padding: 8px 14px; background: var(--paper-deep); border-left: 3px solid #162E51;"><code>numerics_grounded</code> &mdash; every non-trivial number appears verbatim in a source document</div>
+  <div style="font-family: var(--font-mono); font-size: 13px; padding: 8px 14px; background: var(--paper-deep); border-left: 3px solid #162E51;"><code>no_placeholder_tokens</code> &mdash; no leaked template fragments</div>
+  <div style="font-family: var(--font-mono); font-size: 13px; padding: 8px 14px; background: var(--paper-deep); border-left: 3px solid #162E51;"><code>citations_dense</code> &mdash; every number has a [doc_id] citation in the same sentence</div>
+  <div style="font-family: var(--font-mono); font-size: 13px; padding: 8px 14px; background: var(--paper-deep); border-left: 3px solid #162E51;"><code>citations_resolve</code> &mdash; every cited id resolves to an actual input document</div>
+</div>
+</div>
+
+<div>
+<p style="font-size: 19px; color: var(--ink-2); margin-bottom: 14px;">If a Stone has no evidence, the system renders SILENT. If Capstone produces a claim it cannot cite, the system rerolls. If a query is out of scope, the system says so.</p>
+
+<div class="box" style="border-top: 3px solid #162E51;">
+  <div class="lbl">Verified across the test suite</div>
+  <div class="body">
+    5/5 verified queries &nbsp;&middot;&nbsp; 4/4 grounding every run &nbsp;&middot;&nbsp; 0 confabulations across the curated suite
+  </div>
+</div>
+</div>
+
+</div>
 
 ---
 
@@ -268,18 +287,18 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 <div class="box-grid cols-3" style="margin-top: 0;">
 
 <div class="box">
-  <div class="lbl">Break out the Stones</div>
-  <div class="body">Each Stone is a coherent composition over data sources, models, and deterministic checks. Extract Cornerstone, Touchstone, Keystone, Lodestone as independent packages; any civic-tech project can pull one Stone without the full Riprap stack.</div>
+  <div class="lbl">Stones as standalone packages</div>
+  <div class="body">Each Stone is a coherent composition over data sources, models, and deterministic checks. Extract Cornerstone, Touchstone, Keystone, Lodestone as independent packages so any civic-tech project can pull one Stone without the full Riprap stack.</div>
 </div>
 
 <div class="box">
   <div class="lbl">Other flood-impacted cities</div>
-  <div class="body">Houston (Harvey, Beryl), Miami (king tides), Boston (CSO floods), Jakarta, Manila, Dhaka &mdash; the same five-Stone pattern, different probe sets and RAG corpora per city.</div>
+  <div class="body">Houston (Harvey, Beryl), Miami (king tides), Boston (CSO floods), Jakarta, Manila, Dhaka. The same five-Stone pattern, different probe sets and RAG corpora per city.</div>
 </div>
 
 <div class="box tinted">
   <div class="lbl">Historical-event mode</div>
-  <div class="body">Re-run the FSM with snapshot data from any past date. Validate the system against measured outcomes &mdash; what would Riprap have said before Sandy, before Ida, before the 2024 Beryl remnants. Calibration as a first-class feature.</div>
+  <div class="body">Re-run the FSM with snapshot data from any past date. Validate the system against measured outcomes: what would Riprap have said before Sandy, before Ida, before the 2024 Beryl remnants. Calibration as a first-class feature.</div>
 </div>
 
 </div>
