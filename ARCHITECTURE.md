@@ -173,24 +173,39 @@ The full chain, in execution order:
          └────────────┬────────────────────────────────┘
                       ▼
          ┌─────────────────────────────────────────────┐
-         │ 13. rag (Granite Embedding 278M)            │  retrieves policy paragraphs
-         │     query corpus of 5 NYC agency PDFs        │  relevant to this address
+         │ 10. microtopo    DEM + TWI + HAND at point  │  proxy
+         │ 11. ida_hwm      USGS Ida 2021 HWM proximity│  empirical
+         │ 12. mta_entrance MTA subway entrance exposure│  empirical
+         │ 13. prithvi_v2   Prithvi Ida flood polys     │  empirical (model-derived)
+         │ 14. prithvi_live live Prithvi inference      │  (gpu-only; skipped cpu-basic)
+         │ 15. terramind    TerraMind LULC synthesis    │  (gpu-only; skipped cpu-basic)
          └────────────┬────────────────────────────────┘
                       ▼
          ┌─────────────────────────────────────────────┐
-         │ 14. reconcile (Granite 4.1 :3b on Ollama)   │  document-grounded synthesis
-         │     reads all "documents" produced by 1-13  │  → 4-section cited paragraph
-         │     drops sentences with ungrounded numbers  │  → audit trail
+         │ 16. rag (Granite Embedding 278M)            │  retrieves policy paragraphs
+         │     query corpus of 5 NYC agency PDFs        │  relevant to this address
+         │ 17. gliner_extract (GLiNER medium-v2.1)     │  entity extraction over RAG hits
+         └────────────┬────────────────────────────────┘
+                      ▼
+         ┌─────────────────────────────────────────────┐
+         │ 18. reconcile (Granite 4.1 :8b)             │  document-grounded synthesis
+         │     reads all "documents" produced by 1-17  │  → 4-section cited paragraph
+         │     Mellea rejects ungrounded outputs        │  → audit trail
          └────────────┬────────────────────────────────┘
                       ▼
                  cited briefing
                  + tier badge + evidence cards + map
 ```
 
+The `single_address` path emits **24 step events** (including the live
+sub-specialists ttm_311_forecast, ttm_battery_surge, floodnet_forecast,
+and the eo_chip_fetch / terramind_lulc / terramind_buildings gates).
+`neighborhood` emits 8–10 steps (NTA-level specialists only; per-address
+registers don't run).
+
 Each step is implemented as a `@action` in `app/fsm.py`. The Burr
-runtime handles the state-passing between actions and emits a trace
-record per step (timing, ok/err, summary fields) which the front-end
-shows live as the FSM runs.
+runtime handles state-passing between actions and emits a trace record
+per step (timing, ok/err, summary fields) which the front-end shows live.
 
 ### 3.1 What every specialist does, plain language
 
@@ -207,9 +222,12 @@ shows live as the FSM runs.
 | 9 | **ttm_forecast** *(live)* | Granite TTM r2 zero-shot forecast of the surge **residual** at the Battery for the next ~9.6 h. NOAA already publishes the astronomical tide; TTM forecasts the part NOAA doesn't. | live (model-derived) |
 | 10 | **microtopo**            | LiDAR-derived terrain features at the point: elevation, HAND, TWI, local relief percentile.                                                                                      | proxy              |
 | 11 | **ida_hwm**              | USGS Hurricane Ida 2021 high-water marks. Actual measured water heights surveyed in the days after the storm.                                                                   | empirical          |
-| 12 | **prithvi**              | NASA/IBM Prithvi-EO 2.0 segmentation of Sentinel-2 imagery for the Ida pre/post pair. Pre-computed offline; serves point-in-polygon queries against the resulting 166 polygons.   | empirical (model-derived) |
-| 13 | **rag**                  | Granite Embedding 278M retrieves the most-relevant paragraphs from 5 NYC policy PDFs (Comptroller, NPCC4, MTA, NYCHA, ConEd) given the address's borough + which scenarios fired. | policy             |
-| 14 | **reconcile**            | Granite 4.1 :3b reads all the documents produced by steps 1–13 and writes the cited briefing paragraph. See [§6](#6-document-grounded-reconciliation).                            | LLM synthesis      |
+| 12 | **mta_entrance_exposure** | MTA subway entrances within radius: how many, how many are inside Sandy 2012 zone, how many are in DEP Extreme-2080. | empirical          |
+| 13 | **prithvi_eo_v2**        | Pre-computed point-in-polygon against 166 Prithvi-derived Ida 2021 flood polygons (offline-built; instant at request time).                                                      | empirical (model-derived) |
+| 14 | **prithvi_eo_live** / **terramind_synthesis** | Live Prithvi / TerraMind inference over fresh EO chips. GPU-only; silenced (deterministic skip) on cpu-basic HF Space. | empirical (model-derived) |
+| 15 | **rag**                  | Granite Embedding 278M retrieves the most-relevant paragraphs from 5 NYC policy PDFs (Comptroller, NPCC4, MTA, NYCHA, ConEd) given the address's borough + which scenarios fired. | policy             |
+| 16 | **gliner_extract**       | GLiNER medium-v2.1 runs named-entity extraction over the RAG-retrieved paragraphs: locations, agencies, dates, infrastructure-project names. Results ride into the reconciler as additional grounding context. | ancillary |
+| 17 | **reconcile**            | Granite 4.1 :8b reads all documents produced by steps 1–16 and writes the cited briefing paragraph. Mellea rejection-sampling validates 4 grounding requirements; up to 3 attempts. See [§6](#6-document-grounded-reconciliation). | LLM synthesis |
 
 ### 3.2 Worked example: 2940 Brighton 3rd St, Brooklyn
 
@@ -261,18 +279,44 @@ saw those headers and didn't invent them.
 
 ---
 
-## 4. Three user modes
+## 4. Five planner intents
 
-| Path                                  | Mode             | What it does |
-|---------------------------------------|------------------|---|
-| `/`                                   | **Single address** | Geocode → run the full FSM → cited paragraph + map. Live demo path. |
-| `/compare`                            | **Compare**      | Two addresses side by side; parallel FSM runs (`asyncio.to_thread`, `OLLAMA_NUM_PARALLEL=2`). Useful for "this site vs the alternative". |
-| `/register/{schools,nycha,mta_entrances}` | **Register** | Pre-computed bulk runs over NYC public-asset registries. 126 schools, 45 NYCHA developments, ~1,900 MTA subway entrances. Loaded from `data/registers/*.json` at boot. |
+The planner (`app/planner.py`) classifies every free-text query into one of
+five intents before the FSM runs. This happens in a single Granite 4.1 call
+that streams its JSON output to the client as `plan_token` events.
 
-Single-address is the live path. Registers are pre-computed because
-running 1,900 reconciler calls at request time is a non-starter; the
-registers job runs offline (see `scripts/build_*_register.py`) and
-the result is served from cache.
+| Intent                | Triggered by                                  | FSM path                         | Steps |
+|-----------------------|-----------------------------------------------|----------------------------------|-------|
+| `single_address`      | Fully-qualified street address                | Full linear FSM (geocode → 19 specialists → reconcile) | 24 |
+| `neighborhood`        | NTA name, borough name, bare zip              | NTA-level specialists only (no per-address registers)   | 8–10 |
+| `compare`             | "A vs B", "compare X to Y"                   | Two sequential single_address runs; merged two-column paragraph | 2 × 24 |
+| `development_check`   | "what's being built at X", "is Y risky"       | DOB filings + flood layers                              | 3–5 |
+| `live_now`            | "is it flooding now", "current alerts"        | Live-only specialists (tides, alerts, obs) — no Mellea  | 4 |
+| `not_implemented`     | Retrospective, ranking, cross-city queries    | Returns rationale immediately                           | 0 |
+
+### Compare intent detail
+
+`_run_compare()` in `web/main.py` executes the full `single_address` FSM
+sequentially for each target, then merges the two paragraphs under
+`## PLACE A: …` / `## PLACE B: …` headers separated by `---`. The
+`CompareBriefing.svelte` component renders this as a two-column layout with
+a "Key differences" delta bar above. During streaming the tokens are rendered
+in a single column (sequential); the two-column layout appears when the
+`final` event lands.
+
+**Registered routes**
+
+| Path                                      | Serves |
+|-------------------------------------------|--------|
+| `/`                                       | SvelteKit landing + live query UI |
+| `/api/agent/stream?q=…`                   | SSE stream — planner + all intent paths |
+| `/register/{schools,nycha,mta_entrances}` | Pre-computed bulk register browser |
+| `/legacy`, `/single`, `/compare`, `/register/*` | Legacy custom-element bundle (compatibility) |
+
+Registers are pre-computed because running 1,900 reconciler calls at request
+time is a non-starter; the register build runs offline
+(`scripts/build_*_register.py`) and results are loaded from
+`data/registers/*.json` at boot.
 
 ---
 
@@ -431,17 +475,24 @@ loading. Mellea's `OllamaBackend` explicitly raises
 
 | Model | Params | Runtime | Role |
 |-------|--------|---------|------|
-| **Granite 4.1 :3b**         | 3 B    | Ollama (GPU on T4)                   | Planner (intent + specialist routing) + `live_now` reconciler. |
-| **Granite 4.1 :8b**         | 8 B    | Ollama (GPU on T4)                   | Synthesis reconciler for `single_address`, `neighborhood`, `development_check`. Validated by Mellea (4 grounding requirements + reroll). |
+| **Granite 4.1 :3b alias**   | 8 B†   | Ollama or vLLM (AMD MI300X)          | Planner (intent + specialist routing) + `live_now` reconciler. †Production alias `RIPRAP_OLLAMA_3B_TAG=granite4.1:8b` — planner runs 8b in production. |
+| **Granite 4.1 :8b**         | 8 B    | Ollama or vLLM (AMD MI300X)          | Synthesis reconciler for `single_address`, `neighborhood`, `development_check`, `compare`. Validated by Mellea (4 grounding requirements + reroll). |
 | **Granite Embedding 278M**  | 278 M  | sentence-transformers (CPU)          | RAG retrieval over 5 policy PDFs at query time.    |
-| **Prithvi-EO 2.0**          | 300 M  | TerraTorch (offline pre-compute)     | Sen1Floods11 fine-tune; segmented Hurricane Ida 2021 pre/post Sentinel-2 polygons baked into `data/`. |
-| **Granite TimeSeries TTM r2** | 1.5 M | granite-tsfm (CPU)                  | Zero-shot forecast of the Battery surge residual, ~9.6 h horizon. |
+| **Prithvi-EO 2.0**          | 300 M  | TerraTorch (offline pre-compute)     | NYC-Pluvial fine-tune; segmented Hurricane Ida 2021 pre/post Sentinel-2 polygons baked into `data/`. Fine-tune: `msradam/Prithvi-EO-2.0-NYC-Pluvial`. |
+| **Granite TimeSeries TTM r2** | 1.5 M | granite-tsfm (CPU)                  | Zero-shot forecast of the Battery surge residual, ~9.6 h horizon. Fine-tune: `msradam/Granite-TTM-r2-Battery-Surge`. |
+| **GLiNER medium-v2.1**      | ~200 M | gliner (CPU)                         | Named-entity extraction over RAG hits (locations, agencies, dates, infrastructure). `urchade/gliner_medium-v2.1`. |
 
 **Granite 4.1 ≠ Granite Time Series.** Granite 4.1 is IBM's chat-LLM
 family. Granite TimeSeries TTM is a separate IBM Research product
 line (Ekambaram et al. 2024, NeurIPS). Both happen to share the
 "Granite" brand but have different architectures, training data, and
 authors.
+
+**LiteLLM Router.** All LLM calls go through `app/llm.py`, a ~250-line
+shim over a LiteLLM Router. Two backends are wired: `RIPRAP_LLM_PRIMARY=ollama`
+(local + HF Space default) and `RIPRAP_LLM_PRIMARY=vllm` (AMD MI300X demo
+path, auto-fails over to Ollama). The shim normalizes role names and
+citation-token format so the rest of the codebase is backend-agnostic.
 
 ### 7.1 Why Prithvi runs offline
 
@@ -514,7 +565,9 @@ riprap-nyc/
       single_address.py      drives the linear FSM with strict reconcile
       neighborhood.py        polygon-aggregated specialists
       development_check.py   DOB permit overlap with flood polygons
-      compare.py             two-address side-by-side
+    llm.py                   LiteLLM Router shim — all LLM calls go here.
+                             Routes to vLLM (AMD) or Ollama; normalizes
+                             role names and citation token format.
     areas/
       nta.py                 NYC NTA 2020 polygon resolver
 
@@ -541,29 +594,30 @@ riprap-nyc/
       mta_entrances.py       i9wp-a4ja
 
   web/
-    main.py                  FastAPI (5 pages, JSON endpoints, 2 SSE streams)
+    main.py                  FastAPI. Primary SSE at /api/agent/stream.
+                             _run_compare() handles the compare intent
+                             (sequential single_address × 2; no separate
+                             intent module). /api/backend returns live
+                             backend descriptor for the UI pill.
     static/
-      index.html             classic single-address report (compatibility)
-      agent.html             primary UI: planner + live trace + briefing
-      agent.js               EventSource client; sets properties on
-                              <r-briefing> / <r-trace> / <r-sources-footer>
-      report.html / .js      auditable PDF-formatted export view
-      compare.html / .js     two-address side-by-side
-      register.html / .js    bulk register browser
-      style.css              IBM Plex Sans, Planning Labs idiom
-      dist/                  Svelte 5 custom-element bundle (committed.
-                              HF Spaces doesn't run a Node build).
+      agent.html             legacy primary UI (Svelte custom elements)
+      dist/                  Svelte 5 custom-element bundle (committed).
                               Built from web/svelte/ via `npm run build`.
 
-  web/svelte/                Svelte 5 source. Build → web/static/dist/.
-    package.json             vite + @sveltejs/vite-plugin-svelte
-    vite.config.js           lib mode; customElement: true globally
-    src/main.js              registers <r-briefing>, <r-trace>,
-                              <r-sources-footer>; re-exports stores
-    src/lib/stores.js        highlightedDocId, citeIndex (writable)
-    src/lib/Briefing.svelte
-    src/lib/Trace.svelte
-    src/lib/SourcesFooter.svelte
+  web/sveltekit/             SvelteKit app (primary UI). Build →
+                             web/sveltekit/build/. Served at / by FastAPI.
+    src/routes/
+      +page.svelte           landing + query form
+      q/[queryId]/+page.svelte  live query page (SSE stream consumer)
+    src/lib/components/
+      briefing/
+        Briefing.svelte      4-section cited paragraph renderer
+        CompareBriefing.svelte  two-column compare layout + delta bar
+      shell/StatusPill.svelte   AMD / Ollama / Local backend indicator
+
+  web/svelte/                Legacy Svelte 5 custom-element source.
+                             Builds <r-briefing>, <r-trace>, <r-sources-footer>.
+                             Still loaded by agent.html / register/*.html.
 
   scripts/                   offline pre-compute + diagnostic probes
     run_prithvi_ida.py
@@ -636,28 +690,28 @@ riprap-nyc/
 
 ### 12.1 Hugging Face Spaces (production)
 
-Docker SDK, base `nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04`
-(Python 3.10), hardware `nvidia-t4-small` (1× T4, 16 GB VRAM,
-4 vCPU, 15 GB RAM). Ollama + **both** Granite 4.1 variants
-(`:3b` for routing, `:8b` for synthesis) baked into the image at
-build time (~10 GB total). Granite Embedding 278M and Granite TTM r2
-download to `$HF_HOME` on first request (~280 MB and ~30 MB).
+**HF Space**: `lablab-ai-amd-developer-hackathon/riprap-nyc` (cpu-basic).
+Serves the FastAPI + SvelteKit UI. Hardware: cpu-basic (no GPU).
 
-`entrypoint.sh` starts Ollama, then **pre-warms `granite4.1:8b`** with
-a one-token generation so the first user reconcile doesn't pay the
-~30s VRAM-load tax. `OLLAMA_KEEP_ALIVE=24h` holds both models resident
-through the demo. `OLLAMA_FLASH_ATTENTION=1` and
-`OLLAMA_KV_CACHE_TYPE=q8_0` cut KV memory on the 8b path.
+**AMD MI300X droplet** (separate): vLLM + riprap-models containers
+(`services/riprap-models/`). The Space talks to the droplet over HTTP;
+env vars `RIPRAP_LLM_BASE_URL` / `RIPRAP_ML_BASE_URL` point at it.
+The bootstrap droplet was destroyed 2026-05-06; redeploy via
+`scripts/deploy_droplet.sh <ip> <token>`.
 
-Cold-start (first query after container restart) takes ~60–90 s while
-weights load and TTM downloads. Warm queries:
-- `live_now` ~3–6 s
-- `single_address` / `neighborhood` / `development_check` ~30–60 s
-  with Mellea (one streamed attempt + post-validation; one reroll
-  adds ~25 s)
+LLM routing: `RIPRAP_LLM_PRIMARY=vllm` → AMD MI300X (30–50× faster than
+T4 Ollama). Falls over to local Ollama on connection failure. Backend
+status visible in the UI pill (top-right corner; backed by `GET /api/backend`).
 
-The Svelte bundle in `web/static/dist/` is committed, so HF Spaces
-runs no Node build step. Only the Python deps + Ollama install.
+Verified warm query times on AMD MI300X + vLLM (2026-05-06 probe):
+- `single_address`: 5–12 s (4/4 Mellea, 0–2 rerolls)
+- `neighborhood`: 3–5 s
+- `compare` (two sequential legs): ~15 s
+
+Cold-start after container restart: ~30 s for vLLM kernel JIT compile + prefix cache warmup. Run one warm-up query before a demo.
+
+The SvelteKit build in `web/sveltekit/build/` and the Svelte bundle in
+`web/static/dist/` are both committed, so HF Spaces runs no Node build step.
 
 ### 12.2 Local development
 
