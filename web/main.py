@@ -510,8 +510,9 @@ def _run_compare(p, raw_query: str, out_q, i_addr) -> dict:
     `target_label` key so the trace UI can optionally group them, but the
     existing trace UI ignores unknown keys gracefully."""
     from app.planner import Plan
+    from app.intents import neighborhood as i_nbhd
 
-    addr_targets = [t for t in p.targets if t.get("type") == "address"]
+    addr_targets = [t for t in p.targets if t.get("type") in ("address", "nta")]
     if len(addr_targets) < 2:
         # Fallback: only one (or zero) address extracted — run as single_address
         return i_addr.run(p, raw_query, progress_q=out_q, strict=True)
@@ -520,13 +521,6 @@ def _run_compare(p, raw_query: str, out_q, i_addr) -> dict:
     for idx, target in enumerate(addr_targets[:2]):
         label = "PLACE A" if idx == 0 else "PLACE B"
         addr_text = target["text"]
-        # Synthetic single-address plan for this target
-        sub_plan = Plan(
-            intent="single_address",
-            targets=[{"type": "address", "text": addr_text}],
-            specialists=p.specialists,
-            rationale=p.rationale,
-        )
 
         if out_q is not None:
             # Wrap out_q to tag step events with the target label so the
@@ -544,7 +538,22 @@ def _run_compare(p, raw_query: str, out_q, i_addr) -> dict:
         else:
             effective_q = None
 
-        result = i_addr.run(sub_plan, addr_text, progress_q=effective_q, strict=True)
+        if target.get("type") == "nta":
+            sub_plan = Plan(
+                intent="neighborhood",
+                targets=[{"type": "nta", "text": addr_text}],
+                specialists=p.specialists,
+                rationale=p.rationale,
+            )
+            result = i_nbhd.run(sub_plan, addr_text, progress_q=effective_q, strict=True)
+        else:
+            sub_plan = Plan(
+                intent="single_address",
+                targets=[{"type": "address", "text": addr_text}],
+                specialists=p.specialists,
+                rationale=p.rationale,
+            )
+            result = i_addr.run(sub_plan, addr_text, progress_q=effective_q, strict=True)
         results.append((label, addr_text, result))
 
     # Merge: produce one paragraph with both place sections.
@@ -560,7 +569,7 @@ def _run_compare(p, raw_query: str, out_q, i_addr) -> dict:
         return {
             "rerolls": (a.get("rerolls") or 0) + (b.get("rerolls") or 0),
             "n_attempts": (a.get("n_attempts") or 0) + (b.get("n_attempts") or 0),
-            "requirements_passed": list(set(_lst(a, "requirements_passed") + _lst(b, "requirements_passed"))),
+            "requirements_passed": list(set(_lst(a, "requirements_passed")) & set(_lst(b, "requirements_passed"))),
             "requirements_failed": list(set(_lst(a, "requirements_failed") + _lst(b, "requirements_failed"))),
             "requirements_total": max(a.get("requirements_total") or 0, b.get("requirements_total") or 0),
         }

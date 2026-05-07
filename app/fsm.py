@@ -1291,6 +1291,7 @@ def iter_steps(query: str):
     runner.join(timeout=5)
     state = final_state_holder.get("state")
     if state is None:
+        yield {"kind": "final", "paragraph": "", "error": "FSM failed before any action completed"}
         return
     trace = state.get("trace", [])
     yield {
