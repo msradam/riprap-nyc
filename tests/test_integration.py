@@ -38,6 +38,12 @@ from dataclasses import dataclass
 import pytest
 
 BASE = os.environ.get("RIPRAP_TEST_BASE", "http://127.0.0.1:7860")
+# Heavy specialists (prithvi_live, terramind) are only added to the FSM
+# when RIPRAP_HEAVY_SPECIALISTS=1 or RIPRAP_ML_BASE_URL is set.  Tests
+# that assert these steps fired must skip when the gate is off.
+_HEAVY_SPECIALISTS = os.environ.get("RIPRAP_HEAVY_SPECIALISTS", "").lower() in (
+    "1", "true", "yes"
+) or bool(os.environ.get("RIPRAP_ML_BASE_URL", "").strip())
 TIMEOUT_S = float(os.environ.get("RIPRAP_TEST_TIMEOUT", "300"))
 
 
@@ -106,7 +112,9 @@ ADDRESSES = [
 ]
 
 
-# Steps every linear single_address run must hit, regardless of intent
+# Steps every linear single_address run must hit, regardless of intent.
+# prithvi_eo_live is only in the FSM when _HEAVY_SPECIALISTS is True,
+# so it's excluded from this list and tested separately.
 EXPECTED_STEPS = [
     "geocode",
     "sandy_inundation",
@@ -120,7 +128,6 @@ EXPECTED_STEPS = [
     "microtopo_lidar",
     "ida_hwm_2021",
     "prithvi_eo_v2",
-    "prithvi_eo_live",         # Phase 1 integration
     "rag_granite_embedding",
     "gliner_extract",          # Phase 2 integration
     # reconcile step name varies by strict mode; not asserted here
@@ -226,6 +233,8 @@ def test_phase1_prithvi_live_step(streamed: StreamResult):
     — only that the step ran and recorded its outcome."""
     if streamed.plan and streamed.plan.get("intent") != "single_address":
         pytest.skip("non-linear FSM")
+    if not _HEAVY_SPECIALISTS:
+        pytest.skip("RIPRAP_HEAVY_SPECIALISTS not enabled — prithvi_eo_live not in FSM")
     found = [e for e in streamed.events
              if e[0] == "step" and e[1].get("step") == "prithvi_eo_live"]
     assert found, "step_prithvi_live did not fire"
