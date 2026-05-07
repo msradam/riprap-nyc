@@ -34,7 +34,27 @@ description: ASCE NY State Convention, Albany, May 13, 2026
 
 ---
 
-<div class="eyebrow">00 &middot; Learning objectives</div>
+<div class="eyebrow">01 &middot; INTRO</div>
+
+<div style="display: grid; grid-template-columns: 320px 1fr; gap: 48px; align-items: center; margin-top: 20px; height: 450px;">
+
+<div style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
+  <img src="../assets/adam.jpg" style="width: 300px; height: 300px; border-radius: 50%; object-fit: cover; border: 3px solid #162E51;" />
+</div>
+
+<div style="display: flex; flex-direction: column; justify-content: center;">
+  <h1 style="margin: 0 0 14px; font-size: 52px;">Hi. I'm Adam.</h1>
+  <p style="font-size: 17px; color: var(--ink-2); margin: 0 0 12px; line-height: 1.55;">Staff Software Engineer at IBM Z. MS Computer Engineering at NYU Tandon.</p>
+  <p style="font-size: 17px; color: var(--ink-2); margin: 0 0 12px; line-height: 1.55;">I'm not a civil engineer. I'm a software engineer who builds civic-tech systems for places where infrastructure fails the people who live there. Riprap reads a place the way an engineer reads a site, but I'm here to learn from this room where it falls short of how a stamped deliverable would need to behave.</p>
+  <p style="font-size: 17px; color: var(--ink-2); margin: 0 0 20px; line-height: 1.55;">Andrew Hicks invited me. I'm grateful for the chance to show this work to civil engineers and hear what you'd change.</p>
+  <p style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; color: var(--ink-3);">github.com/msradam/riprap-nyc &nbsp;&middot;&nbsp; linkedin.com/in/adamsrahman</p>
+</div>
+
+</div>
+
+---
+
+<div class="eyebrow">02 &middot; Learning objectives</div>
 
 # What you will take away.
 
@@ -50,7 +70,7 @@ description: ASCE NY State Convention, Albany, May 13, 2026
 
 ---
 
-<div class="eyebrow">01 &middot; The problem</div>
+<div class="eyebrow">03 &middot; The problem</div>
 
 # When you assess flood exposure, the evidence sits in eight or more places.
 
@@ -84,7 +104,7 @@ description: ASCE NY State Convention, Albany, May 13, 2026
 
 ---
 
-<div class="eyebrow">02 &middot; Solution</div>
+<div class="eyebrow">04 &middot; Solution</div>
 
 # A flood-exposure briefing for any place in New York City.
 
@@ -94,7 +114,7 @@ description: ASCE NY State Convention, Albany, May 13, 2026
 
 ---
 
-<div class="eyebrow">03 &middot; Architecture</div>
+<div class="eyebrow">05 &middot; Architecture</div>
 
 # Five Stones. Each with one job.
 
@@ -195,7 +215,7 @@ description: ASCE NY State Convention, Albany, May 13, 2026
 
 ---
 
-<div class="eyebrow">04 &middot; Demo</div>
+<div class="eyebrow">06 &middot; Demo</div>
 
 # Live demo.
 
@@ -222,7 +242,7 @@ description: ASCE NY State Convention, Albany, May 13, 2026
 
 ---
 
-<div class="eyebrow">05 &middot; Civic applications</div>
+<div class="eyebrow">07 &middot; Civic applications</div>
 
 # The civic case for civil engineers.
 
@@ -252,7 +272,7 @@ description: ASCE NY State Convention, Albany, May 13, 2026
 
 ---
 
-<div class="eyebrow">06 &middot; What Riprap is not.</div>
+<div class="eyebrow">08 &middot; What Riprap is not.</div>
 
 # What Riprap is not.
 
@@ -284,7 +304,7 @@ description: ASCE NY State Convention, Albany, May 13, 2026
 
 ---
 
-<div class="eyebrow">07 &middot; Directions</div>
+<div class="eyebrow">09 &middot; Directions</div>
 
 # Where this goes from here.
 
@@ -316,7 +336,7 @@ description: ASCE NY State Convention, Albany, May 13, 2026
 
 ---
 
-<div class="eyebrow">08 &middot; How it was built</div>
+<div class="eyebrow">10 &middot; How it was built</div>
 
 # The art of the possible.
 
@@ -347,7 +367,7 @@ description: ASCE NY State Convention, Albany, May 13, 2026
 
 ---
 
-<div class="eyebrow">09 &middot; Discussion</div>
+<div class="eyebrow">11 &middot; Discussion</div>
 
 # What I want from this room.
 

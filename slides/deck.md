@@ -40,7 +40,27 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 
 ---
 
-<div class="eyebrow">01 &middot; The problem</div>
+<div class="eyebrow">01 &middot; INTRO</div>
+
+<div style="display: grid; grid-template-columns: 320px 1fr; gap: 48px; align-items: center; margin-top: 20px; height: 450px;">
+
+<div style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
+  <img src="assets/adam.jpg" style="width: 300px; height: 300px; border-radius: 50%; object-fit: cover; border: 3px solid #162E51;" />
+</div>
+
+<div style="display: flex; flex-direction: column; justify-content: center;">
+  <h1 style="margin: 0 0 14px; font-size: 52px;">Hi. I'm Adam.</h1>
+  <p style="font-size: 17px; color: var(--ink-2); margin: 0 0 12px; line-height: 1.55;">Staff Software Engineer at IBM. MS Computer Engineering at NYU.</p>
+  <p style="font-size: 17px; color: var(--ink-2); margin: 0 0 12px; line-height: 1.55;">I build civic-tech systems for places where infrastructure fails the people who live there. Previous projects ran AI locally for refugee field offices, accessibility routing in five boroughs, and offline geospatial analysis on Raspberry Pi.</p>
+  <p style="font-size: 17px; color: var(--ink-2); margin: 0 0 20px; line-height: 1.55;">Riprap is the third hackathon I've built civic-tech AI for in six months. The discipline carries: open-source, public-record, runs where the people are.</p>
+  <p style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; color: var(--ink-3);">github.com/msradam &nbsp;&middot;&nbsp; linkedin.com/in/adamsrahman</p>
+</div>
+
+</div>
+
+---
+
+<div class="eyebrow">02 &middot; The problem</div>
 
 # Sandy killed 43 New Yorkers in 2012. Ida killed 13 in basement apartments in 2021.
 
@@ -69,7 +89,7 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 
 ---
 
-<div class="eyebrow">02 &middot; What Riprap does</div>
+<div class="eyebrow">03 &middot; What Riprap does</div>
 
 # A flood-exposure briefing for any place in New York City.
 
@@ -81,7 +101,7 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 
 ---
 
-<div class="eyebrow">03 &middot; Architecture</div>
+<div class="eyebrow">04 &middot; Architecture</div>
 
 # Five specialist agents fan out. One cited briefing comes back.
 
@@ -182,7 +202,7 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 
 ---
 
-<div class="eyebrow">04 &middot; Fine-Tuning on AMD MI300X</div>
+<div class="eyebrow">05 &middot; Fine-Tuning on AMD MI300X</div>
 
 # Three Apache-2.0 NYC fine-tunes on MI300X.
 
@@ -220,7 +240,7 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 
 ---
 
-<div class="eyebrow">05 &middot; DEMO</div>
+<div class="eyebrow">06 &middot; DEMO</div>
 
 # Live demo.
 
@@ -246,7 +266,7 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 
 ---
 
-<div class="eyebrow">06 &middot; Why this works</div>
+<div class="eyebrow">07 &middot; Why this works</div>
 
 # It refuses to stay silent. It also refuses to make things up.
 
@@ -278,7 +298,7 @@ description: AMD x lablab.ai Developer Hackathon, May 4–10 2026
 
 ---
 
-<div class="eyebrow">07 &middot; What's next</div>
+<div class="eyebrow">08 &middot; What's next</div>
 
 # What's next.
 
