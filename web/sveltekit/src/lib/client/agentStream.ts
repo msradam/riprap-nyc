@@ -36,6 +36,8 @@ export interface StepEvent {
   err?: string;
   tier?: Tier | null;
   claims?: number;
+  /** Present on compare-intent step events: "PLACE A" or "PLACE B". */
+  target_label?: string;
 }
 
 export interface MelleaAttempt {

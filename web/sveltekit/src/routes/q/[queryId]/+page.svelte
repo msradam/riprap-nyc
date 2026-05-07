@@ -293,6 +293,25 @@
   let terramindLulcFc = $state<FeatureCollection | undefined>(undefined);
   let idaHwmFc = $state<FeatureCollection | undefined>(undefined);
 
+  // Compare-intent: independent geocoded addresses per place.
+  // Populated from geocode step events tagged with target_label.
+  let compareAddressA = $state<{ label: string; lat: number; lon: number; source: AddressSource } | null>(null);
+  let compareAddressB = $state<{ label: string; lat: number; lon: number; source: AddressSource } | null>(null);
+  // Per-place step result payloads for the structured diff strip.
+  let compareStepsA = $state<Record<string, unknown>>({});
+  let compareStepsB = $state<Record<string, unknown>>({});
+  // Per-place map layers for compare intent.
+  let sandyFcA = $state<FeatureCollection | undefined>(undefined);
+  let depFcA = $state<FeatureCollection | undefined>(undefined);
+  let synFcA = $state<FeatureCollection | undefined>(undefined);
+  let proxyFcA = $state<FeatureCollection | undefined>(undefined);
+  let idaHwmFcA = $state<FeatureCollection | undefined>(undefined);
+  let sandyFcB = $state<FeatureCollection | undefined>(undefined);
+  let depFcB = $state<FeatureCollection | undefined>(undefined);
+  let synFcB = $state<FeatureCollection | undefined>(undefined);
+  let proxyFcB = $state<FeatureCollection | undefined>(undefined);
+  let idaHwmFcB = $state<FeatureCollection | undefined>(undefined);
+
   // Per-tier feature counts for the map legend. Layers with 0 are
   // dropped from the legend display per the silence-over-confabulation
   // rule (handoff hard rule #3).
@@ -378,6 +397,26 @@
     }
   });
 
+  // Compare-intent: load map layers independently for each place.
+  $effect(() => {
+    if (!compareAddressA) return;
+    const { lat, lon } = compareAddressA;
+    fetchSandy(lat, lon).then((fc) => (sandyFcA = fc));
+    fetchDep(lat, lon).then((fc) => (depFcA = fc));
+    fetchPrithviSynthetic(lat, lon).then((fc) => (synFcA = fc));
+    fetchProxyDots(lat, lon).then((fc) => (proxyFcA = fc));
+    fetchIdaHwm(lat, lon).then((fc) => (idaHwmFcA = fc));
+  });
+  $effect(() => {
+    if (!compareAddressB) return;
+    const { lat, lon } = compareAddressB;
+    fetchSandy(lat, lon).then((fc) => (sandyFcB = fc));
+    fetchDep(lat, lon).then((fc) => (depFcB = fc));
+    fetchPrithviSynthetic(lat, lon).then((fc) => (synFcB = fc));
+    fetchProxyDots(lat, lon).then((fc) => (proxyFcB = fc));
+    fetchIdaHwm(lat, lon).then((fc) => (idaHwmFcB = fc));
+  });
+
   onMount(() => {
     briefingState.reset();
     if (!queryText()) return;
@@ -415,13 +454,20 @@
         applyStepEventToLiveState(liveResults, s.step, s.result, s.ok);
         liveTick = liveTick + 1;
 
-        // address from the geocode step (single_address / live_now)
+        // address from the geocode step (single_address / live_now / compare).
+        // Compare emits two geocode steps tagged target_label: "PLACE A" / "PLACE B".
         if (s.step === 'geocode') {
           if (s.ok && s.result && typeof s.result === 'object') {
             const r = s.result as Record<string, unknown>;
             if (typeof r.lat === 'number' && typeof r.lon === 'number') {
               const label = (typeof r.address === 'string' ? r.address : queryText()) as string;
-              address = { label, lat: r.lat, lon: r.lon, source: 'geocode' };
+              if (s.target_label === 'PLACE A') {
+                compareAddressA = { label, lat: r.lat, lon: r.lon, source: 'geocode' };
+              } else if (s.target_label === 'PLACE B') {
+                compareAddressB = { label, lat: r.lat, lon: r.lon, source: 'geocode' };
+              } else {
+                address = { label, lat: r.lat, lon: r.lon, source: 'geocode' };
+              }
               geocodeSucceeded = true;
             }
           } else {
@@ -429,6 +475,13 @@
             errorState = 'geocoder';
           }
         }
+        // Accumulate per-place step results for the compare structured diff strip.
+        if (s.target_label === 'PLACE A') {
+          compareStepsA = { ...compareStepsA, [s.step]: s.result };
+        } else if (s.target_label === 'PLACE B') {
+          compareStepsB = { ...compareStepsB, [s.step]: s.result };
+        }
+
         // address from the nta_resolve step (neighborhood / development_check)
         if (s.step === 'nta_resolve' && s.ok && s.result && typeof s.result === 'object') {
           const r = s.result as Record<string, unknown>;
@@ -649,6 +702,8 @@
               paragraph={finalResult.paragraph}
               {citations}
               targets={finalResult.targets}
+              structuredA={compareStepsA}
+              structuredB={compareStepsB}
             />
           {:else if blocks.length}
             <Briefing {blocks} {citations} streaming={false} />
@@ -680,7 +735,11 @@
         <aside id="region-map" class="app-region app-region-map" aria-label="Map region">
           <header class="region-head">
             <span class="section-label">Map</span>
-            {#if address}
+            {#if plan?.intent === 'compare'}
+              <span class="region-head-meta">
+                {#if compareAddressA || compareAddressB}Carto Positron · z15 · 2 locations{:else}awaiting geocode…{/if}
+              </span>
+            {:else if address}
               <span class="region-head-meta">
                 Carto Positron · z15 · {address.lat.toFixed(4)}°N {Math.abs(address.lon).toFixed(4)}°W
               </span>
@@ -688,7 +747,42 @@
               <span class="region-head-meta">awaiting geocode…</span>
             {/if}
           </header>
-          {#if address}
+          {#if plan?.intent === 'compare'}
+            <div class="compare-map-stack">
+              {#if compareAddressA}
+                <div class="compare-map-place">
+                  <div class="compare-map-label">A · {compareAddressA.label}</div>
+                  <div style="position: relative;">
+                    <RipMap
+                      address={compareAddressA}
+                      activeLayers={active}
+                      sandyEmpirical={sandyFcA}
+                      depModeled={depFcA}
+                      syntheticPrior={synFcA}
+                      proxy311={proxyFcA}
+                      idaHwm={idaHwmFcA}
+                    />
+                  </div>
+                </div>
+              {/if}
+              {#if compareAddressB}
+                <div class="compare-map-place">
+                  <div class="compare-map-label">B · {compareAddressB.label}</div>
+                  <div style="position: relative;">
+                    <RipMap
+                      address={compareAddressB}
+                      activeLayers={active}
+                      sandyEmpirical={sandyFcB}
+                      depModeled={depFcB}
+                      syntheticPrior={synFcB}
+                      proxy311={proxyFcB}
+                      idaHwm={idaHwmFcB}
+                    />
+                  </div>
+                </div>
+              {/if}
+            </div>
+          {:else if address}
             <div style="position: relative; flex: 1; min-height: 0;">
               <RipMap
                 {address}
@@ -735,6 +829,27 @@
 </section>
 
 <style>
+  .compare-map-stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-3, 8px);
+    padding-top: 4px;
+  }
+  .compare-map-place {
+    display: flex;
+    flex-direction: column;
+  }
+  .compare-map-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-secondary);
+    padding: 2px 0 4px;
+    border-bottom: 1px solid var(--rule-soft);
+    margin-bottom: 4px;
+  }
   .plan-details {
     border: 1px solid var(--rule-soft);
     background: var(--paper-deep);

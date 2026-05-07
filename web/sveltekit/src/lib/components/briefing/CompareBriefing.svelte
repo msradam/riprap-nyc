@@ -1,7 +1,7 @@
 <script lang="ts">
   import Briefing from './Briefing.svelte';
   import { parseBriefing } from '$lib/client/parseBriefing';
-  import type { BriefingBlock, Citation } from '$lib/types/claim';
+  import type { Citation } from '$lib/types/claim';
 
   interface Target {
     label: string;
@@ -12,9 +12,12 @@
     paragraph: string;
     citations: Record<string, Citation>;
     targets: Target[];
+    /** Per-place step result payloads from the agent stream, keyed by step name. */
+    structuredA?: Record<string, unknown>;
+    structuredB?: Record<string, unknown>;
   }
 
-  let { paragraph, citations, targets }: Props = $props();
+  let { paragraph, citations, targets, structuredA = {}, structuredB = {} }: Props = $props();
 
   // Split the merged compare paragraph at the --- divider.
   // Each half begins with `## PLACE A/B: <address>` which we strip to get
@@ -41,78 +44,69 @@
     ...parsedB.citations
   });
 
-  // Collect prose text keyed by section number ('01'–'04').
-  function sectionTexts(blocks: BriefingBlock[]): Map<string, string> {
-    const map = new Map<string, string>();
-    let cur = '';
-    for (const b of blocks) {
-      if (b.kind === 'head') cur = b.n;
-      else if (b.kind === 'prose' && cur) {
-        map.set(cur, (map.get(cur) ?? '') + ' ' + b.parts.map((p) => p.text).join(''));
-      }
-    }
-    return map;
-  }
-
-  // Return all numbers (with optional unit suffix) in a text, in order.
-  const NUM_RE = /\b(\d[\d,]*(?:\.\d+)?)\s*(%|ft|m|km|mm)?\b/g;
-  function findNumbers(text: string): Array<{ full: string; start: number }> {
-    const hits: Array<{ full: string; start: number }> = [];
-    let m: RegExpExecArray | null;
-    NUM_RE.lastIndex = 0;
-    while ((m = NUM_RE.exec(text)) !== null) {
-      const full = m[1] + (m[2] ?? '');
-      hits.push({ full, start: m.index });
-    }
-    return hits;
-  }
-
-  // Up to 3 words immediately before `start` in `text`.
-  function ctxBefore(text: string, start: number): string {
-    const snippet = text.slice(Math.max(0, start - 40), start).trim();
-    return snippet.split(/\s+/).slice(-3).join(' ');
-  }
-
-  const SECTION_LABELS: Record<string, string> = {
-    '01': 'Status',
-    '02': 'Empirical',
-    '03': 'Modeled',
-    '04': 'Policy'
-  };
-
   interface DeltaRow {
-    sectionLabel: string;
+    label: string;
     ctx: string;
     aVal: string;
     bVal: string;
   }
 
-  // One delta row per canonical section where the first compared number differs.
+  function getNum(steps: Record<string, unknown>, stepName: string, field: string): number | undefined {
+    const r = steps[stepName];
+    if (!r || typeof r !== 'object') return undefined;
+    const v = (r as Record<string, unknown>)[field];
+    return typeof v === 'number' ? v : undefined;
+  }
+
+  function getBool(steps: Record<string, unknown>, stepName: string, field: string): boolean | undefined {
+    const r = steps[stepName];
+    if (!r || typeof r !== 'object') return undefined;
+    const v = (r as Record<string, unknown>)[field];
+    return typeof v === 'boolean' ? v : undefined;
+  }
+
+  // Derive diff rows from structured specialist step payloads.
+  // This avoids parsing prose for numbers, which incorrectly picks up
+  // address street numbers as "Status" comparisons.
   const deltaRows = $derived.by<DeltaRow[]>(() => {
-    const textsA = sectionTexts(parsedA.blocks);
-    const textsB = sectionTexts(parsedB.blocks);
     const rows: DeltaRow[] = [];
-    for (const [n, label] of Object.entries(SECTION_LABELS)) {
-      const tA = textsA.get(n) ?? '';
-      const tB = textsB.get(n) ?? '';
-      if (!tA || !tB) continue;
-      const numsA = findNumbers(tA);
-      const numsB = findNumbers(tB);
-      if (!numsA.length || !numsB.length) continue;
-      const len = Math.min(numsA.length, numsB.length);
-      for (let i = 0; i < len; i++) {
-        if (numsA[i].full !== numsB[i].full) {
-          rows.push({
-            sectionLabel: label,
-            ctx: ctxBefore(tA, numsA[i].start),
-            aVal: numsA[i].full,
-            bVal: numsB[i].full
-          });
-          break;
-        }
-      }
+
+    // Sandy inundation zone membership
+    const sandyA = getBool(structuredA, 'sandy_inundation', 'inside');
+    const sandyB = getBool(structuredB, 'sandy_inundation', 'inside');
+    if (sandyA !== undefined && sandyB !== undefined && sandyA !== sandyB) {
+      rows.push({ label: 'Sandy zone', ctx: '', aVal: sandyA ? 'inside' : 'outside', bVal: sandyB ? 'inside' : 'outside' });
     }
-    return rows;
+
+    // 311 flood complaints (5-year radius)
+    const n311A = getNum(structuredA, 'nyc311', 'n');
+    const n311B = getNum(structuredB, 'nyc311', 'n');
+    if (n311A !== undefined && n311B !== undefined && n311A !== n311B) {
+      rows.push({ label: '311 complaints', ctx: '5 y', aVal: String(n311A), bVal: String(n311B) });
+    }
+
+    // Terrain elevation
+    const elevA = getNum(structuredA, 'microtopo_lidar', 'elev_m');
+    const elevB = getNum(structuredB, 'microtopo_lidar', 'elev_m');
+    if (elevA !== undefined && elevB !== undefined && Math.abs(elevA - elevB) > 0.5) {
+      rows.push({ label: 'Elevation', ctx: '', aVal: `${elevA.toFixed(1)} m`, bVal: `${elevB.toFixed(1)} m` });
+    }
+
+    // FloodNet sensor flood events (3-year)
+    const fnA = getNum(structuredA, 'floodnet', 'n_events_3y');
+    const fnB = getNum(structuredB, 'floodnet', 'n_events_3y');
+    if (fnA !== undefined && fnB !== undefined && fnA !== fnB) {
+      rows.push({ label: 'Sensor events', ctx: 'last 3 y', aVal: String(fnA), bVal: String(fnB) });
+    }
+
+    // Ida 2021 high-water mark (nearest within 800 m)
+    const idaA = getNum(structuredA, 'ida_hwm_2021', 'max_height_above_gnd_ft');
+    const idaB = getNum(structuredB, 'ida_hwm_2021', 'max_height_above_gnd_ft');
+    if (idaA !== undefined && idaB !== undefined && Math.abs(idaA - idaB) > 0.1) {
+      rows.push({ label: 'Ida 2021 HWM', ctx: 'ft above gnd', aVal: `${idaA.toFixed(2)} ft`, bVal: `${idaB.toFixed(2)} ft` });
+    }
+
+    return rows.slice(0, 4);
   });
 </script>
 
@@ -123,7 +117,7 @@
       <div class="compare-delta-rows">
         {#each deltaRows as row}
           <div class="compare-delta-row">
-            <span class="compare-delta-section">{row.sectionLabel}</span>
+            <span class="compare-delta-section">{row.label}</span>
             <span class="compare-delta-claim">
               {#if row.ctx}<span class="compare-delta-ctx">{row.ctx}:</span>{/if}
               <strong class="compare-delta-a">{row.aVal}</strong>
