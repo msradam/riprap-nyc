@@ -595,7 +595,7 @@
             blocks,
             citations,
             generatedAt: new Date().toISOString(),
-            attempts: finalResult?.mellea?.attempts ?? attempt
+            attempts: finalResult?.mellea?.n_attempts ?? attempt
           });
           briefingState.markReady();
         }
