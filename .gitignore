@@ -1,14 +1,26 @@
+# Session artifacts
+*MORNING-BRIEF*.md
+*OVERNIGHT*.md
+*COMMS-OVERNIGHT*.md
+CODE-MORNING-BRIEF*.md
+MONDAY.md
+docs/sessions/
+
 __pycache__/
 *.py[cod]
 *.egg-info/
+dist/
+build/
 .venv/
 .env
 .DS_Store
 outputs/
 node_modules/
 *.tmp
+*.log
 .ruff_cache/
 .pytest_cache/
+.ipynb_checkpoints/
 
 # Claude Code context (per-machine, not for the public repo)
 CLAUDE.md
@@ -22,6 +34,7 @@ data/*.legacy_*
 web/svelte/node_modules/
 web/sveltekit/node_modules/
 web/sveltekit/.svelte-kit/
+web/sveltekit/build/
 
 # Experiments — cached HF model downloads, training artifacts, intermediate
 # fixtures. RESULTS.md, NOTES.md, and source code stay tracked.
@@ -46,6 +59,14 @@ slides/deck.pptx
 *.bak
 *.swp
 *.swo
+.playwright-mcp/
+
+# Demo recordings (large; not committed)
+assets/video/
+
+# Local env overlays
+.env.local
+*.local.env
 
 # Sensitive
 AMD_TOKEN
