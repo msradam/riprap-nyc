@@ -8,7 +8,7 @@
 
 2. **Heavy register specialists no longer hang** — `step_nycha`, `step_doe_schools`, `step_doh_hospitals` previously did 20 polygon×polygon intersections per query (8+ minute hang on HF Space CPU). They now read pre-computed exposure flags from `data/registers/*.json` (sub-millisecond). Hospitals don't have a pre-built register but read the 30 KB GeoJSON directly and sample the new Cornerstone rasters per hit.
 
-3. **Live EO chain enabled** — `eo_chip_fetch` (multi-modal Sentinel-2 + Sentinel-1 from Microsoft Planetary Computer) and `prithvi_eo_live` (NYC-Pluvial flood segmentation on live imagery, remote-inferenced on the AMD MI300X) are now firing on every query. This is the marquee live-data Stone for the demo.
+3. **Live EO chain enabled** — `eo_chip_fetch` (multi-modal Sentinel-2 + Sentinel-1 from Microsoft Planetary Computer) and `prithvi_eo_live` (NYC-Pluvial flood segmentation on live imagery, remote-inferenced on the AMD MI300X) are now firing on every query. **`terramind_lulc` and `terramind_buildings` (your NYC fine-tuned adapters) also fire live** — droplet's `_build_chip_tensor` had a 5D-input bug that silently failed every TerraMind request; patched + container restarted. Verified output: dominant LULC class "Built" 65% on Beach Channel; building coverage 0.6%. This is the marquee live-data showcase.
 
 4. **Misleading UI copy fixed** — three Stone specialists (TerraMind Buildings/LULC/Synthesis, Prithvi-NYC-Pluvial) previously claimed `RIPRAP_HEAVY_SPECIALISTS=0` when they silently skipped. Heavy specialists are actually enabled in production — the new copy reflects the actual cause (no recent <30% cloud Sentinel-2 chip / inference unavailable).
 
@@ -54,8 +54,9 @@ The trace UI groups specialists by Stone. Each row shows status (fired / silent 
 - *"NWS public alerts: no active flood-relevant alerts at this address"* — true, no active alert today
 
 **Specialists that may show as skipped/errored on the demo:**
-- **TerraMind LULC / Buildings / Synthesis** — the droplet's MI300X has Prithvi loaded but not TerraMind weights yet. Specialists return *"remote inference unreachable + local torchvision binary unavailable on this deployment"* — honest. Out of scope to fix from the Space side; needs droplet rebuild with terramind models.
+- **TerraMind LULC + Buildings: LIVE** — finetuned NYC adapters running on the MI300X. Hits live Sentinel-2 + Sentinel-1 chips. **TerraMind Synthesis** (the third terramind variant, DEM-driven LULC synthesis) has no remote inference route, so it returns a clean *"deps unavailable: terratorch (RuntimeError)"* on the HF Space — not on the demo critical path.
 - **floodnet_forecast** — sensors with <5 historical events skip the forecast.
+- **nws_alerts** — when no flood-relevant alert is active at the address (most days).
 
 ## Caveats to be ready for
 
