@@ -281,6 +281,32 @@ def _fetch_and_build(lat: float, lon: float, timeout_s: float) -> dict[str, Any]
             log.exception("eo_chip: tensor build failed")
             return {"ok": False,
                     "err": f"tensor build failed: {type(e).__name__}: {e}"}
+        # Compute the chip's WGS84 bbox so downstream TerraMind specialists
+        # can polygonise their predictions onto the map. The chip is
+        # CHIP_PX × CHIP_PX at PIXEL_M (10 m) in the scene's UTM zone;
+        # reproject the four corners to EPSG:4326 and use the
+        # axis-aligned envelope.
+        try:
+            from pyproj import Transformer
+            half_m = (CHIP_PX * PIXEL_M) / 2.0
+            t_to_utm = Transformer.from_crs(
+                "EPSG:4326", f"EPSG:{modalities['epsg']}", always_xy=True)
+            t_to_4326 = Transformer.from_crs(
+                f"EPSG:{modalities['epsg']}", "EPSG:4326", always_xy=True)
+            cx, cy = t_to_utm.transform(lon, lat)
+            corners_utm = [
+                (cx - half_m, cy - half_m),
+                (cx - half_m, cy + half_m),
+                (cx + half_m, cy - half_m),
+                (cx + half_m, cy + half_m),
+            ]
+            corners_ll = [t_to_4326.transform(x, y) for x, y in corners_utm]
+            lons = [c[0] for c in corners_ll]
+            lats = [c[1] for c in corners_ll]
+            modalities["bounds_4326"] = (
+                min(lons), min(lats), max(lons), max(lats))
+        except Exception:
+            log.exception("eo_chip: bounds_4326 reprojection failed")
         return modalities
 
 

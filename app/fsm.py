@@ -812,6 +812,7 @@ def step_terramind_lulc(state: State) -> State:
             tensors.get("S2L2A"),
             s1rtc=tensors.get("S1RTC"),
             dem=tensors.get("DEM"),
+            bounds_4326=chip.get("bounds_4326"),
         )
         rec["ok"] = bool(out.get("ok"))
         if not rec["ok"]:
@@ -854,6 +855,7 @@ def step_terramind_buildings(state: State) -> State:
             tensors.get("S2L2A"),
             s1rtc=tensors.get("S1RTC"),
             dem=tensors.get("DEM"),
+            bounds_4326=chip.get("bounds_4326"),
         )
         rec["ok"] = bool(out.get("ok"))
         if not rec["ok"]:

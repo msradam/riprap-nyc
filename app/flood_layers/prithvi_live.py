@@ -402,6 +402,38 @@ def _fetch_inner(lat: float, lon: float, timeout_s: float) -> dict[str, Any]:
                     timeout=timeout_s,
                 )
                 if remote.get("ok"):
+                    # Vectorize the remote prediction raster so the map
+                    # actually renders the live water polygons. The
+                    # droplet returns `pred_b64` (uint8 binary mask);
+                    # we polygonize against the chip's WGS84 bounds
+                    # which we know locally from `ref_da`.
+                    polys = None
+                    pred_b64 = remote.get("pred_b64")
+                    pred_shape = remote.get("pred_shape")
+                    if pred_b64 and pred_shape:
+                        try:
+                            xs = ref_da.x.values
+                            ys = ref_da.y.values
+                            from pyproj import Transformer
+                            t_inv = Transformer.from_crs(
+                                f"EPSG:{epsg}", "EPSG:4326",
+                                always_xy=True)
+                            minx, maxx = float(xs.min()), float(xs.max())
+                            miny, maxy = float(ys.min()), float(ys.max())
+                            minlon, minlat = t_inv.transform(minx, miny)
+                            maxlon, maxlat = t_inv.transform(maxx, maxy)
+                            from app.context._polygonize import (
+                                polygonize_binary_mask,
+                            )
+                            polys = polygonize_binary_mask(
+                                pred_b64, pred_shape,
+                                (minlon, minlat, maxlon, maxlat),
+                                label="water", fill_color="#1F77B4",
+                                simplify_tolerance=2e-5,
+                            )
+                        except Exception:
+                            log.exception("prithvi_live: remote polygonize failed")
+                            polys = None
                     return {
                         "ok": True,
                         "item_id": item.id,
@@ -409,12 +441,7 @@ def _fetch_inner(lat: float, lon: float, timeout_s: float) -> dict[str, Any]:
                         "cloud_cover": cc,
                         "pct_water_full": remote.get("pct_water_full"),
                         "pct_water_within_500m": remote.get("pct_water_within_500m"),
-                        # Service doesn't currently return polygonised GeoJSON
-                        # (transport size); the local fallback below produces
-                        # them. For now the remote path leaves polygons null
-                        # and the map renders the layer empty until the
-                        # service grows a polygonisation step.
-                        "polygons_geojson": None,
+                        "polygons_geojson": polys,
                         "compute": f"remote · {remote.get('device', 'gpu')}",
                         "elapsed_s": round(time.time() - t0, 2),
                     }

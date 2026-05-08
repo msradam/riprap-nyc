@@ -299,6 +299,28 @@ def fetch(lat: float, lon: float, timeout_s: float = 60.0) -> dict[str, Any]:
                                           timeout=timeout_s)
                 if remote.get("ok"):
                     elapsed = round(time.time() - t0, 2)
+                    # Polygonize the prediction raster for the map
+                    # layer. The droplet returns the per-pixel argmax;
+                    # we vectorize against the chip's bounds.
+                    polys = None
+                    pred_b64 = remote.get("pred_b64")
+                    pred_shape = remote.get("pred_shape")
+                    class_labels = (remote.get("class_labels")
+                                    or LULC_CLASSES)
+                    if pred_b64 and pred_shape:
+                        try:
+                            from app.context._polygonize import (
+                                polygonize_class_raster,
+                            )
+                            polys = polygonize_class_raster(
+                                pred_b64, pred_shape, class_labels,
+                                tuple(bounds_4326),
+                                simplify_tolerance=2e-5,
+                            )
+                        except Exception:
+                            log.exception("terramind/synthesis: "
+                                          "polygonize failed")
+                            polys = None
                     out = {
                         "ok": True,
                         "synthetic_modality": True,
@@ -313,7 +335,7 @@ def fetch(lat: float, lon: float, timeout_s: float = 60.0) -> dict[str, Any]:
                         "n_classes_observed": remote.get("n_classes_observed") or 0,
                         "chip_shape": remote.get("shape") or [],
                         "bounds_4326": list(bounds_4326),
-                        "polygons_geojson": None,
+                        "polygons_geojson": polys,
                         "label_schema": remote.get("label_schema") or "",
                         "compute": f"remote · {remote.get('device', 'gpu')}",
                         "elapsed_s": elapsed,

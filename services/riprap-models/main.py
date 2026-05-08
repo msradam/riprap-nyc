@@ -201,6 +201,11 @@ def _prithvi_pluvial(payload: PrithviIn) -> dict[str, Any]:
     dist = np.sqrt((yy - cy) ** 2 + (xx - cx) ** 2)
     mask = dist <= min(50, min(h, w) // 4)
     pct_500m = float(100.0 * pred[mask].mean()) if mask.any() else pct_full
+    # Pass the raw prediction raster back so HF can vectorise it into
+    # GeoJSON for the map layer using the chip-georef it already has
+    # locally (ref_da from _build_chip). uint8 is small enough for a
+    # base64 round-trip (~50 KB at 224x224).
+    pred_b64 = base64.b64encode(pred.tobytes()).decode("ascii")
     return {
         "ok": True,
         "elapsed_s": round(time.time() - t0, 2),
@@ -211,6 +216,8 @@ def _prithvi_pluvial(payload: PrithviIn) -> dict[str, Any]:
         "scene_datetime": payload.scene_datetime,
         "cloud_cover": payload.cloud_cover,
         "shape": [int(h), int(w)],
+        "pred_b64": pred_b64,
+        "pred_shape": [int(h), int(w)],
     }
 
 
@@ -416,6 +423,8 @@ def _terramind_synthesis_inference(payload: TerramindIn) -> dict[str, Any]:
                            key=lambda kv: kv[1], reverse=True))
     dominant_class = next(iter(ordered)) if ordered else "unknown"
     dominant_pct = ordered.get(dominant_class, 0.0)
+    pred_u8 = class_idx.astype("uint8")
+    pred_b64 = base64.b64encode(pred_u8.tobytes()).decode("ascii")
     return {
         "ok": True,
         "adapter": "synthesis",
@@ -433,6 +442,9 @@ def _terramind_synthesis_inference(payload: TerramindIn) -> dict[str, Any]:
         "label_schema": "ESRI 2020-2022 Land Cover (tentative — TerraMind "
                          "tokenizer source confirms ESRI but not exact "
                          "label-to-index mapping)",
+        "pred_b64": pred_b64,
+        "pred_shape": [int(s) for s in pred_u8.shape],
+        "class_labels": _TERRAMIND_SPECS["synthesis"]["labels"],
     }
 
 
@@ -493,6 +505,8 @@ def _terramind_inference(payload: TerramindIn) -> dict[str, Any]:
         except Exception:
             log.debug("terramind/buildings: scipy.ndimage unavailable")
 
+    # Pass the per-pixel argmax raster back so HF can vectorise it.
+    pred_b64 = base64.b64encode(pred.tobytes()).decode("ascii")
     return {
         "ok": True,
         "adapter": payload.adapter,
@@ -507,6 +521,9 @@ def _terramind_inference(payload: TerramindIn) -> dict[str, Any]:
         "pct_buildings": round(100.0 * float((pred == 1).sum()) / n, 2)
                          if payload.adapter == "buildings" else None,
         "n_building_components": n_components,
+        "pred_b64": pred_b64,
+        "pred_shape": [int(s) for s in pred.shape],
+        "class_labels": spec["labels"],
     }
 
 

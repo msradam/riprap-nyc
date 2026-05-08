@@ -324,6 +324,34 @@ def _try_remote(adapter_name: str, modality_chips: dict) -> dict | None:
         result.setdefault("adapter", adapter_name)
         result.setdefault("repo", ADAPTERS_REPO)
         result["compute"] = f"remote · {result.get('device', 'gpu')}"
+        # Polygonize the prediction raster onto the chip's bounds so
+        # the map can paint the LULC / buildings overlay. Bounds come
+        # via the modality_chips dict — the eo_chip layer threads them
+        # through. Best-effort; never raises into the FSM.
+        bounds = modality_chips.get("bounds_4326") if modality_chips else None
+        pred_b64 = result.get("pred_b64")
+        pred_shape = result.get("pred_shape")
+        class_labels = result.get("class_labels")
+        if bounds and pred_b64 and pred_shape:
+            try:
+                from app.context._polygonize import (
+                    polygonize_binary_mask, polygonize_class_raster,
+                )
+                if adapter_name == "buildings":
+                    polys = polygonize_binary_mask(
+                        pred_b64, pred_shape, tuple(bounds),
+                        label="building", fill_color="#D62728",
+                        simplify_tolerance=2e-5,
+                    )
+                else:
+                    polys = polygonize_class_raster(
+                        pred_b64, pred_shape, class_labels, tuple(bounds),
+                        simplify_tolerance=2e-5,
+                    )
+                result["polygons_geojson"] = polys
+            except Exception:
+                log.exception("terramind/%s: polygonize failed", adapter_name)
+                result["polygons_geojson"] = None
         return result
     except _inf.RemoteUnreachable as e:
         log.info("terramind/%s: remote unreachable (%s); local fallback",
@@ -359,7 +387,12 @@ def _run(adapter_name: str, modality_chips: dict, summarizer):
     try:
         task = _ensure_adapter(adapter_name)
         spec = ADAPTER_SPECS[adapter_name]
-        logits = _tiled_predict(task, modality_chips, spec["num_classes"])
+        # Strip out bounds_4326 (auxiliary metadata, not a tensor) before
+        # handing the dict to terratorch's tiled_inference, which iterates
+        # all values as modalities.
+        tensors_only = {k: v for k, v in modality_chips.items()
+                        if k != "bounds_4326"}
+        logits = _tiled_predict(task, tensors_only, spec["num_classes"])
         # logits: (B, C, H, W). Argmax to per-pixel class id.
         pred = logits.argmax(dim=1).squeeze(0)
         result = summarizer(pred, spec["class_labels"])
@@ -390,7 +423,9 @@ def _run(adapter_name: str, modality_chips: dict, summarizer):
                 "elapsed_s": round(time.time() - t0, 2)}
 
 
-def lulc(s2l2a, s1rtc=None, dem=None) -> dict[str, Any]:
+def lulc(s2l2a, s1rtc=None, dem=None,
+          bounds_4326: tuple[float, float, float, float] | None = None,
+          ) -> dict[str, Any]:
     """5-class NYC macro land-cover.
 
     Inputs are torch tensors. The temporal models we trained expect
@@ -398,8 +433,14 @@ def lulc(s2l2a, s1rtc=None, dem=None) -> dict[str, Any]:
     Pass S1 and DEM if you have them — the published adapter was
     trained on the full triplet and accuracy degrades when modalities
     are dropped.
+
+    `bounds_4326` is `(minlon, minlat, maxlon, maxlat)` of the chip
+    in WGS84; when provided, the LULC raster is polygonised onto the
+    chip's geographic extent so the map can render an overlay.
     """
     chips = {"S2L2A": s2l2a}
+    if bounds_4326 is not None:
+        chips["bounds_4326"] = bounds_4326
     if s1rtc is not None:
         chips["S1RTC"] = s1rtc
     if dem is not None:
@@ -407,9 +448,13 @@ def lulc(s2l2a, s1rtc=None, dem=None) -> dict[str, Any]:
     return _run("lulc", chips, _summarize_lulc)
 
 
-def buildings(s2l2a, s1rtc=None, dem=None) -> dict[str, Any]:
+def buildings(s2l2a, s1rtc=None, dem=None,
+               bounds_4326: tuple[float, float, float, float] | None = None,
+               ) -> dict[str, Any]:
     """Binary NYC building-footprint mask. Same input contract as lulc()."""
     chips = {"S2L2A": s2l2a}
+    if bounds_4326 is not None:
+        chips["bounds_4326"] = bounds_4326
     if s1rtc is not None:
         chips["S1RTC"] = s1rtc
     if dem is not None:

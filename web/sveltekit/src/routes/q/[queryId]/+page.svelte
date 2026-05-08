@@ -288,6 +288,12 @@
   let synFc = $state<FeatureCollection | undefined>(undefined);
   let proxyFc = $state<FeatureCollection | undefined>(undefined);
   let terramindLulcFc = $state<FeatureCollection | undefined>(undefined);
+  // Live EO polygon layers — populated from the specialist outputs in
+  // FSM `final` state when the remote inference path returns a
+  // polygonised raster. None of these go through a /api/layers fetch;
+  // they ride the SSE stream alongside the specialist results.
+  let prithviLiveFc = $state<FeatureCollection | undefined>(undefined);
+  let terramindBuildingsFc = $state<FeatureCollection | undefined>(undefined);
   let idaHwmFc = $state<FeatureCollection | undefined>(undefined);
 
   // Compare-intent: independent geocoded addresses per place.
@@ -598,14 +604,37 @@
         const fr = f as unknown as Record<string, unknown>;
         registerPointsFc = buildRegisterPointsFc(fr);
         registerPolygonsFc = buildRegisterPolygonsFc(fr);
-        // TerraMind-synthesis LULC polygons — already computed by the
-        // specialist and carried in terramind.polygons_geojson. Wire into
-        // the map's synthetic layer without an additional API round-trip.
-        const tm = fr.terramind as Record<string, unknown> | null | undefined;
-        if (tm?.ok && tm?.polygons_geojson) {
-          const pg = tm.polygons_geojson as FeatureCollection;
+        // EO map layers — every specialist that returns a polygon
+        // collection plumbs onto the map. terramind synthesis +
+        // terramind LULC LoRA both contribute to the synthetic-LULC
+        // overlay; LULC LoRA wins when both fire (it's the
+        // fine-tuned, Sentinel-2-driven signal). Buildings LoRA gets
+        // its own layer. Prithvi NYC Pluvial water mask is the
+        // marquee live-EO overlay.
+        const tmSyn = fr.terramind as Record<string, unknown> | null | undefined;
+        const tmLulc = fr.terramind_lulc as Record<string, unknown> | null | undefined;
+        const tmBld = fr.terramind_buildings as Record<string, unknown> | null | undefined;
+        const pl = fr.prithvi_live as Record<string, unknown> | null | undefined;
+        const lulcCandidate =
+          (tmLulc?.ok && tmLulc?.polygons_geojson)
+            ? (tmLulc.polygons_geojson as FeatureCollection)
+            : (tmSyn?.ok && tmSyn?.polygons_geojson)
+            ? (tmSyn.polygons_geojson as FeatureCollection)
+            : undefined;
+        if (lulcCandidate?.type === 'FeatureCollection'
+            && (lulcCandidate.features?.length ?? 0) > 0) {
+          terramindLulcFc = lulcCandidate;
+        }
+        if (tmBld?.ok && tmBld?.polygons_geojson) {
+          const pg = tmBld.polygons_geojson as FeatureCollection;
           if (pg?.type === 'FeatureCollection' && (pg.features?.length ?? 0) > 0) {
-            terramindLulcFc = pg;
+            terramindBuildingsFc = pg;
+          }
+        }
+        if (pl?.ok && pl?.polygons_geojson) {
+          const pg = pl.polygons_geojson as FeatureCollection;
+          if (pg?.type === 'FeatureCollection' && (pg.features?.length ?? 0) > 0) {
+            prithviLiveFc = pg;
           }
         }
         // v0.4.2 §12 grounding failure: budget exhausted with failed checks.
@@ -792,6 +821,8 @@
                 registerPoints={registerPointsFc}
                 registerPolygons={registerPolygonsFc}
                 terramindLulc={terramindLulcFc}
+                terramindBuildings={terramindBuildingsFc}
+                prithviLive={prithviLiveFc}
                 {linkedKey}
               />
               <MapLegend
