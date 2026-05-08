@@ -290,12 +290,11 @@ def fetch(lat: float, lon: float, timeout_s: float = 60.0) -> dict[str, Any]:
         try:
             from app import inference as _inf
             if _inf.remote_enabled():
-                # Local code does `torch.from_numpy(dem).unsqueeze(0)` —
-                # i.e. 2-D (H, W) → 3-D (1, H, W). The terramind v1 base
-                # generative encoder adds the batch dim internally; sending
-                # an extra leading dim makes its embedding layer trip on
-                # `B, C, H, W = x.shape` (5-D in, expects 4). Match local.
-                dem_remote = dem[None, :, :].astype("float32")
+                # The terramind v1 base generative encoder embedding
+                # layer unpacks `B, C, H, W = x.shape` (verified against
+                # terratorch_terramind_v1_base_generate). DEM has C=1, so
+                # the on-the-wire shape is (1, 1, H, W) 4-D.
+                dem_remote = dem[None, None, :, :].astype("float32")
                 remote = _inf.terramind("synthesis", None, None, dem_remote,
                                           timeout=timeout_s)
                 if remote.get("ok"):
@@ -343,7 +342,9 @@ def fetch(lat: float, lon: float, timeout_s: float = 60.0) -> dict[str, Any]:
         torch.manual_seed(DEFAULT_SEED)
 
         model = _ensure_model()
-        dem_t = torch.from_numpy(dem).unsqueeze(0).float()  # (1, 1, H, W)
+        # `dem` is 2-D (H, W) from `_read_dem_patch.src.read(1, ...)`. The
+        # terramind v1 base generative encoder wants (B=1, C=1, H, W) 4-D.
+        dem_t = torch.from_numpy(dem).unsqueeze(0).unsqueeze(0).float()
         if time.time() - t0 > timeout_s:
             return {"ok": False, "skipped": "terramind exceeded budget"}
 

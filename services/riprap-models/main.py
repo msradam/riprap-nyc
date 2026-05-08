@@ -381,19 +381,17 @@ def _terramind_synthesis_inference(payload: TerramindIn) -> dict[str, Any]:
     import numpy as np
     import torch
     dem_t = torch.from_numpy(dem_np).float()
-    # Match the local-inference shape contract from
-    # app/context/terramind_synthesis.py:_ensure_model — the v1 base
-    # generative encoder wants 3-D (1, H, W) and adds the batch dim
-    # internally. Anything more triggers `B, C, H, W = x.shape` to
-    # unpack 5-D and fail in the embedding layer.
+    # The v1 base generative encoder unpacks `B, C, H, W = x.shape` —
+    # 4-D required. DEM has C=1, so canonical shape is (1, 1, H, W).
+    # Verified empirically against terratorch_terramind_v1_base_generate.
     if dem_t.ndim == 2:
-        dem_t = dem_t.unsqueeze(0)        # (H, W)    -> (1, H, W)
-    elif dem_t.ndim == 4 and dem_t.shape[0] == 1 and dem_t.shape[1] == 1:
-        dem_t = dem_t.squeeze(0)          # (1, 1, H, W) -> (1, H, W)
-    elif dem_t.ndim != 3:
+        dem_t = dem_t.unsqueeze(0).unsqueeze(0)   # (H, W)    -> (1, 1, H, W)
+    elif dem_t.ndim == 3:
+        dem_t = dem_t.unsqueeze(0)                # (1, H, W) -> (1, 1, H, W)
+    elif dem_t.ndim != 4:
         raise HTTPException(status_code=400,
                             detail=f"unexpected DEM shape {tuple(dem_t.shape)}; "
-                                   f"expected (H, W) or (1, H, W)")
+                                   f"expected 4-D (B, C, H, W)")
     dem_t = _to_device(dem_t)
 
     spec = _TERRAMIND_SPECS["synthesis"]
