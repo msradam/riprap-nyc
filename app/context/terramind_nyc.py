@@ -85,7 +85,13 @@ def _has_required_deps() -> tuple[bool, str | None]:
     """Probe the heavy-EO deps. Same shape as prithvi_live's check —
     a missing dep (terratorch / peft / safetensors / hf_hub) returns a
     clean `skipped: deps_unavailable` outcome instead of a noisy
-    ModuleNotFoundError in the trace."""
+    ModuleNotFoundError in the trace.
+
+    On the HF Space, terratorch's import chain itself can raise
+    RuntimeError("operator torchvision::nms does not exist") when the
+    torchvision binary extension can't load against our CPU torch
+    wheel. Treat that as 'unavailable' too — the local inference path
+    is dead-on-arrival there."""
     missing: list[str] = []
     for name in ("terratorch", "peft", "safetensors", "huggingface_hub",
                  "torch", "yaml"):
@@ -93,6 +99,11 @@ def _has_required_deps() -> tuple[bool, str | None]:
             __import__(name)
         except ImportError:
             missing.append(name)
+        except Exception as e:
+            # torchvision::nms RuntimeError, libcuda load failure, etc.
+            log.warning("terramind_nyc: %s import raised %s; treating as "
+                        "unavailable", name, type(e).__name__)
+            missing.append(f"{name} ({type(e).__name__})")
     if missing:
         return False, ", ".join(missing)
     return True, None

@@ -91,6 +91,13 @@ def _has_required_deps() -> tuple[bool, str | None]:
             missing.append(name)
         except ImportError:
             log.debug("terramind: import race on %s, will retry on demand", name)
+        except Exception as e:
+            # torchvision::nms RuntimeError on HF Space — local inference
+            # is unavailable; treat as missing so fetch() returns a clean
+            # skip rather than crashing in _ensure_model.
+            log.warning("terramind: %s import raised %s; treating as "
+                        "unavailable", name, type(e).__name__)
+            missing.append(f"{name} ({type(e).__name__})")
     return (not missing, ", ".join(missing) if missing else None)
 
 

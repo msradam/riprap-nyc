@@ -98,10 +98,18 @@ def _has_required_deps() -> tuple[bool, str | None]:
 
 
 def _has_module(name: str) -> bool:
+    """True if `name` imports cleanly. ImportError → not installed.
+    Other exceptions (e.g. torchvision::nms RuntimeError on the HF
+    Space) → treat as unavailable too; we don't want a clean-skip
+    intent to crash the FSM at deps-probe time."""
     try:
         __import__(name)
         return True
     except ImportError:
+        return False
+    except Exception as e:
+        log.warning("prithvi_live: %s import raised %s; treating as "
+                    "unavailable", name, type(e).__name__)
         return False
 
 
