@@ -27,20 +27,15 @@
      *  not gated by `activeLayers`. */
     registerPoints?: GeoJSON.FeatureCollection;
     registerPolygons?: GeoJSON.FeatureCollection;
-    /** TerraMind-NYC LULC polygons (5-class fine-tune, Sentinel-2-driven)
-     *  or, if the LoRA didn't fire, the IBM v1 base synthesis output.
-     *  Carried via `state.terramind_lulc.polygons_geojson` /
-     *  `state.terramind.polygons_geojson`. Categorical fill by per-feature
-     *  `fill_color`; synthetic tier; controlled by the SYN master toggle. */
+    /** TerraMind-synthesis LULC polygons from the SSE final payload
+     *  (terramind.polygons_geojson). Categorical fill by `fill_color`
+     *  property; synthetic tier; controlled by the SYN master toggle. */
     terramindLulc?: GeoJSON.FeatureCollection;
-    /** TerraMind-NYC Buildings polygons (binary fine-tune, Sentinel-2-
-     *  driven). Carried via `state.terramind_buildings.polygons_geojson`.
-     *  Red fill; modeled tier; controlled by SYN master toggle. */
+    /** TerraMind Buildings LoRA polygons (terramind_buildings.polygons_geojson).
+     *  Synthetic tier; purple outline to distinguish from LULC fill. */
     terramindBuildings?: GeoJSON.FeatureCollection;
-    /** Prithvi-NYC-Pluvial water polygons — live Sentinel-2 segmentation
-     *  via the NYC fine-tune of Prithvi-EO 2.0. Carried via
-     *  `state.prithvi_live.polygons_geojson`. Blue fill; modeled tier;
-     *  controlled by MOD master toggle. */
+    /** Prithvi-NYC-Pluvial flood prediction polygons (prithvi_live.polygons_geojson).
+     *  Modeled tier; teal fill at low opacity. */
     prithviLive?: GeoJSON.FeatureCollection;
     /** USGS Ida 2021 high-water mark points. Empirical tier; amber fill.
      *  Controlled by EMP master toggle. */
@@ -227,28 +222,24 @@
         paint: { 'line-color': ['get', 'fill_color'], 'line-width': 0.75, 'line-opacity': 0.45, 'line-dasharray': [3, 2] }
       });
 
-      // TerraMind-NYC Buildings LoRA polygons. Red fill (matches the
-      // _PALETTE entry for "building" in app/context/_polygonize.py),
-      // sharper outline so individual structures read distinctly.
+      // TerraMind Buildings LoRA — purple outline, synthetic tier.
       map.addLayer({
         id: 'terramind-buildings-fill', type: 'fill', source: 'terramind-buildings',
-        paint: { 'fill-color': '#D62728', 'fill-opacity': 0.32 }
+        paint: { 'fill-color': '#7C3AED', 'fill-opacity': 0.15 }
       });
       map.addLayer({
         id: 'terramind-buildings-line', type: 'line', source: 'terramind-buildings',
-        paint: { 'line-color': '#A31D1F', 'line-width': 0.6, 'line-opacity': 0.7 }
+        paint: { 'line-color': '#7C3AED', 'line-width': 1.0, 'line-opacity': 0.6, 'line-dasharray': [2, 2] }
       });
 
-      // Prithvi-NYC-Pluvial water polygons (live Sentinel-2 segmentation).
-      // Blue fill, slightly higher opacity than the modeled DEP layer so
-      // the live signal reads as the dominant flood overlay.
+      // Prithvi-NYC-Pluvial flood prediction — teal fill, modeled tier.
       map.addLayer({
         id: 'prithvi-live-fill', type: 'fill', source: 'prithvi-live',
-        paint: { 'fill-color': '#1F77B4', 'fill-opacity': 0.42 }
+        paint: { 'fill-color': '#0D9488', 'fill-opacity': 0.20 }
       });
       map.addLayer({
         id: 'prithvi-live-line', type: 'line', source: 'prithvi-live',
-        paint: { 'line-color': '#0F4F7C', 'line-width': 1.0, 'line-opacity': 0.85 }
+        paint: { 'line-color': '#0D9488', 'line-width': 1.0, 'line-opacity': 0.55 }
       });
 
       // Register-asset polygons (NYCHA developments only). Fill graded
