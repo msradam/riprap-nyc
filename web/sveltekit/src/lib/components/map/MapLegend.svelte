@@ -50,13 +50,13 @@
       { label: 'NYCHA developments',           source: 'NYC OD phvi-damg',   tier: 'empirical', wired: true  },
       { label: 'DOE schools',                  source: 'NYC DOE Locations',  tier: 'empirical', wired: true  },
       { label: 'DOH hospitals',                source: 'NYS DOH vn5v-hh5r',  tier: 'empirical', wired: true  },
-      { label: 'TerraMind Buildings (current)', source: 'msradam/TerraMind-NYC-Adapters', tier: 'synthetic', wired: false },
+      { label: 'TerraMind Buildings (current)', source: 'msradam/TerraMind-NYC-Adapters', tier: 'synthetic', wired: true  },
     ],
     touchstone: [
       { label: '311 flood complaints',           source: 'NYC 311',  tier: 'proxy',     wired: false },
       { label: 'FloodNet sensors',               source: 'FloodNet NYC', tier: 'proxy',     wired: true  },
       { label: 'TerraMind LULC (current)',       source: 'msradam/TerraMind-NYC-Adapters', tier: 'synthetic', wired: true  },
-      { label: 'Prithvi-NYC-Pluvial flood pred.', source: 'msradam/Prithvi-EO-2.0-NYC-Pluvial', tier: 'modeled', wired: false },
+      { label: 'Prithvi-NYC-Pluvial flood pred.', source: 'msradam/Prithvi-EO-2.0-NYC-Pluvial', tier: 'modeled', wired: true  },
     ],
     lodestone: [],   // intentional — surfaced as the explicit absence row
     capstone:  [],   // not a map layer; surfaced as "not a map layer"
