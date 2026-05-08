@@ -300,11 +300,23 @@ class TerramindIn(BaseModel):
 
 
 def _build_chip_tensor(np_arr, n_timesteps: int = 4):
+    """Normalize any incoming chip shape into TerraMind's expected
+    (B, C, T, H, W). The HF Space's eo_chip_cache hands us a chip that
+    is already (B, C, T, H, W) 5-D — pass through. Older callers that
+    send a single-timestep (C, H, W) get expanded to T=4 by repetition;
+    a (C, T, H, W) gets just the batch dim added."""
     import torch
-    t = torch.from_numpy(np_arr).float().unsqueeze(1)  # add T dim
-    if t.shape[1] == 1:
-        t = t.repeat(1, n_timesteps, 1, 1)
-    return t.unsqueeze(0)  # add batch
+    t = torch.from_numpy(np_arr).float()
+    if t.ndim == 5:
+        return t                               # (B, C, T, H, W)
+    if t.ndim == 4:
+        return t.unsqueeze(0)                  # (C, T, H, W) -> (1, C, T, H, W)
+    if t.ndim == 3:
+        t = t.unsqueeze(1)                     # (C, H, W)    -> (C, 1, H, W)
+        if t.shape[1] == 1:
+            t = t.repeat(1, n_timesteps, 1, 1) # repeat single timestep
+        return t.unsqueeze(0)                  # add batch dim
+    raise ValueError(f"unexpected chip shape {tuple(t.shape)}")
 
 
 def _terramind_inference(payload: TerramindIn) -> dict[str, Any]:
