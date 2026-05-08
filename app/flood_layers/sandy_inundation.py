@@ -1,14 +1,29 @@
-"""NYC Sandy Inundation Zone (empirical 2012 extent, NYC OD 5xsi-dfpx)."""
+"""NYC Sandy Inundation Zone (empirical 2012 extent, NYC OD 5xsi-dfpx).
+
+Two query paths exist:
+    inside_raster(point) — fast path. Samples data/baked/sandy.tif.
+        ~1 ms; used by step_sandy in the FSM.
+    join(assets)         — legacy GeoJSON sjoin path. Retained as a
+        fallback when the baked raster is absent (local dev) and
+        for coverage_for_polygon (neighborhood mode).
+"""
 from __future__ import annotations
 
+import logging
+import threading
 from functools import lru_cache
 
 import geopandas as gpd
 
-from app.spatial import DATA, load_layer
+from app.spatial import DATA, NYC_CRS, load_layer
 
 DOC_ID = "sandy_inundation"
 CITATION = "NYC Sandy Inundation Zone (NYC OpenData 5xsi-dfpx, empirical 2012 extent)"
+
+log = logging.getLogger(__name__)
+BAKED = DATA / "baked"
+_TLOCAL = threading.local()
+_FALLBACK_WARNED = False
 
 
 @lru_cache(maxsize=1)
@@ -32,6 +47,39 @@ def join(assets: gpd.GeoDataFrame) -> gpd.pd.Series:
     s[:] = False
     s.iloc[list(flagged)] = True
     return s.reset_index(drop=True)
+
+
+def _raster_handle():
+    """Per-thread rasterio handle. See dep_stormwater._raster_handles."""
+    h = getattr(_TLOCAL, "handle", None)
+    if h is not None:
+        return h
+    p = BAKED / "sandy.tif"
+    if not p.exists():
+        return None
+    import rasterio
+    h = rasterio.open(str(p))
+    _TLOCAL.handle = h
+    return h
+
+
+def inside_raster(pt_geom_2263) -> bool:
+    """Fast path. True if the shapely Point (in EPSG:2263) falls inside the
+    2012 Sandy inundation extent. Falls back to the GeoJSON sjoin path if
+    data/baked/sandy.tif is missing."""
+    global _FALLBACK_WARNED
+    h = _raster_handle()
+    if h is None:
+        if not _FALLBACK_WARNED:
+            log.warning(
+                "data/baked/sandy.tif not found — falling back to GeoJSON sjoin. "
+                "Run: uv run python scripts/bake_cornerstone_rasters.py"
+            )
+            _FALLBACK_WARNED = True
+        a = gpd.GeoDataFrame(geometry=[pt_geom_2263], crs=NYC_CRS)
+        return bool(join(a).iloc[0])
+    v = next(h.sample([(pt_geom_2263.x, pt_geom_2263.y)]))
+    return bool(int(v[0]))
 
 
 def coverage_for_polygon(polygon, polygon_crs: str = "EPSG:4326") -> dict:

@@ -69,6 +69,11 @@ variables = {
     'RIPRAP_ML_BACKEND':   'remote',
     'RIPRAP_ML_BASE_URL':  f'http://{ip}:{models_port}',
     'RIPRAP_ML_API_KEY':   token,
+    # Heavy register specialists (NYCHA / DOE schools / DOH hospitals).
+    # Pre-warmed at boot via web/main.py:_warm_caches when this is set;
+    # without it the FSM never adds these step functions, so the demo
+    # never sees register cards even when the underlying data is loaded.
+    'RIPRAP_NYCHA_REGISTERS': '1',
 }
 
 for key, value in variables.items():

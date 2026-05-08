@@ -174,8 +174,10 @@ def step_sandy(state: State) -> State:
         if not _in_nyc(state["lat"], state["lon"]):
             rec["ok"] = False; rec["err"] = "out of NYC scope"
             return state.update(sandy=None, trace=trace)
-        pt = gpd.GeoDataFrame(geometry=[Point(state["lon"], state["lat"])], crs="EPSG:4326").to_crs("EPSG:2263")
-        flag = bool(sandy_inundation.join(pt).iloc[0])
+        pt_geom = (gpd.GeoDataFrame(geometry=[Point(state["lon"], state["lat"])],
+                                    crs="EPSG:4326")
+                   .to_crs("EPSG:2263").iloc[0].geometry)
+        flag = sandy_inundation.inside_raster(pt_geom)
         rec["ok"] = True; rec["result"] = {"inside": flag}
         return state.update(sandy=flag, trace=trace)
     except Exception as e:
@@ -196,13 +198,15 @@ def step_dep(state: State) -> State:
         if not _in_nyc(state["lat"], state["lon"]):
             rec["ok"] = False; rec["err"] = "out of NYC scope"
             return state.update(dep=None, trace=trace)
-        pt = gpd.GeoDataFrame(geometry=[Point(state["lon"], state["lat"])], crs="EPSG:4326").to_crs("EPSG:2263")
+        pt_geom = (gpd.GeoDataFrame(geometry=[Point(state["lon"], state["lat"])],
+                                    crs="EPSG:4326")
+                   .to_crs("EPSG:2263").iloc[0].geometry)
         out: dict[str, Any] = {}
         for scen in ["dep_extreme_2080", "dep_moderate_2050", "dep_moderate_current"]:
-            j = dep_stormwater.join(pt, scen).iloc[0]
+            cls = dep_stormwater.join_raster(pt_geom, scen)
             out[scen] = {
-                "depth_class": int(j["depth_class"]),
-                "depth_label": j["depth_label"],
+                "depth_class": cls,
+                "depth_label": dep_stormwater.DEPTH_CLASS.get(cls, "outside"),
                 "citation": f"NYC DEP Stormwater Flood Map — {dep_stormwater.label(scen)}",
             }
         rec["ok"] = True; rec["result"] = {k: v["depth_label"] for k, v in out.items()}

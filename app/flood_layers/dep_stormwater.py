@@ -4,14 +4,30 @@ Four scenarios, all in EPSG:2263. Polygons are categorized by depth class:
     1 = Nuisance Flooding (>4" and ≤1 ft)
     2 = Deep and Contiguous Flooding (>1 ft and ≤4 ft)
     3 = Deep Contiguous Flooding (>4 ft)
+
+Two query paths exist:
+    join_raster(point) — fast path. Samples the baked GeoTIFFs in
+        data/baked/. ~3 ms per scenario, ~70 ms cold-open. Used by
+        step_dep in the FSM.
+    join(assets)       — legacy GDB path via gpd.sjoin. Retained as
+        a fallback when baked rasters are absent (local dev) and as
+        the polygon-overlap path used by coverage_for_polygon for
+        neighborhood mode.
 """
 from __future__ import annotations
 
+import logging
+import threading
 from functools import lru_cache
 
 import geopandas as gpd
 
 from app.spatial import DATA, NYC_CRS
+
+log = logging.getLogger(__name__)
+BAKED = DATA / "baked"
+_TLOCAL = threading.local()
+_FALLBACK_WARNED = False
 
 ROOT = DATA / "dep"
 
@@ -70,6 +86,47 @@ def join(assets: gpd.GeoDataFrame, scenario: str) -> gpd.GeoDataFrame:
 
 def label(scenario: str) -> str:
     return SCENARIOS[scenario]["label"]
+
+
+def _raster_handles():
+    """Per-thread rasterio handle cache. rasterio.DatasetReader is not
+    safe to share across threads for concurrent .sample() calls; the
+    FSM runs each request on its own executor thread, so we keep one
+    handle set per thread."""
+    h = getattr(_TLOCAL, "handles", None)
+    if h is not None:
+        return h
+    import rasterio
+    h = {}
+    for s in SCENARIOS:
+        p = BAKED / f"{s}.tif"
+        if not p.exists():
+            return None
+        h[s] = rasterio.open(str(p))
+    _TLOCAL.handles = h
+    return h
+
+
+def join_raster(pt_geom_2263, scenario: str) -> int:
+    """Fast path. Returns the integer depth class (0=outside, 1/2/3) for a
+    single shapely Point in EPSG:2263. Falls back to the GDB join() path
+    if baked rasters are missing — emits a one-time warning so local dev
+    still works without the bake artifacts."""
+    global _FALLBACK_WARNED
+    h = _raster_handles()
+    if h is None:
+        if not _FALLBACK_WARNED:
+            log.warning(
+                "data/baked/dep_*.tif not found — falling back to GDB sjoin. "
+                "Run: uv run python scripts/bake_cornerstone_rasters.py"
+            )
+            _FALLBACK_WARNED = True
+        # legacy fallback — wrap point in a one-row GeoDataFrame
+        a = gpd.GeoDataFrame(geometry=[pt_geom_2263], crs=NYC_CRS)
+        return int(join(a, scenario).iloc[0]["depth_class"])
+    ds = h[scenario]
+    v = next(ds.sample([(pt_geom_2263.x, pt_geom_2263.y)]))
+    return int(v[0])
 
 
 def coverage_for_polygon(polygon, scenario: str,
