@@ -358,6 +358,22 @@ def _run(adapter_name: str, modality_chips: dict, summarizer):
         result["compute"] = "local"
         return result
     except Exception as e:
+        msg = str(e)
+        # Translate torchvision binary-extension failures into a clean
+        # skip. terratorch + torchvision both ride a transitive
+        # dep cone on the HF Space (sentence-transformers pulls torch
+        # CPU; torchvision's C extension can't load against that wheel),
+        # so a local _ensure_adapter() raises RuntimeError with this
+        # signature when remote is also unreachable. Clean skip is the
+        # honest demo outcome — same as terramind_synthesis.
+        if "torchvision::nms" in msg or "torchvision_C" in msg:
+            log.warning("terramind_nyc/%s: torchvision binary unavailable; "
+                        "remote unreachable too; clean skip", adapter_name)
+            return {"ok": False,
+                    "skipped": "remote inference unreachable + local "
+                               "torchvision binary unavailable on this "
+                               "deployment",
+                    "elapsed_s": round(time.time() - t0, 2)}
         log.exception("terramind_nyc.%s failed", adapter_name)
         return {"ok": False, "err": f"{type(e).__name__}: {e}",
                 "elapsed_s": round(time.time() - t0, 2)}
