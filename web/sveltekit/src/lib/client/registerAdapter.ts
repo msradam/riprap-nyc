@@ -134,8 +134,8 @@ function adaptSchools(s: BaseFinding): RegisterData | null {
   if (!s.available) return null;
   const list = (s.schools ?? []) as BaseFinding[];
   const rows: RegisterRow[] = list.map((sc) => ({
-    name: `${sc.school_name ?? sc.name ?? '?'}${sc.borough ? ` · ${sc.borough}` : ''}`,
-    elev: feetLabel(sc.elev_m as number | null | undefined),
+    name: `${sc.loc_name ?? sc.school_name ?? sc.name ?? '?'}${sc.borough ? ` · ${sc.borough}` : ''}`,
+    elev: feetLabel((sc.elevation_m ?? sc.elev_m) as number | null | undefined),
     ada: false,
     fema: '—',
     sandy: inundLabel(sc.inside_sandy_2012 as boolean | undefined),
@@ -160,7 +160,7 @@ function adaptHospitals(s: BaseFinding): RegisterData | null {
   const list = (s.hospitals ?? []) as BaseFinding[];
   const rows: RegisterRow[] = list.map((h) => ({
     name: `${h.facility_name ?? h.name ?? '?'}${h.borough ? ` · ${h.borough}` : ''}`,
-    elev: feetLabel(h.elev_m as number | null | undefined),
+    elev: feetLabel((h.elevation_m ?? h.elev_m) as number | null | undefined),
     ada: true, // hospitals are ADA-required
     fema: '—',
     sandy: inundLabel(h.inside_sandy_2012 as boolean | undefined),
