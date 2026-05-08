@@ -74,10 +74,21 @@ gliner>=0.2.13
 # 30-second pip budget.
 #
 # On HF Spaces the lazy-import path returns clean `skipped: deps
-# unavailable on this deployment` for both prithvi_live and
-# terramind_synthesis steps; the other 14 specialists run normally.
-#   - terratorch / torchgeo / pystac-client / planetary-computer
-#   - rioxarray / xarray / einops
+# unavailable on this deployment` for terramind_synthesis (which has
+# no remote-inference path); the other EO specialists (prithvi_live,
+# terramind_lulc, terramind_buildings) work via app/inference.py
+# routing to the AMD MI300X droplet, provided we have the chip-fetch
+# deps below — they're small (pure-Python or thin wrappers around
+# numpy/rasterio which we already have) and don't pull terratorch or
+# torchvision binaries.
+#   - planetary-computer / pystac-client: STAC search at Microsoft PC
+#   - rioxarray / xarray: COG band reads
+#   - einops: tensor reshape used by prithvi_live._build_chip
+planetary-computer>=1.0
+pystac-client>=0.7
+rioxarray>=0.15
+xarray>=2024.1
+einops>=0.7
 
 # Burr FSM
 burr>=0.40

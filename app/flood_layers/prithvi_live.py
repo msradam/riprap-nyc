@@ -63,25 +63,46 @@ _INIT_LOCK = threading.Lock()  # serializes lazy load if multiple threads
 
 
 def _has_required_deps() -> tuple[bool, str | None]:
-    """Heavy-EO deps (terratorch / planetary_computer / rioxarray /
-    pystac-client / xarray / einops) live in requirements-experiments.txt
-    only — they don't fit Riprap's HF Spaces' Py3.10 dep cone alongside
-    transformers<5 / hf_hub<1 / granite-tsfm<0.3.4 / mellea<0.4.
+    """Probe deps in two tiers.
 
-    Probe each importable name once at module load. If any are missing,
-    fetch() returns a clean `skipped: deps_unavailable` outcome instead
-    of crashing with a noisy ModuleNotFoundError in the trace. Local
-    dev + AMD path have these installed and the specialist runs."""
-    missing = []
-    for name in ("terratorch", "planetary_computer", "pystac_client",
-                 "rioxarray", "xarray", "einops"):
-        try:
-            __import__(name)
-        except ImportError:
-            missing.append(name)
+    Tier 1 — chip fetching (planetary_computer / pystac_client / rioxarray
+    / xarray / einops) is always required: prithvi_live always pulls a
+    Sentinel-2 chip from Microsoft Planetary Computer regardless of where
+    inference runs.
+
+    Tier 2 — local inference (terratorch) is only required when remote
+    inference is unavailable. On the HF Space we have remote inference
+    on the AMD MI300X via app/inference.py, so terratorch is not needed
+    even though chip-fetch is.
+
+    Returns (False, missing) if any required dep is missing. Splitting
+    the gate this way lets the HF Space deployment fetch chips and run
+    remote inference even though it doesn't fit terratorch's transitive
+    dep cone (~250 MB) in the HF build sandbox."""
+    chip_deps = ("planetary_computer", "pystac_client",
+                 "rioxarray", "xarray", "einops")
+    missing = [n for n in chip_deps
+               if not _has_module(n)]
     if missing:
         return False, ", ".join(missing)
+    # Tier 2: only need terratorch if we'd run inference locally.
+    try:
+        from app import inference as _inf
+        if _inf.remote_enabled():
+            return True, None
+    except Exception:
+        pass
+    if not _has_module("terratorch"):
+        return False, "terratorch (local inference)"
     return True, None
+
+
+def _has_module(name: str) -> bool:
+    try:
+        __import__(name)
+        return True
+    except ImportError:
+        return False
 
 
 _DEPS_OK, _DEPS_MISSING = _has_required_deps()

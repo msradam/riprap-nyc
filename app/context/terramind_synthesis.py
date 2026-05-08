@@ -75,15 +75,14 @@ LULC_CLASSES = [
 
 
 def _has_required_deps() -> tuple[bool, str | None]:
-    """Probe deps. Distinguishes a *truly missing* package
-    (ModuleNotFoundError) from a *transient race* (other ImportError —
-    typically sklearn's "partially initialized module" from concurrent
-    imports inside the parallel-fanout block).
+    """Probe deps. terramind_synthesis runs only locally (no remote path
+    in app/inference.py for DEM-driven synthesis), so it always needs
+    terratorch. On the HF Space terratorch isn't installed, so this
+    specialist returns a clean `skipped: deps unavailable` outcome.
 
-    Truly missing returns (False, names). Transient race returns
-    (True, None) — let the caller try again, the import will resolve
-    on the next attempt once the racing thread finishes.
-    """
+    Distinguishes a *truly missing* package (ModuleNotFoundError) from
+    a *transient race* (other ImportError — typically sklearn's
+    "partially initialized module" from concurrent imports)."""
     missing = []
     for name in ("terratorch", "rasterio"):
         try:
@@ -91,8 +90,6 @@ def _has_required_deps() -> tuple[bool, str | None]:
         except ModuleNotFoundError:
             missing.append(name)
         except ImportError:
-            # sklearn-style partial-init race; treat as available and
-            # let _ensure_model retry. Logged but not surfaced as missing.
             log.debug("terramind: import race on %s, will retry on demand", name)
     return (not missing, ", ".join(missing) if missing else None)
 
