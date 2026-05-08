@@ -56,6 +56,7 @@ DEFAULT_ADDRESSES: list[dict[str, Any]] = [
         "intent": "single_address",
         "expect_sandy": True,        # Red Hook — canonical Sandy turf
         "expect_311_ge": 1,
+        "expect_terramind_lulc_polygons": True,  # EO map-layer wiring check
         "borough": "Brooklyn",
     },
     {
@@ -301,6 +302,21 @@ def assert_run(spec: dict[str, Any], r: RunResult) -> list[str]:  # TODO(cleanup
         n311 = (final.get("nyc311") or {}).get("n") or 0
         if "expect_311_ge" in spec and n311 < spec["expect_311_ge"]:
             fails.append(f"nyc311={n311} expected >= {spec['expect_311_ge']}")
+
+        # EO map-layer wiring check: TerraMind LULC must produce polygons
+        # when its specialist fires (ok=True). Prithvi and TerraMind
+        # Buildings are accepted as silent — no pluvial flood / no
+        # building change is a valid result, not a bug. This catches the
+        # regression where specialists fire but polygons_geojson is
+        # dropped before reaching the final state.
+        if spec.get("expect_terramind_lulc_polygons"):
+            tm = final.get("terramind") or {}
+            if not tm.get("ok"):
+                fails.append("terramind_lulc: ok=False — LULC specialist did not fire")
+            else:
+                n_poly = len((tm.get("polygons_geojson") or {}).get("features") or [])
+                if n_poly == 0:
+                    fails.append("terramind_lulc: ok=True but 0 polygons in final state")
 
     return fails
 
