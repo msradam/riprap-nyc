@@ -7,7 +7,7 @@
       · <a href="https://www.floodnet.nyc">FloodNet NYC</a>.
     </p>
     <p class="app-footer-build">
-      All foundation models Apache-2.0 · All data from public-record federal, state, and city sources · No commercial APIs contacted at runtime · Riprap v0.4.6 · build 2026-05-06
+      All foundation models Apache-2.0 · All data from public-record federal, state, and city sources · No commercial APIs contacted at runtime · Riprap v0.5.0 · build 2026-05-07
     </p>
     <p class="app-footer-credits">
       Dam mark: <a href="https://thenounproject.com/icon/dam-4516918/">"Dam" by Chintuza</a> via the Noun Project, CC-BY 3.0.
