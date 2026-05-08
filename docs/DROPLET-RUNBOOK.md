@@ -2,12 +2,13 @@
 
 _Last verified: 2026-05-09 (terramind synthesis + LoRA adapters confirmed firing live)_
 
-> **Quick redeploy:** `HF_TOKEN=<write-token> scripts/redeploy.sh <new-droplet-ip>`
+> **Quick redeploy:** `scripts/redeploy.sh <new-droplet-ip>`
 > generates a fresh bearer token, builds + brings up vLLM + riprap-models, updates
 > the HF Space env vars, restarts the Space, and runs the end-to-end probe.
-> Source-committed fixes (e.g. the May 9 terramind chip-tensor + synthesis
-> patches) are inherited automatically because `deploy_droplet.sh` tars
-> `services/riprap-models/` from this repo at run time.
+> HF auth comes from `huggingface-cli login` (cached) — `HF_TOKEN` env override
+> is supported but not required. Source-committed fixes (e.g. the May 9
+> terramind chip-tensor + synthesis patches) are inherited automatically because
+> `deploy_droplet.sh` tars `services/riprap-models/` from this repo at run time.
 
 ## Spec
 

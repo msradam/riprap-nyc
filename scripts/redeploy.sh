@@ -9,7 +9,7 @@
 # Usage: scripts/redeploy.sh <droplet-ip>
 #
 # Requires:
-#   HF_TOKEN  env var with write access to the HF Space
+#   HF auth — either `huggingface-cli login` (preferred) or HF_TOKEN env var
 #   .venv     Python virtual environment with probe_addresses.py deps
 #   SSH access to the droplet (ssh-agent or SSH_KEY env var)
 #
@@ -27,8 +27,20 @@ fi
 
 IP="$1"
 
-if [ -z "${HF_TOKEN:-}" ]; then
-    echo "Error: HF_TOKEN env var is required (write access to the HF Space)" >&2
+# Verify HF auth is available before doing the long droplet build.
+# Either HF_TOKEN env or a cached CLI login works — HfApi() picks up
+# whichever is set.
+if ! python3 -c "
+import sys
+from huggingface_hub import HfApi
+try:
+    HfApi().whoami()
+except Exception as e:
+    print(f'HF auth check failed: {e}', file=sys.stderr)
+    print('Run: huggingface-cli login   (or: export HF_TOKEN=...)',
+          file=sys.stderr)
+    sys.exit(1)
+" >/dev/null; then
     exit 1
 fi
 

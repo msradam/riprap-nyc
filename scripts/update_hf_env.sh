@@ -5,9 +5,12 @@
 # Usage: scripts/update_hf_env.sh <droplet-ip> <bearer-token>
 #
 # Requires:
-#   HF_TOKEN  env var with write access to the Space
 #   huggingface_hub >= 0.36 installed (provides the Python API used below;
 #   note: 'huggingface-cli space variables' does not exist in this version)
+#   Either:
+#     - `huggingface-cli login` cached token (preferred), OR
+#     - HF_TOKEN env var
+#   HfApi() picks up the cached login automatically; HF_TOKEN overrides.
 #
 # Space slug: lablab-ai-amd-developer-hackathon/riprap-nyc
 # Variables set (from docs/DROPLET-RUNBOOK.md §Required secrets):
@@ -17,6 +20,7 @@
 #   RIPRAP_ML_BACKEND     remote
 #   RIPRAP_ML_BASE_URL    http://<ip>:7860
 #   RIPRAP_ML_API_KEY     <token>
+#   RIPRAP_NYCHA_REGISTERS 1
 set -euo pipefail
 
 if [ "$#" -ne 2 ]; then
@@ -26,11 +30,6 @@ fi
 
 IP="$1"
 TOKEN="$2"
-
-if [ -z "${HF_TOKEN:-}" ]; then
-    echo "Error: HF_TOKEN env var is required (write access to the Space)" >&2
-    exit 1
-fi
 
 SPACE_ID="lablab-ai-amd-developer-hackathon/riprap-nyc"
 SPACE_URL="https://lablab-ai-amd-developer-hackathon-riprap-nyc.hf.space"
@@ -55,7 +54,7 @@ except ImportError:
     print('Error: huggingface_hub not installed', file=sys.stderr)
     sys.exit(1)
 
-api = HfApi(token=os.environ['HF_TOKEN'])
+api = HfApi(token=os.environ.get('HF_TOKEN'))  # None → cached CLI login
 space_id = '${SPACE_ID}'
 ip = '${IP}'
 token = '${TOKEN}'
@@ -90,7 +89,7 @@ echo "==> Restarting HF Space"
 python3 -c "
 import os
 from huggingface_hub import HfApi
-api = HfApi(token=os.environ['HF_TOKEN'])
+api = HfApi(token=os.environ.get('HF_TOKEN'))  # None → cached CLI login
 rt = api.restart_space(repo_id='${SPACE_ID}')
 print(f'    stage after restart request: {rt.stage}')
 "
