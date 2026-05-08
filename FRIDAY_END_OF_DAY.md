@@ -276,7 +276,7 @@ neighborhood, compare), and natural-language + bare address + neighborhood forms
 
 | # | Query | Intent | Borough | Result | Time | Mellea | Rerolls |
 |---|-------|--------|---------|--------|------|--------|---------|
-| 1 | "I'm thinking about renting an apartment at 80 Pioneer Street, Brooklyn. Should I worry?" | address | Brooklyn | FAIL¹ | 20.9s | 3/4 | 2 |
+| 1 | 80 Pioneer Street, Brooklyn | address | Brooklyn | FAIL¹ | 20.9s | 3/4 | 2 |
 | 2 | Tottenville, Staten Island | neighborhood | Staten Island | PASS | 11.3s | 4/4 | 1 |
 | 3 | "What's the flood risk at 151 West 34th Street Manhattan? It's near Penn Station." | address | Manhattan | PASS | 24.4s | 4/4 | 1 |
 | 4 | East New York, Brooklyn | neighborhood | Brooklyn | PASS | 10.8s | 4/4 | 0 |
