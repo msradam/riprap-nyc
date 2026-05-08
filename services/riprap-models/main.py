@@ -379,7 +379,13 @@ def _terramind_synthesis_inference(payload: TerramindIn) -> dict[str, Any]:
     DEM tensor, and emits a class-logit raster keyed by the ESRI
     2020 LULC tokenizer codebook."""
     t0 = time.time()
+    log.info("terramind/synthesis: payload dem=%s dem_shape=%s s2=%s",
+             "set" if payload.dem else "None",
+             payload.dem_shape,
+             "set" if payload.s2 else "None")
     if not payload.dem or not payload.dem_shape:
+        log.warning("terramind/synthesis: missing dem (dem=%s, shape=%s)",
+                    bool(payload.dem), payload.dem_shape)
         raise HTTPException(status_code=400,
                             detail="synthesis requires `dem` + `dem_shape`")
     model = _load_terramind_synthesis()

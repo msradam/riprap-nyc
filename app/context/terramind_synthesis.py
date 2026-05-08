@@ -294,7 +294,22 @@ def fetch(lat: float, lon: float, timeout_s: float = 60.0) -> dict[str, Any]:
                 # layer unpacks `B, C, H, W = x.shape` (verified against
                 # terratorch_terramind_v1_base_generate). DEM has C=1, so
                 # the on-the-wire shape is (1, 1, H, W) 4-D.
-                dem_remote = dem[None, None, :, :].astype("float32")
+                # `_read_dem_patch` returns a 3-D (1, H, W) array (it
+                # interpolates to CHIP_PX×CHIP_PX through a 4-D
+                # torch.functional.interpolate then squeezes the batch),
+                # so we add only the batch dim — not two.
+                import numpy as _np_local
+                dem_arr = _np_local.asarray(dem, dtype="float32")
+                if dem_arr.ndim == 2:                # (H, W)
+                    dem_remote = dem_arr[None, None, :, :]
+                elif dem_arr.ndim == 3:              # (1, H, W)
+                    dem_remote = dem_arr[None, :, :, :]
+                elif dem_arr.ndim == 4:              # already (1, 1, H, W)
+                    dem_remote = dem_arr
+                else:
+                    raise ValueError(
+                        f"unexpected DEM shape {dem_arr.shape}; "
+                        "expected 2/3/4-D")
                 remote = _inf.terramind("synthesis", None, None, dem_remote,
                                           timeout=timeout_s)
                 if remote.get("ok"):
