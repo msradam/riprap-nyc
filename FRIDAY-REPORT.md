@@ -31,3 +31,17 @@ The next logical phase is **Algorithmic Optimization of Cornerstone**.
 - **Strategy:** Move from full `geopandas` spatial joins to a pre-indexed or point-in-polygon lookup for the Hazard Reader.
 - **Constraint:** Maintain the "Five Stones" integrity while reducing the 33s `dep` join time to <1s.
 - **Validation:** Retest the 20-query batch after optimization to confirm the performance gain.
+
+---
+
+## 5. Status as of May 9 — Demo-ready
+
+All work from §4 plus a follow-on EO + frontend pass landed. **3/3 canonical demo queries pass live**; see `DEMO-PLAYBOOK.md` for talking points and the smoke-test invocation. Highlights:
+
+- **Cornerstone** raster bake (`data/baked/*.tif`, 7 MB) — 33 s → <100 ms, full parity (see `experiments/22_cornerstone_optim/RESULTS.md`).
+- **Keystone** register specialists (NYCHA / DOE / DOH) read pre-built JSON catalogs — 8+ min hang → <100 ms, no live polygon math.
+- **Live EO chain fully wired through to the map**: `prithvi_eo_live`, `terramind_lulc`, `terramind_buildings`, `terramind` (synthesis) — every fine-tune emits `pred_b64` from the droplet, HF polygonises locally, frontend renders four new map layers.
+- **UI honesty pass**: misleading "RIPRAP_HEAVY_SPECIALISTS=0" copy gone; skip messages reflect actual cause.
+- **Droplet runbook + redeploy script** (`scripts/redeploy.sh <ip>`) inherit every committed source fix on next bring-up — no out-of-band patches required.
+
+Final probe (Pioneer / Beach Channel / Coney Island): 30s / 26s / 10s, Mellea 4/4 on each, rich Stone activation across single_address and neighborhood paths.
