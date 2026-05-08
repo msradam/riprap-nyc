@@ -580,13 +580,26 @@ def _run_compare(p, raw_query: str, out_q, i_addr) -> dict:
 
     mellea_a = results[0][2].get("mellea") or {}
     mellea_b = results[1][2].get("mellea") or {}
-    return {
+
+    # Spread Place A's full specialist state into the return dict so
+    # adaptFinalToFindings can build evidence cards (TTM, TerraMind, Prithvi,
+    # Sandy, etc.) from the higher-risk location.  Place B's live-state data
+    # is available via targets[].state for future per-location card rendering.
+    # Without this, _run_compare returned only paragraph/mellea/intent/targets
+    # and all fine-tuned model cards were silently suppressed (state keys
+    # missing → card builders returned null).
+    out = {**results[0][2]}
+    out.update({
         "paragraph": merged_paragraph,
         "mellea": _merge_mellea(mellea_a, mellea_b),
         "intent": "compare",
-        "targets": [{"label": lbl, "address": addr} for lbl, addr, _ in results],
+        "targets": [
+            {"label": lbl, "address": addr, "state": res}
+            for lbl, addr, res in results
+        ],
         "tier": results[0][2].get("tier"),
-    }
+    })
+    return out
 
 
 @app.get("/api/agent")
