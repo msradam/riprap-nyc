@@ -21,7 +21,7 @@ sentence-transformers==5.4.1
 gliner==0.2.26
 
 # ---- IBM Granite TimeSeries TTM r2 (TTM forecast specialists) ------------
-granite-tsfm==0.3.6
+granite-tsfm
 
 # ---- Prithvi-EO / TerraMind serving stack --------------------------------
 # terratorch pulls torchgeo, lightning, jsonargparse, kornia, timm, einops,

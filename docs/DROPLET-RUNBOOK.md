@@ -1,14 +1,6 @@
 # Droplet Runbook
 
-_Last verified: 2026-05-09 (terramind synthesis + LoRA adapters confirmed firing live)_
-
-> **Quick redeploy:** `scripts/redeploy.sh <new-droplet-ip>`
-> generates a fresh bearer token, builds + brings up vLLM + riprap-models, updates
-> the HF Space env vars, restarts the Space, and runs the end-to-end probe.
-> HF auth comes from `huggingface-cli login` (cached) — `HF_TOKEN` env override
-> is supported but not required. Source-committed fixes (e.g. the May 9
-> terramind chip-tensor + synthesis patches) are inherited automatically because
-> `deploy_droplet.sh` tars `services/riprap-models/` from this repo at run time.
+_Last verified: 2026-05-06 (live introspection of droplet 569363721)_
 
 ## Spec
 
@@ -52,11 +44,9 @@ be a leftover placeholder, not load-bearing for Riprap.
 | `scripts/save_droplet_image.sh` | Commits the running container, saves + compresses to a local tarball via scp. Useful as a fallback if the public-base Dockerfile rebuild fails. | Complete but **moot** once the bootstrap droplet is destroyed — requires a live droplet to extract from. |
 | `scripts/probe_addresses.py` | End-to-end test against `/api/agent/stream` on the HF Space. 5/5 must pass before merging. | Not a droplet-setup script; it tests the full system end-to-end. |
 
-_Previously a gap; now landed:_ `scripts/update_hf_env.sh` automates updating HF
-Space variables (`RIPRAP_LLM_BASE_URL`, `RIPRAP_ML_BASE_URL`, `RIPRAP_NYCHA_REGISTERS`,
-etc.) and restarting the Space. `scripts/redeploy.sh` orchestrates the three-step
-sequence (deploy droplet → update HF Space env → run end-to-end probe) into one
-command.
+**Gap:** No `update_hf_env.sh` exists. Updating HF Space env vars after a redeploy (new IP
+or new token) is a manual `huggingface-cli space variables` command — see §Required
+secrets below. This would be a good script to add.
 
 **Gap:** No `redeploy.sh` wrapper exists. `deploy_droplet.sh` handles bring-up on a fresh
 droplet but does not handle the HF Space variable update or the post-deploy probe run.
@@ -364,16 +354,10 @@ huggingface-cli space variables \
   RIPRAP_LLM_API_KEY="$TOKEN" \
   RIPRAP_ML_BACKEND=remote \
   RIPRAP_ML_BASE_URL="http://${NEW_IP}:${MODELS_PORT}" \
-  RIPRAP_ML_API_KEY="$TOKEN" \
-  RIPRAP_NYCHA_REGISTERS=1
+  RIPRAP_ML_API_KEY="$TOKEN"
 
 huggingface-cli space restart lablab-ai-amd-developer-hackathon/riprap-nyc
 ```
-
-`RIPRAP_NYCHA_REGISTERS=1` is required for the FSM to attach `step_nycha`,
-`step_doe_schools`, `step_doh_hospitals` — without it, the Keystone Stone is
-missing those three specialists in the per-query trace. (`scripts/update_hf_env.sh`
-sets this automatically.)
 
 ## Health check
 
@@ -406,32 +390,12 @@ For a full end-to-end check via the HF Space:
 # Want: 5/5 PASS
 ```
 
-## Source-committed droplet fixes (May 9 2026)
+## Gaps in existing scripts
 
-Two patches landed in `services/riprap-models/main.py` after a live debugging
-session against a running droplet. They are committed to source, so the next
-`scripts/deploy_droplet.sh` (or `scripts/redeploy.sh`) bring-up will inherit
-them automatically — the build context is tarred from this repo at run time.
-
-| Patch | Problem | Fix |
-|-------|---------|-----|
-| `_build_chip_tensor` shape handling | The HF Space's `eo_chip_cache` ships chips at `(B, C, T, H, W)` 5-D; the droplet assumed `(C, H, W)` 3-D and called `.unsqueeze(1).repeat(1, 4, 1, 1)`, raising `RuntimeError: Number of dimensions of repeat dims can not be smaller than number of dimensions of tensor`. Every TerraMind LoRA request silently failed. | `_build_chip_tensor` now branches on `ndim`: 5-D passes through, 4-D adds batch, 3-D expands to T=4 and adds batch. |
-| TerraMind synthesis remote dispatch | `_terramind_inference` only knew `lulc` / `buildings` adapters. `synthesis` (the IBM/NASA v1 base DEM→LULC generative path) had no remote handler, so the HF specialist always fell through to its local terratorch path and crashed on `torchvision::nms` (HF's CPU torch can't load torchvision's C extension). | `_TERRAMIND_SPECS["synthesis"]` + `_load_terramind_synthesis` (FULL_MODEL_REGISTRY build of `terratorch_terramind_v1_base_generate`) + `_terramind_synthesis_inference` (DEM-only 4-D input, 10-class ESRI LULC output). `TerramindIn` schema relaxed so `s2` is optional. |
-
-After a destroy + redeploy you can verify both with:
-
-```bash
-# Beach Channel single-address — single_address full activation
-.venv/bin/python scripts/probe_addresses.py \
-  --base https://lablab-ai-amd-developer-hackathon-riprap-nyc.hf.space \
-  --addresses "2508 Beach Channel Drive, Queens" \
-  --timeout 240
-```
-
-Want all three TerraMind paths firing in the trace (`terramind_lulc`,
-`terramind_buildings`, `terramind_synthesis`) along with `prithvi_eo_live`
-and `eo_chip_fetch`. All four EO specialists lazy-load on first request,
-so the first probe pays cold-load (~30-90 s); subsequent probes are warm.
+| Missing script | What it needs to do |
+|----------------|---------------------|
+| `scripts/update_hf_env.sh` | Accept `<ip> <token>` args, run `huggingface-cli space variables` to update `RIPRAP_LLM_BASE_URL`, `RIPRAP_LLM_API_KEY`, `RIPRAP_ML_BASE_URL`, `RIPRAP_ML_API_KEY`, then restart the Space. Called as the last step after a successful `deploy_droplet.sh`. |
+| `scripts/redeploy.sh` | Thin orchestrator: generate a fresh token, call `deploy_droplet.sh <ip> <token>`, then call `update_hf_env.sh <ip> <token>`, then run `probe_addresses.py` against the live Space to confirm 5/5. Reduces a 4-step redeploy to one command. |
 
 `save_droplet_image.sh` is complete but only useful while a working droplet is alive.
 The bootstrap droplet was destroyed 2026-05-06; this script cannot recover from that.

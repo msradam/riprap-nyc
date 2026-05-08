@@ -34,7 +34,8 @@ data/*.legacy_*
 web/svelte/node_modules/
 web/sveltekit/node_modules/
 web/sveltekit/.svelte-kit/
-web/sveltekit/build/
+# web/sveltekit/build/ (uncommented to allow deployment to HF Space)
+# web/sveltekit/build/
 
 # Experiments — cached HF model downloads, training artifacts, intermediate
 # fixtures. RESULTS.md, NOTES.md, and source code stay tracked.

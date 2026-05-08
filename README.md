@@ -11,33 +11,16 @@ pinned: false
   <img src="assets/logo@2x.png" width="72" height="72" alt="Riprap dam mark" />
 </p>
 
-# Riprap — citation-grounded NYC flood-exposure briefings
+# Riprap
 
-Riprap takes any NYC address (or neighborhood, or development-permit
-query) and produces a four-section briefing — Status, Empirical
-evidence, Modeled scenarios, Policy context. Every numeric claim is
-anchored to a `[doc_id]` citation that resolves to a named primary
-public-record source. If the model cannot cite a number, the model
-does not publish that number.
+## Flood risk analysis for any NYC address.
 
-The Capstone reconciler is **IBM Granite 4.1 8B**, served via Ollama
-on T4 or vLLM on AMD MI300X, wrapped in **Mellea**-validated rejection
-sampling. Sentences that fail one of four grounding checks
-(`numerics_grounded`, `no_placeholder_tokens`, `citations_dense`,
-`citations_resolve`) are rerolled with surgical feedback until the
-budget is exhausted.
-
-Live demo: <https://lablab-ai-amd-developer-hackathon-riprap-nyc.hf.space>
-
----
-
-## What it looks like
+Powered by a multi-agent AI system that reads satellites, watches
+sensors, forecasts surges, and refuses to stay silent.
 
 ![Riprap flood-exposure briefing for 80 Pioneer Street, Brooklyn](assets/screenshots/hero.png)
 
-*A citation-grounded flood-exposure briefing for 80 Pioneer Street in
-Red Hook. Generated in roughly 7 seconds against AMD MI300X. Every
-numeric claim cites a primary public-record source.*
+Live demo: <https://lablab-ai-amd-developer-hackathon-riprap-nyc.hf.space>
 
 ---
 

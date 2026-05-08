@@ -55,7 +55,8 @@ RUN pip install --upgrade pip && \
     # Freeze the ROCm torch/torchvision/torchaudio at whatever version
     # the vLLM base image ships, so transitive deps (peft, torchgeo, etc.)
     # don't pull a CUDA build from PyPI and replace the ROCm one.
-    pip freeze | grep -E "^(torch|torchvision|torchaudio)==" > /tmp/torch-lock.txt && \
+    pip list --format=freeze > /tmp/all-pkgs.txt && \
+    grep -E "^(torch|torchvision|torchaudio)==" /tmp/all-pkgs.txt > /tmp/torch-lock.txt && \
     cat /tmp/torch-lock.txt && \
     pip install -r /tmp/req-full.txt --constraint /tmp/torch-lock.txt
 
@@ -64,6 +65,9 @@ COPY services/riprap-models/main.py /workspace/riprap-models/main.py
 COPY services/riprap-models/requirements.txt /workspace/riprap-models/requirements.txt
 
 EXPOSE 7860
+
+# Ensure we don't use the vLLM entrypoint.
+ENTRYPOINT []
 
 # `--proxy-headers` so a future LB sees the right client IP. The
 # /healthz route is unauthenticated by design (operators want

@@ -27,21 +27,10 @@
      *  not gated by `activeLayers`. */
     registerPoints?: GeoJSON.FeatureCollection;
     registerPolygons?: GeoJSON.FeatureCollection;
-    /** TerraMind-NYC LULC polygons (5-class fine-tune, Sentinel-2-driven)
-     *  or, if the LoRA didn't fire, the IBM v1 base synthesis output.
-     *  Carried via `state.terramind_lulc.polygons_geojson` /
-     *  `state.terramind.polygons_geojson`. Categorical fill by per-feature
-     *  `fill_color`; synthetic tier; controlled by the SYN master toggle. */
+    /** TerraMind-synthesis LULC polygons from the SSE final payload
+     *  (terramind.polygons_geojson). Categorical fill by `fill_color`
+     *  property; synthetic tier; controlled by the SYN master toggle. */
     terramindLulc?: GeoJSON.FeatureCollection;
-    /** TerraMind-NYC Buildings polygons (binary fine-tune, Sentinel-2-
-     *  driven). Carried via `state.terramind_buildings.polygons_geojson`.
-     *  Red fill; modeled tier; controlled by SYN master toggle. */
-    terramindBuildings?: GeoJSON.FeatureCollection;
-    /** Prithvi-NYC-Pluvial water polygons — live Sentinel-2 segmentation
-     *  via the NYC fine-tune of Prithvi-EO 2.0. Carried via
-     *  `state.prithvi_live.polygons_geojson`. Blue fill; modeled tier;
-     *  controlled by MOD master toggle. */
-    prithviLive?: GeoJSON.FeatureCollection;
     /** USGS Ida 2021 high-water mark points. Empirical tier; amber fill.
      *  Controlled by EMP master toggle. */
     idaHwm?: GeoJSON.FeatureCollection;
@@ -62,8 +51,6 @@
     registerPoints,
     registerPolygons,
     terramindLulc,
-    terramindBuildings,
-    prithviLive,
     idaHwm,
     activeLayers = { empirical: true, modeled: true, synthetic: true, proxy: true },
     linkedKey = null,
@@ -94,8 +81,6 @@
   $effect(() => { setSourceData('register-points', registerPoints); });
   $effect(() => { setSourceData('register-polygons', registerPolygons); });
   $effect(() => { setSourceData('terramind-lulc', terramindLulc); });
-  $effect(() => { setSourceData('terramind-buildings', terramindBuildings); });
-  $effect(() => { setSourceData('prithvi-live', prithviLive); });
   $effect(() => { setSourceData('ida-hwm', idaHwm); });
 
   $effect(() => {
@@ -108,10 +93,6 @@
     setLayerVisibility('tier-synthetic-line', activeLayers.synthetic);
     setLayerVisibility('terramind-lulc-fill', activeLayers.synthetic);
     setLayerVisibility('terramind-lulc-line', activeLayers.synthetic);
-    setLayerVisibility('terramind-buildings-fill', activeLayers.synthetic);
-    setLayerVisibility('terramind-buildings-line', activeLayers.synthetic);
-    setLayerVisibility('prithvi-live-fill', activeLayers.modeled);
-    setLayerVisibility('prithvi-live-line', activeLayers.modeled);
     setLayerVisibility('tier-proxy-dots', activeLayers.proxy);
   });
 
@@ -154,8 +135,6 @@
       map.addSource('register-points', { type: 'geojson', data: registerPoints ?? fcEmpty() });
       map.addSource('register-polygons', { type: 'geojson', data: registerPolygons ?? fcEmpty() });
       map.addSource('terramind-lulc', { type: 'geojson', data: terramindLulc ?? fcEmpty() });
-      map.addSource('terramind-buildings', { type: 'geojson', data: terramindBuildings ?? fcEmpty() });
-      map.addSource('prithvi-live', { type: 'geojson', data: prithviLive ?? fcEmpty() });
       map.addSource('ida-hwm', { type: 'geojson', data: idaHwm ?? fcEmpty() });
       map.addSource('queried-address', {
         type: 'geojson',
@@ -225,30 +204,6 @@
       map.addLayer({
         id: 'terramind-lulc-line', type: 'line', source: 'terramind-lulc',
         paint: { 'line-color': ['get', 'fill_color'], 'line-width': 0.75, 'line-opacity': 0.45, 'line-dasharray': [3, 2] }
-      });
-
-      // TerraMind-NYC Buildings LoRA polygons. Red fill (matches the
-      // _PALETTE entry for "building" in app/context/_polygonize.py),
-      // sharper outline so individual structures read distinctly.
-      map.addLayer({
-        id: 'terramind-buildings-fill', type: 'fill', source: 'terramind-buildings',
-        paint: { 'fill-color': '#D62728', 'fill-opacity': 0.32 }
-      });
-      map.addLayer({
-        id: 'terramind-buildings-line', type: 'line', source: 'terramind-buildings',
-        paint: { 'line-color': '#A31D1F', 'line-width': 0.6, 'line-opacity': 0.7 }
-      });
-
-      // Prithvi-NYC-Pluvial water polygons (live Sentinel-2 segmentation).
-      // Blue fill, slightly higher opacity than the modeled DEP layer so
-      // the live signal reads as the dominant flood overlay.
-      map.addLayer({
-        id: 'prithvi-live-fill', type: 'fill', source: 'prithvi-live',
-        paint: { 'fill-color': '#1F77B4', 'fill-opacity': 0.42 }
-      });
-      map.addLayer({
-        id: 'prithvi-live-line', type: 'line', source: 'prithvi-live',
-        paint: { 'line-color': '#0F4F7C', 'line-width': 1.0, 'line-opacity': 0.85 }
       });
 
       // Register-asset polygons (NYCHA developments only). Fill graded
