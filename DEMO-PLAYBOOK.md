@@ -8,7 +8,12 @@
 
 2. **Heavy register specialists no longer hang** — `step_nycha`, `step_doe_schools`, `step_doh_hospitals` previously did 20 polygon×polygon intersections per query (8+ minute hang on HF Space CPU). They now read pre-computed exposure flags from `data/registers/*.json` (sub-millisecond). Hospitals don't have a pre-built register but read the 30 KB GeoJSON directly and sample the new Cornerstone rasters per hit.
 
-3. **Live EO chain enabled** — `eo_chip_fetch` (multi-modal Sentinel-2 + Sentinel-1 from Microsoft Planetary Computer) and `prithvi_eo_live` (NYC-Pluvial flood segmentation on live imagery, remote-inferenced on the AMD MI300X) are now firing on every query. **`terramind_lulc` and `terramind_buildings` (your NYC fine-tuned adapters) also fire live** — droplet's `_build_chip_tensor` had a 5D-input bug that silently failed every TerraMind request; patched + container restarted. Verified output: dominant LULC class "Built" 65% on Beach Channel; building coverage 0.6%. This is the marquee live-data showcase.
+3. **Live EO chain — every fine-tune renders on the map** — every Sentinel-2-driven specialist now produces polygons that surface as a MapLibre layer:
+   - `prithvi_live` (NYC Pluvial flood segmentation) → blue water polygons (`prithvi-live-fill`/`-line`)
+   - `terramind_lulc` (NYC LoRA, 5-class land cover) → categorical fill keyed on `fill_color` per feature (`terramind-lulc-fill`/`-line`)
+   - `terramind_buildings` (NYC LoRA, binary building mask) → red building footprints (`terramind-buildings-fill`/`-line`)
+   - `terramind` (IBM v1 base synthesis, DEM→LULC) → uses the same LULC layer, falls back when the LoRA didn't fire
+   Wire format: droplet returns `pred_b64` (uint8 per-pixel argmax raster) + `pred_shape` + `class_labels`; HF polygonises against the chip's WGS84 bounds via `app/context/_polygonize.py`. Verified live on Beach Channel: 118 LULC polygons, 6 building polygons, 101 synthesis polygons; prithvi correctly returns 0 (address is inland and dry). Three droplet bugs fixed along the way: `_build_chip_tensor` 5D-input crash for the LoRAs; missing `synthesis` adapter route; DEM shape mismatch (`(1,H,W)` vs `(1,1,H,W)`).
 
 4. **Misleading UI copy fixed** — three Stone specialists (TerraMind Buildings/LULC/Synthesis, Prithvi-NYC-Pluvial) previously claimed `RIPRAP_HEAVY_SPECIALISTS=0` when they silently skipped. Heavy specialists are actually enabled in production — the new copy reflects the actual cause (no recent <30% cloud Sentinel-2 chip / inference unavailable).
 
