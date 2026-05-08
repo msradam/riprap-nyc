@@ -222,10 +222,54 @@ _TERRAMIND_SPECS = {
                    "labels": ["Trees", "Cropland", "Built", "Bare", "Water"]},
     "buildings": {"subdir": "buildings_nyc", "num_classes": 2,
                    "labels": ["Background", "Building"]},
+    # Synthesis is the IBM/NASA base TerraMind generative path
+    # (DEM -> LULC), not a NYC fine-tune. Listed here so the same
+    # /v1/terramind dispatch handles it.
+    "synthesis": {"subdir": None, "num_classes": None,
+                   "labels": ["Water", "Trees", "Grass", "Flooded vegetation",
+                              "Crops", "Scrub/Shrub", "Built", "Bare ground",
+                              "Snow/Ice", "Clouds"]},
 }
+_TERRAMIND_SYNTH_TIMESTEPS = int(os.environ.get(
+    "RIPRAP_TERRAMIND_SYNTH_TIMESTEPS", "10"))
+
+
+def _load_terramind_synthesis():
+    """Load the IBM/NASA base TerraMind v1 generative path
+    (DEM -> LULC) once. Different machinery from the LoRA adapters:
+    pulled via terratorch's FULL_MODEL_REGISTRY rather than
+    SemanticSegmentationTask + LoRA injection."""
+    key = "terramind_synthesis"
+    if key in _INSTANCES:
+        return _INSTANCES[key]
+    with _LOCKS.get(key, _LOCKS.get("terramind_lulc")):
+        if key in _INSTANCES:
+            return _INSTANCES[key]
+        log.info("terramind/synthesis: cold load (v1 base generate)")
+        import terratorch.models.backbones.terramind.model.terramind_register  # noqa
+        from terratorch.registry import FULL_MODEL_REGISTRY
+        m = FULL_MODEL_REGISTRY.build(
+            "terratorch_terramind_v1_base_generate",
+            modalities=["DEM"],
+            output_modalities=["LULC"],
+            pretrained=True,
+            timesteps=_TERRAMIND_SYNTH_TIMESTEPS,
+        )
+        try:
+            import torch
+            if _DEVICE == "cuda" and torch.cuda.is_available():
+                m = m.to("cuda")
+        except Exception:
+            log.exception("terramind/synthesis: cuda move failed")
+        m.eval()
+        _INSTANCES[key] = m
+        log.info("terramind/synthesis: ready")
+        return m
 
 
 def _load_terramind(adapter: str):
+    if adapter == "synthesis":
+        return _load_terramind_synthesis()
     key = f"terramind_{adapter}"
     if key in _INSTANCES:
         return _INSTANCES[key]
@@ -291,8 +335,10 @@ def _load_terramind(adapter: str):
 
 class TerramindIn(BaseModel):
     adapter: str  # "lulc" | "buildings" | "synthesis"
-    s2: str
-    s2_shape: list[int]
+    # All modality fields optional — `synthesis` adapter only needs DEM,
+    # while lulc / buildings need at minimum S2L2A.
+    s2: str | None = None
+    s2_shape: list[int] | None = None
     s1: str | None = None
     s1_shape: list[int] | None = None
     dem: str | None = None
@@ -319,14 +365,84 @@ def _build_chip_tensor(np_arr, n_timesteps: int = 4):
     raise ValueError(f"unexpected chip shape {tuple(t.shape)}")
 
 
-def _terramind_inference(payload: TerramindIn) -> dict[str, Any]:
+def _terramind_synthesis_inference(payload: TerramindIn) -> dict[str, Any]:
+    """DEM -> LULC generative path. Different machinery from the LoRA
+    adapters: model is the v1 base generate stack pulled from
+    terratorch's FULL_MODEL_REGISTRY, takes a single 4-D (B, 1, H, W)
+    DEM tensor, and emits a class-logit raster keyed by the ESRI
+    2020 LULC tokenizer codebook."""
     t0 = time.time()
+    if not payload.dem or not payload.dem_shape:
+        raise HTTPException(status_code=400,
+                            detail="synthesis requires `dem` + `dem_shape`")
+    model = _load_terramind_synthesis()
+    dem_np = _decode_array(payload.dem, payload.dem_shape)
+
+    import numpy as np
+    import torch
+    dem_t = torch.from_numpy(dem_np).float()
+    # Accept (H, W), (1, H, W), or (1, 1, H, W) — the local code builds
+    # (1, 1, H, W) so that's the most common.
+    while dem_t.ndim < 4:
+        dem_t = dem_t.unsqueeze(0)
+    dem_t = _to_device(dem_t)
+
+    spec = _TERRAMIND_SPECS["synthesis"]
+    with torch.no_grad():
+        out = model({"DEM": dem_t},
+                    timesteps=_TERRAMIND_SYNTH_TIMESTEPS,
+                    verbose=False)
+    lulc = out["LULC"]
+    if hasattr(lulc, "detach"):
+        lulc = lulc.detach().cpu().numpy()
+    if lulc.ndim == 4:
+        lulc = lulc[0]                      # (n_classes, H, W)
+    class_idx = lulc.argmax(axis=0)         # (H, W) per-pixel class
+    unique, counts = np.unique(class_idx, return_counts=True)
+    total = float(class_idx.size) or 1.0
+    fractions: dict[str, float] = {}
+    for u, c in zip(unique, counts):
+        u = int(u)
+        label = spec["labels"][u] if 0 <= u < len(spec["labels"]) else f"class_{u}"
+        fractions[label] = round(100.0 * c / total, 2)
+    ordered = dict(sorted(fractions.items(),
+                           key=lambda kv: kv[1], reverse=True))
+    dominant_class = next(iter(ordered)) if ordered else "unknown"
+    dominant_pct = ordered.get(dominant_class, 0.0)
+    return {
+        "ok": True,
+        "adapter": "synthesis",
+        "elapsed_s": round(time.time() - t0, 2),
+        "device": _DEVICE,
+        "synthetic_modality": True,
+        "tim_chain": ["DEM", "LULC_synthetic"],
+        "diffusion_steps": _TERRAMIND_SYNTH_TIMESTEPS,
+        "class_fractions": ordered,
+        "dominant_class": dominant_class,
+        "dominant_pct": dominant_pct,
+        "n_classes_observed": len(ordered),
+        "shape": list(lulc.shape),
+        "n_pixels": int(class_idx.size),
+        "label_schema": "ESRI 2020-2022 Land Cover (tentative — TerraMind "
+                         "tokenizer source confirms ESRI but not exact "
+                         "label-to-index mapping)",
+    }
+
+
+def _terramind_inference(payload: TerramindIn) -> dict[str, Any]:
     if payload.adapter not in _TERRAMIND_SPECS:
         raise HTTPException(status_code=400,
                             detail=f"unknown adapter {payload.adapter!r}")
+    if payload.adapter == "synthesis":
+        return _terramind_synthesis_inference(payload)
+    t0 = time.time()
     task = _load_terramind(payload.adapter)
     spec = _TERRAMIND_SPECS[payload.adapter]
 
+    if not payload.s2 or not payload.s2_shape:
+        raise HTTPException(status_code=400,
+                            detail=f"adapter {payload.adapter!r} requires "
+                                   f"`s2` + `s2_shape`")
     s2 = _decode_array(payload.s2, payload.s2_shape)
     chips = {"S2L2A": _to_device(_build_chip_tensor(s2))}
     if payload.s1 and payload.s1_shape:

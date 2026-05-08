@@ -273,8 +273,6 @@ def fetch(lat: float, lon: float, timeout_s: float = 60.0) -> dict[str, Any]:
     """
     if not ENABLE:
         return {"ok": False, "skipped": "RIPRAP_TERRAMIND_ENABLE=0"}
-    if not _DEPS_OK:
-        return {"ok": False, "skipped": f"deps unavailable: {_DEPS_MISSING}"}
     t0 = time.time()
     try:
         import numpy as np
@@ -284,6 +282,58 @@ def fetch(lat: float, lon: float, timeout_s: float = 60.0) -> dict[str, Any]:
         dem, bounds_4326 = patch
         dem_mean = float(dem.mean())
 
+        # v0.4.5+ — try the MI300X inference service first if configured.
+        # The droplet's /v1/terramind dispatch handles adapter='synthesis'
+        # via _terramind_synthesis_inference (DEM -> generative LULC). On
+        # the HF Space terratorch's torchvision binary doesn't load, so
+        # this is the only working path there.
+        try:
+            from app import inference as _inf
+            if _inf.remote_enabled():
+                # Local code uses (1, 1, H, W); send the same shape.
+                dem_remote = dem[None, None, :, :].astype("float32")
+                remote = _inf.terramind("synthesis", None, None, dem_remote,
+                                          timeout=timeout_s)
+                if remote.get("ok"):
+                    elapsed = round(time.time() - t0, 2)
+                    out = {
+                        "ok": True,
+                        "synthetic_modality": True,
+                        "tim_chain": ["DEM", "LULC_synthetic"],
+                        "diffusion_steps": remote.get("diffusion_steps",
+                                                       DEFAULT_STEPS),
+                        "diffusion_seed": DEFAULT_SEED,
+                        "dem_mean_m": round(dem_mean, 2),
+                        "class_fractions": remote.get("class_fractions") or {},
+                        "dominant_class": remote.get("dominant_class") or "unknown",
+                        "dominant_pct": remote.get("dominant_pct") or 0.0,
+                        "n_classes_observed": remote.get("n_classes_observed") or 0,
+                        "chip_shape": remote.get("shape") or [],
+                        "bounds_4326": list(bounds_4326),
+                        "polygons_geojson": None,
+                        "label_schema": remote.get("label_schema") or "",
+                        "compute": f"remote · {remote.get('device', 'gpu')}",
+                        "elapsed_s": elapsed,
+                    }
+                    return out
+                # remote returned non-ok — surface that signal directly
+                return {"ok": False,
+                        "skipped": f"remote terramind synthesis non-ok: "
+                                   f"{remote.get('error') or remote.get('detail') or 'unknown'}",
+                        "elapsed_s": round(time.time() - t0, 2)}
+        except _inf.RemoteUnreachable as e:
+            log.info("terramind_synthesis: remote unreachable (%s); local fallback", e)
+        except Exception as e:
+            log.exception("terramind_synthesis: remote call failed")
+            return {"ok": False,
+                    "skipped": f"remote terramind synthesis error: "
+                               f"{type(e).__name__}: {e}",
+                    "elapsed_s": round(time.time() - t0, 2)}
+
+        # Local fallback — original path; only available where terratorch
+        # imports without the torchvision::nms RuntimeError.
+        if not _DEPS_OK:
+            return {"ok": False, "skipped": f"deps unavailable: {_DEPS_MISSING}"}
         import torch
         random.seed(DEFAULT_SEED)
         torch.manual_seed(DEFAULT_SEED)

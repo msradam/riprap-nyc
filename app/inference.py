@@ -167,15 +167,18 @@ def prithvi_pluvial(s2_chip, *, scene_id: str | None = None,
     }, timeout=timeout)
 
 
-def terramind(adapter: str, s2l2a, s1rtc=None, dem=None, *,
+def terramind(adapter: str, s2l2a=None, s1rtc=None, dem=None, *,
                timeout: float | None = None) -> dict[str, Any]:
     """Remote forward through TerraMind-NYC-Adapters (LULC or Buildings)
-    or the v1 base (synthetic).  `adapter` is one of: lulc, buildings,
-    synthesis. Each modality is a numpy array or None."""
+    or the v1 base generative path (synthesis). `adapter` is one of:
+    lulc, buildings, synthesis. Each modality is a numpy array, torch
+    tensor, or None — `synthesis` only needs DEM; the LoRA adapters
+    need at minimum S2L2A."""
     payload: dict[str, Any] = {"adapter": adapter}
-    s2_np = _to_numpy(s2l2a)
-    payload["s2"] = _serialize_array(s2_np)
-    payload["s2_shape"] = list(s2_np.shape)
+    if s2l2a is not None:
+        s2_np = _to_numpy(s2l2a)
+        payload["s2"] = _serialize_array(s2_np)
+        payload["s2_shape"] = list(s2_np.shape)
     if s1rtc is not None:
         s1_np = _to_numpy(s1rtc)
         payload["s1"] = _serialize_array(s1_np)
