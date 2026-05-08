@@ -349,6 +349,21 @@ def fetch(lat: float, lon: float, timeout_s: float = 60.0) -> dict[str, Any]:
             "elapsed_s": round(time.time() - t0, 2),
         }
     except Exception as e:
+        msg = str(e)
+        # Translate the torchvision binary-extension failure into a clean
+        # skip. The HF Space ships torchvision via a transitive sentence-
+        # transformers dep, but its C extension can't load alongside our
+        # CPU torch wheel, so terratorch's NMS call raises RuntimeError.
+        # Surface this honestly — the local inference path is unavailable
+        # on this deployment, same outcome as a missing terratorch.
+        if "torchvision::nms" in msg or "torchvision_C" in msg:
+            log.warning("terramind: torchvision binary unavailable on this "
+                        "deployment; skipping local inference")
+            return {"ok": False,
+                    "skipped": "local inference unavailable on this "
+                               "deployment (torchvision binary extension "
+                               "not loadable); no remote synthesis path",
+                    "elapsed_s": round(time.time() - t0, 2)}
         log.exception("terramind: fetch failed")
         return {"ok": False, "err": f"{type(e).__name__}: {e}",
                 "elapsed_s": round(time.time() - t0, 2)}
