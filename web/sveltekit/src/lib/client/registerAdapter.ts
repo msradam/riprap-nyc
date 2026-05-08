@@ -107,17 +107,18 @@ function adaptNycha(s: BaseFinding): RegisterData | null {
   if (!s.available) return null;
   const list = (s.developments ?? []) as BaseFinding[];
   const rows: RegisterRow[] = list.map((d) => {
-    const pctSandy = d.pct_inside_sandy_2012 as number | null | undefined;
-    const pct2080 = d.pct_in_dep_extreme_2080 as number | null | undefined;
+    const inSandy = d.inside_sandy_2012 as boolean | undefined;
+    const depLbl = d.dep_extreme_2080_label as string | null | undefined;
+    const depCls = d.dep_extreme_2080_class as number | null | undefined;
     return {
       name: `${d.development ?? '?'}${d.borough ? ` · ${d.borough}` : ''}`,
       elev: feetLabel(d.rep_elevation_m as number | null | undefined),
       ada: false, // NYCHA developments don't carry an ADA flag
       fema: '—',
-      sandy: inundLabel(undefined, pctSandy),
-      dep: depLabel(undefined, undefined, pct2080),
+      sandy: inundLabel(inSandy),
+      dep: depLabel(depLbl, depCls),
       asset: 'nycha',
-      primaryTier: pctSandy && pctSandy > 0 ? 'empirical' : 'modeled'
+      primaryTier: inSandy ? 'empirical' : 'modeled'
     };
   });
   return {

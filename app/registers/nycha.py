@@ -59,13 +59,15 @@ class DevelopmentFinding:
     centroid_lat: float
     centroid_lon: float
     distance_m: float
-    footprint_km2: float
     rep_elevation_m: float | None
     rep_hand_m: float | None
-    pct_inside_sandy_2012: float
-    pct_in_dep_extreme_2080: float       # any-depth (class>=1)
-    pct_in_dep_extreme_2080_deep: float  # class==3 only ("Deep Contiguous")
-    pct_in_dep_moderate_2050: float
+    inside_sandy_2012: bool
+    dep_extreme_2080_class: int          # 0=outside, 1/2/3 = depth class
+    dep_extreme_2080_label: str
+    dep_moderate_2050_class: int
+    dep_moderate_2050_label: str
+    dep_moderate_current_class: int
+    dep_moderate_current_label: str
 
 
 @lru_cache(maxsize=1)
@@ -192,64 +194,85 @@ def _dep_overlap(geom_2263, scenario: str) -> tuple[float, float]:
     return pct_any, pct_deep
 
 
+_DEPTH_LABEL = {
+    0: "outside",
+    1: "Nuisance (>4 in to 1 ft)",
+    2: "Deep & Contiguous (1-4 ft)",
+    3: "Deep Contiguous (>4 ft)",
+}
+
+
 def summary_for_point(lat: float, lon: float,
                        radius_m: float = DEFAULT_RADIUS_M,
                        max_developments: int = DEFAULT_MAX_PER_QUERY) -> dict:
-    near, _ = _developments_near(lat, lon, radius_m)
-    if near.empty:
+    """Return the N nearest tier-1-3 NYCHA developments to (lat, lon)
+    within radius_m, with their pre-computed exposure flags from the
+    register catalog at data/registers/nycha.json.
+
+    The catalog is the source of truth for which developments are
+    flood-exposed (the bake script ran the polygon-overlap math once,
+    citywide). Per-query work is haversine + dict lookup — sub-ms even
+    on the HF Space CPU. Developments outside the tier-1-3 catalog
+    (truly unexposed inland sites) are intentionally not surfaced;
+    "no NYCHA developments at risk within 1 mi" is the honest answer
+    for low-exposure queries.
+    """
+    from app.registers._loader import nearest_n
+    hits = nearest_n("nycha", lat, lon, radius_m, max_developments)
+    if not hits:
         return {"available": False,
                 "n_developments": 0,
                 "radius_m": radius_m,
                 "developments": []}
 
-    near = near.head(max_developments)
-    sandy_2263 = _load_sandy_2263()
-
     findings: list[DevelopmentFinding] = []
-    for _, row in near.iterrows():
-        geom = row.geometry
-        # Representative interior point gives a more meaningful elevation
-        # than the centroid for irregular development footprints.
-        rep = geom.representative_point()
-        # Re-project the rep point to 4326 for raster sampling
-        import geopandas as gpd
-        rep_4326 = gpd.GeoSeries([rep], crs="EPSG:2263").to_crs("EPSG:4326").iloc[0]
-        rep_lat, rep_lon = rep_4326.y, rep_4326.x
+    for distance_m, row in hits:
+        snap = row.get("snap") or {}
+        dep = snap.get("dep") or {}
+        microtopo = snap.get("microtopo") or {}
 
-        elev = _sample_raster(DATA / "nyc_dem_30m.tif", rep_lat, rep_lon)
-        hand = _sample_raster(DATA / "hand.tif", rep_lat, rep_lon)
-        pct_sandy = _overlap_pct(geom, sandy_2263)
-        pct_2080_any, pct_2080_deep = _dep_overlap(geom, "dep_extreme_2080")
-        pct_2050_any, _ = _dep_overlap(geom, "dep_moderate_2050")
+        def _dep_class(scen: str) -> int:
+            d = dep.get(scen) or {}
+            return int(d.get("depth_class") or 0)
+
+        c2080 = _dep_class("dep_extreme_2080")
+        c2050 = _dep_class("dep_moderate_2050")
+        ccur  = _dep_class("dep_moderate_current")
+
+        elev = microtopo.get("point_elev_m")
+        hand = microtopo.get("aoi_hand_m") or microtopo.get("hand_m")
 
         findings.append(DevelopmentFinding(
-            development=str(row["developmen"]),
-            tds_num=str(row["tds_num"]),
-            borough=str(row["borough"]),
-            centroid_lat=round(float(row["clat"]), 5),
-            centroid_lon=round(float(row["clon"]), 5),
-            distance_m=round(float(row["distance_m"]), 1),
-            footprint_km2=round(geom.area / 10.7639 / 1_000_000, 4),  # sq-ft -> km²
-            rep_elevation_m=round(elev, 2) if elev is not None else None,
-            rep_hand_m=round(hand, 2) if hand is not None else None,
-            pct_inside_sandy_2012=pct_sandy,
-            pct_in_dep_extreme_2080=pct_2080_any,
-            pct_in_dep_extreme_2080_deep=pct_2080_deep,
-            pct_in_dep_moderate_2050=pct_2050_any,
+            development=str(row.get("name", "")),
+            tds_num=str(row.get("tds_num", "")),
+            borough=str(row.get("borough", "")),
+            centroid_lat=round(float(row["lat"]), 5),
+            centroid_lon=round(float(row["lon"]), 5),
+            distance_m=round(distance_m, 1),
+            rep_elevation_m=round(float(elev), 2) if elev is not None else None,
+            rep_hand_m=round(float(hand), 2) if hand is not None else None,
+            inside_sandy_2012=bool(snap.get("sandy")),
+            dep_extreme_2080_class=c2080,
+            dep_extreme_2080_label=_DEPTH_LABEL.get(c2080, "outside"),
+            dep_moderate_2050_class=c2050,
+            dep_moderate_2050_label=_DEPTH_LABEL.get(c2050, "outside"),
+            dep_moderate_current_class=ccur,
+            dep_moderate_current_label=_DEPTH_LABEL.get(ccur, "outside"),
         ))
 
-    n_majority_sandy = sum(1 for f in findings if f.pct_inside_sandy_2012 >= 50)
-    n_any_2080 = sum(1 for f in findings if f.pct_in_dep_extreme_2080 > 0)
+    n_in_sandy = sum(1 for f in findings if f.inside_sandy_2012)
+    n_in_2080 = sum(1 for f in findings if f.dep_extreme_2080_class > 0)
     return {
         "available": True,
         "n_developments": len(findings),
         "radius_m": radius_m,
-        "n_majority_inside_sandy_2012": n_majority_sandy,
-        "n_with_dep_2080_overlap": n_any_2080,
+        "n_inside_sandy_2012": n_in_sandy,
+        "n_in_dep_extreme_2080": n_in_2080,
         "developments": [vars(f) for f in findings],
-        "citation": ("NYC Open Data NYCHA Developments (phvi-damg) + "
-                     "NYC OEM Sandy 2012 Inundation Zone (5xsi-dfpx) + "
-                     "NYC DEP Stormwater Flood Maps + USGS 3DEP DEM"),
+        "citation": ("Pre-computed from NYC Open Data NYCHA Developments "
+                     "(phvi-damg) joined to Sandy 2012 Inundation Zone "
+                     "(5xsi-dfpx) + NYC DEP Stormwater Flood Maps + "
+                     "USGS 3DEP DEM. See data/registers/nycha.json."),
     }
 
 

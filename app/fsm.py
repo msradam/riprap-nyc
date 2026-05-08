@@ -646,8 +646,8 @@ def step_nycha(state: State) -> State:
         rec["ok"] = True
         rec["result"] = {
             "n_developments": s["n_developments"],
-            "n_majority_inside_sandy_2012": s["n_majority_inside_sandy_2012"],
-            "n_with_dep_2080_overlap": s["n_with_dep_2080_overlap"],
+            "n_inside_sandy_2012": s["n_inside_sandy_2012"],
+            "n_in_dep_extreme_2080": s["n_in_dep_extreme_2080"],
         }
         return state.update(nycha_developments=s, trace=trace)
     except Exception as e:

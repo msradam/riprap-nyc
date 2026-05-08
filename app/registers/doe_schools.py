@@ -127,38 +127,50 @@ def _dep_class(lat: float, lon: float, scenario: str):
 def summary_for_point(lat: float, lon: float,
                        radius_m: float = DEFAULT_RADIUS_M,
                        max_schools: int = DEFAULT_MAX_PER_QUERY) -> dict:
-    near = _schools_near(lat, lon, radius_m)
-    if near.empty:
+    """N nearest tier-1-3 DOE schools to (lat, lon), with pre-computed
+    exposure flags read from data/registers/schools.json. The bake
+    script runs the buffered point-in-polygon math citywide once;
+    per-query work is haversine + dict lookup."""
+    from app.registers._loader import nearest_n
+    hits = nearest_n("schools", lat, lon, radius_m, max_schools)
+    if not hits:
         return {"available": False,
                 "n_schools": 0,
                 "radius_m": radius_m,
                 "schools": []}
 
-    near = near.head(max_schools)
     findings: list[SchoolFinding] = []
-    for _, row in near.iterrows():
-        slat, slon = float(row["lat"]), float(row["lon"])
-        elev = _sample_raster(DATA / "nyc_dem_30m.tif", slat, slon)
-        hand = _sample_raster(DATA / "hand.tif", slat, slon)
-        in_sandy = _inside_sandy(slat, slon)
-        d80c, d80l = _dep_class(slat, slon, "dep_extreme_2080")
-        d50c, d50l = _dep_class(slat, slon, "dep_moderate_2050")
-        boronum = str(row.get("boronum", ""))
+    for distance_m, row in hits:
+        snap = row.get("snap") or {}
+        dep = snap.get("dep") or {}
+        microtopo = snap.get("microtopo") or {}
+
+        def _depth(scen: str) -> tuple[int | None, str | None]:
+            d = dep.get(scen) or {}
+            cls = d.get("depth_class")
+            lbl = d.get("depth_label")
+            return (int(cls) if cls is not None else None,
+                    str(lbl) if lbl else None)
+
+        d80c, d80l = _depth("dep_extreme_2080")
+        d50c, d50l = _depth("dep_moderate_2050")
+        elev = microtopo.get("point_elev_m")
+        hand = microtopo.get("aoi_hand_m") or microtopo.get("hand_m")
+
         findings.append(SchoolFinding(
-            loc_code=str(row["loc_code"]),
-            loc_name=str(row["loc_name"]),
-            address=str(row["address"]).strip(),
-            borough=BORO_NAME.get(boronum, boronum),
-            bin=str(row["bin"]),
-            bbl=str(row["bbl"]),
-            managed_by=MANAGED_BY_LABEL.get(str(row["managed_by"]),
-                                              str(row["managed_by"])),
-            school_lat=round(slat, 5),
-            school_lon=round(slon, 5),
-            distance_m=round(float(row["distance_m"]), 1),
-            elevation_m=round(elev, 2) if elev is not None else None,
-            hand_m=round(hand, 2) if hand is not None else None,
-            inside_sandy_2012=in_sandy,
+            loc_code=str(row.get("loc_code", "")),
+            loc_name=str(row.get("name", "")),
+            address=str(row.get("address", "")).strip(),
+            borough=str(row.get("borough", "")),
+            bin=str(row.get("bin", "")),
+            bbl=str(row.get("bbl", "")),
+            managed_by="DOE-managed",
+            school_lat=round(float(row["lat"]), 5),
+            school_lon=round(float(row["lon"]), 5),
+            distance_m=round(distance_m, 1),
+            elevation_m=round(float(elev), 2) if elev is not None else None,
+            hand_m=round(float(hand), 2) if hand is not None else None,
+            inside_sandy_2012=bool(snap.get("sandy")),
             dep_extreme_2080_class=d80c,
             dep_extreme_2080_label=d80l,
             dep_moderate_2050_class=d50c,
@@ -176,9 +188,10 @@ def summary_for_point(lat: float, lon: float,
         "n_inside_sandy_2012": n_in_sandy,
         "n_in_dep_extreme_2080": n_dep_2080,
         "schools": [vars(f) for f in findings],
-        "citation": ("NYC DOE Locations Points + NYC OEM Sandy 2012 "
-                     "Inundation Zone (5xsi-dfpx) + NYC DEP Stormwater "
-                     "Flood Maps + USGS 3DEP DEM"),
+        "citation": ("Pre-computed from NYC DOE Locations Points joined "
+                     "to Sandy 2012 Inundation Zone (5xsi-dfpx) + "
+                     "NYC DEP Stormwater Flood Maps + USGS 3DEP DEM. "
+                     "See data/registers/schools.json."),
     }
 
 

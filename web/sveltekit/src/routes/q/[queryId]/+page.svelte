@@ -138,7 +138,7 @@
       prithvi_eo_live: ['scene_date', 'pct_water_500m'],
       microtopo_lidar: ['elev_m', 'pct_200m', 'relief_m'],
       mta_entrance_exposure: ['n_entrances', 'n_inside_sandy_2012', 'n_in_dep_extreme_2080'],
-      nycha_development_exposure: ['n_developments', 'n_majority_inside_sandy_2012'],
+      nycha_development_exposure: ['n_developments', 'n_inside_sandy_2012', 'n_in_dep_extreme_2080'],
       doe_school_exposure: ['n_schools', 'n_inside_sandy_2012'],
       doh_hospital_exposure: ['n_hospitals', 'n_inside_sandy_2012'],
       floodnet_forecast: ['sensor_id', 'distance_m', 'forecast_28d', 'accelerating'],
@@ -207,16 +207,14 @@
     }
     const ny = fr['nycha_developments'] as Record<string, unknown> | null | undefined;
     if (ny && Array.isArray(ny['developments'])) {
-      // NYCHA findings carry centroid_lat/lon; the actual development
-      // polygon is not in the SSE payload (geometry is not serialized
-      // through the dataclass). Render as larger filled circles whose
-      // color encodes whether ≥50% of the footprint is inside Sandy.
-      // Polygon-fill rendering is a morning tightening once
-      // geometry_geojson lands in the dataclass.
+      // NYCHA findings carry centroid_lat/lon; the development polygon
+      // is not serialized in the SSE payload. Render as larger filled
+      // circles colored by Sandy-zone membership (binary, from the
+      // pre-built catalog at data/registers/nycha.json).
       for (const d of ny['developments'] as Record<string, unknown>[]) {
         const lat = Number(d['centroid_lat']); const lon = Number(d['centroid_lon']);
         if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
-        const pct = Number(d['pct_inside_sandy_2012'] ?? 0);
+        const inSandy = Boolean(d['inside_sandy_2012']);
         features.push({
           type: 'Feature',
           geometry: { type: 'Point', coordinates: [lon, lat] },
@@ -224,8 +222,7 @@
             kind: 'nycha',
             name: String(d['development'] ?? '?'),
             doc_id: `nycha_dev_${d['tds_num'] ?? ''}`,
-            inside_sandy_2012: pct >= 50,
-            pct_inside_sandy: pct
+            inside_sandy_2012: inSandy
           }
         });
       }

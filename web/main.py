@@ -145,18 +145,22 @@ def _warm_caches():
         dep_stormwater.load(scen)
     print("[startup] flood layers ready", flush=True)
     if os.environ.get("RIPRAP_NYCHA_REGISTERS", "0").lower() in ("1", "true", "yes"):
-        print("[startup] pre-warming NYCHA registers (may take 60–120 s)...", flush=True)
+        print("[startup] pre-loading register catalogs...", flush=True)
         try:
-            from app.registers import doe_schools as _r_schools
+            # NYCHA + DOE schools read from pre-built JSON catalogs at
+            # data/registers/{nycha,schools}.json — sub-ms per query.
+            from app.registers._loader import load_register
+            n_nycha = len(load_register("nycha"))
+            n_schools = len(load_register("schools"))
+            print(f"[startup] catalogs ready: nycha={n_nycha} rows, "
+                  f"schools={n_schools} rows", flush=True)
+            # DOH hospitals has no pre-built catalog (~150 entries; we
+            # read the GeoJSON directly and sample baked rasters per hit).
             from app.registers import doh_hospitals as _r_hospitals
-            from app.registers import nycha as _r_nycha
-            _r_nycha._load_nycha()
-            _r_nycha._load_sandy_2263()
-            _r_schools._load_schools()
             _r_hospitals._load_hospitals()
-            print("[startup] NYCHA registers ready", flush=True)
+            print("[startup] hospitals geojson loaded", flush=True)
         except Exception as _e:
-            print(f"[startup] NYCHA register warm failed (non-fatal): {_e}", flush=True)
+            print(f"[startup] register warm failed (non-fatal): {_e}", flush=True)
     print("[startup] warming RAG (Granite Embedding 278M + 5 PDFs)...", flush=True)
     # RAG warm loads sentence-transformers, which on some HF Space rebuilds
     # has hit transformers-lazy-import edge cases (CodeCarbonCallback). The

@@ -586,27 +586,31 @@ def build_documents(state: dict[str, Any]) -> list[dict]:
         for d in nycha.get("developments", [])[:4]:
             tds = d.get("tds_num")
             body = [
-                "Source: NYC Open Data NYCHA Developments (phvi-damg) "
-                "+ NYC OEM Sandy 2012 Inundation Zone (5xsi-dfpx) "
-                "+ NYC DEP Stormwater Flood Maps + USGS 3DEP DEM.",
+                "Source: pre-computed from NYC Open Data NYCHA Developments "
+                "(phvi-damg) joined to NYC OEM Sandy 2012 Inundation Zone "
+                "(5xsi-dfpx) + NYC DEP Stormwater Flood Maps + USGS 3DEP DEM.",
                 (f"NYCHA development {d.get('development')} (TDS {tds}, "
-                 f"{d.get('borough')}), footprint {d.get('footprint_km2')} km², "
-                 f"{d.get('distance_m')} m from query."),
+                 f"{d.get('borough')}), {d.get('distance_m')} m from query."),
                 (f"Representative-point elevation {d.get('rep_elevation_m')} m, "
                  f"HAND {d.get('rep_hand_m')} m."),
-                (f"{d.get('pct_inside_sandy_2012')}% of footprint inside the "
-                 "2012 Sandy Inundation Zone (empirical)."),
             ]
-            if (d.get("pct_in_dep_extreme_2080") or 0) > 0:
+            if d.get("inside_sandy_2012"):
                 body.append(
-                    f"{d.get('pct_in_dep_extreme_2080')}% of footprint inside "
-                    "NYC DEP Extreme-2080 scenario "
-                    f"(of which {d.get('pct_in_dep_extreme_2080_deep')}% in the "
-                    "deepest >4 ft band).")
-            if (d.get("pct_in_dep_moderate_2050") or 0) > 0:
+                    "Centroid is inside the 2012 Sandy Inundation Zone "
+                    "(empirical).")
+            else:
                 body.append(
-                    f"{d.get('pct_in_dep_moderate_2050')}% of footprint inside "
-                    "NYC DEP Moderate-2050 scenario.")
+                    "Centroid is outside the 2012 Sandy Inundation Zone.")
+            c2080 = d.get("dep_extreme_2080_class") or 0
+            if c2080 > 0:
+                body.append(
+                    f"DEP Extreme-2080 scenario at this development: "
+                    f"{d.get('dep_extreme_2080_label')} (depth class {c2080}).")
+            c2050 = d.get("dep_moderate_2050_class") or 0
+            if c2050 > 0:
+                body.append(
+                    f"DEP Moderate-2050 scenario at this development: "
+                    f"{d.get('dep_moderate_2050_label')} (depth class {c2050}).")
             docs.append(_doc_message(f"nycha_dev_{tds}", body))
 
     schools = state.get("doe_schools")

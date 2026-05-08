@@ -121,9 +121,49 @@ def _dep_class(lat: float, lon: float, scenario: str):
     return dep_class_buffered(lat, lon, BUFFER_DOH_HOSPITAL_M, scenario)
 
 
+_DEPTH_LABEL = {
+    0: "outside",
+    1: "Nuisance (>4 in to 1 ft)",
+    2: "Deep & Contiguous (1-4 ft)",
+    3: "Deep Contiguous (>4 ft)",
+}
+
+
+def _exposure_at(lat: float, lon: float) -> tuple[bool, dict]:
+    """Use baked Cornerstone rasters for fast per-point exposure lookup.
+    Returns (inside_sandy, {scen: (depth_class, depth_label)}). Falls
+    back to the legacy buffered GDB join if rasters absent."""
+    try:
+        import geopandas as gpd
+        from shapely.geometry import Point
+
+        from app.flood_layers import dep_stormwater, sandy_inundation
+        pt = (gpd.GeoDataFrame(geometry=[Point(lon, lat)], crs="EPSG:4326")
+              .to_crs("EPSG:2263").iloc[0].geometry)
+        in_sandy = sandy_inundation.inside_raster(pt)
+        deps = {}
+        for scen in ("dep_extreme_2080", "dep_moderate_2050"):
+            cls = dep_stormwater.join_raster(pt, scen)
+            deps[scen] = (cls, _DEPTH_LABEL.get(cls, "outside"))
+        return in_sandy, deps
+    except Exception:
+        log.exception("raster exposure lookup failed; falling back")
+        in_sandy = _inside_sandy(lat, lon)
+        d80c, d80l = _dep_class(lat, lon, "dep_extreme_2080")
+        d50c, d50l = _dep_class(lat, lon, "dep_moderate_2050")
+        return in_sandy, {
+            "dep_extreme_2080": (d80c, d80l),
+            "dep_moderate_2050": (d50c, d50l),
+        }
+
+
 def summary_for_point(lat: float, lon: float,
                        radius_m: float = DEFAULT_RADIUS_M,
                        max_hospitals: int = DEFAULT_MAX_PER_QUERY) -> dict:
+    """N nearest hospitals to (lat, lon), with exposure flags computed
+    via Cornerstone baked rasters. Hospitals have no pre-built register
+    (small enough at ~150 entries to not need one), so we read the
+    full GeoJSON and sample the rasters per-hit. Sub-ms per query."""
     near = _hospitals_near(lat, lon, radius_m)
     if near.empty:
         return {"available": False,
@@ -137,9 +177,9 @@ def summary_for_point(lat: float, lon: float,
         hlat, hlon = float(row["lat"]), float(row["lon"])
         elev = _sample_raster(DATA / "nyc_dem_30m.tif", hlat, hlon)
         hand = _sample_raster(DATA / "hand.tif", hlat, hlon)
-        in_sandy = _inside_sandy(hlat, hlon)
-        d80c, d80l = _dep_class(hlat, hlon, "dep_extreme_2080")
-        d50c, d50l = _dep_class(hlat, hlon, "dep_moderate_2050")
+        in_sandy, deps = _exposure_at(hlat, hlon)
+        d80c, d80l = deps["dep_extreme_2080"]
+        d50c, d50l = deps["dep_moderate_2050"]
         findings.append(HospitalFinding(
             fac_id=str(row["fac_id"]),
             facility_name=str(row["facility_name"]),
