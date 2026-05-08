@@ -290,8 +290,12 @@ def fetch(lat: float, lon: float, timeout_s: float = 60.0) -> dict[str, Any]:
         try:
             from app import inference as _inf
             if _inf.remote_enabled():
-                # Local code uses (1, 1, H, W); send the same shape.
-                dem_remote = dem[None, None, :, :].astype("float32")
+                # Local code does `torch.from_numpy(dem).unsqueeze(0)` —
+                # i.e. 2-D (H, W) → 3-D (1, H, W). The terramind v1 base
+                # generative encoder adds the batch dim internally; sending
+                # an extra leading dim makes its embedding layer trip on
+                # `B, C, H, W = x.shape` (5-D in, expects 4). Match local.
+                dem_remote = dem[None, :, :].astype("float32")
                 remote = _inf.terramind("synthesis", None, None, dem_remote,
                                           timeout=timeout_s)
                 if remote.get("ok"):

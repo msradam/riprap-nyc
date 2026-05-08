@@ -381,10 +381,19 @@ def _terramind_synthesis_inference(payload: TerramindIn) -> dict[str, Any]:
     import numpy as np
     import torch
     dem_t = torch.from_numpy(dem_np).float()
-    # Accept (H, W), (1, H, W), or (1, 1, H, W) — the local code builds
-    # (1, 1, H, W) so that's the most common.
-    while dem_t.ndim < 4:
-        dem_t = dem_t.unsqueeze(0)
+    # Match the local-inference shape contract from
+    # app/context/terramind_synthesis.py:_ensure_model — the v1 base
+    # generative encoder wants 3-D (1, H, W) and adds the batch dim
+    # internally. Anything more triggers `B, C, H, W = x.shape` to
+    # unpack 5-D and fail in the embedding layer.
+    if dem_t.ndim == 2:
+        dem_t = dem_t.unsqueeze(0)        # (H, W)    -> (1, H, W)
+    elif dem_t.ndim == 4 and dem_t.shape[0] == 1 and dem_t.shape[1] == 1:
+        dem_t = dem_t.squeeze(0)          # (1, 1, H, W) -> (1, H, W)
+    elif dem_t.ndim != 3:
+        raise HTTPException(status_code=400,
+                            detail=f"unexpected DEM shape {tuple(dem_t.shape)}; "
+                                   f"expected (H, W) or (1, H, W)")
     dem_t = _to_device(dem_t)
 
     spec = _TERRAMIND_SPECS["synthesis"]
@@ -473,6 +482,19 @@ def _terramind_inference(payload: TerramindIn) -> dict[str, Any]:
     fractions = {k: v for k, v in fractions.items() if v > 0}
     dom_idx = int(max(range(spec["num_classes"]),
                       key=lambda i: int((pred == i).sum())))
+
+    # Buildings: connected-component count (parity with local
+    # _summarize_buildings). The card subhead reads this — without it,
+    # the UI shows "0 distinct components".
+    n_components = None
+    if payload.adapter == "buildings":
+        try:
+            from scipy.ndimage import label
+            _, n_components = label((pred == 1).astype("uint8"))
+            n_components = int(n_components)
+        except Exception:
+            log.debug("terramind/buildings: scipy.ndimage unavailable")
+
     return {
         "ok": True,
         "adapter": payload.adapter,
@@ -483,9 +505,10 @@ def _terramind_inference(payload: TerramindIn) -> dict[str, Any]:
         "class_fractions": fractions,
         "dominant_class": spec["labels"][dom_idx],
         "dominant_pct": fractions.get(spec["labels"][dom_idx], 0.0),
-        # Buildings-specific stat (NaN-safe; 0 when not the buildings adapter).
+        # Buildings-specific stat (None when not the buildings adapter).
         "pct_buildings": round(100.0 * float((pred == 1).sum()) / n, 2)
                          if payload.adapter == "buildings" else None,
+        "n_building_components": n_components,
     }
 
 
