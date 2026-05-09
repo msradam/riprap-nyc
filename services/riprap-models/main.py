@@ -707,43 +707,124 @@ def _gliner_extract(payload: GlinerIn) -> dict[str, Any]:
 
 # ---- FastAPI app ------------------------------------------------------------
 
+# Last error per route, kept on the in-memory map so /v1/diag can
+# expose it without forcing the operator to grep container logs.
+_LAST_ERR: dict[str, dict[str, Any]] = {}
+
+
+def _safe_route(stage: str, fn, payload):
+    """Wrap a route body so an uncaught exception becomes a structured
+    `{"ok": False, "err": "...", "stage": "..."}` JSON response with
+    HTTP 200 instead of FastAPI's opaque "Internal Server Error" body.
+
+    The proxy on :7860 forwards this body untouched, so the FSM
+    specialist surfaces the real reason in the trace card. Logs the
+    full traceback to stderr so operators can still root-cause from
+    the Space's runtime logs."""
+    try:
+        return fn(payload)
+    except HTTPException:
+        raise
+    except Exception as e:  # noqa: BLE001
+        import traceback
+        tb = traceback.format_exc()
+        log.error("route %s failed: %s\n%s", stage, e, tb)
+        info = {
+            "ok": False,
+            "err": f"{type(e).__name__}: {e}",
+            "stage": stage,
+            "ts": time.time(),
+        }
+        _LAST_ERR[stage] = {**info, "traceback_tail": tb.splitlines()[-3:]}
+        return info
+
+
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     log.info("riprap-models starting on device=%s auth=%s",
              _DEVICE, "yes" if _AUTH_TOKEN else "no")
+    # Pre-load the heavy models so the first user request doesn't
+    # collide with a cold-load on the same GPU as vLLM. Each warm
+    # is best-effort: a single model failing must not block the
+    # service from starting (others may still serve).
+    if os.environ.get("RIPRAP_MODELS_WARM_AT_STARTUP", "1").lower() in ("1", "true", "yes"):
+        for stage, fn in (
+            ("warm/prithvi", _load_prithvi),
+            ("warm/terramind_synthesis", _load_terramind_synthesis),
+            ("warm/terramind_lulc", lambda: _load_terramind("lulc")),
+            ("warm/terramind_buildings", lambda: _load_terramind("buildings")),
+            ("warm/embed", _load_embed),
+            ("warm/gliner", _load_gliner),
+        ):
+            try:
+                fn()
+                log.info("startup %s ok", stage)
+            except Exception as e:  # noqa: BLE001
+                log.exception("startup %s failed: %s", stage, e)
+                _LAST_ERR[stage] = {"ok": False,
+                                     "err": f"{type(e).__name__}: {e}",
+                                     "stage": stage}
     yield
     log.info("riprap-models stopping")
 
 
-app = FastAPI(title="riprap-models", version="0.4.5", lifespan=lifespan)
+app = FastAPI(title="riprap-models", version="0.5.1", lifespan=lifespan)
 
 
 @app.get("/healthz")
 def healthz():
     return {"ok": True, "device": _DEVICE,
-             "models_loaded": sorted(_INSTANCES.keys())}
+             "models_loaded": sorted(_INSTANCES.keys()),
+             "last_errors": _LAST_ERR}
+
+
+@app.get("/v1/diag", dependencies=[Depends(_require_auth)])
+def diag():
+    """Operator-only diagnostic snapshot — what's loaded, last
+    per-stage error (with a 3-line traceback tail), and CUDA
+    visibility. The proxy forwards this through the catch-all so
+    operators can hit it from outside the Space."""
+    cuda = {"available": False, "devices": []}
+    try:
+        import torch
+        cuda["available"] = bool(torch.cuda.is_available())
+        if cuda["available"]:
+            cuda["devices"] = [{
+                "name": torch.cuda.get_device_name(i),
+                "mem_total_mb": torch.cuda.get_device_properties(i).total_memory // (1024 * 1024),
+                "mem_alloc_mb": torch.cuda.memory_allocated(i) // (1024 * 1024),
+            } for i in range(torch.cuda.device_count())]
+    except Exception as e:  # noqa: BLE001
+        cuda["err"] = f"{type(e).__name__}: {e}"
+    return {
+        "device": _DEVICE,
+        "models_loaded": sorted(_INSTANCES.keys()),
+        "last_errors": _LAST_ERR,
+        "cuda": cuda,
+    }
 
 
 @app.post("/v1/prithvi-pluvial", dependencies=[Depends(_require_auth)])
 def prithvi_pluvial_route(payload: PrithviIn):
-    return _prithvi_pluvial(payload)
+    return _safe_route("prithvi-pluvial", _prithvi_pluvial, payload)
 
 
 @app.post("/v1/terramind", dependencies=[Depends(_require_auth)])
 def terramind_route(payload: TerramindIn):
-    return _terramind_inference(payload)
+    return _safe_route(f"terramind/{payload.adapter}",
+                       _terramind_inference, payload)
 
 
 @app.post("/v1/ttm-forecast", dependencies=[Depends(_require_auth)])
 def ttm_forecast_route(payload: TtmIn):
-    return _ttm_forecast(payload)
+    return _safe_route("ttm-forecast", _ttm_forecast, payload)
 
 
 @app.post("/v1/granite-embed", dependencies=[Depends(_require_auth)])
 def granite_embed_route(payload: EmbedIn):
-    return _granite_embed(payload)
+    return _safe_route("granite-embed", _granite_embed, payload)
 
 
 @app.post("/v1/gliner-extract", dependencies=[Depends(_require_auth)])
 def gliner_extract_route(payload: GlinerIn):
-    return _gliner_extract(payload)
+    return _safe_route("gliner-extract", _gliner_extract, payload)
