@@ -214,13 +214,45 @@ class PrithviIn(BaseModel):
 
 def _prithvi_pluvial(payload: PrithviIn) -> dict[str, Any]:
     t0 = time.time()
-    m, run_model = _load_prithvi()
+    m, _run_model = _load_prithvi()
     chip = _decode_array(payload.s2, payload.shape, "float32")
     # Sen1Floods11 expects [1, 6, 1, H, W]
     if chip.ndim == 3:
         chip = chip[None, :, None, :, :]
-    pred_t = run_model(chip, None, None, m.model, m.datamodule, chip.shape[-1])
-    pred = pred_t[0].cpu().numpy().astype("uint8")
+    elif chip.ndim == 4:
+        chip = chip[:, :, None, :, :]   # (1, C, H, W) → (1, C, 1, H, W)
+
+    # Bypass IBM's run_model entirely: it's a sliding-window helper
+    # designed for full-scene inference, and its dependence on
+    # datamodule.test_transform / datamodule.aug producing a specific
+    # tensor shape kept tripping us up on the v2 fine-tune (yaml-typed
+    # means / stds, dict-input vs tensor-input contract). Our chip is
+    # already exactly model resolution and on-device — just normalise,
+    # forward, argmax. Same math, no version-skew surface.
+    import torch as _torch
+    chip_t = _torch.from_numpy(chip).float()
+    chip_t = _to_device(chip_t)
+
+    # Means / stds from prithvi_nyc_phase14.yaml (the v2 training
+    # config). Same six bands in the same order as the chip
+    # (BLUE, GREEN, RED, NARROW_NIR, SWIR_1, SWIR_2).
+    means_t = _torch.tensor(
+        [0.107, 0.107, 0.115, 0.265, 0.235, 0.155],
+        device=chip_t.device, dtype=chip_t.dtype,
+    ).view(1, 6, 1, 1, 1)
+    stds_t = _torch.tensor(
+        [0.082, 0.075, 0.085, 0.115, 0.11, 0.1],
+        device=chip_t.device, dtype=chip_t.dtype,
+    ).view(1, 6, 1, 1, 1)
+    x = (chip_t - means_t) / stds_t
+
+    with _torch.no_grad():
+        out = m.model(x)
+        logits = out.output if hasattr(out, "output") else out
+
+    # logits shape (B, num_classes, H, W) for segmentation. Argmax →
+    # (B, H, W) class indices.
+    pred = logits.argmax(dim=1).squeeze(0).cpu().numpy().astype("uint8")
     pct_full = float(100.0 * pred.mean())
     # Center-disk fraction (500 m at 10 m/px → 50 px radius from chip center).
     h, w = pred.shape
