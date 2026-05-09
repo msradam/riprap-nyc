@@ -315,10 +315,17 @@ def _default_hardware_label() -> str:
     """Best-guess hardware label for the UI badge.
 
     Auto-detected from env. Operators can override with
-    RIPRAP_HARDWARE_LABEL (e.g. "AMD MI300X" / "NVIDIA T4" / "Apple M3 Pro").
+    RIPRAP_HARDWARE_LABEL (e.g. "NVIDIA L4" / "AMD MI300X" /
+    "NVIDIA T4" / "Apple M3 Pro").
+
+    Default when a remote vLLM/Ollama backend is configured is "NVIDIA
+    L4" — both Riprap inference Spaces (msradam/riprap-vllm,
+    msradam/riprap-inference) run on L4. The MI300X droplet was
+    decommissioned 2026-05-06; set RIPRAP_HARDWARE_LABEL=AMD MI300X
+    explicitly if redeploying to that hardware.
     """
     if _PRIMARY == "vllm" and _VLLM_BASE:
-        return "AMD MI300X"
+        return "NVIDIA L4"
     if os.environ.get("SPACE_ID") or os.environ.get("HF_SPACE_ID"):
         return "NVIDIA T4"
     return "Local"
