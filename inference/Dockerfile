@@ -63,8 +63,8 @@ RUN pip install --no-cache-dir \
     && pip install --no-cache-dir \
         peft==0.18.1 \
         granite-tsfm==0.3.3 \
-        sentence-transformers>=3.3,<4 \
-        gliner>=0.2.6 \
+        "sentence-transformers>=3.3,<4" \
+        "gliner>=0.2.6" \
         --index-url https://pypi.org/simple
 
 # Bake Granite 4.1 weights at build. We pull two tags:
