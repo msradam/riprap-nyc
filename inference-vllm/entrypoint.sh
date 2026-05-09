@@ -3,34 +3,18 @@
 
 set -e
 
-# --- 0. EO toolchain (terratorch + Sentinel-2 chain) -----------------
-EO_DIR="$HOME/.eo-pkgs"
-EO_MARKER="$EO_DIR/.installed"
-if [ ! -f "$EO_MARKER" ]; then
-    echo "[entrypoint.vllm] installing EO toolchain into $EO_DIR ..."
-    mkdir -p "$EO_DIR"
-    if pip install --no-cache-dir --no-deps --target="$EO_DIR" \
-            terratorch==1.1rc6 einops diffusers timm; then
-        if PYTHONPATH="$EO_DIR:$PYTHONPATH" python -c "
+# EO toolchain (terratorch + transitive deps) is now baked into the
+# image at build time, not runtime-installed. Verify import once at
+# startup so the trace makes the failure visible if a wheel goes
+# stale.
+python -c "
 import terratorch
 import terratorch.models.backbones.terramind.model.terramind_register
 from terratorch.registry import FULL_MODEL_REGISTRY
 n = len([k for k in FULL_MODEL_REGISTRY if 'terramind' in k.lower()])
 assert n > 0
 print(f'[entrypoint.vllm] terratorch ok ({n} terramind entries)')
-"; then
-            touch "$EO_MARKER"
-            echo "[entrypoint.vllm] EO toolchain READY"
-        else
-            echo "[entrypoint.vllm] EO verify FAILED — TerraMind probes will skip"
-        fi
-    else
-        echo "[entrypoint.vllm] pip install FAILED — TerraMind probes will skip"
-    fi
-else
-    echo "[entrypoint.vllm] EO toolchain cached"
-fi
-export PYTHONPATH="$EO_DIR:$PYTHONPATH"
+" || echo "[entrypoint.vllm] WARN: terratorch import failed — TerraMind probes will skip"
 
 # --- 1. vLLM (Granite 4.1 8B FP8) on :8000 --------------------------
 LOG_VLLM="$HOME/vllm.log"

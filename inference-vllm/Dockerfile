@@ -56,8 +56,19 @@ RUN pip install --no-cache-dir \
         granite-tsfm==0.3.3 \
         "sentence-transformers>=3.3,<4" \
         "gliner>=0.2.6" \
-        segmentation-models-pytorch \
         torchvision
+
+# Bake terratorch with its transitive deps at build time (vs the canonical
+# entrypoint which runtime-installs with --no-deps to dodge the CPU Space's
+# tight build sandbox). On L4 we have build room; full install lets all
+# the EO probes work without dep-chase whack-a-mole.
+RUN pip install --no-cache-dir \
+        terratorch==1.1rc6 \
+        einops diffusers timm \
+        albumentations \
+        segmentation-models-pytorch \
+        kornia \
+        tifffile
 
 # Bake Granite 4.1 8B FP8 weights into the image (~8 GB). vLLM auto-
 # detects the FP8 config in the model's config.json.
