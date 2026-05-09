@@ -15,6 +15,7 @@ from fastapi import FastAPI, Request  # noqa: E402
 from fastapi.responses import FileResponse, StreamingResponse  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 
+from app import emissions  # noqa: E402
 from app.context import floodnet  # noqa: E402
 from app.flood_layers import dep_stormwater, sandy_inundation  # noqa: E402
 from app.fsm import iter_steps  # noqa: E402
@@ -619,26 +620,33 @@ def api_agent(q: str):
     from app.intents import neighborhood as i_nbhd
     from app.intents import single_address as i_addr
     from app.planner import plan as run_planner
-    p = run_planner(q)
-    if p.intent == "not_implemented":
-        return JSONResponse({
-            "paragraph": p.rationale,
-            "mellea": {"rerolls": 0, "n_attempts": 0,
-                       "requirements_passed": [], "requirements_failed": [],
-                       "requirements_total": 0},
-            "status": "not_implemented",
-        })
-    if p.intent == "compare":
-        out = _run_compare(p, q, None, i_addr)
-    elif p.intent == "development_check":
-        out = i_dev.run(p, q, strict=True)
-    elif p.intent == "neighborhood":
-        out = i_nbhd.run(p, q, strict=True)
-    elif p.intent == "live_now":
-        out = i_live.run(p, q)
-    else:
-        out = i_addr.run(p, q, strict=True)
-    return JSONResponse(out)
+    tracker = emissions.Tracker()
+    emissions.install(tracker)
+    try:
+        p = run_planner(q)
+        if p.intent == "not_implemented":
+            return JSONResponse({
+                "paragraph": p.rationale,
+                "mellea": {"rerolls": 0, "n_attempts": 0,
+                           "requirements_passed": [], "requirements_failed": [],
+                           "requirements_total": 0},
+                "status": "not_implemented",
+                "emissions": tracker.summarize(),
+            })
+        if p.intent == "compare":
+            out = _run_compare(p, q, None, i_addr)
+        elif p.intent == "development_check":
+            out = i_dev.run(p, q, strict=True)
+        elif p.intent == "neighborhood":
+            out = i_nbhd.run(p, q, strict=True)
+        elif p.intent == "live_now":
+            out = i_live.run(p, q)
+        else:
+            out = i_addr.run(p, q, strict=True)
+        out["emissions"] = tracker.summarize()
+        return JSONResponse(out)
+    finally:
+        emissions.install(None)
 
 
 @app.get("/api/agent/stream")
@@ -650,7 +658,10 @@ async def api_agent_stream(q: str):
     import queue
     out_q: queue.Queue[dict] = queue.Queue()
 
+    tracker = emissions.Tracker()
+
     def runner():
+        emissions.install(tracker)
         try:
             from app.intents import development_check as i_dev
             from app.intents import live_now as i_live
@@ -685,10 +696,12 @@ async def api_agent_stream(q: str):
                 final = i_live.run(p, q, progress_q=out_q)
             else:
                 final = i_addr.run(p, q, progress_q=out_q, strict=True)
+            final["emissions"] = tracker.summarize()
             out_q.put({"kind": "final", **final})
         except Exception as e:
             out_q.put({"kind": "error", "err": str(e)})
         finally:
+            emissions.install(None)
             out_q.put({"kind": "_done"})
 
     async def event_stream():

@@ -1,17 +1,20 @@
 <script lang="ts">
   import type { Card, StoneTrace } from '$lib/types/card';
+  import type { EmissionsSummary } from '$lib/client/agentStream';
 
   /** Top-of-Findings status row. Mirrors findings.jsx RunHealth44:
    *  Stones · functions fired · evidence cards · wall-clock · silent /
-   *  warn / error chips when nonzero. */
+   *  warn / error chips when nonzero. Also surfaces a compact emissions
+   *  chip (mWh + tokens) when the backend reports a per-call ledger. */
   interface Props {
     cards: Card[];
     stones: StoneTrace[];
     wallSeconds?: number;
     cacheHit?: number;
+    emissions?: EmissionsSummary;
   }
 
-  let { cards, stones, wallSeconds, cacheHit }: Props = $props();
+  let { cards, stones, wallSeconds, cacheHit, emissions }: Props = $props();
 
   function flatten(ms: StoneTrace['members']): StoneTrace['members'] {
     return ms.flatMap((m) => (m.children ? [m, ...flatten(m.children)] : [m]));
@@ -30,6 +33,36 @@
   let wall = $derived(wallSeconds == null
     ? '—'
     : wallSeconds < 1 ? `${Math.round(wallSeconds * 1000)}ms` : `${wallSeconds.toFixed(1)}s`);
+
+  // Format emissions: prefer mWh under 100, else Wh; tokens with K-suffix.
+  let emEnergy = $derived.by(() => {
+    if (!emissions || emissions.total_wh === 0) return null;
+    const wh = emissions.total_wh;
+    if (wh < 0.1) return `${emissions.total_mwh.toFixed(1)} mWh`;
+    return `${wh.toFixed(2)} Wh`;
+  });
+  let emTokens = $derived.by(() => {
+    const t = emissions?.tokens?.total;
+    if (!t) return null;
+    return t >= 1000 ? `${(t / 1000).toFixed(1)}K tok` : `${t} tok`;
+  });
+  let emRatio = $derived(emissions?.comparison?.ratio_cloud_over_query ?? null);
+  let emHardware = $derived.by(() => {
+    if (!emissions) return null;
+    const labels = Object.values(emissions.by_hardware).map(h => h.label);
+    return labels.length === 1 ? labels[0] : labels.join(' + ');
+  });
+  let emTooltip = $derived.by(() => {
+    if (!emissions) return '';
+    const lines = [
+      `${emissions.n_calls} inference calls — ${emissions.total_joules} J total`,
+      emHardware ? `Hardware: ${emHardware}` : '',
+      emissions.tokens.total ? `Tokens: ${emissions.tokens.prompt ?? 0} prompt + ${emissions.tokens.completion ?? 0} completion` : '',
+      emRatio != null ? `~${emRatio}× lower than ${emissions.comparison.cloud_per_query_mwh} mWh frontier-cloud per-query estimate` : '',
+      emissions.method,
+    ].filter(Boolean);
+    return lines.join('\n');
+  });
 </script>
 
 <div class="rh">
@@ -62,6 +95,14 @@
   {/if}
   <span class="rh-sep">·</span>
   <span class="rh-item rh-total"><strong>{total}</strong> registered</span>
+  {#if emEnergy}
+    <span class="rh-sep">·</span>
+    <span class="rh-item rh-em" title={emTooltip}>
+      <strong>{emEnergy}</strong> inference
+      {#if emTokens}<span class="rh-em-tok">/ {emTokens}</span>{/if}
+      {#if emRatio != null}<span class="rh-em-ratio">~{emRatio}× &lt; cloud</span>{/if}
+    </span>
+  {/if}
 </div>
 
 <style>
@@ -90,4 +131,19 @@
   .rh-err { color: #B91C1C; }
   .rh-notinvoked { color: var(--ink-tertiary); font-style: italic; }
   .rh-total strong { color: var(--ink-tertiary); }
+  .rh-em {
+    cursor: help;
+    color: var(--ink-secondary);
+  }
+  .rh-em strong { color: var(--ink); }
+  .rh-em-tok { margin-left: 4px; opacity: 0.75; }
+  .rh-em-ratio {
+    margin-left: 6px;
+    padding: 1px 5px;
+    border: 1px solid var(--rule-soft);
+    border-radius: 2px;
+    font-size: 10px;
+    letter-spacing: 0.03em;
+    color: var(--ink-tertiary);
+  }
 </style>

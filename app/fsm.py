@@ -16,6 +16,7 @@ import geopandas as gpd
 from burr.core import ApplicationBuilder, State, action
 from shapely.geometry import Point
 
+from app import emissions
 from app.context import floodnet, microtopo, noaa_tides, nws_alerts, nws_obs, nyc311
 from app.energy import estimate as energy_estimate
 from app.flood_layers import dep_stormwater, ida_hwm, prithvi_water, sandy_inundation
@@ -1171,6 +1172,16 @@ def _summarize_energy(trace: list) -> dict | None:
     return energy_estimate(rec_step.get("elapsed_s", 0) or 0, total_s)
 
 
+def _summarize_emissions() -> dict | None:
+    """Snapshot the active per-call emissions tracker, if installed.
+
+    Returns None when no tracker is bound to this thread (e.g. unit
+    tests that call `fsm.run` directly without going through the
+    web/intent layer that installs one)."""
+    t = emissions.current()
+    return t.summarize() if t is not None else None
+
+
 def run(query: str) -> dict[str, Any]:
     app = build_app(query)
     final_action, _, final_state = app.run(halt_after=["reconcile"])
@@ -1205,6 +1216,7 @@ def run(query: str) -> dict[str, Any]:
         "audit": final_state.get("audit"),
         "mellea": final_state.get("mellea"),
         "energy": _summarize_energy(trace),
+        "emissions": _summarize_emissions(),
         "trace": trace,
     }
 
@@ -1248,12 +1260,14 @@ def iter_steps(query: str):
     _captured_planned = _current_planned_specialists()
     _captured_token_cb = _current_token_callback()
     _captured_mellea_cb = _current_mellea_attempt_callback()
+    _captured_tracker = emissions.current()
 
     def _run_iterate():
         set_strict_mode(_captured_strict)
         set_planned_specialists(_captured_planned)
         set_token_callback(_captured_token_cb)
         set_mellea_attempt_callback(_captured_mellea_cb)
+        emissions.install(_captured_tracker)
         try:
             for _action_obj, _result, state in app.iterate(halt_after=["reconcile"]):
                 final_state_holder["state"] = state
@@ -1271,6 +1285,7 @@ def iter_steps(query: str):
             set_planned_specialists(None)
             set_token_callback(None)
             set_mellea_attempt_callback(None)
+            emissions.install(None)
             q.put(None)  # sentinel
 
     runner = _threading.Thread(target=_run_iterate, name="riprap-fsm",
@@ -1331,4 +1346,5 @@ def iter_steps(query: str):
         "audit": state.get("audit"),
         "mellea": state.get("mellea"),
         "energy": _summarize_energy(trace),
+        "emissions": _summarize_emissions(),
     }

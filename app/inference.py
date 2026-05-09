@@ -32,10 +32,13 @@ from __future__ import annotations
 import base64
 import logging
 import os
+import time
 from collections.abc import Iterable
 from typing import Any
 
 import httpx
+
+from app import emissions
 
 log = logging.getLogger("riprap.inference")
 
@@ -81,6 +84,7 @@ def _post(path: str, payload: dict[str, Any], timeout: float | None = None) -> d
     if not remote_enabled():
         raise RemoteUnreachable("remote ML backend not configured "
                                 "(RIPRAP_ML_BASE_URL empty or BACKEND=local)")
+    t0 = time.monotonic()
     try:
         with _client(timeout) as c:
             r = c.post(path, json=payload)
@@ -90,6 +94,17 @@ def _post(path: str, payload: dict[str, Any], timeout: float | None = None) -> d
     if r.status_code >= 500:
         raise RemoteUnreachable(f"HTTP {r.status_code} from {path}: {r.text[:200]}")
     r.raise_for_status()
+    duration_s = time.monotonic() - t0
+    # The remote ML service runs alongside vLLM on the AMD MI300X
+    # droplet; attribute the wallclock to that hardware. Local-fallback
+    # paths don't reach this function — they go straight to in-process
+    # model loads in the specialist module, which we don't track.
+    emissions.active().record_ml(
+        endpoint=path,
+        backend="riprap-models",
+        hardware="amd_mi300x",
+        duration_s=duration_s,
+    )
     return r.json()
 
 

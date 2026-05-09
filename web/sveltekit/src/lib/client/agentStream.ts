@@ -56,6 +56,51 @@ export interface FinalResult {
   /** Present when intent === "compare". */
   intent?: string;
   targets?: Array<{ label: string; address: string }>;
+  /** Per-call emissions ledger from app/emissions.py. Optional —
+   *  older backends + the not_implemented short-circuit may omit it. */
+  emissions?: EmissionsSummary;
+}
+
+export interface EmissionsCall {
+  kind: 'llm' | 'ml';
+  model?: string;
+  endpoint?: string;
+  backend: string;
+  hardware: string;
+  hardware_label: string;
+  power_w: number;
+  duration_s: number;
+  prompt_tokens?: number | null;
+  completion_tokens?: number | null;
+  total_tokens?: number | null;
+  stream?: boolean;
+  wh: number;
+  joules: number;
+}
+
+export interface EmissionsSummary {
+  n_calls: number;
+  total_wh: number;
+  total_mwh: number;
+  total_joules: number;
+  total_duration_s: number;
+  tokens: {
+    prompt?: number | null;
+    completion?: number | null;
+    total?: number | null;
+  };
+  by_kind: Record<string, { wh: number; mwh: number; n: number; duration_s: number }>;
+  by_hardware: Record<string, {
+    label: string; power_w: number; wh: number; mwh: number; n: number; duration_s: number;
+  }>;
+  calls: EmissionsCall[];
+  comparison: {
+    cloud_per_query_wh: number;
+    cloud_per_query_mwh: number;
+    ratio_cloud_over_query: number | null;
+    cloud_source: string;
+  };
+  method: string;
 }
 
 export interface AgentStreamHandlers {

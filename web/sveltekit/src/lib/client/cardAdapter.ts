@@ -659,6 +659,7 @@ export function adaptFinalToFindings(
     cards: cards.filter((c): c is Card => c != null),
     stones: buildStoneTraces(trace),
     wallSeconds,
+    emissions: (f as { emissions?: FindingsData['emissions'] }).emissions,
   };
 }
 

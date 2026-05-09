@@ -506,7 +506,12 @@ def fetch(lat: float, lon: float, timeout_s: float = 60.0) -> dict[str, Any]:
                 "skipped": f"deps unavailable on this deployment: "
                            f"{_DEPS_MISSING}"}
     hard_timeout = timeout_s + 15.0
-    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+    from app import emissions as _emissions
+    _parent_tracker = _emissions.current()
+    with concurrent.futures.ThreadPoolExecutor(
+        max_workers=1,
+        initializer=lambda t=_parent_tracker: _emissions.install(t),
+    ) as pool:
         future = pool.submit(_fetch_inner, lat, lon, timeout_s)
         try:
             return future.result(timeout=hard_timeout)
