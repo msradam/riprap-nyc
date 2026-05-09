@@ -34,7 +34,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libgl1 libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN useradd -m -u 1000 user
+# Ubuntu 24.04 ships with a default `ubuntu` user at UID 1000; remove
+# it before creating the HF Spaces convention `user` at UID 1000.
+RUN userdel -r ubuntu 2>/dev/null || true && useradd -m -u 1000 user
 ENV HOME=/home/user \
     PATH=/home/user/.local/bin:/usr/local/bin:/usr/bin:/bin \
     PYTHONUNBUFFERED=1 \
