@@ -1,5 +1,16 @@
 # Riprap architecture
 
+> **Update, May 2026.** The MI300X DigitalOcean droplet that hosted
+> production vLLM + EO models was decommissioned 2026-05-06; inference
+> now serves from the NVIDIA L4 HF Space `msradam/riprap-vllm` and a
+> matching FastAPI proxy that surfaces real per-call GPU power
+> readings on every response. The MI300X language preserved in this
+> document remains accurate for the original AMD-judging deploy
+> (recoverable via [`docs/DROPLET-RUNBOOK.md`](DROPLET-RUNBOOK.md) +
+> `RIPRAP_HARDWARE_LABEL=AMD MI300X`); current production topology +
+> deploy commands live in [`docs/DEPLOY.md`](DEPLOY.md), and the
+> emissions ledger is documented in [`docs/EMISSIONS.md`](EMISSIONS.md).
+
 > **What it is.** A web tool that takes any NYC address and produces a
 > short, citation-grounded **flood-exposure briefing**. A tier (1–4)
 > with a paragraph of evidence, where every numeric claim links back to

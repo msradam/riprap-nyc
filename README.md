@@ -11,33 +11,36 @@ pinned: false
   <img src="assets/logo@2x.png" width="72" height="72" alt="Riprap dam mark" />
 </p>
 
-# Riprap — citation-grounded NYC flood-exposure briefings
+# Riprap
 
-Riprap takes any NYC address (or neighborhood, or development-permit
-query) and produces a four-section briefing — Status, Empirical
-evidence, Modeled scenarios, Policy context. Every numeric claim is
-anchored to a `[doc_id]` citation that resolves to a named primary
-public-record source. If the model cannot cite a number, the model
-does not publish that number.
+## Flood risk analysis for any NYC address.
 
-The Capstone reconciler is **IBM Granite 4.1 8B**, served via Ollama
-on T4 or vLLM on AMD MI300X, wrapped in **Mellea**-validated rejection
-sampling. Sentences that fail one of four grounding checks
-(`numerics_grounded`, `no_placeholder_tokens`, `citations_dense`,
-`citations_resolve`) are rerolled with surgical feedback until the
-budget is exhausted.
+A multi-agent AI system that reads satellites, watches sensors, forecasts
+surges, and refuses to ship a sentence it cannot ground in a citation.
+
+![Riprap flood-exposure briefing for DUMBO, Brooklyn](assets/screenshots/hero.png)
 
 Live demo: <https://lablab-ai-amd-developer-hackathon-riprap-nyc.hf.space>
 
 ---
 
-## What it looks like
+## The problem Riprap solves
 
-![Riprap flood-exposure briefing for 80 Pioneer Street, Brooklyn](assets/screenshots/hero.png)
+NYC has spent decades publishing the flood-exposure inputs an engineer needs:
+Sandy 2012 inundation, NYC DEP stormwater scenarios, FloodNet sensors, NOAA
+tide gauges, USGS 3DEP LiDAR, 311 complaints, MTA, NYCHA, schools, hospitals.
+The data is public. None of it composes itself.
 
-*A citation-grounded flood-exposure briefing for 80 Pioneer Street in
-Red Hook. Generated in roughly 7 seconds against AMD MI300X. Every
-numeric claim cites a primary public-record source.*
+Every engineer doing a drainage review, every resilience office siting a
+capital project, every climate-adaptation team prioritising blocks
+reassembles the same evidence by hand, per address, from a dozen agencies. A
+briefing that should be a tool call ends up as a half-day of manual joins.
+Existing tools either return opaque vendor risk scores or skip the audit
+trail a stamped engineering memo actually requires.
+
+Riprap composes it. Type any NYC address, get a four-section,
+citation-grounded briefing in about two minutes, with every claim pointing
+back to a `[doc_id]` in public-record data.
 
 ---
 
@@ -47,10 +50,18 @@ Three ways to use Riprap, in increasing order of self-host:
 
 ### 1. Try the live demo
 
-The hosted Space runs the full pipeline against a live AMD MI300X
-inference backend. Type any NYC address.
+The hosted Space runs the full pipeline. Type any NYC address.
 
 <https://lablab-ai-amd-developer-hackathon-riprap-nyc.hf.space>
+
+The hackathon submission was originally built against an AMD Instinct
+MI300X via the AMD Developer Cloud, where the three NYC-specialised
+fine-tunes were trained. For the hackathon-period demo, inference now
+serves from an NVIDIA L4 Hugging Face Space (`msradam/riprap-vllm`)
+co-hosting vLLM + the EO model stack — see
+[`docs/DEPLOY.md`](docs/DEPLOY.md). Setting
+`RIPRAP_HARDWARE_LABEL=AMD MI300X` on a redeploy swaps the energy
+ledger back to MI300X figures.
 
 ### 2. Run locally with Docker
 
@@ -65,8 +76,8 @@ docker compose up
 
 Visit `http://localhost:7860`.
 
-To self-host the GPU inference half (vLLM + the ML specialist
-service) on an AMD ROCm or NVIDIA CUDA box, run:
+To self-host the GPU inference half (vLLM + the ML specialist service) on
+an AMD ROCm or NVIDIA CUDA box, run:
 
 ```bash
 docker compose --profile with-models up
@@ -111,14 +122,38 @@ group those probes into five legible roles:
 
 | Stone | Role | What fires |
 |---|---|---|
-| **Cornerstone** | The Hazard Reader. What NYC's ground remembers. | Sandy 2012 inundation extent, NYC DEP stormwater scenarios, 2021 Ida USGS high-water marks, baked Prithvi-EO Ida-attributable polygons, USGS 3DEP DEM + HAND/TWI |
+| **Cornerstone** | The Hazard Reader. What the ground remembers. | Sandy 2012 inundation extent, NYC DEP stormwater scenarios, 2021 Ida USGS high-water marks, baked Prithvi-EO Ida-attributable polygons, USGS 3DEP DEM + HAND/TWI |
 | **Keystone** | The Asset Register. What's exposed. | MTA subway entrances, NYCHA developments, NYC DOE schools, NYS DOH hospitals, **TerraMind-NYC Buildings LoRA** |
 | **Touchstone** | The Live Observer. Current state of the city. | FloodNet ultrasonic depth sensors, NYC 311 flood complaints, NWS hourly METAR, NOAA tide-gauge water levels, **Prithvi-EO 2.0 NYC-Pluvial v2**, **TerraMind-NYC LULC LoRA** |
 | **Lodestone** | The Projector. What's coming. | NWS public flood alerts, Granite TTM r2 surge nowcast (zero-shot, 6-min cadence, 9.6 h horizon), per-address 311 weekly forecast, FloodNet sensor recurrence forecast, **Granite-TTM-r2-Battery-Surge fine-tune** (96 h hourly horizon) |
 | **Capstone** | The Synthesiser. Citation-grounded briefing. | Granite 4.1 + Mellea rejection sampling |
 
-The four data-Stones run sequentially per query; the Capstone
-reconciles their documents into one cited paragraph.
+The four data-Stones run sequentially per query; the Capstone reconciles
+their documents into one cited briefing.
+
+---
+
+## The Five Stones beyond NYC
+
+The Five Stones taxonomy is a city-agnostic template for any
+flood-vulnerable region with the right data scaffolding. The five roles
+generalise; only the probes plugged into each Stone change.
+
+| Stone | Role | What you replace |
+|---|---|---|
+| **Cornerstone** | Hazard memory | Local historical inundation extents, regional DEM, regulatory floodplain maps |
+| **Keystone** | Asset registers | The transit, housing, education, and healthcare polygons your jurisdiction publishes |
+| **Touchstone** | Live observation | Whatever live sensors and complaint streams the city or region exposes (FloodNet has analogues in Houston, Boston, Miami) |
+| **Lodestone** | Forecasts | Local NWS forecast office output, regional surge or hydrologic models, time-series fine-tunes for your tide gauge |
+| **Capstone** | Citation-grounded synthesis | Same |
+
+The architectural commitments transfer unchanged: Burr FSM with one
+`@action` per probe, Granite-native `role="document"` reconciliation,
+Mellea four-check grounding, SSE streaming to a SvelteKit map UI, every
+claim cited to its source. To port Riprap to a new city, you reimplement
+each Stone's `collect()` against local data and retrain the EO and
+time-series fine-tunes on your jurisdiction's imagery and gauges. The
+agentic shell stays the same.
 
 ---
 
@@ -133,13 +168,14 @@ full-FT baseline), TiM 0.6023, Buildings 0.5511. Trained in around 18
 minutes on a single MI300X.
 
 **[`msradam/Prithvi-EO-2.0-NYC-Pluvial`](https://huggingface.co/msradam/Prithvi-EO-2.0-NYC-Pluvial).**
-NYC pluvial-flood fine-tune of Prithvi-EO 2.0. Test flood IoU 0.5979
-vs 0.10 on the Sen1Floods11 base, a 6× lift. Lovász-Softmax loss with
+NYC pluvial-flood fine-tune of Prithvi-EO 2.0. Test flood IoU 0.5979 vs
+0.10 on the Sen1Floods11 base, a 6× lift. Lovász-Softmax loss with
 copy-paste augmentation.
 
 **[`msradam/Granite-TTM-r2-Battery-Surge`](https://huggingface.co/msradam/Granite-TTM-r2-Battery-Surge).**
-NYC Battery storm-surge nowcast fine-tune of Granite TimeSeries TTM
-r2. Test MAE 0.1091 m, −41% vs persistence and −25% vs zero-shot.
+NYC Battery storm-surge nowcast fine-tune of Granite TimeSeries TTM r2.
+Test MAE 0.1091 m, 41% better than persistence and 25% better than
+zero-shot.
 
 All three are loaded at runtime by their respective FSM probes in
 `app/context/` and `app/live/`. Reproduction recipes live under
@@ -172,10 +208,18 @@ NYC address ──► Granite 4.1 3B planner ──► Plan{intent, targets, spe
                        SSE stream → SvelteKit UI (briefing, trace, map)
 ```
 
-LLM inference is dispatched through `app/llm.py`, a LiteLLM Router
-shim with two backends: **Ollama** (T4 / local) and **vLLM** (AMD
-MI300X). Same `chat()` signature in both directions; vLLM is primary
-for the demo, Ollama is the auto-failover.
+LLM inference is dispatched through `app/llm.py`, a LiteLLM Router shim
+with two backends: **Ollama** (local dev) and **vLLM** (AMD MI300X or
+NVIDIA L4 — currently L4 on `msradam/riprap-vllm`). Same `chat()`
+signature in both directions; vLLM is primary for the demo, Ollama is
+the auto-failover.
+
+ML model inference (Prithvi-EO, TerraMind, TTM, GLiNER, Granite
+Embedding) goes through `app/inference.py::_post`, a thin HTTP client
+that hits the bearer-authenticated proxy on the inference Space. The
+proxy forwards to vLLM or to the riprap-models service co-resident on
+the same L4, and stamps real GPU power readings onto every response —
+see the energy section below.
 
 Source-of-truth pointers:
 
@@ -192,8 +236,47 @@ Source-of-truth pointers:
   `plan / step / token / mellea_attempt / final` events plus the
   `stone_start / stone_done` envelope around each Stone group.
 - `web/sveltekit/`: primary UI (SvelteKit + adapter-static).
+- `inference-vllm/proxy.py`: bearer-auth proxy on the L4 inference
+  Space; runs the NVML power sampler that the energy ledger reads.
+- `app/emissions.py`: per-query Tracker + hardware profiles. Records
+  every LLM and ML inference call with `measured: bool`.
 
-For the long-form architecture document, see [`ARCHITECTURE.md`](ARCHITECTURE.md).
+For the long-form architecture document, see
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). Methodology and
+civil-engineering framing in
+[`docs/METHODOLOGY.md`](docs/METHODOLOGY.md). Lit review in
+[`docs/RESEARCH.md`](docs/RESEARCH.md). Production deploy
+topology in [`docs/DEPLOY.md`](docs/DEPLOY.md).
+
+---
+
+## Inference energy — measured, not estimated
+
+Riprap reports the energy and token cost of every inference call it
+makes during a briefing. The status row on the Findings region
+displays a single chip:
+
+```
+✓ 1.4 Wh / 6.9K tok inference
+```
+
+The `✓` icon means every recorded call came back with a real reading
+off the L4 GPU via `nvmlDeviceGetPowerUsage`. The inference Space
+runs a 100 ms-cadence NVML sampler in the proxy and stamps
+`X-GPU-Power-W` / `X-GPU-Energy-J` on every response; the LLM client
+brackets each completion with two GETs to `/v1/power` because LiteLLM
+hides response headers. When the proxy is unreachable, the chip
+shows `~` or `◐` and the row falls back to a data-sheet sustained-
+power estimate.
+
+Per-call records carry `prompt_tokens`, `completion_tokens`,
+`duration_s`, `power_w`, `joules`, and a `measured: bool` flag. The
+full ledger is shipped on the SSE `final` event under
+`emissions.calls`, so any consumer (dashboard, billing model,
+reproducibility check) can reuse the data.
+
+Detailed pipeline + verification recipe in
+[`docs/EMISSIONS.md`](docs/EMISSIONS.md).
 
 ---
 
@@ -210,7 +293,7 @@ aggregators.
 | Hurricane Ida 2021 USGS high-water marks | USGS Short-Term Network | Empirical validation points |
 | FloodNet ultrasonic sensor network | NYU CUSP / FloodNet | Live water-depth observations |
 | NYC 311 flood complaints | NYC Open Data | Empirical complaint history |
-| NOAA tide gauge — The Battery | NOAA CO-OPS | Live tide and surge level |
+| NOAA tide gauge, The Battery | NOAA CO-OPS | Live tide and surge level |
 | NWS METAR | National Weather Service | Hourly precipitation |
 | NWS public flood alerts | National Weather Service | Active warnings and watches |
 | MTA subway entrances | MTA / NYC Open Data | Transit asset register |
@@ -223,28 +306,47 @@ aggregators.
 | Sentinel-2 MSI imagery | ESA / Copernicus | Prithvi + TerraMind inputs |
 
 The full data licence map and vintage table is enumerated in
-[`ARCHITECTURE.md`](ARCHITECTURE.md).
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ---
 
-## What Riprap is not
+## Repository structure
 
-The civil engineer carries the stamp. Riprap surfaces the evidence the
-engineer judges.
+```
+app/                       Python — Burr FSM, specialists, reconciler
+├── fsm.py                 One @action per probe, plus the Stones taxonomy
+├── llm.py                 LiteLLM Router shim (Ollama / vLLM)
+├── inference.py           HTTP client for the riprap-models service
+├── emissions.py           Per-query energy + token ledger (real NVML)
+├── reconcile.py           Granite-native document reconcile (Capstone)
+├── mellea_validator.py    Mellea four-check rejection sampling
+├── stones/, intents/      Stone definitions + intent dispatchers
+├── flood_layers/          Cornerstone hazard probes
+├── context/, registers/   Keystone + Touchstone register / EO probes
+└── live/                  Lodestone forecast probes
 
-- **Not a hydraulic model.** Riprap does not replace HEC-RAS, SWMM, or
-  ICM. It synthesises evidence from completed modelling work; it does
-  not produce new flow or stage estimates.
-- **Not a stamped deliverable.** The briefing is a starting point for
-  a memo, not the memo itself. Professional judgment, field
-  reconnaissance, and the engineer's stamp are required for any
-  actionable output.
-- **Not a substitute for site investigation.** Microtopography is from
-  1 m USGS 3DEP LiDAR, appropriate for screening, not for design.
-- **Not a risk score.** Riprap does not output a 1–10 or 1–100 number.
-  Score-based tools (First Street, ClimateCheck, Jupiter) are
-  different products for different audiences. Riprap is the evidence
-  audit trail behind any such judgment.
+web/                       FastAPI + SvelteKit
+├── main.py                FastAPI app, SSE streaming, layer endpoints
+├── sveltekit/             Primary UI (adapter-static; build committed)
+└── static/                Legacy custom-element pages (still mounted)
+
+inference-vllm/            Inference Space (vLLM + EO models + proxy)
+├── Dockerfile             L4 image, bakes Granite 4.1 8B FP8 + EO deps
+├── entrypoint.sh          Boots vllm, riprap-models, proxy together
+└── proxy.py               Bearer-auth + NVML sampler + SSE pass-through
+
+inference/                 Ollama-backed inference Space (fallback)
+services/riprap-models/    EO/forecast specialist HTTP service
+
+scripts/                   Probes, register builders, deploy commands
+experiments/               Reproduction recipes for the three NYC fine-tunes
+docs/                      ARCHITECTURE · DEPLOY · EMISSIONS · METHODOLOGY · RESEARCH
+tests/                     pytest suite (envelope + compare-shape)
+```
+
+[`CONTRIBUTING.md`](CONTRIBUTING.md) covers dev setup, the probe
+scripts, and house style. [`CHANGELOG.md`](CHANGELOG.md) tracks
+changes since the v0.5.0 hackathon submission.
 
 ---
 
@@ -267,30 +369,30 @@ If you reference Riprap in academic or professional work:
 
 ## License
 
-Apache 2.0 (this repository). The three NYC-specialised fine-tunes
-above are also Apache 2.0; underlying upstream models retain their
-own permissive licences (see each `MODEL_CARD.md`).
+Apache 2.0. See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
 
-HF Space configuration reference:
-<https://huggingface.co/docs/hub/spaces-config-reference>.
+The three NYC-specialised fine-tunes above are also Apache 2.0;
+underlying upstream models retain their own permissive licences (see
+each `MODEL_CARD.md`). Public-record data sources retain their own
+access terms; the licence map is in
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ---
 
 ## Acknowledgments
 
-- **AMD Developer Cloud** — MI300X compute that made the three
-  Apache-2.0 NYC fine-tunes feasible.
-- **AMD x lablab.ai Developer Hackathon** — the venue.
-- **IBM Research** — Granite 4.1, Granite Embedding 278M, Granite TTM
-  r2, Mellea, and the rest of the open-source Granite ecosystem.
-- **NASA / IBM Prithvi-EO 2.0** and **IBM / ESA TerraMind 1.0** — the
+- **AMD Developer Cloud**, MI300X compute that made the three Apache-2.0
+  NYC fine-tunes feasible.
+- **AMD × lablab.ai Developer Hackathon**, the venue.
+- **IBM Research**, Granite 4.1, Granite Embedding 278M, Granite TTM r2,
+  Mellea, and the rest of the open-source Granite ecosystem.
+- **NASA / IBM Prithvi-EO 2.0** and **IBM / ESA TerraMind 1.0**, the
   geospatial foundation models behind the NYC fine-tunes.
-- **NYU CUSP / FloodNet** — the public sensor network whose data
-  Riprap reads live.
-- **Andrew Hicks** — civil-engineering review of the methodology, and
-  framing for what Riprap is not.
-- **The Riprap dam mark** — ["Dam" by Chintuza](https://thenounproject.com/icon/dam-4516918/)
+- **NYU CUSP / FloodNet**, the public sensor network whose data Riprap
+  reads live.
+- **Andrew Hicks**, civil-engineering review of the methodology.
+- **The Riprap dam mark**, ["Dam" by Chintuza](https://thenounproject.com/icon/dam-4516918/)
   via the Noun Project, licensed CC-BY 3.0. The original SVG embedded
-  the attribution as on-canvas text; Riprap's `assets/logo*.svg`
-  strips the embedded text and carries the credit here in body copy
-  instead, per the Creative Commons attribution requirement.
+  the attribution as on-canvas text; Riprap's `assets/logo*.svg` strips
+  the embedded text and carries the credit here in body copy instead,
+  per the Creative Commons attribution requirement.
