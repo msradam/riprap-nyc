@@ -19,7 +19,7 @@ PERSONAL_REMOTE="personal"
 # personal Space MUST have a different repo name (e.g. -mirror or -l4)
 # than the org Space, or this script will push to the org Space and
 # overwrite the official submission. Configure here.
-PERSONAL_URL="https://huggingface.co/spaces/msradam/riprap-mirror"
+PERSONAL_URL="https://huggingface.co/spaces/msradam/riprap"
 PERSONAL_BRANCH="hf-personal"
 LABLAB_NAME_PATTERN="AMD-hackathon|lablab-ai"
 
@@ -94,8 +94,10 @@ git worktree add --detach "$DEPLOY_TMP" HEAD
     # Orphan branch — single commit, no ancestry.
     git checkout --orphan "$PERSONAL_BRANCH"
 
-    # Strip artifacts that don't ship to the running Space.
-    rm -rf slides/ submission/ docs/ pitch/ research/ corpus/ \
+    # Strip artifacts that don't ship to the running Space. Keep
+    # corpus/ — it's the policy-document RAG corpus the FSM reads at
+    # runtime, and the Dockerfile COPYs it.
+    rm -rf slides/ submission/ docs/ pitch/ research/ \
            assets/screenshots/ \
            assets/cover.png assets/cover-*.png assets/cover-v*.png \
            assets/logo-paper@2x.png assets/logo@2x.png \
