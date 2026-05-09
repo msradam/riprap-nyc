@@ -1,10 +1,23 @@
-# Session artifacts
+# Session artifacts (legacy agent reports — not for the public repo)
 *MORNING-BRIEF*.md
 *OVERNIGHT*.md
 *COMMS-OVERNIGHT*.md
 CODE-MORNING-BRIEF*.md
 MONDAY.md
+FRIDAY*.md
+*-REPORT.md
 docs/sessions/
+docs/design_handoff/
+
+# Local-only secrets / credentials
+AMD_TOKEN
+
+# Probe / batch / diagnostic output (regenerable; not for the repo)
+tests/batch_results.json
+tests/overnight_audit.json
+scripts/diagnostic_*.py
+scripts/find_top_locations.py
+scripts/verify_locations.py
 
 __pycache__/
 *.py[cod]

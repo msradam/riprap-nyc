@@ -1,0 +1,41 @@
+Riprap — Citation-Grounded NYC Flood-Exposure Briefings
+Copyright 2026 Adam Munawar Rahman
+
+This product is licensed under the Apache License, Version 2.0
+(the "License"). You may obtain a copy of the License in the LICENSE
+file at the root of this repository or at:
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+================================================================================
+Third-party components and data
+================================================================================
+
+Riprap incorporates and depends on third-party open-source software,
+foundation models, and public-record datasets. Each retains its own
+upstream licence; the list below records attribution where required.
+
+Foundation models (Apache 2.0 unless noted):
+  - IBM Granite 4.1 (granite-4.1-h-tiny, granite-4.1-h-small)
+  - IBM Granite Embedding 278M (granite-embedding-278m-multilingual)
+  - IBM Granite TimeSeries TTM r2 (granite-timeseries-ttm-r2)
+  - IBM Mellea (rejection-sampling validator)
+  - NASA / IBM Prithvi-EO 2.0
+  - IBM / ESA TerraMind 1.0
+
+NYC-specialised fine-tunes published by this project (Apache 2.0):
+  - msradam/TerraMind-NYC-Adapters (LULC, Buildings, TiM LoRA family)
+  - msradam/Prithvi-EO-2.0-NYC-Pluvial
+  - msradam/Granite-TTM-r2-Battery-Surge
+
+Public-record data sources contacted at runtime (no commercial APIs):
+  See the "Data sources" table in README.md and the licence map in
+  ARCHITECTURE.md for hosting agency, access terms, and vintage.
+
+Logo attribution:
+  The Riprap dam mark is derived from "Dam" by Chintuza, via the
+  Noun Project (https://thenounproject.com/icon/dam-4516918/),
+  licensed CC-BY 3.0. The original SVG embedded the attribution as
+  on-canvas text; assets/logo*.svg in this repository strip the
+  embedded text and carry the attribution here per the Creative
+  Commons attribution requirement.

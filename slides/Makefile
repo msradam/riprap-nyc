@@ -1,6 +1,6 @@
 DECK := deck.md
 THEME := riprap.css
-MARP := marp $(DECK) --theme $(THEME) --allow-local-files --html
+MARP := npx @marp-team/marp-cli $(DECK) --theme $(THEME) --allow-local-files --html
 
 .PHONY: all pdf html pptx clean
 

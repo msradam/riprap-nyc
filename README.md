@@ -18,7 +18,7 @@ pinned: false
 Powered by a multi-agent AI system that reads satellites, watches
 sensors, forecasts surges, and refuses to stay silent.
 
-![Riprap flood-exposure briefing for 80 Pioneer Street, Brooklyn](assets/screenshots/hero.png)
+![Riprap flood-exposure briefing for DUMBO, Brooklyn](assets/screenshots/hero.png)
 
 Live demo: <https://lablab-ai-amd-developer-hackathon-riprap-nyc.hf.space>
 
@@ -250,12 +250,12 @@ If you reference Riprap in academic or professional work:
 
 ## License
 
-Apache 2.0 (this repository). The three NYC-specialised fine-tunes
-above are also Apache 2.0; underlying upstream models retain their
-own permissive licences (see each `MODEL_CARD.md`).
+Apache 2.0 — see [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
 
-HF Space configuration reference:
-<https://huggingface.co/docs/hub/spaces-config-reference>.
+The three NYC-specialised fine-tunes above are also Apache 2.0;
+underlying upstream models retain their own permissive licences
+(see each `MODEL_CARD.md`). Public-record data sources retain their
+own access terms; the licence map is in [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
 ---
 
