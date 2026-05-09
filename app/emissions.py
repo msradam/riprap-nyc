@@ -30,24 +30,40 @@ from typing import Any
 
 # (label, sustained_power_w, source)
 HARDWARE: dict[str, tuple[str, float, str]] = {
+    "nvidia_l4": (
+        "NVIDIA L4",
+        60.0,
+        "NVIDIA L4 Tensor Core GPU data sheet (72 W TGP, Ada Lovelace, "
+        "24 GB); ~60 W sustained during transformer inference. The "
+        "active backend for both Riprap inference Spaces — "
+        "msradam/riprap-vllm for Granite 4.1 8B FP8 (vLLM), and "
+        "msradam/riprap-inference for Prithvi-EO / TerraMind / "
+        "Granite TTM / GLiNER / Granite Embedding.",
+    ),
     "amd_mi300x": (
         "AMD MI300X",
         600.0,
         "AMD Instinct MI300X data sheet (750 W TDP); ~600 W sustained "
-        "during vLLM generation is a conservative midpoint of public "
-        "ROCm benchmarks.",
+        "during vLLM generation. Selected only when an operator deploys "
+        "against an MI300X droplet and sets RIPRAP_HARDWARE_LABEL=AMD "
+        "MI300X explicitly. The hackathon submission used to run on "
+        "this hardware; the droplet was decommissioned 2026-05-06 and "
+        "inference now routes through L4 Spaces.",
     ),
     "nvidia_t4": (
         "NVIDIA T4",
         50.0,
         "NVIDIA T4 data sheet (70 W max); ~50 W sustained during "
-        "transformer inference.",
+        "transformer inference. Used by the CPU-tier UI Spaces "
+        "(lablab + personal mirror) when a small inline LLM runs "
+        "alongside the FastAPI front-end.",
     ),
     "apple_m": (
         "Apple M-series",
         20.0,
         "ml.energy / community measurements: ~20 W package power "
-        "during Granite 4.1 q4_K_M inference on Apple M3/M4.",
+        "during Granite 4.1 q4_K_M inference on Apple M3/M4 (the "
+        "local-dev path, no remote backend configured).",
     ),
     "cpu_server": (
         "x86 CPU",
