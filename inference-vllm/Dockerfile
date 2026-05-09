@@ -54,7 +54,8 @@ RUN pip install --no-cache-dir \
         fastapi>=0.115 \
         uvicorn[standard]>=0.32 \
         httpx>=0.27 \
-        pydantic>=2.9
+        pydantic>=2.9 \
+        nvidia-ml-py>=12.560
 
 # riprap-models specialist deps. Layered after vLLM so its torch wins.
 COPY services/riprap-models/requirements.txt /tmp/req-models.txt

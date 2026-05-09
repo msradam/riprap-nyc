@@ -68,8 +68,14 @@ export interface EmissionsCall {
   backend: string;
   hardware: string;
   hardware_label: string;
+  /** Power figure used for this row's energy. When measured=true this is
+   *  the NVML-derived avg watts; otherwise it's the data-sheet fallback. */
   power_w: number;
   duration_s: number;
+  /** True when joules came from a real NVML read on the inference proxy
+   *  (X-GPU-Energy-J header for ML / bracket-sampled /v1/power for LLM).
+   *  False = data-sheet × duration estimate. */
+  measured: boolean;
   prompt_tokens?: number | null;
   completion_tokens?: number | null;
   total_tokens?: number | null;
@@ -80,6 +86,8 @@ export interface EmissionsCall {
 
 export interface EmissionsSummary {
   n_calls: number;
+  /** Number of calls whose joules came from a real GPU power read. */
+  n_measured: number;
   total_wh: number;
   total_mwh: number;
   total_joules: number;
@@ -91,15 +99,9 @@ export interface EmissionsSummary {
   };
   by_kind: Record<string, { wh: number; mwh: number; n: number; duration_s: number }>;
   by_hardware: Record<string, {
-    label: string; power_w: number; wh: number; mwh: number; n: number; duration_s: number;
+    label: string; wh: number; mwh: number; n: number; duration_s: number;
   }>;
   calls: EmissionsCall[];
-  comparison: {
-    cloud_per_query_wh: number;
-    cloud_per_query_mwh: number;
-    ratio_cloud_over_query: number | null;
-    cloud_source: string;
-  };
   method: string;
 }
 

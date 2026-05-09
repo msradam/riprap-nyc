@@ -46,19 +46,38 @@
     if (!t) return null;
     return t >= 1000 ? `${(t / 1000).toFixed(1)}K tok` : `${t} tok`;
   });
-  let emRatio = $derived(emissions?.comparison?.ratio_cloud_over_query ?? null);
   let emHardware = $derived.by(() => {
     if (!emissions) return null;
     const labels = Object.values(emissions.by_hardware).map(h => h.label);
     return labels.length === 1 ? labels[0] : labels.join(' + ');
   });
+  // Fraction of calls that came back with a real NVML reading (vs.
+  // data-sheet fallback). Surfaced as a small ✓ / ~ badge so the
+  // viewer can tell whether the number is measured or estimated.
+  let emMeasuredFrac = $derived(
+    emissions && emissions.n_calls > 0
+      ? (emissions.n_measured ?? 0) / emissions.n_calls
+      : 0
+  );
+  let emMeasuredIcon = $derived(
+    emEnergy == null
+      ? ''
+      : emMeasuredFrac >= 0.9
+        ? '✓'           // all (or nearly all) calls measured on GPU
+        : emMeasuredFrac > 0
+          ? '◐'         // partial coverage
+          : '~'         // pure data-sheet estimate
+  );
   let emTooltip = $derived.by(() => {
     if (!emissions) return '';
+    const measuredLine = emissions.n_measured != null
+      ? `${emissions.n_measured}/${emissions.n_calls} calls measured on GPU (others use data-sheet estimate)`
+      : '';
     const lines = [
       `${emissions.n_calls} inference calls — ${emissions.total_joules} J total`,
       emHardware ? `Hardware: ${emHardware}` : '',
+      measuredLine,
       emissions.tokens.total ? `Tokens: ${emissions.tokens.prompt ?? 0} prompt + ${emissions.tokens.completion ?? 0} completion` : '',
-      emRatio != null ? `~${emRatio}× lower than ${emissions.comparison.cloud_per_query_mwh} mWh frontier-cloud per-query estimate` : '',
       emissions.method,
     ].filter(Boolean);
     return lines.join('\n');
@@ -98,9 +117,9 @@
   {#if emEnergy}
     <span class="rh-sep">·</span>
     <span class="rh-item rh-em" title={emTooltip}>
+      <span class="rh-em-icon" aria-hidden="true">{emMeasuredIcon}</span>
       <strong>{emEnergy}</strong> inference
       {#if emTokens}<span class="rh-em-tok">/ {emTokens}</span>{/if}
-      {#if emRatio != null}<span class="rh-em-ratio">~{emRatio}× &lt; cloud</span>{/if}
     </span>
   {/if}
 </div>
@@ -137,13 +156,9 @@
   }
   .rh-em strong { color: var(--ink); }
   .rh-em-tok { margin-left: 4px; opacity: 0.75; }
-  .rh-em-ratio {
-    margin-left: 6px;
-    padding: 1px 5px;
-    border: 1px solid var(--rule-soft);
-    border-radius: 2px;
+  .rh-em-icon {
+    margin-right: 4px;
     font-size: 10px;
-    letter-spacing: 0.03em;
     color: var(--ink-tertiary);
   }
 </style>
