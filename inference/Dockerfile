@@ -79,10 +79,12 @@ RUN mkdir -p $OLLAMA_MODELS && \
     kill $OPID 2>/dev/null || true && \
     sleep 2
 
-# Service code.
+# Service code. The deploy script (scripts/deploy_inference_space.sh)
+# moves inference/{proxy.py,entrypoint.sh,Dockerfile} to the repo root
+# before pushing, so the COPY paths below are root-relative.
 COPY services/riprap-models/main.py  ./riprap_models.py
-COPY inference/proxy.py              ./proxy.py
-COPY inference/entrypoint.sh         ./entrypoint.sh
+COPY proxy.py                        ./proxy.py
+COPY entrypoint.sh                   ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
 
 RUN chown -R user:user /home/user
