@@ -77,6 +77,8 @@ slides/deck.pptx
 
 # Demo recordings (large; not committed)
 assets/video/
+slides/*.mp4
+slides/asce/speaker_notes.md
 
 # Local env overlays
 .env.local
