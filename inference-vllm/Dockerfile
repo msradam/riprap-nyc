@@ -19,9 +19,13 @@
 # We cap vLLM at gpu_memory_utilization=0.55 so it doesn't grab the
 # whole device.
 
-FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04 AS base
+# Ubuntu 24.04 ships Python 3.12; needed because terratorch 1.1rc6 pulls
+# torchgeo>=0.7.0 which itself requires Python 3.11+. The Py3.10 base
+# (cuda:12.4.1-cudnn-runtime-ubuntu22.04) cannot satisfy that resolver.
+FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu24.04 AS base
 
-ENV DEBIAN_FRONTEND=noninteractive
+ENV DEBIAN_FRONTEND=noninteractive \
+    PIP_BREAK_SYSTEM_PACKAGES=1
 RUN apt-get update && apt-get install -y --no-install-recommends \
         python3 python3-pip python3-venv python-is-python3 \
         curl ca-certificates git zstd procps \
