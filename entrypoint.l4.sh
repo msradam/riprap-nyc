@@ -20,8 +20,11 @@ EO_MARKER="$EO_DIR/.installed"
 if [ ! -f "$EO_MARKER" ]; then
     echo "[entrypoint.l4] installing EO toolchain into $EO_DIR ..."
     mkdir -p "$EO_DIR"
+    # torchvision is now baked into the base image (Dockerfile.l4) so
+    # don't re-install it here — the EO_DIR shadowing copy was the
+    # source of the `torchvision::nms does not exist` runtime error.
     if pip install --no-cache-dir --no-deps --target="$EO_DIR" \
-            terratorch==1.1rc6 einops diffusers timm torchvision; then
+            terratorch==1.1rc6 einops diffusers timm; then
         if PYTHONPATH="$EO_DIR:$PYTHONPATH" python -c "
 import terratorch
 import terratorch.models.backbones.terramind.model.terramind_register
