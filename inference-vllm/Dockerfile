@@ -55,7 +55,9 @@ RUN pip install --no-cache-dir \
         peft==0.18.1 \
         granite-tsfm==0.3.3 \
         "sentence-transformers>=3.3,<4" \
-        "gliner>=0.2.6"
+        "gliner>=0.2.6" \
+        segmentation-models-pytorch \
+        torchvision
 
 # Bake Granite 4.1 8B FP8 weights into the image (~8 GB). vLLM auto-
 # detects the FP8 config in the model's config.json.
