@@ -450,7 +450,15 @@ def _fetch_inner(lat: float, lon: float, timeout_s: float) -> dict[str, Any]:
                                    f"{remote.get('error') or 'unknown'}",
                         "elapsed_s": round(time.time() - t0, 2)}
         except _inf.RemoteUnreachable as e:
-            log.info("prithvi_live: remote unreachable (%s); falling back to local", e)
+            log.info("prithvi_live: remote unreachable (%s)", e)
+            if remote_attempted:
+                # Don't fall to local — torchvision::nms is broken on the
+                # CPU-tier UI Spaces and crashes the FSM specialist with
+                # a confusing RuntimeError. Return a clean skipped row so
+                # the trace says "remote unreachable" instead.
+                return {"ok": False,
+                        "skipped": f"remote prithvi-pluvial unreachable: {e}",
+                        "elapsed_s": round(time.time() - t0, 2)}
         except Exception as e:
             log.exception("prithvi_live: remote call failed")
             if remote_attempted:
@@ -460,6 +468,8 @@ def _fetch_inner(lat: float, lon: float, timeout_s: float) -> dict[str, Any]:
                         "elapsed_s": round(time.time() - t0, 2)}
 
         # Local fallback — the path that's been live since v0.4.4.
+        # Reached only when remote_attempted is False (i.e. remote
+        # backend not configured at all).
         model, run_model = _ensure_model()
         x = img[None, :, None, :, :]  # (1, 6, 1, H, W)
         pred_t = run_model(x, None, None, model.model, model.datamodule, IMG_SIZE)
