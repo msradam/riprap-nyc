@@ -1,0 +1,92 @@
+# Riprap — Hugging Face Spaces deployment for the personal Space
+# (msradam/riprap-nyc) on L4 hardware.
+#
+# Differences from the canonical Dockerfile:
+#
+#   1. L4 has 24 GB VRAM (vs 16 GB on T4 small), so we co-host the
+#      riprap-models service inside the same container instead of
+#      proxying to the AMD MI300X droplet. No external dependency.
+#
+#   2. We bake granite4.1:8b at *build* time. The build sandbox could
+#      not previously fit Granite + EO toolchain together; this Dockerfile
+#      keeps the EO install at runtime (entrypoint.l4.sh) and frees the
+#      sandbox budget for the 8B pull.
+#
+#   3. CUDA + ROCm-free torch — the inline riprap-models service uses
+#      the cu124 wheels installed via requirements.txt + the additional
+#      delta in services/riprap-models/requirements.txt.
+#
+# DO NOT push this image to the lablab Space — that one stays pointed
+# at the MI300X droplet for AMD-judging continuity.
+
+FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04 AS base
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        python3 python3-pip python3-venv python-is-python3 \
+        curl ca-certificates zstd procps git \
+        gdal-bin libgdal-dev libgeos-dev libproj-dev \
+        libgl1 libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN useradd -m -u 1000 user
+ENV HOME=/home/user \
+    PATH=/home/user/.local/bin:/usr/local/bin:/usr/bin:/bin \
+    PYTHONUNBUFFERED=1 \
+    HF_HOME=/home/user/.cache/huggingface \
+    OLLAMA_HOST=127.0.0.1:11434 \
+    OLLAMA_NUM_PARALLEL=1 \
+    OLLAMA_KEEP_ALIVE=24h \
+    OLLAMA_MAX_LOADED_MODELS=2 \
+    OLLAMA_FLASH_ATTENTION=1 \
+    OLLAMA_KV_CACHE_TYPE=q8_0 \
+    OLLAMA_DEBUG=1 \
+    OLLAMA_MODELS=/home/user/.ollama/models \
+    RIPRAP_OLLAMA_3B_TAG=granite4.1:8b \
+    RIPRAP_LLM_PRIMARY=ollama \
+    RIPRAP_LLM_BASE_URL=http://127.0.0.1:11434/v1 \
+    RIPRAP_ML_BACKEND=remote \
+    RIPRAP_ML_BASE_URL=http://127.0.0.1:7861
+
+RUN curl -fsSL https://ollama.com/install.sh | sh
+
+WORKDIR /home/user/app
+
+# Web app deps (torch cu124 lands via sentence-transformers / etc.).
+COPY --chown=user:user requirements.txt ./
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# riprap-models delta deps. Use the existing requirements.txt at the
+# *service* level, but skip requirements-full.txt — its ROCm-frozen
+# torch pin would clobber the cu124 wheels installed above.
+COPY --chown=user:user services/riprap-models/requirements.txt /tmp/req-models.txt
+RUN pip install --no-cache-dir -r /tmp/req-models.txt
+
+# Bake Granite 4.1 weights into the image (EO toolchain is installed
+# at runtime — see entrypoint.l4.sh — to keep the build sandbox under
+# its disk threshold).
+RUN mkdir -p $OLLAMA_MODELS && \
+    ollama serve & \
+    OPID=$! && \
+    for i in $(seq 1 30); do curl -sf http://127.0.0.1:11434/ > /dev/null && break; sleep 1; done && \
+    ollama pull granite4.1:8b && \
+    kill $OPID 2>/dev/null || true && \
+    sleep 2
+
+# App code, fixtures, and inline model service.
+COPY --chown=user:user app/ ./app/
+COPY --chown=user:user web/ ./web/
+COPY --chown=user:user scripts/ ./scripts/
+COPY --chown=user:user data/ ./data/
+COPY --chown=user:user corpus/ ./corpus/
+COPY --chown=user:user services/riprap-models/main.py ./riprap_models.py
+COPY --chown=user:user agent.py riprap.py ./
+COPY --chown=user:user entrypoint.l4.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
+
+RUN chown -R user:user /home/user
+USER user
+
+EXPOSE 7860
+CMD ["./entrypoint.sh"]
