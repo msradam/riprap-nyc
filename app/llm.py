@@ -237,17 +237,28 @@ def _hardware_for(engine: str) -> str:
     """Map the active LLM engine to an emissions.HARDWARE key.
 
     Operator override via RIPRAP_HARDWARE_LABEL is honored where it
-    matches a known key (mi300x / t4 / apple / cpu); otherwise we
-    infer from engine selection and HF Space presence."""
+    matches a known key (mi300x / l4 / t4 / apple / cpu); otherwise:
+      - Remote vLLM/Ollama (RIPRAP_LLM_BASE_URL set) → NVIDIA L4. Both
+        Riprap inference Spaces (msradam/riprap-vllm + msradam/
+        riprap-inference) run on L4. The MI300X droplet was retired
+        2026-05-06.
+      - On a CPU/T4-tier HF Space (UI Space with no remote backend) →
+        T4.
+      - Otherwise local dev → Apple M-series."""
     override = (os.environ.get("RIPRAP_HARDWARE_LABEL") or "").lower()
     if "mi300x" in override or "amd" in override:
         return "amd_mi300x"
-    if "t4" in override or "nvidia" in override:
+    if "l4" in override:
+        return "nvidia_l4"
+    if "t4" in override:
         return "nvidia_t4"
+    if "nvidia" in override:
+        return "nvidia_l4"
     if "apple" in override or "m3" in override or "m4" in override:
         return "apple_m"
-    if engine == "vLLM" and _VLLM_BASE:
-        return "amd_mi300x"
+    if _VLLM_BASE:
+        # Any remote vLLM/Ollama backend currently lives on an L4 Space.
+        return "nvidia_l4"
     if os.environ.get("SPACE_ID") or os.environ.get("HF_SPACE_ID"):
         return "nvidia_t4"
     return "apple_m"

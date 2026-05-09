@@ -95,14 +95,23 @@ def _post(path: str, payload: dict[str, Any], timeout: float | None = None) -> d
         raise RemoteUnreachable(f"HTTP {r.status_code} from {path}: {r.text[:200]}")
     r.raise_for_status()
     duration_s = time.monotonic() - t0
-    # The remote ML service runs alongside vLLM on the AMD MI300X
-    # droplet; attribute the wallclock to that hardware. Local-fallback
-    # paths don't reach this function — they go straight to in-process
-    # model loads in the specialist module, which we don't track.
+    # Remote ML service is msradam/riprap-inference (or the vLLM-co-
+    # hosting msradam/riprap-vllm) — both run on NVIDIA L4 HF Spaces.
+    # Operators can override via RIPRAP_HARDWARE_LABEL when targeting
+    # different hardware (e.g. an MI300X droplet). Local-fallback paths
+    # don't reach this function — they go straight to in-process model
+    # loads in the specialist module, which we don't track.
+    override = (os.environ.get("RIPRAP_HARDWARE_LABEL") or "").lower()
+    if "mi300x" in override or "amd" in override:
+        hw = "amd_mi300x"
+    elif "t4" in override:
+        hw = "nvidia_t4"
+    else:
+        hw = "nvidia_l4"
     emissions.active().record_ml(
         endpoint=path,
         backend="riprap-models",
-        hardware="amd_mi300x",
+        hardware=hw,
         duration_s=duration_s,
     )
     return r.json()
