@@ -20,9 +20,10 @@
 # whole device.
 
 # Ubuntu 24.04 ships Python 3.12; needed because terratorch 1.1rc6 pulls
-# torchgeo>=0.7.0 which itself requires Python 3.11+. The Py3.10 base
-# (cuda:12.4.1-cudnn-runtime-ubuntu22.04) cannot satisfy that resolver.
-FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu24.04 AS base
+# torchgeo>=0.7.0 which itself requires Python 3.11+. NVIDIA's earliest
+# CUDA + ubuntu24.04 + cudnn tag is 12.6.0; CUDA 12.6 is forward-compat
+# with the cu124 PyTorch wheels we install below.
+FROM nvidia/cuda:12.6.3-cudnn-runtime-ubuntu24.04 AS base
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PIP_BREAK_SYSTEM_PACKAGES=1
