@@ -20,10 +20,7 @@ sensors, forecasts surges, and refuses to stay silent.
 
 ![Riprap flood-exposure briefing for DUMBO, Brooklyn](assets/screenshots/hero.png)
 
-Live demos:
-
-- **Hackathon submission** (AMD-hackathon HF org, official entry): <https://lablab-ai-amd-developer-hackathon-riprap-nyc.hf.space>
-- **Self-contained portfolio mirror** (personal HF, L4 GPU, sleep-on-idle): <https://msradam-riprap-nyc.hf.space>
+Live demo: <https://lablab-ai-amd-developer-hackathon-riprap-nyc.hf.space>
 
 ---
 
@@ -33,26 +30,10 @@ Three ways to use Riprap, in increasing order of self-host:
 
 ### 1. Try the live demo
 
-Two Spaces run the same code from this repo, with different backends.
-
-**`lablab-ai-amd-developer-hackathon-riprap-nyc`** is the official
-hackathon submission. The Space itself is CPU-only (per the AMD
-hackathon org policy); inference proxies to an AMD MI300X droplet
-provisioned via AMD Developer Cloud. The droplet is online during
-demo and judging windows. Outside those windows the briefing UI
-loads and renders pre-baked Cornerstone rasters, but live ML probes
-(Granite reconcile, Prithvi-EO, TerraMind) return `skipped:
-inference unavailable`.
+The hosted Space runs the full pipeline against a live AMD MI300X
+inference backend. Type any NYC address.
 
 <https://lablab-ai-amd-developer-hackathon-riprap-nyc.hf.space>
-
-**`msradam/riprap-nyc`** is the self-contained mirror. The Space
-runs on an L4 GPU and co-hosts everything in one container —
-Granite 4.1 8B via Ollama, plus Prithvi-EO 2.0, TerraMind LoRAs,
-and Granite TTM r2 in-process — so no external dependency. Sleeps
-on idle; first request after sleep takes ~45–60 s to wake.
-
-<https://msradam-riprap-nyc.hf.space>
 
 ### 2. Run locally with Docker
 
@@ -76,22 +57,6 @@ docker compose --profile with-models up
 
 Full single-command MI300X bring-up via DigitalOcean: see
 [`docs/DROPLET-RUNBOOK.md`](docs/DROPLET-RUNBOOK.md).
-
-To deploy the self-contained L4 mirror to your own HF Space (the
-`msradam/riprap-nyc` pattern — Ollama + Granite + EO models all
-co-resident in one container, no external droplet):
-
-```bash
-scripts/deploy_personal_space.sh --setup   # one-time: add `personal` git remote
-scripts/deploy_personal_space.sh           # build + push to msradam/riprap-nyc
-
-# What this does:
-# - swaps Dockerfile.l4 → Dockerfile and entrypoint.l4.sh → entrypoint.sh
-#   on a temporary `hf-personal` branch (your main branch is untouched)
-# - force-pushes that branch to your personal HF Space's main
-# - hard-coded guard refuses to push to any remote whose URL matches
-#   the lablab-ai / AMD-hackathon org
-```
 
 ### 3. Develop
 

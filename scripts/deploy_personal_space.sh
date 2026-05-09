@@ -14,21 +14,39 @@
 set -euo pipefail
 
 PERSONAL_REMOTE="personal"
-PERSONAL_URL="https://huggingface.co/spaces/msradam/riprap-nyc"
+# IMPORTANT: HF redirects <username>/<repo-name> back to the canonical
+# org Space if the repo doesn't exist on the personal account. So the
+# personal Space MUST have a different repo name (e.g. -mirror or -l4)
+# than the org Space, or this script will push to the org Space and
+# overwrite the official submission. Configure here.
+PERSONAL_URL="https://huggingface.co/spaces/msradam/riprap-mirror"
 PERSONAL_BRANCH="hf-personal"
 LABLAB_NAME_PATTERN="AMD-hackathon|lablab-ai"
 
 guard_against_lablab () {
-    # Refuse to run if the working tree's "origin" or any remote whose
-    # URL matches the lablab Space is the push target.
+    # Layer 1: the configured PERSONAL_URL must not contain the org name.
+    if echo "$PERSONAL_URL" | grep -qE "$LABLAB_NAME_PATTERN"; then
+        echo "FATAL: PERSONAL_URL ($PERSONAL_URL) matches the lablab org pattern."
+        exit 1
+    fi
+    # Layer 2: HF's redirect resolution. Follow redirects on the URL
+    # and check the final landing URL too. This is the layer that
+    # catches the <username>/<repo-name> shorthand redirect.
+    final=$(curl -sIL -o /dev/null -w "%{url_effective}" "$PERSONAL_URL")
+    if echo "$final" | grep -qE "$LABLAB_NAME_PATTERN"; then
+        echo "FATAL: PERSONAL_URL ($PERSONAL_URL) redirects to a lablab-org URL"
+        echo "       (resolved to: $final)."
+        echo "       The personal Space must have a repo name that does NOT"
+        echo "       collide with the org Space. Pick a unique name and"
+        echo "       create the Space on HF before re-running this."
+        exit 1
+    fi
+    # Layer 3: configured remotes.
     for r in $(git remote); do
         url=$(git remote get-url "$r" 2>/dev/null || echo "")
-        if echo "$url" | grep -qE "$LABLAB_NAME_PATTERN"; then
-            if [ "$r" = "$PERSONAL_REMOTE" ]; then
-                echo "FATAL: remote '$PERSONAL_REMOTE' points at the lablab Space ($url)."
-                echo "       This script will not push there. Re-add the personal Space remote."
-                exit 1
-            fi
+        if [ "$r" = "$PERSONAL_REMOTE" ] && echo "$url" | grep -qE "$LABLAB_NAME_PATTERN"; then
+            echo "FATAL: remote '$PERSONAL_REMOTE' points at the lablab Space ($url)."
+            exit 1
         fi
     done
 }
@@ -61,23 +79,76 @@ if ! git remote | grep -q "^${PERSONAL_REMOTE}$"; then
     exit 1
 fi
 
-# Build a deploy branch that uses Dockerfile.l4 as Dockerfile and
-# entrypoint.l4.sh as entrypoint.sh. We never modify main.
+# Build a deploy branch with NO history — HF Spaces scans the full
+# branch ancestry for binary files and rejects the push if any commit
+# anywhere in history contains an unmigrated binary. So we orphan a
+# fresh branch from the current tree, prune non-app artifacts, swap
+# the Dockerfile and entrypoint, and force-push that single commit.
 DEPLOY_TMP="$(git rev-parse --show-toplevel)/.deploy-tmp-l4"
 rm -rf "$DEPLOY_TMP"
-git worktree add -B "$PERSONAL_BRANCH" "$DEPLOY_TMP" HEAD
+git worktree add --detach "$DEPLOY_TMP" HEAD
 
 (
     cd "$DEPLOY_TMP"
+
+    # Orphan branch — single commit, no ancestry.
+    git checkout --orphan "$PERSONAL_BRANCH"
+
+    # Strip artifacts that don't ship to the running Space.
+    rm -rf slides/ submission/ docs/ pitch/ research/ corpus/ \
+           assets/screenshots/ \
+           assets/cover.png assets/cover-*.png assets/cover-v*.png \
+           assets/logo-paper@2x.png assets/logo@2x.png \
+           assets/video/ \
+           ARCHITECTURE.md METHODOLOGY.md RESEARCH.md \
+           NOTICE LICENSE \
+           tests/ experiments/ \
+           Dockerfile.app docker-compose.yml \
+           README.md
+    # Swap Dockerfile + entrypoint to the L4 variants.
     cp Dockerfile.l4    Dockerfile
     cp entrypoint.l4.sh entrypoint.sh
     chmod +x entrypoint.sh
-    git add Dockerfile entrypoint.sh
-    git commit -m "deploy(l4): swap Dockerfile.l4 → Dockerfile for personal Space" || true
+    rm -f Dockerfile.l4 entrypoint.l4.sh
+
+    # Minimal Space-facing README with HF Space frontmatter.
+    cat > README.md <<'README'
+---
+title: Riprap NYC (Personal Mirror, L4)
+emoji: 🌊
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+pinned: false
+short_description: NYC flood-exposure briefings on L4 (self-contained).
+---
+
+# Riprap — NYC flood-exposure briefings (L4 self-contained mirror)
+
+This Space is a self-contained mirror of
+[`github.com/msradam/riprap-nyc`](https://github.com/msradam/riprap-nyc).
+
+It runs on a single L4 GPU and co-hosts everything in one container:
+Granite 4.1 8B (via Ollama), Prithvi-EO 2.0 NYC-Pluvial, TerraMind
+LULC + Buildings LoRAs, and Granite TTM r2 — no external droplet
+dependency. Sleeps on idle; first request after sleep takes ~45–60 s
+to wake.
+
+The hackathon submission Space (CPU UI, droplet proxy) lives at
+[`AMD-hackathon/riprap-nyc`](https://lablab-ai-amd-developer-hackathon-riprap-nyc.hf.space).
+
+Apache 2.0. See the GitHub repo for full source, architecture
+deep-dive, methodology, and licence map.
+README
+
+    git add -A
+    git -c user.email=msrahmanadam@gmail.com -c user.name="Adam Munawar Rahman" \
+        commit -m "deploy(l4): self-contained Riprap mirror"
 
     echo "[deploy] pushing $PERSONAL_BRANCH → $PERSONAL_REMOTE main ..."
-    git push --force-with-lease "$PERSONAL_REMOTE" "${PERSONAL_BRANCH}:main"
+    git push --force "$PERSONAL_REMOTE" "${PERSONAL_BRANCH}:main"
 )
 
 git worktree remove --force "$DEPLOY_TMP"
+git branch -D "$PERSONAL_BRANCH" 2>/dev/null || true
 echo "[deploy] done. Watch build at: ${PERSONAL_URL}"
