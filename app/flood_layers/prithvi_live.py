@@ -445,9 +445,12 @@ def _fetch_inner(lat: float, lon: float, timeout_s: float) -> dict[str, Any]:
                         "compute": f"remote · {remote.get('device', 'gpu')}",
                         "elapsed_s": round(time.time() - t0, 2),
                     }
+                err = (remote.get("err")
+                       or remote.get("error")
+                       or remote.get("skipped")
+                       or "unknown")
                 return {"ok": False,
-                        "skipped": f"remote prithvi-pluvial non-ok: "
-                                   f"{remote.get('error') or 'unknown'}",
+                        "skipped": f"remote prithvi-pluvial non-ok: {err}",
                         "elapsed_s": round(time.time() - t0, 2)}
         except _inf.RemoteUnreachable as e:
             log.info("prithvi_live: remote unreachable (%s)", e)

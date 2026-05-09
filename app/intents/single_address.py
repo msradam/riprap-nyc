@@ -51,8 +51,15 @@ def run(plan, query: str, progress_q=None, strict: bool = False) -> dict:
     set_user_query(query)
     set_planner_intent(plan.intent)
     if progress_q is not None:
-        def _on_token(delta: str):
-            progress_q.put({"kind": "token", "delta": delta})
+        def _on_token(delta: str, attempt_idx: int = 0):
+            # `attempt_idx` is the 0-based Mellea reroll index. The
+            # SvelteKit client treats a change in this value as a
+            # signal to clear the live briefing buffer (per
+            # web/sveltekit/src/lib/client/agentStream.ts:onAttemptStart).
+            # We surface it as a 1-based attempt counter so the chip
+            # in the UI reads "attempt N" naturally.
+            progress_q.put({"kind": "token", "delta": delta,
+                            "attempt": attempt_idx + 1})
         def _on_mellea_attempt(attempt_idx, passed, failed):
             progress_q.put({"kind": "mellea_attempt",
                             "attempt": attempt_idx,

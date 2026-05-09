@@ -1015,11 +1015,24 @@ def step_reconcile(state: State) -> State:
                     query=_current_user_query() or state.get("query") or "",
                     intent=_current_planner_intent() or "single_address",
                 )
+                # Forward the (delta, attempt_idx) pair through. Older
+                # token_cb signatures were single-arg; we detect by
+                # introspecting the callable's expected positional count
+                # so single_address.py's old shape still works while new
+                # callbacks see the attempt index they need to clear the
+                # frontend buffer on a Mellea reroll.
+                def _fwd_token(delta: str, attempt_idx: int) -> None:
+                    if token_cb is None:
+                        return
+                    try:
+                        token_cb(delta, attempt_idx)
+                    except TypeError:
+                        token_cb(delta)
                 mres = reconcile_strict_streaming(
                     doc_msgs, framed_prompt,
                     user_prompt="Write the cited paragraph now.",
                     loop_budget=DEFAULT_LOOP_BUDGET,
-                    on_token=(lambda d, _ai: token_cb(d)) if token_cb else None,
+                    on_token=_fwd_token if token_cb else None,
                     on_attempt_end=attempt_cb,
                 )
                 para = mres["paragraph"]
