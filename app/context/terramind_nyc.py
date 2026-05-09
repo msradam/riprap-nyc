@@ -305,9 +305,18 @@ def _summarize_buildings(pred, class_labels: list[str]) -> dict[str, Any]:
 
 
 def _try_remote(adapter_name: str, modality_chips: dict) -> dict | None:
-    """v0.4.5 — POST to MI300X riprap-models if configured. Returns the
-    parsed result on success; None on RemoteUnreachable so the caller
-    falls through to the local terratorch path."""
+    """POST to the riprap-models inference service if configured.
+
+    Returns:
+      - successful result dict on a 200/ok=True remote response
+      - {"ok": False, "skipped": "<reason>"} when remote was attempted
+        but failed (RemoteUnreachable, ok=False, or other error). The
+        caller MUST NOT fall through to local terratorch in this case
+        — local has been broken on the CPU-tier UI Spaces since the
+        torchvision binary mismatch landed, and we'd rather show a
+        clean "remote unreachable" reason than a noisy crash.
+      - None ONLY when remote isn't configured at all (caller may
+        legitimately try local then)."""
     try:
         from app import inference as _inf
         if not _inf.remote_enabled():
@@ -320,7 +329,9 @@ def _try_remote(adapter_name: str, modality_chips: dict) -> dict | None:
         # service rebuilds the temporal stack on its end.
         result = _inf.terramind(adapter_name, s2, s1, dem)
         if not result.get("ok"):
-            return None
+            err = result.get("error") or result.get("err") or "unknown"
+            return {"ok": False,
+                    "skipped": f"remote terramind/{adapter_name} non-ok: {err}"}
         result.setdefault("adapter", adapter_name)
         result.setdefault("repo", ADAPTERS_REPO)
         result["compute"] = f"remote · {result.get('device', 'gpu')}"
@@ -354,13 +365,14 @@ def _try_remote(adapter_name: str, modality_chips: dict) -> dict | None:
                 result["polygons_geojson"] = None
         return result
     except _inf.RemoteUnreachable as e:
-        log.info("terramind/%s: remote unreachable (%s); local fallback",
-                 adapter_name, e)
-        return None
-    except Exception:
-        log.exception("terramind/%s: remote call failed; local fallback",
-                       adapter_name)
-        return None
+        log.info("terramind/%s: remote unreachable (%s)", adapter_name, e)
+        return {"ok": False,
+                "skipped": f"remote terramind/{adapter_name} unreachable: {e}"}
+    except Exception as e:
+        log.exception("terramind/%s: remote call failed", adapter_name)
+        return {"ok": False,
+                "skipped": f"remote terramind/{adapter_name} error: "
+                           f"{type(e).__name__}: {e}"}
 
 
 def _run(adapter_name: str, modality_chips: dict, summarizer):
