@@ -82,7 +82,7 @@ COPY --chown=user:user data/ ./data/
 COPY --chown=user:user corpus/ ./corpus/
 COPY --chown=user:user services/riprap-models/main.py ./riprap_models.py
 COPY --chown=user:user agent.py riprap.py ./
-COPY --chown=user:user entrypoint.l4.sh ./entrypoint.sh
+COPY --chown=user:user entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
 
 RUN chown -R user:user /home/user
