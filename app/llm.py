@@ -280,16 +280,59 @@ def _extract_usage(resp) -> tuple[int | None, int | None]:
         return (None, None)
 
 
+def _power_url() -> str | None:
+    """Build the proxy's /v1/power URL from RIPRAP_LLM_BASE_URL.
+    Returns None if remote isn't configured."""
+    if not _VLLM_BASE:
+        return None
+    base = _VLLM_BASE
+    # _VLLM_BASE looks like https://msradam-riprap-vllm.hf.space/v1
+    # The proxy's /v1/power lives at the same /v1 prefix.
+    if base.endswith("/v1"):
+        return base + "/power"
+    return base.rstrip("/") + "/v1/power"
+
+
+def _sample_gpu_power_w() -> float | None:
+    """Single GET to the proxy's /v1/power endpoint. Returns the
+    instantaneous reading in watts, or None if unreachable / NVML off."""
+    url = _power_url()
+    if not url:
+        return None
+    try:
+        import httpx as _httpx
+        with _httpx.Client(timeout=2.0) as c:
+            r = c.get(url, headers={"Authorization": f"Bearer {_VLLM_KEY}"})
+        if r.status_code != 200:
+            return None
+        data = r.json()
+        # Prefer the 1 s rolling average — smooths over the 100 ms sampler
+        # so a single mid-idle tick doesn't poison the bracket.
+        for k in ("power_w_avg_1s", "power_w", "power_w_avg_5s"):
+            v = data.get(k)
+            if isinstance(v, (int, float)) and v > 0:
+                return float(v)
+    except Exception:
+        return None
+    return None
+
+
 def _record_llm(*, alias: str, messages: list[dict], duration_s: float,
                 resp=None, completion_text: str | None = None,
-                stream: bool = False) -> None:
+                stream: bool = False,
+                avg_power_w: float | None = None) -> None:
     """Record one llm.chat call into the active emissions tracker.
 
     For non-stream calls, we read prompt/completion tokens off the
     LiteLLM response. For stream calls, the response is a generator —
     we estimate tokens from concatenated assistant text and from a
-    char/4 estimate of the input messages. Estimates are flagged on
-    the call record so the UI can disclose them."""
+    char/4 estimate of the input messages.
+
+    `avg_power_w`, when provided, comes from a real NVML read on the
+    inference proxy (bracketed before / after the call). The tracker
+    converts that to joules via `power × duration` and flags the row
+    `measured=True`. Estimates fall through to the data-sheet figure.
+    """
     info = backend_info()
     hardware = _hardware_for(info["engine"])
     backend = info["engine"]
@@ -300,6 +343,8 @@ def _record_llm(*, alias: str, messages: list[dict], duration_s: float,
             " " * prompt_chars) if prompt_chars else None
     if completion_tokens is None and completion_text is not None:
         completion_tokens = emissions.estimate_completion_tokens(completion_text)
+    joules_real = (avg_power_w * duration_s
+                   if avg_power_w is not None and duration_s > 0 else None)
     emissions.active().record_llm(
         model=alias,
         backend=backend,
@@ -308,6 +353,8 @@ def _record_llm(*, alias: str, messages: list[dict], duration_s: float,
         completion_tokens=completion_tokens,
         duration_s=duration_s,
         stream=stream,
+        joules_real=joules_real,
+        power_w_real=avg_power_w,
     )
 
 
@@ -380,18 +427,40 @@ def chat(model: str, messages: list[dict], options: dict | None = None,
         kwargs["response_format"] = {"type": "json_object"}
         # Ollama path (LiteLLM forwards this via extra_body for ollama_chat)
         kwargs.setdefault("extra_body", {})["format"] = "json"
+    # Bracket the call with /v1/power samples so we get a real
+    # NVML-derived energy reading, not a data-sheet estimate. Each
+    # sample is a sub-100 ms GET; the proxy returns a 1 s rolling avg
+    # so a single tick of idleness doesn't poison the bracket.
+    p0 = _sample_gpu_power_w()
     t0 = time.monotonic()
     if stream:
         s = _router.completion(model=alias, messages=messages,
                                stream=True, **kwargs)
 
         def _on_stream_done(full_text: str) -> None:
+            duration_s = time.monotonic() - t0
+            p1 = _sample_gpu_power_w()
+            avg = _avg_w(p0, p1)
             _record_llm(alias=alias, messages=messages,
-                        duration_s=time.monotonic() - t0,
-                        completion_text=full_text, stream=True)
+                        duration_s=duration_s,
+                        completion_text=full_text, stream=True,
+                        avg_power_w=avg)
 
         return _stream_to_ollama_shape(s, on_done=_on_stream_done)
     resp = _router.completion(model=alias, messages=messages, **kwargs)
+    duration_s = time.monotonic() - t0
+    p1 = _sample_gpu_power_w()
+    avg = _avg_w(p0, p1)
     _record_llm(alias=alias, messages=messages,
-                duration_s=time.monotonic() - t0, resp=resp, stream=False)
+                duration_s=duration_s, resp=resp, stream=False,
+                avg_power_w=avg)
     return _to_ollama_shape(resp)
+
+
+def _avg_w(p0: float | None, p1: float | None) -> float | None:
+    """Mean of two power samples; falls back to whichever single sample
+    is available, or None if both failed."""
+    pair = [p for p in (p0, p1) if p is not None]
+    if not pair:
+        return None
+    return sum(pair) / len(pair)

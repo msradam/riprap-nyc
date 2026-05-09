@@ -95,12 +95,11 @@ def _post(path: str, payload: dict[str, Any], timeout: float | None = None) -> d
         raise RemoteUnreachable(f"HTTP {r.status_code} from {path}: {r.text[:200]}")
     r.raise_for_status()
     duration_s = time.monotonic() - t0
-    # Remote ML service is msradam/riprap-inference (or the vLLM-co-
-    # hosting msradam/riprap-vllm) — both run on NVIDIA L4 HF Spaces.
-    # Operators can override via RIPRAP_HARDWARE_LABEL when targeting
-    # different hardware (e.g. an MI300X droplet). Local-fallback paths
-    # don't reach this function — they go straight to in-process model
-    # loads in the specialist module, which we don't track.
+    # Hardware: msradam/riprap-vllm runs on NVIDIA L4. Operators can
+    # override via RIPRAP_HARDWARE_LABEL. The proxy reports per-call
+    # GPU energy off NVML in the X-GPU-Energy-J / X-GPU-Power-W headers
+    # — read those for a real measurement instead of the data-sheet
+    # estimate when present.
     override = (os.environ.get("RIPRAP_HARDWARE_LABEL") or "").lower()
     if "mi300x" in override or "amd" in override:
         hw = "amd_mi300x"
@@ -108,13 +107,31 @@ def _post(path: str, payload: dict[str, Any], timeout: float | None = None) -> d
         hw = "nvidia_t4"
     else:
         hw = "nvidia_l4"
+    joules_real, power_w_real = _parse_gpu_headers(r.headers)
     emissions.active().record_ml(
         endpoint=path,
         backend="riprap-models",
         hardware=hw,
         duration_s=duration_s,
+        joules_real=joules_real,
+        power_w_real=power_w_real,
     )
     return r.json()
+
+
+def _parse_gpu_headers(headers) -> tuple[float | None, float | None]:
+    """Pull (joules, watts) from X-GPU-Energy-J / X-GPU-Power-W if the
+    proxy attached them. Returns (None, None) if the headers are absent
+    (older proxy build, NVML init failed, or the call streamed)."""
+    def _f(name: str) -> float | None:
+        v = headers.get(name)
+        if v is None or v == "":
+            return None
+        try:
+            return float(v)
+        except ValueError:
+            return None
+    return _f("x-gpu-energy-j"), _f("x-gpu-power-w")
 
 
 def _serialize_array(arr) -> str:
