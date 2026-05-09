@@ -237,7 +237,10 @@ For the long-form architecture document, see
 civil-engineering framing in
 [`docs/METHODOLOGY.md`](docs/METHODOLOGY.md). Lit review in
 [`docs/RESEARCH.md`](docs/RESEARCH.md). Production deploy
-topology in [`docs/DEPLOY.md`](docs/DEPLOY.md).
+topology in [`docs/DEPLOY.md`](docs/DEPLOY.md). Live measurements
+on the canonical four-address verification set (wall-clock, real
+NVML energy, Mellea grounding pass-rate) in
+[`docs/BENCHMARKS.md`](docs/BENCHMARKS.md).
 
 ---
 

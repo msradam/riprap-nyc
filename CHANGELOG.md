@@ -23,8 +23,11 @@ that landed on the hackathon-period production deploys.
   address query against the lablab UI and asserts all five Stones
   fire, no `torchvision::nms` / `deps unavailable` dep regression,
   and the `emissions` block carries `nvidia_l4` hardware.
-- `docs/EMISSIONS.md`, `docs/DEPLOY.md`, `CHANGELOG.md`,
-  `CONTRIBUTING.md`.
+- `scripts/probe_benchmarks.py` — collects the canonical
+  four-address verification set into `outputs/benchmarks.json`
+  for the `docs/BENCHMARKS.md` page.
+- `docs/EMISSIONS.md`, `docs/DEPLOY.md`, `docs/BENCHMARKS.md`,
+  `CHANGELOG.md`, `CONTRIBUTING.md`.
 
 ### Changed
 - The `RunHealthStrip` chip dropped the cloud-energy comparison
