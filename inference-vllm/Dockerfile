@@ -46,8 +46,10 @@ ENV HOME=/home/user \
 WORKDIR /home/user/app
 
 # vLLM brings its own torch / cu124. Pin a known-working version.
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir \
+# Skip `pip install --upgrade pip` — Ubuntu 24.04's debian-managed pip
+# 24.0 lacks the RECORD file so pip can't cleanly uninstall it, and the
+# stock 24.0 is new enough for our needs anyway.
+RUN pip install --no-cache-dir \
         vllm==0.7.3 \
         fastapi>=0.115 \
         uvicorn[standard]>=0.32 \
