@@ -177,10 +177,39 @@ async def healthz():
             out["vllm"] = f"err: {type(e).__name__}"
         try:
             r = await client.get(f"{MODELS_URL}/healthz")
-            out["riprap_models"] = "ok" if r.status_code == 200 else f"http_{r.status_code}"
+            if r.status_code == 200:
+                out["riprap_models"] = "ok"
+                # Bubble up the loaded-model list + last-error map so
+                # operators can diagnose without hitting /v1/diag.
+                try:
+                    body = r.json()
+                    out["riprap_models_loaded"] = body.get("models_loaded")
+                    out["riprap_models_last_errors"] = body.get("last_errors")
+                except Exception:
+                    pass
+            else:
+                out["riprap_models"] = f"http_{r.status_code}"
         except Exception as e:
             out["riprap_models"] = f"err: {type(e).__name__}"
     return out
+
+
+@app.get("/v1/diag", include_in_schema=False)
+async def diag(request: Request) -> Response:
+    """Forward to riprap-models /v1/diag (auth-required).
+    Operator-only diagnostic snapshot — what's loaded, last per-stage
+    error with traceback tail, and CUDA memory state per device."""
+    _check_auth(request)
+    async with httpx.AsyncClient(timeout=10) as client:
+        try:
+            r = await client.get(f"{MODELS_URL}/v1/diag")
+        except Exception as e:
+            return JSONResponse({"ok": False,
+                                 "err": f"upstream: {type(e).__name__}: {e}"},
+                                status_code=503)
+        return Response(content=r.content,
+                        status_code=r.status_code,
+                        media_type=r.headers.get("content-type", "application/json"))
 
 
 @app.get("/v1/power")
