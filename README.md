@@ -41,10 +41,18 @@ Three ways to use Riprap, in increasing order of self-host:
 
 ### 1. Try the live demo
 
-The hosted Space runs the full pipeline against a live AMD MI300X (or NVIDIA
-L4) inference backend. Type any NYC address.
+The hosted Space runs the full pipeline. Type any NYC address.
 
 <https://lablab-ai-amd-developer-hackathon-riprap-nyc.hf.space>
+
+The hackathon submission was originally built against an AMD Instinct
+MI300X via the AMD Developer Cloud, where the three NYC-specialised
+fine-tunes were trained. For the hackathon-period demo, inference now
+serves from an NVIDIA L4 Hugging Face Space (`msradam/riprap-vllm`)
+co-hosting vLLM + the EO model stack — see
+[`docs/DEPLOY.md`](docs/DEPLOY.md). Setting
+`RIPRAP_HARDWARE_LABEL=AMD MI300X` on a redeploy swaps the energy
+ledger back to MI300X figures.
 
 ### 2. Run locally with Docker
 
@@ -192,9 +200,17 @@ NYC address ──► Granite 4.1 3B planner ──► Plan{intent, targets, spe
 ```
 
 LLM inference is dispatched through `app/llm.py`, a LiteLLM Router shim
-with two backends: **Ollama** (T4 / local) and **vLLM** (AMD MI300X or
-NVIDIA L4). Same `chat()` signature in both directions; vLLM is primary
-for the demo, Ollama is the auto-failover.
+with two backends: **Ollama** (local dev) and **vLLM** (AMD MI300X or
+NVIDIA L4 — currently L4 on `msradam/riprap-vllm`). Same `chat()`
+signature in both directions; vLLM is primary for the demo, Ollama is
+the auto-failover.
+
+ML model inference (Prithvi-EO, TerraMind, TTM, GLiNER, Granite
+Embedding) goes through `app/inference.py::_post`, a thin HTTP client
+that hits the bearer-authenticated proxy on the inference Space. The
+proxy forwards to vLLM or to the riprap-models service co-resident on
+the same L4, and stamps real GPU power readings onto every response —
+see the energy section below.
 
 Source-of-truth pointers:
 
@@ -211,12 +227,47 @@ Source-of-truth pointers:
   `plan / step / token / mellea_attempt / final` events plus the
   `stone_start / stone_done` envelope around each Stone group.
 - `web/sveltekit/`: primary UI (SvelteKit + adapter-static).
+- `inference-vllm/proxy.py`: bearer-auth proxy on the L4 inference
+  Space; runs the NVML power sampler that the energy ledger reads.
+- `app/emissions.py`: per-query Tracker + hardware profiles. Records
+  every LLM and ML inference call with `measured: bool`.
 
 For the long-form architecture document, see
 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). Methodology and
 civil-engineering framing in
 [`docs/METHODOLOGY.md`](docs/METHODOLOGY.md). Lit review in
-[`docs/RESEARCH.md`](docs/RESEARCH.md).
+[`docs/RESEARCH.md`](docs/RESEARCH.md). Production deploy
+topology in [`docs/DEPLOY.md`](docs/DEPLOY.md).
+
+---
+
+## Inference energy — measured, not estimated
+
+Riprap reports the energy and token cost of every inference call it
+makes during a briefing. The status row on the Findings region
+displays a single chip:
+
+```
+✓ 1.4 Wh / 6.9K tok inference
+```
+
+The `✓` icon means every recorded call came back with a real reading
+off the L4 GPU via `nvmlDeviceGetPowerUsage`. The inference Space
+runs a 100 ms-cadence NVML sampler in the proxy and stamps
+`X-GPU-Power-W` / `X-GPU-Energy-J` on every response; the LLM client
+brackets each completion with two GETs to `/v1/power` because LiteLLM
+hides response headers. When the proxy is unreachable, the chip
+shows `~` or `◐` and the row falls back to a data-sheet sustained-
+power estimate.
+
+Per-call records carry `prompt_tokens`, `completion_tokens`,
+`duration_s`, `power_w`, `joules`, and a `measured: bool` flag. The
+full ledger is shipped on the SSE `final` event under
+`emissions.calls`, so any consumer (dashboard, billing model,
+reproducibility check) can reuse the data.
+
+Detailed pipeline + verification recipe in
+[`docs/EMISSIONS.md`](docs/EMISSIONS.md).
 
 ---
 
@@ -247,6 +298,46 @@ aggregators.
 
 The full data licence map and vintage table is enumerated in
 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+
+---
+
+## Repository structure
+
+```
+app/                       Python — Burr FSM, specialists, reconciler
+├── fsm.py                 One @action per probe, plus the Stones taxonomy
+├── llm.py                 LiteLLM Router shim (Ollama / vLLM)
+├── inference.py           HTTP client for the riprap-models service
+├── emissions.py           Per-query energy + token ledger (real NVML)
+├── reconcile.py           Granite-native document reconcile (Capstone)
+├── mellea_validator.py    Mellea four-check rejection sampling
+├── stones/, intents/      Stone definitions + intent dispatchers
+├── flood_layers/          Cornerstone hazard probes
+├── context/, registers/   Keystone + Touchstone register / EO probes
+└── live/                  Lodestone forecast probes
+
+web/                       FastAPI + SvelteKit
+├── main.py                FastAPI app, SSE streaming, layer endpoints
+├── sveltekit/             Primary UI (adapter-static; build committed)
+└── static/                Legacy custom-element pages (still mounted)
+
+inference-vllm/            Inference Space (vLLM + EO models + proxy)
+├── Dockerfile             L4 image, bakes Granite 4.1 8B FP8 + EO deps
+├── entrypoint.sh          Boots vllm, riprap-models, proxy together
+└── proxy.py               Bearer-auth + NVML sampler + SSE pass-through
+
+inference/                 Ollama-backed inference Space (fallback)
+services/riprap-models/    EO/forecast specialist HTTP service
+
+scripts/                   Probes, register builders, deploy commands
+experiments/               Reproduction recipes for the three NYC fine-tunes
+docs/                      ARCHITECTURE · DEPLOY · EMISSIONS · METHODOLOGY · RESEARCH
+tests/                     pytest suite (envelope + compare-shape)
+```
+
+[`CONTRIBUTING.md`](CONTRIBUTING.md) covers dev setup, the probe
+scripts, and house style. [`CHANGELOG.md`](CHANGELOG.md) tracks
+changes since the v0.5.0 hackathon submission.
 
 ---
 

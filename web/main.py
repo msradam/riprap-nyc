@@ -12,7 +12,7 @@ from pathlib import Path
 warnings.filterwarnings("ignore")
 
 from fastapi import FastAPI, Request  # noqa: E402
-from fastapi.responses import FileResponse, StreamingResponse  # noqa: E402
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 
 from app import emissions  # noqa: E402
@@ -95,6 +95,38 @@ app.mount("/static", StaticFiles(directory=STATIC), name="static")
 # /legacy, /single, /compare, /register/* for as long as they're useful.
 if SVELTEKIT_BUILD.exists():
     app.mount("/_app", StaticFiles(directory=SVELTEKIT_BUILD / "_app"), name="sveltekit_assets")
+
+# Top-level static assets the SvelteKit build emits next to the HTML
+# entry points (favicon.svg / favicon.png / robots.txt). These would
+# fall through to the SPA fallback and 404 without explicit routes;
+# adapter-static expects them under /, not /_app.
+def _serve_build_asset(name: str):
+    p = SVELTEKIT_BUILD / name
+    if not p.exists():
+        return JSONResponse({"detail": "Not Found"}, status_code=404)
+    return FileResponse(p, headers={"Cache-Control": "public, max-age=86400"})
+
+
+@app.get("/favicon.svg", include_in_schema=False)
+def _favicon_svg():
+    return _serve_build_asset("favicon.svg")
+
+
+@app.get("/favicon.png", include_in_schema=False)
+def _favicon_png():
+    return _serve_build_asset("favicon.png")
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def _favicon_ico():
+    # No .ico in the build, but browsers still probe for it. Redirect-
+    # by-content to the PNG so the tab gets the dam mark either way.
+    return _serve_build_asset("favicon.png")
+
+
+@app.get("/robots.txt", include_in_schema=False)
+def _robots():
+    return _serve_build_asset("robots.txt")
 
 import json as _json  # noqa: E402
 
