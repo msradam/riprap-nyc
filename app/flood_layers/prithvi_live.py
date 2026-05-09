@@ -233,10 +233,14 @@ def _ensure_model():
                                 std = self.std.to(sample.device)
                                 return (sample - mean) / std
 
-                        m.datamodule.aug = _DictNormalize(
-                            _old.means.view(-1).detach().clone(),
-                            _old.stds.view(-1).detach().clone(),
-                        )
+                        # `_old.means` / `_old.stds` come from the
+                        # yaml as Python lists — calling `.view()` on
+                        # them is what tripped the original
+                        # `'list' object has no attribute 'view'`.
+                        # _DictNormalize handles the conversion via
+                        # torch.as_tensor internally; just pass the
+                        # raw values whatever their type.
+                        m.datamodule.aug = _DictNormalize(_old.means, _old.stds)
                         log.info("prithvi_live: patched v2 datamodule transforms "
                                  "for IBM inference.py compat (dict-aware Normalize)")
                 else:

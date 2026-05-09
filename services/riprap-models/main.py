@@ -173,10 +173,13 @@ def _load_prithvi():
                         std = self.std.to(sample.device)
                         return (sample - mean) / std
 
-                m.datamodule.aug = _DictNormalize(
-                    _old.means.view(-1).detach().clone(),
-                    _old.stds.view(-1).detach().clone(),
-                )
+                # `_old.means` / `_old.stds` come from the yaml as
+                # Python lists — calling `.view()` on them is what
+                # tripped the original `'list' object has no attribute
+                # 'view'`. _DictNormalize handles the conversion via
+                # torch.as_tensor internally; just pass the raw values
+                # whatever their type.
+                m.datamodule.aug = _DictNormalize(_old.means, _old.stds)
                 log.info("prithvi: patched v2 datamodule transforms "
                          "for IBM inference.py compat (dict-aware Normalize)")
         else:
@@ -803,10 +806,15 @@ async def lifespan(_app: FastAPI):
                 fn()
                 log.info("startup %s ok", stage)
             except Exception as e:  # noqa: BLE001
+                import traceback
+                tb = traceback.format_exc()
                 log.exception("startup %s failed: %s", stage, e)
-                _LAST_ERR[stage] = {"ok": False,
-                                     "err": f"{type(e).__name__}: {e}",
-                                     "stage": stage}
+                _LAST_ERR[stage] = {
+                    "ok": False,
+                    "err": f"{type(e).__name__}: {e}",
+                    "stage": stage,
+                    "traceback_tail": tb.splitlines()[-5:],
+                }
     yield
     log.info("riprap-models stopping")
 
