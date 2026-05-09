@@ -144,21 +144,41 @@ def _load_prithvi():
             if getattr(getattr(m, 'datamodule', None),
                        'test_transform', None) is None:
                 import albumentations as A
-                import kornia.augmentation as _Ka
+                import torch as _torch
                 from albumentations.pytorch import ToTensorV2
                 m.datamodule.test_transform = A.Compose([ToTensorV2()])
                 _old = m.datamodule.aug
-                # Pass torch.Tensor (not Python list via .tolist()) —
-                # kornia 0.7+ stores the values as-is and calls .view()
-                # on them at apply time. With a list that fails with
-                # `AttributeError: 'list' object has no attribute 'view'`.
-                # Cloning detaches from the source datamodule's params.
-                m.datamodule.aug = _Ka.AugmentationSequential(
-                    _Ka.Normalize(_old.means.view(-1).detach().clone(),
-                                  _old.stds.view(-1).detach().clone()),
-                    data_keys=None)
+
+                # IBM's inference.py:188 calls
+                # `datamodule.aug({'image': tensor})['image']` —
+                # passing a dict and indexing the result. The previous
+                # patch wrapped a kornia AugmentationSequential here,
+                # which doesn't natively accept dict input and tripped
+                # `'list' object has no attribute 'view'` deep inside
+                # kornia's internal storage on first inference. Drop
+                # kornia entirely and use a hand-rolled dict-aware
+                # normalizer — fewer moving parts, identical math.
+                class _DictNormalize:
+                    def __init__(self, mean, std):
+                        self.mean = _torch.as_tensor(mean).view(-1, 1, 1).float()
+                        self.std = _torch.as_tensor(std).view(-1, 1, 1).float()
+
+                    def __call__(self, sample):
+                        if isinstance(sample, dict):
+                            img = sample["image"]
+                            mean = self.mean.to(img.device)
+                            std = self.std.to(img.device)
+                            return {**sample, "image": (img - mean) / std}
+                        mean = self.mean.to(sample.device)
+                        std = self.std.to(sample.device)
+                        return (sample - mean) / std
+
+                m.datamodule.aug = _DictNormalize(
+                    _old.means.view(-1).detach().clone(),
+                    _old.stds.view(-1).detach().clone(),
+                )
                 log.info("prithvi: patched v2 datamodule transforms "
-                         "for IBM inference.py compat")
+                         "for IBM inference.py compat (dict-aware Normalize)")
         else:
             log.info("prithvi: v2 unavailable, falling back to base")
             base_ckpt = hf_hub_download(
