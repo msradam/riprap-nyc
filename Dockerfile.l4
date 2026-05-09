@@ -73,10 +73,7 @@ RUN pip install --no-cache-dir -r /tmp/req-models.txt
 RUN pip install --no-cache-dir \
         --index-url https://download.pytorch.org/whl/cu124 \
         torchvision \
-    && pip install --no-cache-dir \
-        peft==0.18.1 \
-        torchgeo==0.9.0 \
-        torchmetrics==1.9.0
+    && pip install --no-cache-dir peft==0.18.1
 
 # Bake Granite 4.1 weights into the image (EO toolchain is installed
 # at runtime — see entrypoint.l4.sh — to keep the build sandbox under
