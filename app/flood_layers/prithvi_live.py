@@ -209,9 +209,14 @@ def _ensure_model():
                         from albumentations.pytorch import ToTensorV2
                         m.datamodule.test_transform = A.Compose([ToTensorV2()])
                         _old = m.datamodule.aug
+                        # Pass torch.Tensor (not list via .tolist()).
+                        # kornia 0.7+ stores values as-is and calls
+                        # .view() on them at apply time; passing a
+                        # Python list crashes with `AttributeError:
+                        # 'list' object has no attribute 'view'`.
                         m.datamodule.aug = _Ka.AugmentationSequential(
-                            _Ka.Normalize(_old.means.view(-1).tolist(),
-                                          _old.stds.view(-1).tolist()),
+                            _Ka.Normalize(_old.means.view(-1).detach().clone(),
+                                          _old.stds.view(-1).detach().clone()),
                             data_keys=None)
                         log.info("prithvi_live: patched v2 datamodule transforms "
                                  "for IBM inference.py compat")

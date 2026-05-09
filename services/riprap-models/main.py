@@ -148,9 +148,14 @@ def _load_prithvi():
                 from albumentations.pytorch import ToTensorV2
                 m.datamodule.test_transform = A.Compose([ToTensorV2()])
                 _old = m.datamodule.aug
+                # Pass torch.Tensor (not Python list via .tolist()) —
+                # kornia 0.7+ stores the values as-is and calls .view()
+                # on them at apply time. With a list that fails with
+                # `AttributeError: 'list' object has no attribute 'view'`.
+                # Cloning detaches from the source datamodule's params.
                 m.datamodule.aug = _Ka.AugmentationSequential(
-                    _Ka.Normalize(_old.means.view(-1).tolist(),
-                                  _old.stds.view(-1).tolist()),
+                    _Ka.Normalize(_old.means.view(-1).detach().clone(),
+                                  _old.stds.view(-1).detach().clone()),
                     data_keys=None)
                 log.info("prithvi: patched v2 datamodule transforms "
                          "for IBM inference.py compat")
@@ -478,17 +483,35 @@ def _terramind_inference(payload: TerramindIn) -> dict[str, Any]:
         chips["DEM"] = _to_device(_build_chip_tensor(dem))
 
     import torch
-    from terratorch.tasks.tiled_inference import tiled_inference
 
-    def _forward(x, **_extra):
+    def _forward(x):
         out = task.model(x)
         return out.output if hasattr(out, "output") else out
+
+    # Call the model directly — same shape contract as the
+    # training-time inference at
+    # experiments/18_terramind_nyc_lora/shared/inference_ensemble.py:
+    # the canonical chip is already the model's native 224×224 input
+    # in (B, C, T, H, W) form, so terratorch's `tiled_inference` is
+    # unnecessary and was the cause of the "Expected size 12 but got
+    # size 2" 5-D handling regression we hit on the L4 deploy.
+    # Tile only when the chip is bigger than the model resolution.
+    s2_t = chips["S2L2A"]
+    h_chip, w_chip = int(s2_t.shape[-2]), int(s2_t.shape[-1])
     with torch.no_grad():
-        logits = tiled_inference(
-            _forward, chips, out_channels=spec["num_classes"],
-            h_crop=224, w_crop=224, h_stride=128, w_stride=128,
-            average_patches=True, blend_overlaps=True, padding="reflect",
-        )
+        if h_chip == 224 and w_chip == 224:
+            logits = _forward(chips)
+        else:
+            from terratorch.tasks.tiled_inference import tiled_inference
+
+            def _forward_tile(x, **_extra):
+                return _forward(x)
+
+            logits = tiled_inference(
+                _forward_tile, chips, out_channels=spec["num_classes"],
+                h_crop=224, w_crop=224, h_stride=128, w_stride=128,
+                average_patches=True, blend_overlaps=True, padding="reflect",
+            )
     pred = logits.argmax(dim=1).squeeze(0).cpu().numpy().astype("uint8")
     n = max(int(pred.size), 1)
     fractions = {
