@@ -233,6 +233,9 @@ export type FindingsData = {
   wallSeconds?: number;
   /** Optional cache-hit ratio, dev-mode surfaced. */
   cacheHit?: number;
+  /** Per-call inference emissions (energy + tokens). Surfaced as a
+   *  chip in RunHealthStrip; full breakdown available via tooltip. */
+  emissions?: import('$lib/client/agentStream').EmissionsSummary;
 };
 
 /** Density toggle — affects card padding + register row height. */

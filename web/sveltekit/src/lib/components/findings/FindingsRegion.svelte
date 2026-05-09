@@ -66,6 +66,7 @@
     stones={data.stones}
     wallSeconds={data.wallSeconds}
     cacheHit={data.cacheHit}
+    emissions={data.emissions}
   />
 
   {#each STONE_ORDER as key (key)}

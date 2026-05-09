@@ -27,11 +27,14 @@ from __future__ import annotations
 
 import logging
 import os
+import time
 from collections.abc import Iterator
 from typing import Any
 
 import litellm
 from litellm import Router
+
+from app import emissions
 
 log = logging.getLogger(__name__)
 
@@ -211,7 +214,8 @@ def _to_ollama_shape(resp) -> dict:
     return {"message": {"role": "assistant", "content": content}}
 
 
-def _stream_to_ollama_shape(stream) -> Iterator[dict]:
+def _stream_to_ollama_shape(stream, *, on_done=None) -> Iterator[dict]:
+    accum: list[str] = []
     for chunk in stream:
         try:
             delta = chunk.choices[0].delta
@@ -223,7 +227,77 @@ def _stream_to_ollama_shape(stream) -> Iterator[dict]:
         # idempotent / no-op on partial matches.
         if content:
             content = _normalize_citations(content)
+            accum.append(content)
         yield {"message": {"role": "assistant", "content": content}}
+    if on_done is not None:
+        on_done("".join(accum))
+
+
+def _hardware_for(engine: str) -> str:
+    """Map the active LLM engine to an emissions.HARDWARE key.
+
+    Operator override via RIPRAP_HARDWARE_LABEL is honored where it
+    matches a known key (mi300x / t4 / apple / cpu); otherwise we
+    infer from engine selection and HF Space presence."""
+    override = (os.environ.get("RIPRAP_HARDWARE_LABEL") or "").lower()
+    if "mi300x" in override or "amd" in override:
+        return "amd_mi300x"
+    if "t4" in override or "nvidia" in override:
+        return "nvidia_t4"
+    if "apple" in override or "m3" in override or "m4" in override:
+        return "apple_m"
+    if engine == "vLLM" and _VLLM_BASE:
+        return "amd_mi300x"
+    if os.environ.get("SPACE_ID") or os.environ.get("HF_SPACE_ID"):
+        return "nvidia_t4"
+    return "apple_m"
+
+
+def _extract_usage(resp) -> tuple[int | None, int | None]:
+    """Pull (prompt_tokens, completion_tokens) from a LiteLLM response.
+    Returns (None, None) when usage isn't surfaced (some Ollama paths)."""
+    try:
+        u = getattr(resp, "usage", None)
+        if u is None and isinstance(resp, dict):
+            u = resp.get("usage")
+        if u is None:
+            return (None, None)
+        # LiteLLM's Usage is dict-like / pydantic — accept either shape.
+        get = (u.get if hasattr(u, "get") else lambda k, d=None: getattr(u, k, d))
+        return (get("prompt_tokens"), get("completion_tokens"))
+    except Exception:  # noqa: BLE001 — instrumentation must never throw
+        return (None, None)
+
+
+def _record_llm(*, alias: str, messages: list[dict], duration_s: float,
+                resp=None, completion_text: str | None = None,
+                stream: bool = False) -> None:
+    """Record one llm.chat call into the active emissions tracker.
+
+    For non-stream calls, we read prompt/completion tokens off the
+    LiteLLM response. For stream calls, the response is a generator —
+    we estimate tokens from concatenated assistant text and from a
+    char/4 estimate of the input messages. Estimates are flagged on
+    the call record so the UI can disclose them."""
+    info = backend_info()
+    hardware = _hardware_for(info["engine"])
+    backend = info["engine"]
+    prompt_tokens, completion_tokens = _extract_usage(resp) if resp is not None else (None, None)
+    if prompt_tokens is None:
+        prompt_chars = sum(len(m.get("content") or "") for m in messages)
+        prompt_tokens = emissions.estimate_completion_tokens(
+            " " * prompt_chars) if prompt_chars else None
+    if completion_tokens is None and completion_text is not None:
+        completion_tokens = emissions.estimate_completion_tokens(completion_text)
+    emissions.active().record_llm(
+        model=alias,
+        backend=backend,
+        hardware=hardware,
+        prompt_tokens=prompt_tokens,
+        completion_tokens=completion_tokens,
+        duration_s=duration_s,
+        stream=stream,
+    )
 
 
 def _default_hardware_label() -> str:
@@ -288,9 +362,18 @@ def chat(model: str, messages: list[dict], options: dict | None = None,
         kwargs["response_format"] = {"type": "json_object"}
         # Ollama path (LiteLLM forwards this via extra_body for ollama_chat)
         kwargs.setdefault("extra_body", {})["format"] = "json"
+    t0 = time.monotonic()
     if stream:
         s = _router.completion(model=alias, messages=messages,
                                stream=True, **kwargs)
-        return _stream_to_ollama_shape(s)
+
+        def _on_stream_done(full_text: str) -> None:
+            _record_llm(alias=alias, messages=messages,
+                        duration_s=time.monotonic() - t0,
+                        completion_text=full_text, stream=True)
+
+        return _stream_to_ollama_shape(s, on_done=_on_stream_done)
     resp = _router.completion(model=alias, messages=messages, **kwargs)
+    _record_llm(alias=alias, messages=messages,
+                duration_s=time.monotonic() - t0, resp=resp, stream=False)
     return _to_ollama_shape(resp)
