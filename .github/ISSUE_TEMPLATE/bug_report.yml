@@ -1,0 +1,65 @@
+name: Bug report
+description: A briefing came back wrong, a Stone failed to fire, or the UI broke.
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing! Riprap is a hackathon-period demo; the more
+        reproducible the report, the faster it gets fixed.
+  - type: input
+    id: address
+    attributes:
+      label: NYC address tested
+      description: The exact string you typed (or "n/a" if the bug is UI-only).
+      placeholder: 80 Pioneer Street, Brooklyn
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Paste the briefing text or describe the failure.
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Where did you reproduce this?
+      options:
+        - Hosted demo (lablab Space)
+        - Local Docker (`docker compose up`)
+        - Local dev server (`uvicorn web.main:app`)
+        - Self-hosted GPU inference
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser / OS
+      placeholder: Chrome 142 on macOS 14
+  - type: textarea
+    id: console
+    attributes:
+      label: Browser console errors
+      description: DevTools → Console. Paste anything red.
+      render: text
+  - type: textarea
+    id: stream
+    attributes:
+      label: /api/agent/stream output (optional)
+      description: |
+        If the bug is a Stone failure, paste the relevant lines from the
+        SSE trace pane (or curl `/api/agent/stream?q=<address>` directly).
+      render: text
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else

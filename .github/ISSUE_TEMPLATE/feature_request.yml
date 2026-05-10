@@ -1,0 +1,54 @@
+name: Feature request
+description: Propose a new probe, a new Stone, or a new civic-tech use case.
+title: "[feat] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: usecase
+    attributes:
+      label: Civic-tech use case
+      description: |
+        Who is the user, what decision are they making, and what
+        evidence would Riprap need to surface to support it?
+      placeholder: |
+        e.g. "A resilience office siting a capital project needs the
+        joint exposure of NYCHA + schools within 200m of a Sandy
+        100-year inundation polygon."
+    validations:
+      required: true
+  - type: textarea
+    id: data
+    attributes:
+      label: Data source(s)
+      description: |
+        Which public-record datasets should Riprap pull from? Include
+        URLs, agency owner, refresh cadence, and licence if known.
+    validations:
+      required: true
+  - type: dropdown
+    id: stone
+    attributes:
+      label: Which Stone does this belong in?
+      options:
+        - Cornerstone (hazard memory)
+        - Keystone (asset registers)
+        - Touchstone (live observation)
+        - Lodestone (forecast)
+        - Capstone (synthesis)
+        - Not sure / cross-cutting
+    validations:
+      required: true
+  - type: dropdown
+    id: contribute
+    attributes:
+      label: Willing to contribute the implementation?
+      options:
+        - "Yes — I can open the PR"
+        - "Maybe — with mentorship"
+        - "No — flagging the gap"
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else

@@ -1,0 +1,43 @@
+name: check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: import + lightweight tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Set up Python 3.12
+        run: uv python install 3.12
+
+      - name: Create venv and install deps
+        run: |
+          uv venv --python 3.12
+          uv pip install -r requirements.txt
+
+      - name: Import smoke test
+        env:
+          PYTHONPATH: .
+        run: |
+          uv run python -c "from app import fsm, llm, inference, emissions; from web import main"
+
+      - name: Lightweight pytest subset
+        env:
+          PYTHONPATH: .
+        run: |
+          uv run pytest -q tests/test_stones.py tests/test_compare_shape.py tests/test_stone_envelope.py

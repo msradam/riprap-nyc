@@ -1,0 +1,70 @@
+name: Port to a new city
+description: Plan a Riprap deployment for a city other than NYC.
+title: "[port] "
+labels: ["port", "enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Riprap's Five Stones taxonomy is city-agnostic; only the probes
+        plugged into each Stone change. See the "Five Stones beyond NYC"
+        section in the README. This template helps scope a port.
+  - type: input
+    id: city
+    attributes:
+      label: Target city / region
+      placeholder: e.g. Houston, TX
+    validations:
+      required: true
+  - type: textarea
+    id: cornerstone
+    attributes:
+      label: Cornerstone — hazard memory
+      description: |
+        Local historical inundation extents, regional DEM, regulatory
+        floodplain maps. Include dataset URLs and licences.
+    validations:
+      required: true
+  - type: textarea
+    id: keystone
+    attributes:
+      label: Keystone — asset registers
+      description: |
+        Transit, housing, education, healthcare polygons your jurisdiction
+        publishes.
+    validations:
+      required: true
+  - type: textarea
+    id: touchstone
+    attributes:
+      label: Touchstone — live observation
+      description: |
+        Live sensors, complaint streams (e.g. Houston has FloodNet
+        analogues; many cities expose 311 or equivalent).
+    validations:
+      required: true
+  - type: textarea
+    id: lodestone
+    attributes:
+      label: Lodestone — forecast
+      description: |
+        Local NWS / hydrologic / surge models, tide gauges, time-series
+        fine-tunes you'd retrain.
+    validations:
+      required: true
+  - type: dropdown
+    id: hardware
+    attributes:
+      label: Target inference hardware
+      options:
+        - AMD MI300X (or other ROCm)
+        - NVIDIA L4 / A10
+        - NVIDIA H100 / A100
+        - CPU-only (Ollama)
+        - Not decided
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else

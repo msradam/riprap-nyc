@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Try the live demo
+    url: https://lablab-ai-amd-developer-hackathon-riprap-nyc.hf.space
+    about: Reproduce the issue against the hosted Space before filing.
+  - name: Read the architecture docs
+    url: https://github.com/msradam/riprap-nyc/tree/main/docs
+    about: ARCHITECTURE, METHODOLOGY, EMISSIONS, DEPLOY, BENCHMARKS, RESEARCH.

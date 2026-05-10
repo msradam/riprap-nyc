@@ -4,6 +4,8 @@
 
 # Riprap
 
+[![check](https://github.com/msradam/riprap-nyc/actions/workflows/check.yml/badge.svg)](https://github.com/msradam/riprap-nyc/actions/workflows/check.yml) [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE) [![Live demo](https://img.shields.io/badge/demo-lablab.ai-2DD4BF)](https://lablab-ai-amd-developer-hackathon-riprap-nyc.hf.space) [![Python 3.12](https://img.shields.io/badge/python-3.12-3776AB.svg)](https://www.python.org/downloads/release/python-3120/)
+
 ## Flood risk analysis for any NYC address.
 
 A multi-agent AI system that reads satellites, watches sensors, forecasts
@@ -240,7 +242,8 @@ civil-engineering framing in
 topology in [`docs/DEPLOY.md`](docs/DEPLOY.md). Live measurements
 on the canonical four-address verification set (wall-clock, real
 NVML energy, Mellea grounding pass-rate) in
-[`docs/BENCHMARKS.md`](docs/BENCHMARKS.md).
+[`docs/BENCHMARKS.md`](docs/BENCHMARKS.md). One-line map of every
+doc in [`docs/INDEX.md`](docs/INDEX.md).
 
 ---
 
