@@ -39,3 +39,26 @@ Logo attribution:
   on-canvas text; assets/logo*.svg in this repository strip the
   embedded text and carry the attribution here per the Creative
   Commons attribution requirement.
+
+================================================================================
+AI-assisted authoring
+================================================================================
+
+Portions of the source code, configuration, prompt templates, and
+documentation in this repository were drafted with the assistance of large
+language models. All output was reviewed and accepted by Adam Rahman, who
+takes responsibility for the resulting code, claims, and reproducibility
+guarantees made by this project.
+
+The Riprap system orchestrates third-party foundation models (IBM Granite
+4.1, IBM Granite Embedding 278M, NASA-IBM Prithvi-EO 2.0, IBM Granite TTM r2,
+IBM-ESA TerraMind 1.0) at inference time. It does not generate model
+weights. The NYC fine-tunes referenced by this system are trained
+separately and documented at github.com/msradam/riprap-models.
+
+Commits prior to 2026-05-10 may include "Co-Authored-By" trailers
+referencing Anthropic Claude. These trailers are preserved as historical
+record of how the project was built during the AMD Developer Cloud
+hackathon (May 4-10, 2026); commits going forward do not include them.
+The artifact-level disclosure in this NOTICE supersedes the per-commit
+attribution.

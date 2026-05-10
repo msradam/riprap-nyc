@@ -364,6 +364,19 @@ If you reference Riprap in academic or professional work:
 
 ---
 
+## AI-assisted authoring
+
+Portions of this repository were drafted with the assistance of large
+language models. All output was reviewed and accepted by Adam Rahman, who
+takes responsibility for the resulting code, claims, and reproducibility
+guarantees. Commits prior to 2026-05-10 may include `Co-Authored-By`
+trailers referencing Anthropic Claude, preserved as historical record of
+the AMD Developer Cloud hackathon (May 4–10, 2026); commits going forward
+do not include them. The artifact-level disclosure in [`NOTICE`](NOTICE)
+supersedes per-commit attribution.
+
+---
+
 ## License
 
 Apache 2.0. See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
