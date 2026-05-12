@@ -24,7 +24,7 @@ from app.geocode import geocode_one
 from app.live import floodnet_forecast as fn_forecast
 from app.live import ttm_forecast
 from app.rag import retrieve as rag_retrieve
-from app.reconcile import reconcile as run_reconcile
+from app.reconcile import citations_from_docs, reconcile as run_reconcile
 from app.registers import doe_schools as r_schools
 from app.registers import doh_hospitals as r_hospitals
 from app.registers import mta_entrances as r_mta
@@ -988,7 +988,7 @@ def _label_counts(gliner_out: dict[str, dict]) -> dict[str, int]:
                "mta_entrances",
                "nycha_developments", "doe_schools", "doh_hospitals",
                "rag", "gliner"],
-        writes=["paragraph", "audit", "mellea", "trace"])
+        writes=["paragraph", "audit", "mellea", "citations", "trace"])
 def step_reconcile(state: State) -> State:
     is_strict = _current_strict_mode()
     rec, trace = _step(state, "mellea_reconcile_address" if is_strict else "reconcile_granite41")
@@ -1083,14 +1083,19 @@ def step_reconcile(state: State) -> State:
                 "paragraph_chars": len(para),
                 "dropped_sentences": len(audit["dropped"]),
             }
+        # Build citation metadata list from whichever doc_msgs were used.
+        from app.reconcile import build_documents, trim_docs_to_plan
+        _cite_msgs = build_documents(snap)
+        _cite_msgs = trim_docs_to_plan(_cite_msgs, _current_planned_specialists())
+        cite_list = citations_from_docs(_cite_msgs)
         rec["ok"] = True
         return state.update(paragraph=para, audit=audit,
-                            mellea=mellea_meta, trace=trace)
+                            mellea=mellea_meta, citations=cite_list, trace=trace)
     except Exception as e:
         rec["ok"] = False; rec["err"] = str(e)
         log.exception("reconcile failed")
         return state.update(paragraph="", audit={"raw": "", "dropped": []},
-                            mellea=None, trace=trace)
+                            mellea=None, citations=[], trace=trace)
     finally:
         rec["elapsed_s"] = round(time.time() - rec["started_at"], 2)
 
@@ -1383,6 +1388,7 @@ def iter_steps(query: str):
         "paragraph": state.get("paragraph"),
         "audit": state.get("audit"),
         "mellea": state.get("mellea"),
+        "citations": state.get("citations"),
         "energy": _summarize_energy(trace),
         "emissions": _summarize_emissions(),
     }

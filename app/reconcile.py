@@ -48,6 +48,59 @@ CITATION_TTM_FORECAST = (
     "~51 h context, ~9.6 h horizon."
 )
 
+# Metadata table for every doc_id the system may emit. Used to build the
+# citations array in the final SSE event so the frontend can enrich each
+# numbered citation with source/title/url/vintage without re-parsing.
+_DOC_META: dict[str, dict] = {
+    "geocode":          {"source": "NYC DCP Geosearch", "title": "Address geocode", "url": "https://geosearch.planninglabs.nyc"},
+    "sandy":            {"source": "NYC OEM / FEMA", "title": "Sandy Inundation Zone (2012)", "url": "https://data.cityofnewyork.us/Public-Safety/Hurricane-Sandy-Inundation-Zone/5xsi-dfpx"},
+    "dep_stormwater":   {"source": "NYC DEP", "title": "DEP Stormwater Flood Maps", "url": "https://data.cityofnewyork.us/Environment/DEP-Stormwater-Flood-Projections-Data/d73m-mf6p"},
+    "dep_moderate_current": {"source": "NYC DEP", "title": "DEP Stormwater — Moderate Current", "url": "https://data.cityofnewyork.us/Environment/DEP-Stormwater-Flood-Projections-Data/d73m-mf6p"},
+    "dep_extreme_2080": {"source": "NYC DEP", "title": "DEP Stormwater — Extreme 2080", "url": "https://data.cityofnewyork.us/Environment/DEP-Stormwater-Flood-Projections-Data/d73m-mf6p"},
+    "ida_hwm":          {"source": "USGS STN", "title": "Hurricane Ida 2021 High-Water Marks", "url": "https://stn.wim.usgs.gov/FEV/#IdaAug2021"},
+    "prithvi_water":    {"source": "msradam/Prithvi-EO-2.0-NYC-Pluvial", "title": "Prithvi-EO 2.0 Ida flood polygons", "url": "https://huggingface.co/msradam/Prithvi-EO-2.0-NYC-Pluvial", "vintage": "2021-09"},
+    "microtopo":        {"source": "USGS 3DEP", "title": "LiDAR microtopography (HAND/TWI)", "url": "https://www.usgs.gov/3d-elevation-program", "vintage": "2018"},
+    "floodnet":         {"source": "FloodNet NYC", "title": "FloodNet ultrasonic depth sensors", "url": "https://api.floodnet.nyc"},
+    "nyc311":           {"source": "NYC 311", "title": "311 flood-related complaints", "url": "https://data.cityofnewyork.us/Social-Services/311-Service-Requests-from-2010-to-Present/erm2-nwe9"},
+    "noaa_tides":       {"source": "NOAA CO-OPS", "title": "Battery tide gauge water level", "url": "https://tidesandcurrents.noaa.gov/stationhome.html?id=8518750"},
+    "nws_alerts":       {"source": "NWS", "title": "Active NWS flood alerts", "url": "https://api.weather.gov"},
+    "nws_obs":          {"source": "NWS ASOS", "title": "NWS hourly precipitation observations", "url": "https://api.weather.gov"},
+    "ttm_forecast":     {"source": "IBM Granite TTM r2", "title": "Battery surge residual nowcast", "url": "https://huggingface.co/ibm-granite/granite-timeseries-ttm-r2"},
+    "ttm_311":          {"source": "IBM Granite TTM r2", "title": "NYC 311 weekly flood forecast", "url": "https://huggingface.co/ibm-granite/granite-timeseries-ttm-r2"},
+    "floodnet_forecast":{"source": "FloodNet + IBM Granite TTM r2", "title": "FloodNet sensor recurrence forecast", "url": "https://huggingface.co/ibm-granite/granite-timeseries-ttm-r2"},
+    "ttm_battery":      {"source": "msradam/Granite-TTM-r2-Battery-Surge", "title": "Battery surge fine-tune forecast", "url": "https://huggingface.co/msradam/Granite-TTM-r2-Battery-Surge"},
+    "npcc4_slr":        {"source": "NPCC4 (2024)", "title": "NYC sea-level rise projections, Battery gauge", "url": "https://nyas.org/npcc4", "vintage": "2024-03"},
+    "mta":              {"source": "MTA Open Data", "title": "MTA subway entrance flood exposure", "url": "https://data.ny.gov/Transportation/MTA-Subway-Stations/39hk-dx4f"},
+    "nycha":            {"source": "NYC Open Data / NYCHA", "title": "NYCHA development flood exposure", "url": "https://data.cityofnewyork.us/Housing-Development/NYCHA-Developments/i9rv-hdr5"},
+    "doe_schools":      {"source": "NYC DOE", "title": "NYC public school flood exposure", "url": "https://data.cityofnewyork.us/Education/School-Point-Locations/jfju-ynrr"},
+    "doh_hospitals":    {"source": "NYS DOH", "title": "Hospital flood exposure (NYS DOH vn5v-hh5r)", "url": "https://health.data.ny.gov/Health/Health-Facility-General-Information/vn5v-hh5r"},
+    "terramind":        {"source": "msradam/TerraMind-NYC-Adapters", "title": "TerraMind land cover synthesis", "url": "https://huggingface.co/msradam/TerraMind-NYC-Adapters"},
+    "terramind_lulc":   {"source": "msradam/TerraMind-NYC-Adapters", "title": "TerraMind LULC classification", "url": "https://huggingface.co/msradam/TerraMind-NYC-Adapters"},
+    "terramind_buildings": {"source": "msradam/TerraMind-NYC-Adapters", "title": "TerraMind building footprint analysis", "url": "https://huggingface.co/msradam/TerraMind-NYC-Adapters"},
+    "prithvi_live":     {"source": "msradam/Prithvi-EO-2.0-NYC-Pluvial", "title": "Prithvi-EO live pluvial flood prediction", "url": "https://huggingface.co/msradam/Prithvi-EO-2.0-NYC-Pluvial"},
+}
+
+
+def citations_from_docs(doc_msgs: list[dict]) -> list[dict]:
+    """Build a citations list from the document messages passed to the
+    reconciler. Each entry has doc_id plus any available metadata.
+    Order matches the document order (which is Stone canonical order)."""
+    seen: dict[str, dict] = {}
+    for msg in doc_msgs:
+        role = msg.get("role", "")
+        if not role.startswith("document "):
+            continue
+        doc_id = role[len("document "):].strip()
+        if doc_id in seen:
+            continue
+        meta = _DOC_META.get(doc_id, {})
+        # rag_ prefixed doc_ids get a generic RAG entry
+        if not meta and doc_id.startswith("rag_"):
+            meta = {"source": "Policy corpus (RAG)", "title": doc_id.replace("rag_", "").replace("_", " ").title()}
+        seen[doc_id] = {"doc_id": doc_id, **meta}
+    return list(seen.values())
+
+
 # The Ollama chat template auto-prepends Granite's own grounded-generation
 # system suffix once the message list contains role="document" entries.
 # This text is OUR additional system prompt, prepended to that suffix.
