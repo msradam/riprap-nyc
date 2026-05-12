@@ -30,6 +30,7 @@ python -m vllm.entrypoints.openai.api_server \
     --gpu-memory-utilization 0.55 \
     --max-model-len 4096 \
     --enforce-eager \
+    --guided-decoding-backend lm-format-enforcer \
     --disable-log-requests \
     > "$LOG_VLLM" 2>&1 &
 VLLM_PID=$!
