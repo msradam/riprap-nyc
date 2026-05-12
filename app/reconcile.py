@@ -22,6 +22,7 @@ import re
 from typing import Any
 
 from app import llm
+from app.context import npcc4_slr
 
 log = logging.getLogger("riprap.reconcile")
 
@@ -1036,6 +1037,35 @@ def build_documents(state: dict[str, Any]) -> list[dict]:
             "and Ida conditions citywide.",
         ]
         docs.append(_doc_message("ttm_battery", body))
+
+    # NPCC4 sea-level rise projection — static table, always emits for
+    # NYC addresses. Provides the policy/planning horizon context that
+    # grounding the "what's coming" section.
+    slr = state.get("npcc4_slr")
+    if not out_of_nyc and slr and slr.get("available"):
+        y2050 = slr["2050"]
+        y2100 = slr["2100"]
+        body = [
+            f"Source: {npcc4_slr.CITATION}",
+            "Sea-level rise projections for the Battery Tide Gauge "
+            "(primary NYC harbor reference), inches above 2000–2004 baseline:",
+            f"2050 — Low (10th pct): {y2050['10']['in']} in "
+            f"({y2050['10']['m']} m); "
+            f"Mid (50th): {y2050['50']['in']} in ({y2050['50']['m']} m); "
+            f"High (90th): {y2050['90']['in']} in ({y2050['90']['m']} m); "
+            f"Extreme (99th): {y2050['99']['in']} in ({y2050['99']['m']} m).",
+            f"2100 — Low (10th pct): {y2100['10']['in']} in "
+            f"({y2100['10']['m']} m); "
+            f"Mid (50th): {y2100['50']['in']} in ({y2100['50']['m']} m); "
+            f"High (90th): {y2100['90']['in']} in ({y2100['90']['m']} m); "
+            f"Extreme (99th): {y2100['99']['in']} in ({y2100['99']['m']} m).",
+            "INTERPRETATION: these are harbor-wide projections, not "
+            "site-specific inundation depths. Local exposure depends on "
+            "elevation, distance to waterfront, and storm-surge coupling. "
+            "Use the DEP stormwater and Sandy layers for site-specific "
+            "flood-zone assignment.",
+        ]
+        docs.append(_doc_message("npcc4_slr", body))
 
     # ---- Policy context (RAG + GLiNER, ancillary to the four Stones) ---
     # Retrieved policy paragraphs and GLiNER typed-entity extractions.

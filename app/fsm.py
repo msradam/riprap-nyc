@@ -17,7 +17,7 @@ from burr.core import ApplicationBuilder, State, action
 from shapely.geometry import Point
 
 from app import emissions
-from app.context import floodnet, microtopo, noaa_tides, nws_alerts, nws_obs, nyc311
+from app.context import floodnet, microtopo, noaa_tides, npcc4_slr, nws_alerts, nws_obs, nyc311
 from app.energy import estimate as energy_estimate
 from app.flood_layers import dep_stormwater, ida_hwm, prithvi_water, sandy_inundation
 from app.geocode import geocode_one
@@ -601,6 +601,28 @@ def step_floodnet_forecast(state: State) -> State:
         rec["elapsed_s"] = round(time.time() - rec["started_at"], 2)
 
 
+@action(reads=["lat", "lon"], writes=["npcc4_slr", "trace"])
+def step_npcc4_projection(state: State) -> State:
+    """NPCC4 (2024) sea-level rise table — static lookup, always available."""
+    rec, trace = _step(state, "npcc4_projection")
+    try:
+        s = npcc4_slr.get_projections()
+        rec["ok"] = True
+        rec["result"] = {
+            "2050_10th_in": s["2050"]["10"]["in"],
+            "2050_50th_in": s["2050"]["50"]["in"],
+            "2050_90th_in": s["2050"]["90"]["in"],
+            "2100_90th_in": s["2100"]["90"]["in"],
+        }
+        return state.update(npcc4_slr=s, trace=trace)
+    except Exception as e:
+        rec["ok"] = False; rec["err"] = str(e)
+        log.exception("npcc4_projection failed")
+        return state.update(npcc4_slr=None, trace=trace)
+    finally:
+        rec["elapsed_s"] = round(time.time() - rec["started_at"], 2)
+
+
 @action(reads=["lat", "lon"], writes=["mta_entrances", "trace"])
 def step_mta_entrances(state: State) -> State:
     rec, trace = _step(state, "mta_entrance_exposure")
@@ -961,7 +983,8 @@ def _label_counts(gliner_out: dict[str, dict]) -> dict[str, int]:
                "ida_hwm", "prithvi_water", "prithvi_live", "terramind",
                "terramind_lulc", "terramind_buildings",
                "noaa_tides", "nws_alerts", "nws_obs", "ttm_forecast",
-               "ttm_311_forecast", "floodnet_forecast", "ttm_battery_surge",
+               "ttm_311_forecast", "floodnet_forecast", "npcc4_slr",
+               "ttm_battery_surge",
                "mta_entrances",
                "nycha_developments", "doe_schools", "doh_hospitals",
                "rag", "gliner"],
@@ -986,6 +1009,7 @@ def step_reconcile(state: State) -> State:
             "ttm_forecast": state.get("ttm_forecast"),
             "ttm_311_forecast": state.get("ttm_311_forecast"),
             "floodnet_forecast": state.get("floodnet_forecast"),
+            "npcc4_slr": state.get("npcc4_slr"),
             "ttm_battery_surge": state.get("ttm_battery_surge"),
             "rag": state.get("rag"),
             "gliner": state.get("gliner"),
@@ -1143,6 +1167,7 @@ def build_app(query: str):
         "ttm_forecast": step_ttm_forecast,
         "ttm_311_forecast": step_ttm_311_forecast,
         "floodnet_forecast": step_floodnet_forecast,
+        "npcc4_projection": step_npcc4_projection,
         "ttm_battery_surge": step_ttm_battery_surge,
         "microtopo": step_microtopo,
         "ida_hwm": step_ida_hwm,

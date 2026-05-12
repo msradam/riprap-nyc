@@ -87,6 +87,7 @@ SPECIALISTS = {
     "nyc311":        ("NYC 311 flood-related complaints in buffer or polygon.",    ["single_address", "neighborhood", "compare"]),
     "noaa_tides":    ("Live NOAA Battery / Kings Pt / Sandy Hook water level.",   ["single_address", "neighborhood", "live_now", "compare"]),
     "nws_alerts":    ("Live NWS active flood-relevant alerts at point.",           ["single_address", "neighborhood", "live_now", "compare"]),
+    "npcc4_slr":     ("NPCC4 (2024) sea-level rise projections at the Battery — 2050/2100 low/mid/high/extreme.", ["single_address", "neighborhood", "compare"]),
     "nws_obs":       ("Live NWS hourly precip from nearest ASOS station.",         ["single_address", "neighborhood", "live_now", "compare"]),
     "ttm_forecast":  ("Granite TTM r2 surge-residual nowcast at the Battery.",     ["single_address", "neighborhood", "live_now", "compare"]),
     "microtopo":     ("LiDAR-derived terrain (HAND, TWI, percentile) at point or aggregated over polygon.", ["single_address", "neighborhood", "compare"]),

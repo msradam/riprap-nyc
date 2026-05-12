@@ -202,7 +202,6 @@ export const STONE_REGISTRY: Record<StoneKey, RegistryEntry[]> = {
       name: 'npcc4.slr_projection',
       stepNames: ['npcc4_projection'],
       tier: 'modeled',
-      skipReason: 'NPCC4 SLR projection: not yet wired into FSM (static reference card on hold)',
     },
   ],
   capstone: [
