@@ -37,12 +37,14 @@ OLLAMA_MODEL = os.environ.get("RIPRAP_PLANNER_MODEL",
 
 INTENTS = {
     "single_address": (
-        "Use ONLY when the query contains a specific street ADDRESS — "
-        "house number + street name (e.g. '116-50 Sutphin Blvd', '350 5th "
-        "Ave Manhattan'). If the query names only a neighborhood or "
-        "borough without a house number, the intent is 'neighborhood', "
-        "even if phrased as a yes/no question like 'is X at risk?' or "
-        "'is X safe?'."
+        "Use when the query refers to a SPECIFIC LOCATABLE POINT — either "
+        "(a) a street address with house number + street name (e.g. "
+        "'116-50 Sutphin Blvd', '350 5th Ave Manhattan'), or (b) a named "
+        "development, complex, or housing project that geocodes to a single "
+        "location (e.g. 'Coney Island I Houses', 'Carleton Manor Houses', "
+        "'Vladeck Houses'). If the query names only a general neighborhood "
+        "or borough with no specific address or named building, use "
+        "'neighborhood'."
     ),
     "neighborhood": (
         "Use when the query names a NEIGHBORHOOD or BOROUGH with no "
