@@ -18,18 +18,18 @@ print(f'[entrypoint.vllm] terratorch ok ({n} terramind entries)')
 
 # --- 1. vLLM (Granite 4.1 8B FP8) on :8000 --------------------------
 LOG_VLLM="$HOME/vllm.log"
-# --gpu-memory-utilization 0.55 caps vLLM at ~13 GB on a 24 GB L4,
-# leaving room for the riprap-models EO stack to load alongside.
-# --served-model-name aliases the long HF id to the short tags the
-# canonical FSM uses (granite4.1:8b → routes through here).
+# --gpu-memory-utilization 0.45 caps vLLM at ~10 GB on the 22.5 GB L4,
+# leaving ~12.5 GB for the riprap-models EO stack (Prithvi, TerraMind
+# x3, TTM, GLiNER, Embedding) which peaks at ~10 GB during loading.
+# Previous value 0.55 left only ~0.5 GB headroom and caused OOM crashes
+# when riprap-models loaded alongside vLLM.
 python -m vllm.entrypoints.openai.api_server \
     --model ibm-granite/granite-4.1-8b-fp8 \
     --served-model-name granite4.1:8b granite-4.1-8b ibm-granite/granite-4.1-8b-fp8 \
     --host 127.0.0.1 \
     --port 8000 \
-    --gpu-memory-utilization 0.55 \
+    --gpu-memory-utilization 0.45 \
     --max-model-len 8192 \
-    --enforce-eager \
     --disable-log-requests \
     > "$LOG_VLLM" 2>&1 &
 VLLM_PID=$!
@@ -52,6 +52,32 @@ if ! curl -sf http://127.0.0.1:8000/health > /dev/null 2>&1; then
     tail -60 "$LOG_VLLM" || true
     exit 1
 fi
+
+# Background watchdog: if vLLM dies after startup, restart it.
+_start_vllm() {
+    python -m vllm.entrypoints.openai.api_server \
+        --model ibm-granite/granite-4.1-8b-fp8 \
+        --served-model-name granite4.1:8b granite-4.1-8b ibm-granite/granite-4.1-8b-fp8 \
+        --host 127.0.0.1 \
+        --port 8000 \
+        --gpu-memory-utilization 0.45 \
+        --max-model-len 8192 \
+        --disable-log-requests \
+        >> "$LOG_VLLM" 2>&1 &
+    echo $!
+}
+_vllm_watchdog() {
+    local pid=$1
+    while true; do
+        sleep 30
+        if ! kill -0 "$pid" 2>/dev/null; then
+            echo "[watchdog] vLLM died — restarting..." >> "$LOG_VLLM"
+            pid=$(_start_vllm)
+            echo "[watchdog] vLLM restarted as pid $pid" >> "$LOG_VLLM"
+        fi
+    done
+}
+_vllm_watchdog "$VLLM_PID" &
 
 # --- 2. riprap-models on :7861 --------------------------------------
 LOG_MODELS="$HOME/riprap-models.log"

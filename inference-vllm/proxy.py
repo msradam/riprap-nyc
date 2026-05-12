@@ -166,6 +166,23 @@ def root():
             "nvml_err": None if _NVML_OK else _NVML_ERR}
 
 
+@app.get("/vllm-log", include_in_schema=False)
+async def vllm_log(request: Request, lines: int = 100) -> Response:
+    """Last N lines of $HOME/vllm.log — operator diagnostic."""
+    _check_auth(request)
+    import os
+    log_path = os.path.join(os.environ.get("HOME", "/home/user"), "vllm.log")
+    try:
+        with open(log_path) as f:
+            tail = f.readlines()[-lines:]
+        return JSONResponse({"ok": True, "path": log_path,
+                             "lines": len(tail), "log": "".join(tail)})
+    except FileNotFoundError:
+        return JSONResponse({"ok": False, "err": "vllm.log not found"}, status_code=404)
+    except Exception as e:
+        return JSONResponse({"ok": False, "err": str(e)}, status_code=500)
+
+
 @app.get("/healthz")
 async def healthz():
     out = {"proxy": "ok", "nvml": "ok" if _NVML_OK else f"err: {_NVML_ERR}"}
@@ -210,6 +227,8 @@ async def diag(request: Request) -> Response:
         return Response(content=r.content,
                         status_code=r.status_code,
                         media_type=r.headers.get("content-type", "application/json"))
+
+
 
 
 @app.get("/v1/power")
