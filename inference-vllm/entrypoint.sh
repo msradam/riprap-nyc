@@ -30,6 +30,7 @@ python -m vllm.entrypoints.openai.api_server \
     --port 8000 \
     --gpu-memory-utilization 0.45 \
     --max-model-len 8192 \
+    --enforce-eager \
     --disable-log-requests \
     > "$LOG_VLLM" 2>&1 &
 VLLM_PID=$!
@@ -62,6 +63,7 @@ _start_vllm() {
         --port 8000 \
         --gpu-memory-utilization 0.45 \
         --max-model-len 8192 \
+        --enforce-eager \
         --disable-log-requests \
         >> "$LOG_VLLM" 2>&1 &
     echo $!
