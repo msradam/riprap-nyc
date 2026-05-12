@@ -29,7 +29,7 @@ python -m vllm.entrypoints.openai.api_server \
     --host 127.0.0.1 \
     --port 8000 \
     --gpu-memory-utilization 0.45 \
-    --max-model-len 8192 \
+    --max-model-len 4096 \
     --enforce-eager \
     --disable-log-requests \
     > "$LOG_VLLM" 2>&1 &
@@ -41,16 +41,20 @@ for i in $(seq 1 240); do
         break
     fi
     if ! kill -0 "$VLLM_PID" 2>/dev/null; then
-        echo "[entrypoint.vllm] FATAL: vLLM died"
-        tail -60 "$LOG_VLLM" || true
+        echo "[entrypoint.vllm] FATAL: vLLM died — HEAD:"
+        head -80 "$LOG_VLLM" || true
+        echo "[entrypoint.vllm] FATAL: vLLM died — TAIL:"
+        tail -80 "$LOG_VLLM" || true
         exit 1
     fi
     sleep 1
 done
 
 if ! curl -sf http://127.0.0.1:8000/health > /dev/null 2>&1; then
-    echo "[entrypoint.vllm] FATAL: vLLM did not become ready within 240s"
-    tail -60 "$LOG_VLLM" || true
+    echo "[entrypoint.vllm] FATAL: vLLM did not become ready within 240s — HEAD:"
+    head -80 "$LOG_VLLM" || true
+    echo "[entrypoint.vllm] FATAL: vLLM did not become ready within 240s — TAIL:"
+    tail -80 "$LOG_VLLM" || true
     exit 1
 fi
 
@@ -62,7 +66,7 @@ _start_vllm() {
         --host 127.0.0.1 \
         --port 8000 \
         --gpu-memory-utilization 0.45 \
-        --max-model-len 8192 \
+        --max-model-len 4096 \
         --enforce-eager \
         --disable-log-requests \
         >> "$LOG_VLLM" 2>&1 &
