@@ -147,7 +147,7 @@ Available specialists (and which intents they apply to):
 
 {PLAN_SCHEMA_DESC}
 
-Output ONLY the JSON object. No commentary, no markdown."""
+Output ONLY the JSON object. No commentary, no markdown. The "rationale" field MUST be ONE SHORT SENTENCE (under 20 words). Stop immediately after the closing brace."""
 
 
 # ---- Not-implemented short-circuits ----------------------------------------
@@ -224,15 +224,18 @@ def plan(query: str, model: str = OLLAMA_MODEL, on_token=None) -> Plan:
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user",   "content": query},
     ]
+    # Cap output — the plan JSON is tiny; an uncapped model can spin
+    # forever in the rationale field and exhaust the stream timeout.
+    _opts = {"temperature": 0, "num_predict": 512}
     if on_token is None:
         resp = llm.chat(model=model, messages=messages,
-                           format="json", options={"temperature": 0})
+                           format="json", options=_opts)
         raw = resp["message"]["content"].strip()
     else:
         chunks: list[str] = []
         for chunk in llm.chat(model=model, messages=messages,
                                  format="json", stream=True,
-                                 options={"temperature": 0}):
+                                 options=_opts):
             delta = (chunk.get("message") or {}).get("content") or ""
             if delta:
                 chunks.append(delta)
@@ -241,8 +244,19 @@ def plan(query: str, model: str = OLLAMA_MODEL, on_token=None) -> Plan:
     log.info("planner raw: %s", raw[:400])
     try:
         d = json.loads(raw)
-    except json.JSONDecodeError as e:
-        raise ValueError(f"planner emitted non-JSON: {raw!r}") from e
+    except json.JSONDecodeError:
+        # Model hit num_predict ceiling mid-JSON — try salvaging with a
+        # truncated-JSON repair: strip to last valid closing brace.
+        trimmed = raw
+        for i in range(len(raw) - 1, -1, -1):
+            if raw[i] == "}":
+                trimmed = raw[:i + 1]
+                break
+        try:
+            d = json.loads(trimmed)
+            log.warning("planner JSON repaired by trimming to last '}'")
+        except json.JSONDecodeError as e2:
+            raise ValueError(f"planner emitted non-JSON: {raw[:200]!r}") from e2
     return _validate(d, raw_query=query)
 
 
@@ -298,7 +312,7 @@ def _validate(d: dict[str, Any], raw_query: str) -> Plan:  # TODO(cleanup): cc-g
     if not specialists:
         specialists = _default_specialists(intent)
 
-    rationale = (d.get("rationale") or "").strip() or "(no rationale provided)"
+    rationale = (d.get("rationale") or "").strip()[:300] or "(no rationale provided)"
     return Plan(intent=intent, targets=targets, specialists=specialists, rationale=rationale)
 
 
