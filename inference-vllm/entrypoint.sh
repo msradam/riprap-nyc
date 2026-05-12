@@ -18,17 +18,16 @@ print(f'[entrypoint.vllm] terratorch ok ({n} terramind entries)')
 
 # --- 1. vLLM (Granite 4.1 8B FP8) on :8000 --------------------------
 LOG_VLLM="$HOME/vllm.log"
-# --gpu-memory-utilization 0.45 caps vLLM at ~10 GB on the 22.5 GB L4,
-# leaving ~12.5 GB for the riprap-models EO stack (Prithvi, TerraMind
-# x3, TTM, GLiNER, Embedding) which peaks at ~10 GB during loading.
-# Previous value 0.55 left only ~0.5 GB headroom and caused OOM crashes
-# when riprap-models loaded alongside vLLM.
+# --gpu-memory-utilization 0.55: vLLM gets ~12.4 GB of 22.5 GB L4.
+# After FP8 weights (~8 GB) that leaves ~4.4 GB for KV cache (4096 ctx).
+# riprap-models gets the remaining ~10 GB. Models are loaded sequentially
+# (vLLM first, then riprap-models) so peak overlap is low.
 python -m vllm.entrypoints.openai.api_server \
     --model ibm-granite/granite-4.1-8b-fp8 \
     --served-model-name granite4.1:8b granite-4.1-8b ibm-granite/granite-4.1-8b-fp8 \
     --host 127.0.0.1 \
     --port 8000 \
-    --gpu-memory-utilization 0.45 \
+    --gpu-memory-utilization 0.55 \
     --max-model-len 4096 \
     --enforce-eager \
     --disable-log-requests \
@@ -41,20 +40,22 @@ for i in $(seq 1 240); do
         break
     fi
     if ! kill -0 "$VLLM_PID" 2>/dev/null; then
-        echo "[entrypoint.vllm] FATAL: vLLM died — HEAD:"
-        head -80 "$LOG_VLLM" || true
-        echo "[entrypoint.vllm] FATAL: vLLM died — TAIL:"
-        tail -80 "$LOG_VLLM" || true
+        echo "[entrypoint.vllm] FATAL: vLLM died"
+        echo "=== vllm.log grep (Error|OOM|CUDA|ValueError|killed) ==="
+        grep -iE "error|out of memory|killed|valueerror|cuda|exception|failed" "$LOG_VLLM" | tail -40 || true
+        echo "=== vllm.log tail-30 ==="
+        tail -30 "$LOG_VLLM" || true
         exit 1
     fi
     sleep 1
 done
 
 if ! curl -sf http://127.0.0.1:8000/health > /dev/null 2>&1; then
-    echo "[entrypoint.vllm] FATAL: vLLM did not become ready within 240s — HEAD:"
-    head -80 "$LOG_VLLM" || true
-    echo "[entrypoint.vllm] FATAL: vLLM did not become ready within 240s — TAIL:"
-    tail -80 "$LOG_VLLM" || true
+    echo "[entrypoint.vllm] FATAL: vLLM did not become ready within 240s"
+    echo "=== vllm.log grep (Error|OOM|CUDA|ValueError|killed) ==="
+    grep -iE "error|out of memory|killed|valueerror|cuda|exception|failed" "$LOG_VLLM" | tail -40 || true
+    echo "=== vllm.log tail-30 ==="
+    tail -30 "$LOG_VLLM" || true
     exit 1
 fi
 
@@ -65,7 +66,7 @@ _start_vllm() {
         --served-model-name granite4.1:8b granite-4.1-8b ibm-granite/granite-4.1-8b-fp8 \
         --host 127.0.0.1 \
         --port 8000 \
-        --gpu-memory-utilization 0.45 \
+        --gpu-memory-utilization 0.55 \
         --max-model-len 4096 \
         --enforce-eager \
         --disable-log-requests \
