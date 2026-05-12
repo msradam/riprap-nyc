@@ -69,7 +69,7 @@
       eyebrow: 'Backend unavailable',
       headline: 'All routing targets exhausted.',
       body:
-        "LiteLLM tried Local Ollama → HF Space T4 → AMD MI300X and didn't reach a healthy backend. This usually clears within 5 minutes during a deploy window. The hardware-pill in the header is currently red.",
+        "The inference backend (msradam/riprap-vllm, NVIDIA L4) didn't respond. This usually clears within 5 minutes during a deploy window. The hardware-pill in the header is currently red.",
       tier: 'proxy',
       defaultActions: ['Retry now', 'Switch backend']
     }
