@@ -78,6 +78,14 @@ _DOC_META: dict[str, dict] = {
     "terramind_lulc":   {"source": "msradam/TerraMind-NYC-Adapters", "title": "TerraMind LULC classification", "url": "https://huggingface.co/msradam/TerraMind-NYC-Adapters"},
     "terramind_buildings": {"source": "msradam/TerraMind-NYC-Adapters", "title": "TerraMind building footprint analysis", "url": "https://huggingface.co/msradam/TerraMind-NYC-Adapters"},
     "prithvi_live":     {"source": "msradam/Prithvi-EO-2.0-NYC-Pluvial", "title": "Prithvi-EO live pluvial flood prediction", "url": "https://huggingface.co/msradam/Prithvi-EO-2.0-NYC-Pluvial"},
+    # Neighborhood NTA variants (same source, polygon-aggregated)
+    "sandy_nta":             {"source": "NYC OEM / FEMA", "title": "Sandy Inundation Zone — NTA coverage (2012)", "url": "https://data.cityofnewyork.us/Public-Safety/Hurricane-Sandy-Inundation-Zone/5xsi-dfpx"},
+    "dep_extreme_2080_nta":  {"source": "NYC DEP", "title": "DEP Stormwater — Extreme 2080, NTA coverage", "url": "https://data.cityofnewyork.us/Environment/DEP-Stormwater-Flood-Projections-Data/d73m-mf6p"},
+    "dep_moderate_2050_nta": {"source": "NYC DEP", "title": "DEP Stormwater — Moderate 2050, NTA coverage", "url": "https://data.cityofnewyork.us/Environment/DEP-Stormwater-Flood-Projections-Data/d73m-mf6p"},
+    "dep_moderate_current_nta": {"source": "NYC DEP", "title": "DEP Stormwater — Moderate Current, NTA coverage", "url": "https://data.cityofnewyork.us/Environment/DEP-Stormwater-Flood-Projections-Data/d73m-mf6p"},
+    "nyc311_nta":            {"source": "NYC 311", "title": "311 flood complaints — NTA summary", "url": "https://data.cityofnewyork.us/Social-Services/311-Service-Requests-from-2010-to-Present/erm2-nwe9"},
+    "microtopo_nta":         {"source": "USGS 3DEP", "title": "LiDAR microtopography — NTA aggregate (HAND/TWI)", "url": "https://www.usgs.gov/3d-elevation-program", "vintage": "2018"},
+    "terramind_synthetic":   {"source": "msradam/TerraMind-NYC-Adapters", "title": "TerraMind synthetic land-cover prior", "url": "https://huggingface.co/msradam/TerraMind-NYC-Adapters"},
 }
 
 

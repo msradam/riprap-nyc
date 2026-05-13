@@ -24,6 +24,7 @@ from app.areas import nta
 from app.context import microtopo, nyc311
 from app.flood_layers import dep_stormwater, sandy_inundation
 from app.rag import retrieve as rag_retrieve
+from app.reconcile import citations_from_docs
 
 log = logging.getLogger("riprap.intent.neighborhood")
 
@@ -422,6 +423,8 @@ def run(plan, query: str, progress_q=None, strict: bool = False) -> dict[str, An
     rec_step["elapsed_s"] = round(time.time() - rec_t0, 2)
     _emit(rec_step)
 
+    cite_list = citations_from_docs(docs)
+
     target_safe = {k: v for k, v in target.items() if k != "geometry"}
     target_safe["bbox"] = list(target["geometry"].bounds)  # [minx, miny, maxx, maxy]
     return {
@@ -445,6 +448,7 @@ def run(plan, query: str, progress_q=None, strict: bool = False) -> dict[str, An
         "paragraph":   paragraph,
         "audit":       audit,
         "mellea":      mellea_meta,
+        "citations":   cite_list,
         "trace":       trace,
         "total_s":     round(time.time() - t0, 2),
     }
@@ -492,5 +496,6 @@ def _empty_result(plan, query: str, trace: list, error: str) -> dict:
             "rationale": plan.rationale,
         },
         "trace":     trace,
+        "citations": [],
         "paragraph": f"Could not resolve target to an NTA: {error}",
     }
