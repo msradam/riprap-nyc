@@ -78,6 +78,13 @@ _DOC_META: dict[str, dict] = {
     "terramind_lulc":   {"source": "msradam/TerraMind-NYC-Adapters", "title": "TerraMind LULC classification", "url": "https://huggingface.co/msradam/TerraMind-NYC-Adapters"},
     "terramind_buildings": {"source": "msradam/TerraMind-NYC-Adapters", "title": "TerraMind building footprint analysis", "url": "https://huggingface.co/msradam/TerraMind-NYC-Adapters"},
     "prithvi_live":     {"source": "msradam/Prithvi-EO-2.0-NYC-Pluvial", "title": "Prithvi-EO live pluvial flood prediction", "url": "https://huggingface.co/msradam/Prithvi-EO-2.0-NYC-Pluvial"},
+    "nta_resolve":           {"source": "NYC DCP", "title": "NTA polygon resolution", "url": "https://data.cityofnewyork.us/City-Government/NTA-map/d3qk-pfyz"},
+    # RAG policy corpus entries (titles from app/rag.py CORPUS_META)
+    "rag_dep_2013":   {"source": "NYC DEP", "title": "NYC DEP Wastewater Resiliency Plan (2013)"},
+    "rag_nycha":      {"source": "NYCHA", "title": "Flood Resilience at NYCHA — Lessons Learned"},
+    "rag_coned":      {"source": "Con Edison", "title": "Con Edison Climate Change Resilience Plan (2023)"},
+    "rag_mta":        {"source": "MTA", "title": "MTA Climate Resilience Roadmap (October 2025)"},
+    "rag_comptroller":{"source": "NYC Comptroller", "title": "Is NYC Ready for Rain? (2024)"},
     # Neighborhood NTA variants (same source, polygon-aggregated)
     "sandy_nta":             {"source": "NYC OEM / FEMA", "title": "Sandy Inundation Zone — NTA coverage (2012)", "url": "https://data.cityofnewyork.us/Public-Safety/Hurricane-Sandy-Inundation-Zone/5xsi-dfpx"},
     "dep_extreme_2080_nta":  {"source": "NYC DEP", "title": "DEP Stormwater — Extreme 2080, NTA coverage", "url": "https://data.cityofnewyork.us/Environment/DEP-Stormwater-Flood-Projections-Data/d73m-mf6p"},
