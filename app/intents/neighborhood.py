@@ -467,7 +467,7 @@ def _reconcile(docs: list[dict], on_token=None) -> tuple[str, dict]:
     # num_ctx 4096 covers our actual prompt (system ~600 + 6 docs ~2000)
     # with margin; 8192 was over-allocating KV cache. num_predict caps the
     # briefing at ~400 tokens — enough for 4 sections, no runaway.
-    OPTS = {"temperature": 0, "num_ctx": 4096, "num_predict": 400}
+    OPTS = {"temperature": 0, "num_ctx": 4096, "num_predict": 600}
     if on_token is None:
         resp = llm.chat(model=OLLAMA_MODEL, messages=messages, options=OPTS)
         raw = resp["message"]["content"].strip()

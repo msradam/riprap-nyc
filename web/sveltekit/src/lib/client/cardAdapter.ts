@@ -57,6 +57,13 @@ function stoneForStep(name: string): StoneKey | null {
   if (n === 'ida_hwm_2021' || n === 'ida_hwm') return 'cornerstone';
   if (n === 'prithvi_eo_v2' || n === 'prithvi_water') return 'cornerstone';
   if (n === 'microtopo_lidar' || n === 'microtopo') return 'cornerstone';
+  // Neighborhood NTA chain
+  if (n === 'sandy_nta') return 'cornerstone';
+  if (n === 'dep_extreme_2080_nta' || n === 'dep_moderate_2050_nta' ||
+      n === 'dep_moderate_current_nta') return 'cornerstone';
+  if (n === 'microtopo_nta') return 'cornerstone';
+  if (n === 'nyc311_nta') return 'touchstone';
+  if (n === 'rag_nta') return 'capstone';
   if (n === 'mta_entrance_exposure' || n === 'mta_entrances') return 'keystone';
   if (n === 'nycha_development_exposure' || n === 'nycha_developments') return 'keystone';
   if (n === 'doe_school_exposure' || n === 'doe_schools') return 'keystone';
@@ -570,6 +577,109 @@ function buildNwsAlerts(state: Final): Card | null {
   };
 }
 
+// ── Neighborhood NTA card builders ────────────────────────────────────────────
+
+function buildSandyNta(state: Final): Card | null {
+  const s = obj(state.sandy_nta);
+  if (!s) return null;
+  const frac = num(s.fraction) ?? 0;
+  const areaKm2 = num(s.polygon_area_m2) != null
+    ? ((s.polygon_area_m2 as number) / 1e6).toFixed(2)
+    : null;
+  return {
+    id: 'nta-sandy',
+    stone: 'cornerstone', tier: 'empirical', variant: 'scalars',
+    source: 'NYC OEM', agency: 'NYC OEM / FEMA · Sandy 2012 inundation zone',
+    vintage: '2012-10-29',
+    title: 'Hurricane Sandy 2012 inundation — NTA coverage',
+    scalars: [
+      { value: `${(frac * 100).toFixed(1)}%`, label: 'area inundated' },
+      ...(areaKm2 ? [{ value: `${areaKm2} km²`, label: 'NTA area' }] : []),
+    ],
+    sub: frac > 0
+      ? `${(frac * 100).toFixed(1)}% of this NTA was empirically inundated by Sandy (2012). Point data unavailable for neighborhood-mode queries.`
+      : 'NTA boundary was outside the empirical 2012 Sandy inundation extent.',
+    docId: 'sandy_nta', citeId: 'sandy_nta',
+  };
+}
+
+function buildDepNta(state: Final): Card | null {
+  const d = obj(state.dep_nta);
+  if (!d) return null;
+  const rows: (string | number)[][] = [];
+  for (const [scen, info] of Object.entries(d)) {
+    const i = obj(info as unknown);
+    if (!i) continue;
+    const frac = num(i.fraction_any) ?? 0;
+    if (frac <= 0) continue;
+    const label = str(i.label) ?? scen;
+    rows.push([label.replace(/DEP (Extreme|Moderate) Stormwater \(.*?\)\s*/i, '$1').trim(),
+               `${(frac * 100).toFixed(1)}%`, 'fraction flooded']);
+  }
+  if (!rows.length) return null;
+  return {
+    id: 'nta-dep',
+    stone: 'cornerstone', tier: 'modeled', variant: 'tabular',
+    source: 'NYC DEP', agency: 'NYC Department of Environmental Protection · Stormwater Flood Maps',
+    vintage: '2021',
+    title: 'DEP stormwater flood scenarios — NTA coverage',
+    columns: ['scenario', '% NTA flooded', 'metric'],
+    rows,
+    sub: `${rows.length} scenario${rows.length === 1 ? '' : 's'} show modeled inundation across this NTA.`,
+    docId: 'dep_stormwater', citeId: 'dep_nta',
+  };
+}
+
+function buildNyc311Nta(state: Final): Card | null {
+  const s = obj(state.nyc311_nta);
+  if (!s) return null;
+  const n = num(s.n) ?? 0;
+  if (n <= 0) return null;
+  const years = num(s.years) ?? 3;
+  const desc = s.by_descriptor && typeof s.by_descriptor === 'object'
+    ? Object.entries(s.by_descriptor as Record<string, unknown>)
+        .map(([k, v]) => [k.replace(/ \(.*\)$/, ''), v as number, ''])
+        .slice(0, 4)
+    : [];
+  return {
+    id: 'nta-311',
+    stone: 'touchstone', tier: 'proxy', variant: 'tabular',
+    source: 'NYC 311', agency: 'NYC 311 Service Requests · flood-relevant descriptors',
+    vintage: RIPRAP_VINTAGE,
+    title: `NYC 311 flood complaints — ${n.toLocaleString()} in ${years} yr`,
+    columns: ['complaint type', 'count', ''],
+    rows: desc as (string | number)[][],
+    sub: `${n.toLocaleString()} flood-related 311 service requests in this NTA over the past ${years} years.`,
+    docId: 'nyc311_nta', citeId: 'nyc311_nta',
+  };
+}
+
+function buildMicrotopoNta(state: Final): Card | null {
+  const m = obj(state.microtopo_nta);
+  if (!m) return null;
+  const elev = num(m.elev_median_m);
+  if (elev == null) return null;
+  const scalars = [
+    { value: `${elev.toFixed(1)} m`, label: 'median elevation' },
+  ];
+  if (num(m.hand_median_m) != null)
+    scalars.push({ value: `${(m.hand_median_m as number).toFixed(1)} m`, label: 'median HAND' });
+  if (num(m.twi_median) != null)
+    scalars.push({ value: `${(m.twi_median as number).toFixed(1)}`, label: 'median TWI' });
+  if (num(m.frac_hand_lt1) != null)
+    scalars.push({ value: `${((m.frac_hand_lt1 as number) * 100).toFixed(0)}%`, label: 'cells HAND < 1 m' });
+  return {
+    id: 'nta-microtopo',
+    stone: 'cornerstone', tier: 'proxy', variant: 'scalars',
+    source: 'USGS 3DEP', agency: 'USGS 3DEP DEM (LiDAR-derived) · NTA polygon aggregate',
+    vintage: '2018',
+    title: 'Microtopography — NTA aggregate',
+    scalars,
+    sub: 'Aggregated over all DEM cells within the NTA boundary. HAND < 1 m = very close to drainage channel.',
+    docId: 'microtopo_nta', citeId: 'microtopo_nta',
+  };
+}
+
 function buildCapstoneMeta(final: FinalResult, wallSeconds?: number): Card {
   // v0.4.5 §2 — wire the four metrics to the reconciler's actual state.
   // The FSM emits `mellea` as `{ rerolls, n_attempts, requirements_passed,
@@ -630,19 +740,20 @@ export function adaptFinalToFindings(
 ): FindingsData {
   const f = (final ?? {}) as Final;
   const geocode = obj(f.geocode);
+  const isNeighborhood = str(f.intent) === 'neighborhood';
   const cards: (Card | null)[] = [
     // Cornerstone
-    buildSandy(f, geocode),
-    buildDep(f),
+    isNeighborhood ? buildSandyNta(f) : buildSandy(f, geocode),
+    isNeighborhood ? buildDepNta(f) : buildDep(f),
     buildIdaHwm(f),
     buildPrithviWater(f),
-    buildMicrotopo(f),
+    isNeighborhood ? buildMicrotopoNta(f) : buildMicrotopo(f),
     // Keystone
     buildRegisters(f),
     buildTerramindBuildings(f),
     // Touchstone
     buildFloodnet(f),
-    buildNyc311(f),
+    isNeighborhood ? buildNyc311Nta(f) : buildNyc311(f),
     buildNwsObs(f),
     buildNoaaTides(f),
     buildPrithviLive(f),
@@ -702,6 +813,13 @@ export function applyStepEventToLiveState(
     terramind_buildings: 'terramind_buildings',
     eo_chip_fetch: 'eo_chip',
     geocode: 'geocode',
+    // Neighborhood NTA chain
+    sandy_nta: 'sandy_nta',
+    dep_extreme_2080_nta: 'dep_nta',
+    dep_moderate_2050_nta: 'dep_nta',
+    dep_moderate_current_nta: 'dep_nta',
+    nyc311_nta: 'nyc311_nta',
+    microtopo_nta: 'microtopo_nta',
   };
   const key = STEP_TO_STATE[stepName];
   if (!key) return [];

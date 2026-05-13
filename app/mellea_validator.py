@@ -271,7 +271,7 @@ def reconcile_strict(doc_msgs: list[dict],
             return_sampling_results=True,
             model_options={"temperature": 0,
                            "num_ctx": int(os.environ.get("RIPRAP_MELLEA_NUM_CTX", "4096")),
-                           "num_predict": int(os.environ.get("RIPRAP_MELLEA_NUM_PREDICT", "400")),
+                           "num_predict": int(os.environ.get("RIPRAP_MELLEA_NUM_PREDICT", "600")),
                            **(ollama_options or {})},
         )
 
@@ -362,7 +362,7 @@ def reconcile_strict_streaming(
     # Override with RIPRAP_MELLEA_NUM_CTX / RIPRAP_MELLEA_NUM_PREDICT.
     base_opts = {"temperature": 0,
                  "num_ctx": int(os.environ.get("RIPRAP_MELLEA_NUM_CTX", "4096")),
-                 "num_predict": int(os.environ.get("RIPRAP_MELLEA_NUM_PREDICT", "400")),
+                 "num_predict": int(os.environ.get("RIPRAP_MELLEA_NUM_PREDICT", "600")),
                  **(ollama_options or {})}
 
     paragraph = ""

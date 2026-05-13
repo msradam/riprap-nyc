@@ -32,7 +32,7 @@ export type RegistryEntry = {
   /** One-line message rendered when the specialist is not_invoked.
    *  Engineering-honest voice (V0.4.5_SPEC.md §1) — describe the
    *  precondition that wasn't met, not "no data found". */
-  skipReason: string;
+  skipReason?: string;
 };
 
 export const STONE_REGISTRY: Record<StoneKey, RegistryEntry[]> = {
@@ -202,6 +202,7 @@ export const STONE_REGISTRY: Record<StoneKey, RegistryEntry[]> = {
       name: 'npcc4.slr_projection',
       stepNames: ['npcc4_projection'],
       tier: 'modeled',
+      skipReason: 'NPCC4 SLR projection: harbor-wide static reference — see Battery tide gauge in Touchstone',
     },
   ],
   capstone: [
