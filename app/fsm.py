@@ -14,7 +14,10 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 
 import geopandas as gpd
-from burr.core import ApplicationBuilder, State, action
+from burr.core import ApplicationBuilder, State, action, expr
+from burr.core.persistence import SQLitePersister
+from burr.lifecycle import PostRunStepHook
+from burr.tracking import LocalTrackingClient
 from shapely.geometry import Point
 
 from app import emissions
@@ -118,6 +121,25 @@ def set_planner_intent(intent: str | None):
 
 def _current_planner_intent() -> str | None:
     return getattr(_FSM_LOCAL, "planner_intent", None)
+
+
+class StepEventHook(PostRunStepHook):
+    """Burr lifecycle hook — fires after each action and pushes a
+    ``("step", rec)`` tuple onto a caller-supplied queue.
+
+    Replaces the manual ``seen_keys`` deduplication loop in ``iter_steps``.
+    Pass ``queue=None`` to construct a no-op hook (non-streaming paths)."""
+
+    def __init__(self, queue=None):
+        self._q = queue
+
+    def post_run_step(self, *, state: State, action, result, exception, **_kw):
+        if self._q is None:
+            return
+        trace = state.get("trace") or []
+        if not trace:
+            return
+        self._q.put(("step", trace[-1]))
 
 
 def _step(state: State, name: str) -> dict[str, Any]:
@@ -1364,18 +1386,50 @@ _NYCHA_REGISTERS_ENABLED = _os.environ.get(
 ).lower() in ("1", "true", "yes")
 
 
-def build_app(query: str):
+_BURR_TRACKING_DIR = _os.environ.get("RIPRAP_BURR_TRACKING_DIR", "/tmp/riprap-burr")
+_BURR_CACHE_DB = _os.environ.get("RIPRAP_BURR_CACHE_DB", "/tmp/riprap-burr-cache.db")
+
+
+def build_app(query: str, step_queue=None):
     """Burr application — Cornerstone specialists run in parallel.
 
     Order: geocode → cornerstone (7 geospatial specialists, parallel) →
     live network signals → RAG → reconcile. Heavy specialists (NYCHA /
     DOE / DOH register joins, Prithvi-EO live STAC, TerraMind diffusion)
     are gated behind RIPRAP_HEAVY_SPECIALISTS — see module-level note.
+
+    step_queue: optional queue.Queue — if provided, StepEventHook pushes
+    each completed action's trace record to it (replaces iter_steps
+    manual deduplication). LocalTrackingClient writes to RIPRAP_BURR_TRACKING_DIR.
+    SQLitePersister caches completed runs keyed by (address, date) so repeat
+    queries skip the specialist pipeline and go straight to reconcile.
     """
+    import hashlib
+    from datetime import date
+
+    # Cache partition: (normalized_address, today). Same address on same day
+    # restores the full specialist state and skips to reconcile.
+    cache_key = hashlib.md5(
+        f"{query.lower().strip()}:{date.today().isoformat()}".encode()
+    ).hexdigest()[:16]
+
+    persister = SQLitePersister(db_path=_BURR_CACHE_DB, table_name="riprap_runs")
+    persister.initialize()
+
+    tracker = LocalTrackingClient(project="riprap", storage_dir=_BURR_TRACKING_DIR)
+
     builder = (
         ApplicationBuilder()
-        .with_state(query=query, trace=[])
-        .with_entrypoint("geocode")
+        .with_identifiers(partition_key=cache_key, app_id=cache_key)
+        .with_tracker(tracker)
+        .with_state_persister(persister)
+        .initialize_from(
+            persister,
+            resume_at_next_action=True,
+            default_state={"query": query, "trace": []},
+            default_entrypoint="geocode",
+        )
+        .with_hooks(StepEventHook(step_queue))
     )
 
     actions: dict[str, Any] = {
@@ -1398,10 +1452,6 @@ def build_app(query: str):
     if _HEAVY_SPECIALISTS_ENABLED:
         actions["prithvi_live"] = step_prithvi_live
         actions["terramind"] = step_terramind
-        # New TerraMind-NYC LoRA family — one chip fetch feeds two
-        # specialists. Keep eo_chip directly before the two consumers
-        # so the chip stays warm in memory and isn't garbage-collected
-        # by anything in between.
         actions["eo_chip"] = step_eo_chip
         actions["terramind_lulc"] = step_terramind_lulc
         actions["terramind_buildings"] = step_terramind_buildings
@@ -1409,9 +1459,18 @@ def build_app(query: str):
     actions["gliner"] = step_gliner
     actions["reconcile"] = step_reconcile
 
-    # Sequential transitions — pair every adjacent action in the dict order.
+    # Conditional transitions:
+    #   geocode → cornerstone if coords resolved; else skip straight to reconcile
+    #   All other transitions remain sequential.
     keys = list(actions.keys())
-    transitions = list(zip(keys, keys[1:]))
+    # Build sequential pairs, but replace geocode→cornerstone with a conditional.
+    transitions = []
+    for src, dst in zip(keys, keys[1:]):
+        if src == "geocode" and dst == "cornerstone":
+            transitions.append(("geocode", "cornerstone", expr("lat is not None")))
+            transitions.append(("geocode", "reconcile"))  # geocode failed → skip all
+        else:
+            transitions.append((src, dst))
 
     return (
         builder.with_actions(**actions).with_transitions(*transitions).build()
@@ -1494,16 +1553,7 @@ def iter_steps(query: str):
     import queue
 
     q: queue.Queue[tuple[str, Any] | None] = queue.Queue()
-    seen_keys: set[tuple[str, float]] = set()
-
-    def _push_step(rec: dict) -> None:
-        key = (rec.get("step", ""), rec.get("started_at", 0.0))
-        if key in seen_keys:
-            return
-        seen_keys.add(key)
-        q.put(("step", rec))
-
-    app = build_app(query)
+    app = build_app(query, step_queue=q)
     final_state_holder: dict[str, Any] = {}
 
     # Threadlocals are per-thread; the request thread (single_address.run
@@ -1526,12 +1576,8 @@ def iter_steps(query: str):
         try:
             for _action_obj, _result, state in app.iterate(halt_after=["reconcile"]):
                 final_state_holder["state"] = state
-                # Each action appends one record to state.trace; emit the
-                # most recent so the SSE client gets the step event the
-                # moment Burr returns from that action.
-                trace = state.get("trace") or []
-                if trace:
-                    _push_step(trace[-1])
+                # StepEventHook fires after each action and pushes to q;
+                # nothing else needed here.
         except Exception as e:
             log.exception("iterate raised")
             q.put(("error", {"err": f"{type(e).__name__}: {e}"}))
