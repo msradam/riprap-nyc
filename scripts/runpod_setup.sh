@@ -53,12 +53,13 @@ pip install --quiet \
 
 echo "==> [5/6] Start vLLM on :8000"
 pkill -f "vllm.entrypoints.openai" 2>/dev/null || true
+mkdir -p /tmp/prometheus_multiproc
+export PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus_multiproc
 nohup python -m vllm.entrypoints.openai.api_server \
     --model ibm-granite/granite-4.1-8b-fp8 \
     --served-model-name granite4.1:8b granite4.1:3b \
-    --host 0.0.0.0 \
+    --host 127.0.0.1 \
     --port 8000 \
-    --api-key "$PROXY_TOKEN" \
     --gpu-memory-utilization 0.55 \
     --max-model-len 4096 \
     --enforce-eager \
