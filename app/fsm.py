@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 import threading as _threading
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 
 import geopandas as gpd
@@ -119,15 +120,6 @@ def _current_planner_intent() -> str | None:
     return getattr(_FSM_LOCAL, "planner_intent", None)
 
 
-# Canonical Burr: one action per specialist, sequential transitions.
-# A previous version of this module wrapped 16 specialists in a single
-# fan-out action that ran them concurrently in a ThreadPoolExecutor;
-# that path was removed because it sometimes hung after the fan-out
-# completed (Burr-internal post-action cleanup with custom executors)
-# and made the trace UI's per-step timing harder to reason about.
-# Parallelism, when wanted, belongs at the inference layer
-# (vLLM / Ollama NUM_PARALLEL), not the FSM.
-
 def _step(state: State, name: str) -> dict[str, Any]:
     """Append a step record to the trace; returns the dict so the action
     can mutate timing/result fields."""
@@ -135,6 +127,232 @@ def _step(state: State, name: str) -> dict[str, Any]:
     rec = {"step": name, "started_at": time.time(), "ok": None}
     trace.append(rec)
     return rec, trace
+
+
+def _make_rec(name: str) -> dict[str, Any]:
+    """Trace record for use outside of Burr state (parallel workers)."""
+    return {"step": name, "started_at": time.time(), "ok": None}
+
+
+# ---------------------------------------------------------------------------
+# Cornerstone parallel helpers — plain functions, no State dependency.
+# Each returns (state_key, value, trace_rec). step_cornerstone fans them
+# out via ThreadPoolExecutor and merges results into Burr state in one shot.
+# Using a single Burr action with internal threads avoids the previous hang
+# (which was caused by Burr-internal post-action cleanup racing with a
+# custom executor passed to ApplicationBuilder).
+# ---------------------------------------------------------------------------
+
+def _run_sandy(lat, lon) -> tuple[str, Any, dict]:
+    rec = _make_rec("sandy_inundation")
+    try:
+        if not _in_nyc(lat, lon):
+            rec["ok"] = False; rec["err"] = "out of NYC scope"
+            return "sandy", None, rec
+        pt_geom = (gpd.GeoDataFrame(geometry=[Point(lon, lat)], crs="EPSG:4326")
+                   .to_crs("EPSG:2263").iloc[0].geometry)
+        flag = sandy_inundation.inside_raster(pt_geom)
+        rec["ok"] = True; rec["result"] = {"inside": flag}
+        return "sandy", flag, rec
+    except Exception as e:
+        rec["ok"] = False; rec["err"] = str(e)
+        log.exception("sandy failed")
+        return "sandy", None, rec
+    finally:
+        rec["elapsed_s"] = round(time.time() - rec["started_at"], 2)
+
+
+def _run_dep(lat, lon) -> tuple[str, Any, dict]:
+    rec = _make_rec("dep_stormwater")
+    try:
+        if not _in_nyc(lat, lon):
+            rec["ok"] = False; rec["err"] = "out of NYC scope"
+            return "dep", None, rec
+        pt_geom = (gpd.GeoDataFrame(geometry=[Point(lon, lat)], crs="EPSG:4326")
+                   .to_crs("EPSG:2263").iloc[0].geometry)
+        out: dict[str, Any] = {}
+        for scen in ["dep_extreme_2080", "dep_moderate_2050", "dep_moderate_current"]:
+            cls = dep_stormwater.join_raster(pt_geom, scen)
+            out[scen] = {
+                "depth_class": cls,
+                "depth_label": dep_stormwater.DEPTH_CLASS.get(cls, "outside"),
+                "citation": f"NYC DEP Stormwater Flood Map — {dep_stormwater.label(scen)}",
+            }
+        rec["ok"] = True; rec["result"] = {k: v["depth_label"] for k, v in out.items()}
+        return "dep", out, rec
+    except Exception as e:
+        rec["ok"] = False; rec["err"] = str(e)
+        log.exception("dep failed")
+        return "dep", None, rec
+    finally:
+        rec["elapsed_s"] = round(time.time() - rec["started_at"], 2)
+
+
+def _run_floodnet(lat, lon) -> tuple[str, Any, dict]:
+    rec = _make_rec("floodnet")
+    try:
+        if not _in_nyc(lat, lon):
+            rec["ok"] = False; rec["err"] = "out of NYC scope"
+            return "floodnet", None, rec
+        s = floodnet.summary_for_point(lat, lon, radius_m=600)
+        s["radius_m"] = 600
+        rec["ok"] = True
+        rec["result"] = {"n_sensors": s["n_sensors"], "n_events_3y": s["n_flood_events_3y"]}
+        return "floodnet", s, rec
+    except Exception as e:
+        rec["ok"] = False; rec["err"] = str(e)
+        log.exception("floodnet failed")
+        return "floodnet", None, rec
+    finally:
+        rec["elapsed_s"] = round(time.time() - rec["started_at"], 2)
+
+
+def _run_311(lat, lon) -> tuple[str, Any, dict]:
+    rec = _make_rec("nyc311")
+    try:
+        if not _in_nyc(lat, lon):
+            rec["ok"] = False; rec["err"] = "out of NYC scope"
+            return "nyc311", None, rec
+        s = nyc311.summary_for_point(lat, lon, radius_m=200, years=5)
+        rec["ok"] = True; rec["result"] = {"n": s["n"]}
+        return "nyc311", s, rec
+    except Exception as e:
+        rec["ok"] = False; rec["err"] = str(e)
+        log.exception("311 failed")
+        return "nyc311", None, rec
+    finally:
+        rec["elapsed_s"] = round(time.time() - rec["started_at"], 2)
+
+
+def _run_ida_hwm(lat, lon) -> tuple[str, Any, dict]:
+    rec = _make_rec("ida_hwm_2021")
+    try:
+        s = ida_hwm.summary_for_point(lat, lon, radius_m=800)
+        if s is None:
+            rec["ok"] = False; rec["err"] = "HWM data missing"
+            return "ida_hwm", None, rec
+        rec["ok"] = True
+        rec["result"] = {
+            "n_within_800m": s.n_within_radius,
+            "max_height_above_gnd_ft": s.max_height_above_gnd_ft,
+            "nearest_m": s.nearest_dist_m,
+        }
+        return "ida_hwm", vars(s), rec
+    except Exception as e:
+        rec["ok"] = False; rec["err"] = str(e)
+        log.exception("ida_hwm failed")
+        return "ida_hwm", None, rec
+    finally:
+        rec["elapsed_s"] = round(time.time() - rec["started_at"], 2)
+
+
+def _run_prithvi(lat, lon) -> tuple[str, Any, dict]:
+    rec = _make_rec("prithvi_eo_v2")
+    try:
+        if not _in_nyc(lat, lon):
+            rec["ok"] = False; rec["err"] = "out of NYC scope"
+            return "prithvi_water", None, rec
+        s = prithvi_water.summary_for_point(lat, lon)
+        if s is None:
+            rec["ok"] = False; rec["err"] = "Prithvi mask missing"
+            return "prithvi_water", None, rec
+        rec["ok"] = True
+        rec["result"] = {
+            "inside_water_polygon": s.inside_water_polygon,
+            "nearest_distance_m": s.nearest_distance_m,
+            "n_polygons_within_500m": s.n_polygons_within_500m,
+        }
+        return "prithvi_water", vars(s), rec
+    except Exception as e:
+        rec["ok"] = False; rec["err"] = str(e)
+        log.exception("prithvi failed")
+        return "prithvi_water", None, rec
+    finally:
+        rec["elapsed_s"] = round(time.time() - rec["started_at"], 2)
+
+
+def _run_microtopo(lat, lon) -> tuple[str, Any, dict]:
+    rec = _make_rec("microtopo_lidar")
+    try:
+        if not _in_nyc(lat, lon):
+            rec["ok"] = False; rec["err"] = "out of NYC scope"
+            return "microtopo", None, rec
+        m = microtopo.microtopo_at(lat, lon)
+        if m is None:
+            rec["ok"] = False; rec["err"] = "DEM fetch failed"
+            return "microtopo", None, rec
+        rec["ok"] = True
+        rec["result"] = {
+            "elev_m": m.point_elev_m,
+            "pct_200m": m.rel_elev_pct_200m,
+            "relief_m": m.basin_relief_m,
+        }
+        return "microtopo", vars(m), rec
+    except Exception as e:
+        rec["ok"] = False; rec["err"] = str(e)
+        log.exception("microtopo failed")
+        return "microtopo", None, rec
+    finally:
+        rec["elapsed_s"] = round(time.time() - rec["started_at"], 2)
+
+
+_CORNERSTONE_WORKERS = [
+    _run_sandy, _run_dep, _run_floodnet, _run_311,
+    _run_ida_hwm, _run_prithvi, _run_microtopo,
+]
+
+
+@action(reads=["lat", "lon"],
+        writes=["sandy", "dep", "floodnet", "nyc311",
+                "ida_hwm", "prithvi_water", "microtopo", "trace"])
+def step_cornerstone(state: State) -> State:
+    """Run all 7 geospatial Cornerstone specialists in parallel.
+
+    Uses ThreadPoolExecutor internally (not Burr's parallel executor) to
+    avoid the post-action cleanup hang that occurred with the previous
+    fan-out approach. Workers are pure functions — no shared Burr state."""
+    trace = list(state.get("trace", []))
+    lat, lon = state.get("lat"), state.get("lon")
+
+    defaults = {
+        "sandy": None, "dep": None, "floodnet": None,
+        "nyc311": None, "ida_hwm": None, "prithvi_water": None, "microtopo": None,
+    }
+
+    if lat is None:
+        for fn in _CORNERSTONE_WORKERS:
+            rec = _make_rec(fn.__name__.removeprefix("_run_"))
+            rec["ok"] = False; rec["err"] = "no coords"
+            rec["elapsed_s"] = 0.0
+            trace.append(rec)
+        return state.update(**defaults, trace=trace)
+
+    results: dict[str, Any] = {}
+    with ThreadPoolExecutor(max_workers=len(_CORNERSTONE_WORKERS)) as pool:
+        futures = {pool.submit(fn, lat, lon): fn for fn in _CORNERSTONE_WORKERS}
+        for future in as_completed(futures):
+            try:
+                key, val, rec = future.result()
+            except Exception as e:
+                fn = futures[future]
+                rec = {"step": fn.__name__, "ok": False,
+                       "err": str(e), "elapsed_s": 0.0, "started_at": time.time()}
+                key = fn.__name__.removeprefix("_run_")
+                val = None
+                log.exception("cornerstone worker %s raised", fn.__name__)
+            results[key] = val
+            trace.append(rec)
+
+    return state.update(
+        sandy=results.get("sandy"),
+        dep=results.get("dep"),
+        floodnet=results.get("floodnet"),
+        nyc311=results.get("nyc311"),
+        ida_hwm=results.get("ida_hwm"),
+        prithvi_water=results.get("prithvi_water"),
+        microtopo=results.get("microtopo"),
+        trace=trace,
+    )
 
 
 @action(reads=["query"], writes=["geocode", "lat", "lon", "trace"])
@@ -1147,12 +1365,12 @@ _NYCHA_REGISTERS_ENABLED = _os.environ.get(
 
 
 def build_app(query: str):
-    """Linear, single-action-per-step Burr application.
+    """Burr application — Cornerstone specialists run in parallel.
 
-    Order: cheap-first geo + flood layers, then live live network signals,
-    then RAG → reconcile. Heavy specialists (NYCHA / DOE / DOH register
-    joins, Prithvi-EO live STAC, TerraMind diffusion) are gated behind
-    RIPRAP_HEAVY_SPECIALISTS — see the module-level note above.
+    Order: geocode → cornerstone (7 geospatial specialists, parallel) →
+    live network signals → RAG → reconcile. Heavy specialists (NYCHA /
+    DOE / DOH register joins, Prithvi-EO live STAC, TerraMind diffusion)
+    are gated behind RIPRAP_HEAVY_SPECIALISTS — see module-level note.
     """
     builder = (
         ApplicationBuilder()
@@ -1162,10 +1380,7 @@ def build_app(query: str):
 
     actions: dict[str, Any] = {
         "geocode": step_geocode,
-        "sandy": step_sandy,
-        "dep": step_dep,
-        "floodnet": step_floodnet,
-        "nyc311": step_311,
+        "cornerstone": step_cornerstone,  # sandy+dep+floodnet+311+ida+prithvi+microtopo
         "noaa_tides": step_noaa_tides,
         "nws_alerts": step_nws_alerts,
         "nws_obs": step_nws_obs,
@@ -1174,10 +1389,7 @@ def build_app(query: str):
         "floodnet_forecast": step_floodnet_forecast,
         "npcc4_projection": step_npcc4_projection,
         "ttm_battery_surge": step_ttm_battery_surge,
-        "microtopo": step_microtopo,
-        "ida_hwm": step_ida_hwm,
         "mta_entrances": step_mta_entrances,
-        "prithvi": step_prithvi,  # baked GeoJSON polygons for Ida; cheap
     }
     if _HEAVY_SPECIALISTS_ENABLED and _NYCHA_REGISTERS_ENABLED:
         actions["nycha"] = step_nycha
