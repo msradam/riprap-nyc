@@ -83,6 +83,7 @@ done
 echo "==> [6a/6] Start riprap-models on :7861"
 pkill -f "riprap_models" 2>/dev/null || true
 cp "$REPO_DIR/services/riprap-models/main.py" /workspace/riprap_models.py
+cd /workspace
 nohup uvicorn riprap_models:app --host 0.0.0.0 --port 7861 --log-level info \
     > "$LOG_DIR/riprap-models.log" 2>&1 &
 echo "    riprap-models pid $!"
