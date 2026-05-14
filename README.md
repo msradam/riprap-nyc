@@ -1,10 +1,17 @@
+---
+title: Riprap Nyc
+emoji: 😻
+colorFrom: red
+colorTo: yellow
+sdk: docker
+pinned: false
+---
+
 <p align="left">
   <img src="assets/logo@2x.png" width="72" height="72" alt="Riprap dam mark" />
 </p>
 
 # Riprap
-
-[![check](https://github.com/msradam/riprap-nyc/actions/workflows/check.yml/badge.svg)](https://github.com/msradam/riprap-nyc/actions/workflows/check.yml) [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE) [![Live demo](https://img.shields.io/badge/demo-lablab.ai-2DD4BF)](https://lablab-ai-amd-developer-hackathon-riprap-nyc.hf.space) [![Python 3.12](https://img.shields.io/badge/python-3.12-3776AB.svg)](https://www.python.org/downloads/release/python-3120/)
 
 ## Flood risk analysis for any NYC address.
 
@@ -242,8 +249,7 @@ civil-engineering framing in
 topology in [`docs/DEPLOY.md`](docs/DEPLOY.md). Live measurements
 on the canonical four-address verification set (wall-clock, real
 NVML energy, Mellea grounding pass-rate) in
-[`docs/BENCHMARKS.md`](docs/BENCHMARKS.md). One-line map of every
-doc in [`docs/INDEX.md`](docs/INDEX.md).
+[`docs/BENCHMARKS.md`](docs/BENCHMARKS.md).
 
 ---
 
@@ -361,19 +367,6 @@ If you reference Riprap in academic or professional work:
   note         = {Built for the AMD x lablab.ai Developer Hackathon}
 }
 ```
-
----
-
-## AI-assisted authoring
-
-Portions of this repository were drafted with the assistance of large
-language models. All output was reviewed and accepted by Adam Rahman, who
-takes responsibility for the resulting code, claims, and reproducibility
-guarantees. Commits prior to 2026-05-10 may include `Co-Authored-By`
-trailers referencing Anthropic Claude, preserved as historical record of
-the AMD Developer Cloud hackathon (May 4–10, 2026); commits going forward
-do not include them. The artifact-level disclosure in [`NOTICE`](NOTICE)
-supersedes per-commit attribution.
 
 ---
 
