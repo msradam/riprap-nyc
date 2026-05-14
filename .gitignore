@@ -62,10 +62,31 @@ experiments/**/*.parquet
 experiments/**/*.npy
 pitch/screenshots-*/
 
-# Marp deck render artefacts (regenerable via `make` in slides/)
-slides/deck.pdf
-slides/deck.html
-slides/deck.pptx
+# Presentation slides and internal working materials (→ riprap-work)
+slides/
+pitch/
+research/
+submission/
+
+# Internal ops scripts (→ riprap-work)
+scripts/deploy_droplet.sh
+scripts/deploy_inference_space.sh
+scripts/deploy_personal_space.sh
+scripts/deploy_vllm_space.sh
+scripts/redeploy.sh
+scripts/save_droplet_image.sh
+scripts/point_lablab_at_vllm_space.sh
+scripts/probe_30.py
+scripts/runpod_setup.sh
+riprap.sh
+SAT_MAY_9.md
+github_repo_cleanup.prompt
+
+# Internal docs (→ riprap-work)
+docs/HF_BLOG.md
+docs/COMPLIANCE.md
+docs/DROPLET-RUNBOOK.md
+docs/legacy/
 
 # Session artifacts
 /tmp/riprap-*

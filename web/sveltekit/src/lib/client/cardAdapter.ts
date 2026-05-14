@@ -78,7 +78,7 @@ function stoneForStep(name: string): StoneKey | null {
     return 'touchstone';
   if (n === 'nws_alerts') return 'lodestone';
   if (n === 'ttm_forecast' || n === 'ttm_311_forecast' || n === 'floodnet_forecast' ||
-      n === 'ttm_battery_surge') return 'lodestone';
+      n === 'ttm_battery_surge' || n === 'npcc4_projection') return 'lodestone';
   if (n.startsWith('reconcile') || n.startsWith('mellea') ||
       n === 'rag_granite_embedding' || n === 'gliner_extract') return 'capstone';
   return null;

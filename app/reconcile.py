@@ -171,10 +171,17 @@ def _normalize_num(s: str) -> set[str]:
 
 
 def _docs_corpus(doc_msgs: list[dict]) -> str:
-    """Join all document message contents (and their role suffixes — those
-    carry the doc_id, which is itself a number-free identifier) into one
-    big haystack we substring-search for numeric claims."""
-    return "\n".join(m.get("content", "") for m in doc_msgs)
+    """Join all document message contents into one haystack for numeric grounding.
+
+    The geocode document is excluded: it contains the raw address string
+    (e.g. "80 Pioneer Street") which would let address-number substrings
+    (like "80") falsely pass the grounding check for LLM-hallucinated values
+    like "80%" when the actual data says "0.8%"."""
+    return "\n".join(
+        m.get("content", "")
+        for m in doc_msgs
+        if not m.get("role", "").endswith("geocode")
+    )
 
 
 # Recognise structured-output section headers like `**Status.**` on their
@@ -351,7 +358,10 @@ def trim_docs_to_plan(doc_msgs: list[dict],
         "doe_schools":        ("doe_school", "nyc_school"),
         "doh_hospitals":      ("doh_hospital", "nyc_hospital"),
     }
-    ALWAYS_KEEP = ("geocode", "scope_note", "nta_resolve")
+    # npcc4_slr: static reference, always relevant for NYC addresses regardless
+    # of what the planner chose. rag_: RAG already did relevance filtering; if
+    # it found a hit, that hit is useful and should reach Capstone.
+    ALWAYS_KEEP = ("geocode", "scope_note", "nta_resolve", "npcc4_slr", "rag_")
 
     allowed_prefixes: set[str] = set()
     for spec in planned_specialists:
