@@ -391,13 +391,18 @@ def reconcile_strict_streaming(
         try:
             import httpx as _httpx
             _probe_url = f"{_vllm_base}/models"
+            _probe_key = os.environ.get("RIPRAP_LLM_API_KEY", "") or "EMPTY"
+            _probe_headers = {"Authorization": f"Bearer {_probe_key}"}
             _probe_deadline = t0 + _first_token_timeout
             log.info("mellea: polling vLLM readiness at %s", _probe_url)
             while time.time() < _probe_deadline:
                 try:
-                    _r = _httpx.get(_probe_url, timeout=5.0)
-                    if _r.status_code == 200:
-                        log.info("mellea: vLLM ready (%.1fs elapsed)", time.time() - t0)
+                    _r = _httpx.get(_probe_url, headers=_probe_headers, timeout=5.0)
+                    # Any non-503/502/504 means the service is UP (200 = ready,
+                    # 401 = auth-gated but alive, 404 = wrong path but alive).
+                    if _r.status_code not in (502, 503, 504):
+                        log.info("mellea: vLLM ready (status=%d, %.1fs elapsed)",
+                                 _r.status_code, time.time() - t0)
                         break
                 except Exception as _pe:
                     log.debug("mellea: vLLM probe: %r", _pe)
