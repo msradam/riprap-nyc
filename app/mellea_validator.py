@@ -374,10 +374,12 @@ def reconcile_strict_streaming(
     attempts = 0
     _streaming_hung = False  # set on first per-token timeout; skip retries
 
-    # 120 s gives the LLM time to respond after a cold start. The warmup
-    # thread in iter_steps fires a tiny 1-token request at the start of
-    # every request so the GPU is warm by the time we get here.
-    _per_token_timeout = int(os.environ.get("RIPRAP_TOKEN_TIMEOUT_S", "120"))
+    # Two-phase timeout: the FIRST token from a cold RunPod pod can take
+    # 3-4 min (container boot + model load into GPU VRAM). Once streaming
+    # has started, each subsequent token should arrive in < 5 s; we use a
+    # tight 45 s inter-token timeout to catch mid-stream stalls quickly.
+    _first_token_timeout = int(os.environ.get("RIPRAP_FIRST_TOKEN_TIMEOUT_S", "250"))
+    _inter_token_timeout = int(os.environ.get("RIPRAP_TOKEN_TIMEOUT_S", "45"))
 
     for attempt_idx in range(loop_budget):
         attempts = attempt_idx + 1
@@ -431,12 +433,14 @@ def reconcile_strict_streaming(
         _st = threading.Thread(target=_stream_worker, daemon=True)
         _st.start()
         _timed_out = False
+        _got_first_token = False
         while True:
+            _timeout = _inter_token_timeout if _got_first_token else _first_token_timeout
             try:
-                chunk = _stream_q.get(timeout=_per_token_timeout)
+                chunk = _stream_q.get(timeout=_timeout)
             except queue.Empty:
-                log.warning("mellea: per-token timeout (%ds) — breaking stream",
-                            _per_token_timeout)
+                log.warning("mellea: timeout (%ds, first=%s) — breaking stream",
+                            _timeout, not _got_first_token)
                 _timed_out = True
                 _streaming_hung = True
                 break
@@ -447,6 +451,7 @@ def reconcile_strict_streaming(
                 break
             delta = (chunk.get("message") or {}).get("content") or ""
             if delta:
+                _got_first_token = True
                 chunks.append(delta)
                 if on_token is not None:
                     try:
