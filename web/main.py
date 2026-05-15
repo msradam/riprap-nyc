@@ -695,6 +695,21 @@ async def api_agent_stream(q: str):
     def runner():
         emissions.install(tracker)
         try:
+            import threading as _th
+            from app import llm as _llm
+
+            def _warmup_llm():
+                try:
+                    _llm.chat(
+                        model="granite-8b",
+                        messages=[{"role": "user", "content": "hi"}],
+                        options={"num_predict": 1, "temperature": 0},
+                        stream=False,
+                    )
+                except Exception:
+                    pass
+            _th.Thread(target=_warmup_llm, daemon=True, name="riprap-warmup").start()
+
             from app.intents import development_check as i_dev
             from app.intents import live_now as i_live
             from app.intents import neighborhood as i_nbhd
