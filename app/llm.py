@@ -428,20 +428,25 @@ def chat(model: str, messages: list[dict], options: dict | None = None,
     kwargs = _opts_to_kwargs(options)
     docs = _extract_documents(messages)
     if docs:
-        # Merge into extra_body so Granite's HF chat template (vLLM)
-        # picks them up. Ollama backend ignores extra_body and keeps
-        # using the role="document <id>" messages already in `messages`.
         eb = kwargs.setdefault("extra_body", {})
-        eb["documents"] = docs
-        eb.setdefault("chat_template_kwargs", {})["documents"] = docs
-    # vLLM's Granite HF chat template reads documents from
-    # chat_template_kwargs (set above). The `role="document <id>"` entries
-    # are Ollama-specific; vLLM's Jinja template doesn't recognise
-    # non-standard roles and returns 400 immediately, causing LiteLLM to
-    # fall back to Ollama (5 s CPU timeout → empty paragraph).
-    # Strip them so vLLM gets only user/system/assistant messages.
-    # The Ollama fallback receives the same filtered messages, which is
-    # acceptable — the Ollama path is a 5 s safety net when vLLM is up.
+        if _PRIMARY == "vllm" and _VLLM_BASE:
+            # vLLM's Granite HF chat template reads documents from
+            # chat_template_kwargs.documents only. Sending them ALSO as a
+            # top-level "documents" key causes vLLM to inject them twice
+            # (once via the template kwarg path, once via vLLM's own
+            # grounding handler), doubling the token count and blowing
+            # past max_model_len=2352 → 400 → LiteLLM Ollama fallback →
+            # 5 s CPU timeout → empty paragraph.
+            eb.setdefault("chat_template_kwargs", {})["documents"] = docs
+        else:
+            # Ollama backend: role="document <id>" messages in `messages`
+            # are the primary document path. The extra_body fields are
+            # forwarded as-is for Ollama's own handling.
+            eb["documents"] = docs
+            eb.setdefault("chat_template_kwargs", {})["documents"] = docs
+    # For vLLM, strip the role="document <id>" messages from the messages
+    # array — vLLM's Jinja template doesn't recognise non-standard roles
+    # (raises 400). Documents are already in chat_template_kwargs above.
     effective_messages = (
         [m for m in messages if not m.get("role", "").startswith("document ")]
         if docs and _PRIMARY == "vllm" and _VLLM_BASE
