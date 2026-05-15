@@ -379,7 +379,7 @@ def reconcile_strict_streaming(
     # 3-4 min (container boot + model load into GPU VRAM). Once streaming
     # has started, each subsequent token should arrive in < 5 s; we use a
     # tight 45 s inter-token timeout to catch mid-stream stalls quickly.
-    _first_token_timeout = int(os.environ.get("RIPRAP_FIRST_TOKEN_TIMEOUT_S", "250"))
+    _first_token_timeout = int(os.environ.get("RIPRAP_FIRST_TOKEN_TIMEOUT_S", "400"))
     _inter_token_timeout = int(os.environ.get("RIPRAP_TOKEN_TIMEOUT_S", "45"))
 
     for attempt_idx in range(loop_budget):
