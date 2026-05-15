@@ -97,7 +97,9 @@ def _build_router() -> Router:
     # stream_timeout (per-chunk) stays tight since subsequent tokens are fast.
     _vllm_first_token_timeout = int(
         os.environ.get("RIPRAP_LITELLM_TIMEOUT_S", "360"))
-    _ollama_timeout = 240
+    # 5s: fail fast so callers (mellea probe loop) aren't blocked waiting
+    # for an Ollama that doesn't exist in the vLLM-primary HF Space.
+    _ollama_timeout = 5
 
     for alias, (vllm_name, ollama_tag) in _LOGICAL.items():
         if use_vllm:

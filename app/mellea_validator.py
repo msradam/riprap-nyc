@@ -382,6 +382,32 @@ def reconcile_strict_streaming(
     _first_token_timeout = int(os.environ.get("RIPRAP_FIRST_TOKEN_TIMEOUT_S", "400"))
     _inter_token_timeout = int(os.environ.get("RIPRAP_TOKEN_TIMEOUT_S", "45"))
 
+    # When PRIMARY=vllm, RunPod cold-starts take ~250s (container boot +
+    # model load). LiteLLM gets a 503 and falls back to Ollama, which blocks
+    # for the full Ollama timeout before failing. Poll /v1/models instead and
+    # wait here — keepalives keep the SSE connection alive during the wait.
+    _vllm_base = os.environ.get("RIPRAP_LLM_BASE_URL", "").rstrip("/")
+    if os.environ.get("RIPRAP_LLM_PRIMARY", "ollama") == "vllm" and _vllm_base:
+        try:
+            import httpx as _httpx
+            _probe_url = f"{_vllm_base}/models"
+            _probe_deadline = t0 + _first_token_timeout
+            log.info("mellea: polling vLLM readiness at %s", _probe_url)
+            while time.time() < _probe_deadline:
+                try:
+                    _r = _httpx.get(_probe_url, timeout=5.0)
+                    if _r.status_code == 200:
+                        log.info("mellea: vLLM ready (%.1fs elapsed)", time.time() - t0)
+                        break
+                except Exception as _pe:
+                    log.debug("mellea: vLLM probe: %r", _pe)
+                time.sleep(10)
+            else:
+                log.warning("mellea: vLLM not ready after %.1fs, proceeding anyway",
+                            time.time() - t0)
+        except ImportError:
+            log.warning("mellea: httpx not available, skipping vLLM probe")
+
     for attempt_idx in range(loop_budget):
         attempts = attempt_idx + 1
         # On reroll, append a tight feedback message naming what failed AND
