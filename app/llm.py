@@ -434,6 +434,19 @@ def chat(model: str, messages: list[dict], options: dict | None = None,
         eb = kwargs.setdefault("extra_body", {})
         eb["documents"] = docs
         eb.setdefault("chat_template_kwargs", {})["documents"] = docs
+    # vLLM's Granite HF chat template reads documents from
+    # chat_template_kwargs (set above). The `role="document <id>"` entries
+    # are Ollama-specific; vLLM's Jinja template doesn't recognise
+    # non-standard roles and returns 400 immediately, causing LiteLLM to
+    # fall back to Ollama (5 s CPU timeout → empty paragraph).
+    # Strip them so vLLM gets only user/system/assistant messages.
+    # The Ollama fallback receives the same filtered messages, which is
+    # acceptable — the Ollama path is a 5 s safety net when vLLM is up.
+    effective_messages = (
+        [m for m in messages if not m.get("role", "").startswith("document ")]
+        if docs and _PRIMARY == "vllm" and _VLLM_BASE
+        else messages
+    )
     if format == "json":
         # OpenAI/vLLM path
         kwargs["response_format"] = {"type": "json_object"}
@@ -446,7 +459,7 @@ def chat(model: str, messages: list[dict], options: dict | None = None,
     p0 = _sample_gpu_power_w()
     t0 = time.monotonic()
     if stream:
-        s = _router.completion(model=alias, messages=messages,
+        s = _router.completion(model=alias, messages=effective_messages,
                                stream=True, **kwargs)
 
         def _on_stream_done(full_text: str) -> None:
@@ -459,7 +472,7 @@ def chat(model: str, messages: list[dict], options: dict | None = None,
                         avg_power_w=avg)
 
         return _stream_to_ollama_shape(s, on_done=_on_stream_done)
-    resp = _router.completion(model=alias, messages=messages, **kwargs)
+    resp = _router.completion(model=alias, messages=effective_messages, **kwargs)
     duration_s = time.monotonic() - t0
     p1 = _sample_gpu_power_w()
     avg = _avg_w(p0, p1)
