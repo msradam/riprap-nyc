@@ -1550,6 +1550,24 @@ def iter_steps(query: str):
     app = build_app(query, step_queue=q)
     final_state_holder: dict[str, Any] = {}
 
+    # Fire a tiny warmup request to the LLM backend immediately so that a
+    # cold RunPod pod starts loading the model while the ~35s specialist
+    # pipeline runs. By the time step_reconcile starts, the GPU should be
+    # warm and the first token arrives quickly.
+    def _warmup_llm():
+        try:
+            from app import llm as _llm
+            _llm.chat(
+                model="granite-8b",
+                messages=[{"role": "user", "content": "hi"}],
+                options={"num_predict": 1, "temperature": 0},
+                stream=False,
+            )
+        except Exception:
+            pass  # warmup failure is silent — reconciler will still try
+
+    _threading.Thread(target=_warmup_llm, daemon=True, name="riprap-warmup").start()
+
     # Threadlocals are per-thread; the request thread (single_address.run
     # / neighborhood.run) sets the strict-mode flag, planner specialist
     # set, and token / Mellea-attempt callbacks, but Burr's app.iterate

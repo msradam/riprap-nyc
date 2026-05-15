@@ -374,8 +374,9 @@ def reconcile_strict_streaming(
     attempts = 0
     _streaming_hung = False  # set on first per-token timeout; skip retries
 
-    # 120 s covers RunPod cold-start (model load + KV-cache alloc ≈ 60-90 s)
-    # while still failing fast for genuinely dead endpoints.
+    # 120 s gives the LLM time to respond after a cold start. The warmup
+    # thread in iter_steps fires a tiny 1-token request at the start of
+    # every request so the GPU is warm by the time we get here.
     _per_token_timeout = int(os.environ.get("RIPRAP_TOKEN_TIMEOUT_S", "120"))
 
     for attempt_idx in range(loop_budget):
