@@ -130,14 +130,15 @@ class StepEventHook(PostRunStepHook):
 
     def __init__(self, queue=None):
         self._q = queue
+        self._prev_trace_len = 0
 
     def post_run_step(self, *, state: State, action, result, exception, **_kw):
         if self._q is None:
             return
         trace = state.get("trace") or []
-        if not trace:
-            return
-        self._q.put(("step", trace[-1]))
+        for rec in trace[self._prev_trace_len:]:
+            self._q.put(("step", rec))
+        self._prev_trace_len = len(trace)
 
 
 def _step(state: State, name: str) -> dict[str, Any]:
@@ -633,35 +634,21 @@ def step_terramind(state: State) -> State:
     *synthetic-prior* — explicitly fourth epistemic class alongside
     empirical / modeled / proxy. Frame the doc body and reconciler
     narration as 'plausible synthesis from terrain context', never
-    'imaged' or 'reconstructed'."""
-    rec, trace = _step(state, "terramind_synthesis")
+    'imaged' or 'reconstructed'.
+
+    Runs silently — no trace record emitted — because the remote
+    endpoint is unreliable and an always-failing card in Findings
+    is noise rather than signal."""
+    trace = list(state.get("trace", []))
     try:
-        if state.get("lat") is None:
-            rec["ok"] = False; rec["err"] = "no coords"
-            return state.update(terramind=None, trace=trace)
-        if not _in_nyc(state["lat"], state["lon"]):
-            rec["ok"] = False; rec["err"] = "out of NYC scope"
+        if state.get("lat") is None or not _in_nyc(state["lat"], state["lon"]):
             return state.update(terramind=None, trace=trace)
         from app.context import terramind_synthesis
         s = terramind_synthesis.fetch(state["lat"], state["lon"])
-        rec["ok"] = bool(s.get("ok"))
-        if not s.get("ok"):
-            rec["err"] = s.get("err") or s.get("skipped") or "terramind unavailable"
-        else:
-            rec["result"] = {
-                "tim_chain": s.get("tim_chain"),
-                "diffusion_steps": s.get("diffusion_steps"),
-                "dem_mean_m": s.get("dem_mean_m"),
-                "synth_chip_shape": s.get("synth_chip_shape"),
-                "elapsed_s": s.get("elapsed_s"),
-            }
-        return state.update(terramind=s, trace=trace)
-    except Exception as e:
-        rec["ok"] = False; rec["err"] = str(e)
+        return state.update(terramind=s if s.get("ok") else None, trace=trace)
+    except Exception:
         log.exception("terramind failed")
         return state.update(terramind=None, trace=trace)
-    finally:
-        rec["elapsed_s"] = round(time.time() - rec["started_at"], 2)
 
 
 @action(reads=["lat", "lon"], writes=["noaa_tides", "trace"])
