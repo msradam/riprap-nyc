@@ -449,6 +449,11 @@ def reconcile_strict_streaming(
                 break
             if isinstance(chunk, Exception):
                 log.warning("mellea: stream error: %r", chunk)
+                if not _got_first_token:
+                    # LiteLLM/httpx timeout before first token — treat as
+                    # streaming hung so we don't start a concurrent retry.
+                    _timed_out = True
+                    _streaming_hung = True
                 break
             delta = (chunk.get("message") or {}).get("content") or ""
             if delta:
