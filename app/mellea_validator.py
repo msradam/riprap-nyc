@@ -372,6 +372,9 @@ def reconcile_strict_streaming(
     last_failed: list[str] = [name for name, _ in checks]
     last_paragraph = ""
     attempts = 0
+    _streaming_hung = False  # set on first per-token timeout; skip retries
+
+    _per_token_timeout = int(os.environ.get("RIPRAP_TOKEN_TIMEOUT_S", "45"))
 
     for attempt_idx in range(loop_budget):
         attempts = attempt_idx + 1
@@ -403,30 +406,38 @@ def reconcile_strict_streaming(
             messages.append({"role": "user", "content": "\n".join(feedback)})
 
         chunks: list[str] = []
-        _per_token_timeout = int(os.environ.get("RIPRAP_TOKEN_TIMEOUT_S", "45"))
-        _stream_q: queue.Queue = queue.Queue()
-        _STREAM_DONE = object()
 
-        def _stream_worker():
+        # Each attempt gets its own sentinel so that a stale daemon thread
+        # from a previous timed-out attempt cannot corrupt this attempt's
+        # queue (the closure captures variables by reference; re-binding
+        # them per-attempt keeps each daemon's sentinel unique).
+        _stream_q: queue.Queue = queue.Queue()
+        _done_sentinel = object()
+
+        def _stream_worker(q=_stream_q, done=_done_sentinel,
+                           msgs=messages, opts=base_opts):
             try:
-                for _chunk in llm.chat(model=model, messages=messages,
-                                       stream=True, options=base_opts):
-                    _stream_q.put(_chunk)
+                for _chunk in llm.chat(model=model, messages=msgs,
+                                       stream=True, options=opts):
+                    q.put(_chunk)
             except Exception as _e:
-                _stream_q.put(_e)
+                q.put(_e)
             finally:
-                _stream_q.put(_STREAM_DONE)
+                q.put(done)
 
         _st = threading.Thread(target=_stream_worker, daemon=True)
         _st.start()
+        _timed_out = False
         while True:
             try:
                 chunk = _stream_q.get(timeout=_per_token_timeout)
             except queue.Empty:
                 log.warning("mellea: per-token timeout (%ds) — breaking stream",
                             _per_token_timeout)
+                _timed_out = True
+                _streaming_hung = True
                 break
-            if chunk is _STREAM_DONE:
+            if chunk is _done_sentinel:
                 break
             if isinstance(chunk, Exception):
                 log.warning("mellea: stream error: %r", chunk)
@@ -460,6 +471,16 @@ def reconcile_strict_streaming(
                 log.exception("on_attempt_end callback raised")
 
         if not failed:
+            break
+
+        # If this attempt's stream hung, stop retrying with streaming.
+        # A stale daemon thread is still consuming vLLM resources; starting
+        # another streaming request would create a second concurrent request
+        # and can crash vLLM (observed as HTTP/2 stream error on the SSE
+        # connection). Signal the caller to use a non-streaming fallback.
+        if _timed_out:
+            log.warning("mellea: streaming hung — aborting retry loop "
+                        "to avoid concurrent vLLM requests")
             break
 
     return {

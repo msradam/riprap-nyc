@@ -1269,8 +1269,19 @@ def step_reconcile(state: State) -> State:
             else:
                 token_cb = _current_token_callback()
                 attempt_cb = _current_mellea_attempt_callback()
+                # Enumerate the exact doc_ids the model may cite so it
+                # doesn't invent plausible-sounding ones (e.g. rag_npcc4).
+                _avail_ids = sorted(
+                    m["role"].split(" ", 1)[1]
+                    for m in doc_msgs
+                    if m.get("role", "").startswith("document ")
+                )
+                _id_note = (
+                    f"\nValid document IDs for citation (use these exactly): "
+                    f"{', '.join(_avail_ids)}."
+                )
                 framed_prompt = augment_system_prompt(
-                    EXTRA_SYSTEM_PROMPT,
+                    EXTRA_SYSTEM_PROMPT + _id_note,
                     query=_current_user_query() or state.get("query") or "",
                     intent=_current_planner_intent() or "single_address",
                 )
