@@ -765,6 +765,10 @@ async def api_agent_stream(q: str):
             try:
                 ev = await asyncio.to_thread(out_q.get, True, 1.0)
             except Exception:
+                # No event for 1 s — send an SSE comment so the HF Space
+                # proxy doesn't close the idle connection (proxy idle timeout
+                # is ~15-20 s; the reconciler's vLLM call can take longer).
+                yield ": keepalive\n\n"
                 continue
             kind = ev.get("kind")
             if kind == "_done":
