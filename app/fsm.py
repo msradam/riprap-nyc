@@ -1316,14 +1316,13 @@ def step_reconcile(state: State) -> State:
                     "model": mres["model"],
                     "loop_budget": mres["loop_budget"],
                 }
-                # Mellea returned empty (likely LLM streaming stall) —
-                # fall back to the non-strict reconciler (non-streaming,
-                # to avoid a second streaming hang) so the user gets
-                # *something* rather than a blank briefing.
+                # If Mellea returned empty (streaming stall / LLM failure),
+                # do NOT call run_reconcile as a fallback: Mellea's daemon
+                # thread is likely still running a streaming vLLM request,
+                # and a second concurrent request overloads RunPod, causing
+                # both to hang for the full 240 s LiteLLM timeout.
                 if not para or len(para.strip()) < 50:
-                    log.warning("mellea returned empty — fallback to non-strict reconcile")
-                    para, audit = run_reconcile(snap, return_audit=True,
-                                                on_token=None)
+                    log.warning("mellea returned empty — skipping fallback to avoid concurrent vLLM")
             rec["result"] = {
                 "rerolls": (mellea_meta or {}).get("rerolls"),
                 "passed": (f"{len((mellea_meta or {}).get('requirements_passed') or [])}/"
