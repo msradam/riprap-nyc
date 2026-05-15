@@ -23,7 +23,9 @@ from __future__ import annotations
 
 import logging
 import os
+import queue
 import re
+import threading
 import time
 from typing import Any
 
@@ -339,6 +341,8 @@ def reconcile_strict_streaming(
     t0 = time.time()
 
     checks = [
+        ("non_empty",
+         lambda p: bool(p and len(p.strip()) > 50)),
         ("numerics_grounded",
          _check_no_invented_numbers(doc_msgs)),
         ("no_placeholder_tokens",
@@ -353,16 +357,14 @@ def reconcile_strict_streaming(
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_prompt},
     ]
-    # num_ctx 4096 fits a typical trimmed prompt (≈700 system + ≈2500 docs);
-    # num_predict 400 caps the 4-section briefing at ≈300-350 tokens. With
-    # RIPRAP_TRIM_DOCS=1 and the planner picking 6-9 specialists, the 4096
-    # window has been sufficient on every probe; the previous 6144/600 was
-    # sized for the *untrimmed* fan-out and was forcing Ollama to grow the
-    # KV cache (33% more memory + a full re-init) every Mellea attempt.
-    # Override with RIPRAP_MELLEA_NUM_CTX / RIPRAP_MELLEA_NUM_PREDICT.
+    # num_predict 512 lets the 4-section briefing complete in one pass.
+    # Reconciler prompts run ~1200 tokens (after trim_docs_to_plan),
+    # so 1200+512=1712 comfortably under the vLLM max_model_len=2352.
+    # Override with RIPRAP_MELLEA_NUM_PREDICT if needed.
+    # num_ctx (Ollama only) is forwarded via extra_body; vLLM ignores it.
     base_opts = {"temperature": 0,
                  "num_ctx": int(os.environ.get("RIPRAP_MELLEA_NUM_CTX", "4096")),
-                 "num_predict": int(os.environ.get("RIPRAP_MELLEA_NUM_PREDICT", "600")),
+                 "num_predict": int(os.environ.get("RIPRAP_MELLEA_NUM_PREDICT", "512")),
                  **(ollama_options or {})}
 
     paragraph = ""
@@ -401,8 +403,34 @@ def reconcile_strict_streaming(
             messages.append({"role": "user", "content": "\n".join(feedback)})
 
         chunks: list[str] = []
-        for chunk in llm.chat(model=model, messages=messages,
-                                 stream=True, options=base_opts):
+        _per_token_timeout = int(os.environ.get("RIPRAP_TOKEN_TIMEOUT_S", "45"))
+        _stream_q: queue.Queue = queue.Queue()
+        _STREAM_DONE = object()
+
+        def _stream_worker():
+            try:
+                for _chunk in llm.chat(model=model, messages=messages,
+                                       stream=True, options=base_opts):
+                    _stream_q.put(_chunk)
+            except Exception as _e:
+                _stream_q.put(_e)
+            finally:
+                _stream_q.put(_STREAM_DONE)
+
+        _st = threading.Thread(target=_stream_worker, daemon=True)
+        _st.start()
+        while True:
+            try:
+                chunk = _stream_q.get(timeout=_per_token_timeout)
+            except queue.Empty:
+                log.warning("mellea: per-token timeout (%ds) — breaking stream",
+                            _per_token_timeout)
+                break
+            if chunk is _STREAM_DONE:
+                break
+            if isinstance(chunk, Exception):
+                log.warning("mellea: stream error: %r", chunk)
+                break
             delta = (chunk.get("message") or {}).get("content") or ""
             if delta:
                 chunks.append(delta)

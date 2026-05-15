@@ -121,7 +121,7 @@ def citations_from_docs(doc_msgs: list[dict]) -> list[dict]:
 # This text is OUR additional system prompt, prepended to that suffix.
 EXTRA_SYSTEM_PROMPT = """Write a flood-exposure briefing for an NYC address. Use ONLY the facts in the provided documents.
 
-Output the four sections below, filling each <...> with content drawn only from the documents. **Every sentence that contains a number MUST include a citation tag — such as [sandy], [nyc311], [microtopo], [dep_extreme_2080], [floodnet], [rag_npcc4], etc. — somewhere in that sentence, using the actual document id, not a placeholder.** Cite the specific doc_id exactly as it appears in the documents list. Bold at most one phrase per section using `**...**`. Omit any section whose supporting facts are absent from the documents.
+Output the four sections below, filling each <...> with content drawn only from the documents. **Every sentence that contains a number MUST include a citation tag — such as [sandy], [nyc311], [microtopo], [dep_extreme_2080], [floodnet], [npcc4_slr], etc. — somewhere in that sentence, using the actual document id, not a placeholder.** Cite the specific doc_id exactly as it appears in the documents list. Bold at most one phrase per section using `**...**`. Omit any section whose supporting facts are absent from the documents.
 
 **Status.**
 <one sentence: dominant exposure signal(s) for this address, citing the strongest document ids>.

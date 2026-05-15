@@ -10,12 +10,10 @@ from __future__ import annotations
 import logging
 import threading as _threading
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 
 import geopandas as gpd
 from burr.core import ApplicationBuilder, State, action, expr
-from burr.core.persistence import SQLitePersister
 from burr.lifecycle import PostRunStepHook
 from burr.tracking import LocalTrackingClient
 from shapely.geometry import Point
@@ -350,20 +348,17 @@ def step_cornerstone(state: State) -> State:
         return state.update(**defaults, trace=trace)
 
     results: dict[str, Any] = {}
-    with ThreadPoolExecutor(max_workers=len(_CORNERSTONE_WORKERS)) as pool:
-        futures = {pool.submit(fn, lat, lon): fn for fn in _CORNERSTONE_WORKERS}
-        for future in as_completed(futures):
-            try:
-                key, val, rec = future.result()
-            except Exception as e:
-                fn = futures[future]
-                rec = {"step": fn.__name__, "ok": False,
-                       "err": str(e), "elapsed_s": 0.0, "started_at": time.time()}
-                key = fn.__name__.removeprefix("_run_")
-                val = None
-                log.exception("cornerstone worker %s raised", fn.__name__)
-            results[key] = val
-            trace.append(rec)
+    for fn in _CORNERSTONE_WORKERS:
+        try:
+            key, val, rec = fn(lat, lon)
+        except Exception as e:
+            rec = {"step": fn.__name__, "ok": False,
+                   "err": str(e), "elapsed_s": 0.0, "started_at": time.time()}
+            key = fn.__name__.removeprefix("_run_")
+            val = None
+            log.exception("cornerstone worker %s raised", fn.__name__)
+        results[key] = val
+        trace.append(rec)
 
     return state.update(
         sandy=results.get("sandy"),
@@ -1310,6 +1305,14 @@ def step_reconcile(state: State) -> State:
                     "model": mres["model"],
                     "loop_budget": mres["loop_budget"],
                 }
+                # Mellea returned empty (likely LLM streaming stall) —
+                # fall back to the non-strict reconciler (non-streaming,
+                # to avoid a second streaming hang) so the user gets
+                # *something* rather than a blank briefing.
+                if not para or len(para.strip()) < 50:
+                    log.warning("mellea returned empty — fallback to non-strict reconcile")
+                    para, audit = run_reconcile(snap, return_audit=True,
+                                                on_token=None)
             rec["result"] = {
                 "rerolls": (mellea_meta or {}).get("rerolls"),
                 "passed": (f"{len((mellea_meta or {}).get('requirements_passed') or [])}/"
@@ -1387,7 +1390,6 @@ _NYCHA_REGISTERS_ENABLED = _os.environ.get(
 
 
 _BURR_TRACKING_DIR = _os.environ.get("RIPRAP_BURR_TRACKING_DIR", "/tmp/riprap-burr")
-_BURR_CACHE_DB = _os.environ.get("RIPRAP_BURR_CACHE_DB", "/tmp/riprap-burr-cache.db")
 
 
 def build_app(query: str, step_queue=None):
@@ -1404,31 +1406,13 @@ def build_app(query: str, step_queue=None):
     SQLitePersister caches completed runs keyed by (address, date) so repeat
     queries skip the specialist pipeline and go straight to reconcile.
     """
-    import hashlib
-    from datetime import date
-
-    # Cache partition: (normalized_address, today). Same address on same day
-    # restores the full specialist state and skips to reconcile.
-    cache_key = hashlib.md5(
-        f"{query.lower().strip()}:{date.today().isoformat()}".encode()
-    ).hexdigest()[:16]
-
-    persister = SQLitePersister(db_path=_BURR_CACHE_DB, table_name="riprap_runs")
-    persister.initialize()
-
     tracker = LocalTrackingClient(project="riprap", storage_dir=_BURR_TRACKING_DIR)
 
     builder = (
         ApplicationBuilder()
-        .with_identifiers(partition_key=cache_key, app_id=cache_key)
+        .with_state(query=query, trace=[])
+        .with_entrypoint("geocode")
         .with_tracker(tracker)
-        .with_state_persister(persister)
-        .initialize_from(
-            persister,
-            resume_at_next_action=True,
-            default_state={"query": query, "trace": []},
-            default_entrypoint="geocode",
-        )
         .with_hooks(StepEventHook(step_queue))
     )
 
