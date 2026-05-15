@@ -357,14 +357,15 @@ def reconcile_strict_streaming(
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_prompt},
     ]
-    # num_predict 512 lets the 4-section briefing complete in one pass.
-    # Reconciler prompts run ~1200 tokens (after trim_docs_to_plan),
-    # so 1200+512=1712 comfortably under the vLLM max_model_len=2352.
+    # num_predict 350 for the 4-section briefing (typically 250-350 tokens).
+    # Lower ceiling (was 512) frees ~160 tokens of input budget, keeping the
+    # full prompt (documents + system prompt + 350 output) under
+    # max_model_len=2352 for the RunPod vLLM deployment.
     # Override with RIPRAP_MELLEA_NUM_PREDICT if needed.
     # num_ctx (Ollama only) is forwarded via extra_body; vLLM ignores it.
     base_opts = {"temperature": 0,
                  "num_ctx": int(os.environ.get("RIPRAP_MELLEA_NUM_CTX", "4096")),
-                 "num_predict": int(os.environ.get("RIPRAP_MELLEA_NUM_PREDICT", "512")),
+                 "num_predict": int(os.environ.get("RIPRAP_MELLEA_NUM_PREDICT", "350")),
                  **(ollama_options or {})}
 
     paragraph = ""
@@ -382,10 +383,11 @@ def reconcile_strict_streaming(
     _first_token_timeout = int(os.environ.get("RIPRAP_FIRST_TOKEN_TIMEOUT_S", "400"))
     _inter_token_timeout = int(os.environ.get("RIPRAP_TOKEN_TIMEOUT_S", "45"))
 
-    # When PRIMARY=vllm, RunPod cold-starts take ~250s (container boot +
-    # model load). LiteLLM gets a 503 and falls back to Ollama, which blocks
-    # for the full Ollama timeout before failing. Poll /v1/models instead and
-    # wait here — keepalives keep the SSE connection alive during the wait.
+    # When PRIMARY=vllm, RunPod cold-starts take ~250-360s (container boot +
+    # model load). The pod starts when the warmup request hits the proxy, but
+    # the proxy returns 503 immediately. LiteLLM would fall back to Ollama and
+    # fail before RunPod is ready. Poll /v1/models here (after specialists, but
+    # before generation) and wait — keepalives keep the SSE connection alive.
     _vllm_base = os.environ.get("RIPRAP_LLM_BASE_URL", "").rstrip("/")
     if os.environ.get("RIPRAP_LLM_PRIMARY", "ollama") == "vllm" and _vllm_base:
         try:
