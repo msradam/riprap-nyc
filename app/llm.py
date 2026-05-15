@@ -92,6 +92,13 @@ def _build_router() -> Router:
     fallbacks: list[dict[str, list[str]]] = []
     use_vllm = _PRIMARY == "vllm" and bool(_VLLM_BASE)
 
+    # vLLM on RunPod can take 250+ seconds to cold-start (container boot +
+    # model load into GPU VRAM). The first-token timeout must exceed that.
+    # stream_timeout (per-chunk) stays tight since subsequent tokens are fast.
+    _vllm_first_token_timeout = int(
+        os.environ.get("RIPRAP_LITELLM_TIMEOUT_S", "360"))
+    _ollama_timeout = 240
+
     for alias, (vllm_name, ollama_tag) in _LOGICAL.items():
         if use_vllm:
             model_list.append({
@@ -100,8 +107,8 @@ def _build_router() -> Router:
                     "model": f"openai/{vllm_name}",
                     "api_base": _VLLM_BASE,
                     "api_key": _VLLM_KEY,
-                    "timeout": 240,
-                    "stream_timeout": 240,
+                    "timeout": _vllm_first_token_timeout,
+                    "stream_timeout": 60,
                 },
             })
             if _FALLBACK == "ollama":
@@ -111,8 +118,8 @@ def _build_router() -> Router:
                     "litellm_params": {
                         "model": f"ollama_chat/{ollama_tag}",
                         "api_base": _OLLAMA_BASE,
-                        "timeout": 240,
-                        "stream_timeout": 240,
+                        "timeout": _ollama_timeout,
+                        "stream_timeout": _ollama_timeout,
                     },
                 })
                 fallbacks.append({alias: [fb_alias]})
@@ -122,8 +129,8 @@ def _build_router() -> Router:
                 "litellm_params": {
                     "model": f"ollama_chat/{ollama_tag}",
                     "api_base": _OLLAMA_BASE,
-                    "timeout": 240,
-                    "stream_timeout": 240,
+                    "timeout": _ollama_timeout,
+                    "stream_timeout": _ollama_timeout,
                 },
             })
 
@@ -135,7 +142,7 @@ def _build_router() -> Router:
         fallbacks=fallbacks,
         num_retries=0,  # Router fallback handles the failover; no point
                         # burning seconds re-hitting a dead endpoint.
-        timeout=240,
+        timeout=_vllm_first_token_timeout if use_vllm else _ollama_timeout,
     )
 
 
