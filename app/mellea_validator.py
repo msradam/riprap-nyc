@@ -371,6 +371,7 @@ def reconcile_strict_streaming(
     last_passed: list[str] = []
     last_failed: list[str] = [name for name, _ in checks]
     last_paragraph = ""
+    best_paragraph = ""  # best non-empty paragraph seen across all attempts
     attempts = 0
     _streaming_hung = False  # set on first per-token timeout; skip retries
 
@@ -459,6 +460,8 @@ def reconcile_strict_streaming(
                     except Exception:
                         log.exception("on_token callback raised")
         paragraph = "".join(chunks).strip()
+        if paragraph:
+            best_paragraph = paragraph
 
         passed: list[str] = []
         failed: list[str] = []
@@ -492,7 +495,7 @@ def reconcile_strict_streaming(
             break
 
     return {
-        "paragraph": paragraph,
+        "paragraph": paragraph or best_paragraph,
         "rerolls": max(0, attempts - 1),
         "n_attempts": attempts,
         "requirements_total": len(checks),
