@@ -45,7 +45,7 @@ For DEP, the raster encodes max `Flooding_Category` per pixel
 
 ## Canonical addresses
 
-Per CLAUDE.md / probe set:
+Per `scripts/probe_addresses.py` (`DEFAULT_ADDRESSES`):
 
 1. 80 Pioneer Street, Brooklyn — (40.6790, -74.0050)
 2. 2508 Beach Channel Drive, Queens — (40.5867, -73.8062)

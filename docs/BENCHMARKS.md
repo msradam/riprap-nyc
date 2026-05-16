@@ -1,6 +1,6 @@
 # Benchmarks
 
-Live measurements collected against the lablab demo Space (`lablab-ai-amd-developer-hackathon-riprap-nyc.hf.space`) on **2026-05-09**, running the canonical four-address verification set listed in `CLAUDE.md`. Inference served from `msradam/riprap-vllm` on a single NVIDIA L4 (24 GB, Ada Lovelace, 72 W TGP).
+Live measurements collected against the lablab demo Space (`lablab-ai-amd-developer-hackathon-riprap-nyc.hf.space`) on **2026-05-09**, running the canonical four-address verification set defined in `scripts/probe_addresses.py` (`DEFAULT_ADDRESSES`). Inference served from `msradam/riprap-vllm` on a single NVIDIA L4 (24 GB, Ada Lovelace, 72 W TGP).
 
 Every per-call energy figure is **measured off the device** via `nvmlDeviceGetPowerUsage` — the proxy stamps `X-GPU-Power-W` / `X-GPU-Energy-J` headers on every ML response and the LLM client brackets each completion with two `/v1/power` GETs. See [`docs/EMISSIONS.md`](EMISSIONS.md) for the pipeline. The reproducer is `scripts/probe_benchmarks.py`; raw output in `outputs/benchmarks.json`.
 

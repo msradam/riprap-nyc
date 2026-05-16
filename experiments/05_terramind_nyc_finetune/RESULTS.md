@@ -68,7 +68,8 @@ postmortem in `eval/v1_synth_sar_postmortem.md`.
 4. **Cost discipline.** If the production deploy uses MI300X for
    inference, per-query latency is meaningfully better than NVIDIA T4
    on HF Spaces but burns AMD Developer Cloud credit at $1.99/hr.
-   The fallback to T4 + Ollama is documented in `CLAUDE.md` §1.
+   The fallback path is local Ollama (`granite4.1:8b`) — see the
+   "Running locally" section of the root `README.md`.
 
 5. **TerraMind-base-Flood-AMD vs TerraMind-base-Flood (IBM's).** Even
    if our Phase-1 reproduction is statistically indistinguishable from

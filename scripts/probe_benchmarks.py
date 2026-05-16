@@ -20,7 +20,7 @@ Usage:
   PYTHONPATH=. uv run python scripts/probe_benchmarks.py \\
       --queries "80 Pioneer Street, Brooklyn" "2508 Beach Channel Drive"
 
-Defaults to the canonical four addresses from CLAUDE.md.
+Defaults to the canonical four addresses from `scripts/probe_addresses.py`.
 """
 from __future__ import annotations
 

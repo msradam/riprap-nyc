@@ -72,7 +72,7 @@ _VLLM_3B = os.environ.get("RIPRAP_LLM_VLLM_3B_NAME", _VLLM_8B)
 # RIPRAP_OLLAMA_8B_TAG is also the cheapest knob for swapping quants
 # without touching code: e.g. "granite4.1:8b-q3_K_M" gives ~1 GB of
 # memory back vs the default Q4_K_M, at minor grounding-discipline cost
-# (re-run the Hollis probe before committing — see CLAUDE.md).
+# (re-run `scripts/probe_addresses.py` before committing).
 _OLLAMA_3B_TAG = os.environ.get("RIPRAP_OLLAMA_3B_TAG", "granite4.1:3b")
 _OLLAMA_8B_TAG = os.environ.get("RIPRAP_OLLAMA_8B_TAG", "granite4.1:8b")
 _LOGICAL: dict[str, tuple[str, str]] = {
