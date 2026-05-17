@@ -1,0 +1,46 @@
+id: lake_michigan_water_level
+type: live
+title: Lake Michigan water level — Calumet Harbor (NOAA station 9087044)
+stone: touchstone
+adapter: python_call
+
+spatial:
+  scope: point
+  crs: EPSG:4326
+
+# NOAA Tides & Currents serves Great Lakes stations the same way as
+# coastal tide gauges. `app.context.noaa_tides.summary_for_point` finds
+# the nearest station automatically; for Chicago lakefront addresses
+# that's typically Calumet Harbor (9087044) or Chicago (9087057).
+config:
+  module: app.context.noaa_tides
+  function: summary_for_point
+  args:
+    - {source: lat}
+    - {source: lon}
+  on_none: passthrough
+
+trace_summary:
+  station: station_id
+  observed_ft_mllw: observed_ft_mllw
+  residual_ft: residual_ft
+
+provenance:
+  source_name: NOAA CO-OPS — Lake Michigan water level (Calumet Harbor / Chicago)
+  source_url: https://tidesandcurrents.noaa.gov/stationhome.html?id=9087044
+  license: U.S. Public Domain
+  doc_id: noaa_tides
+  citation: NOAA CO-OPS water-level observations, nearest Lake Michigan station to address.
+
+narration:
+  short: Recent NOAA water-level reading at the nearest Lake Michigan station to this address.
+
+display:
+  order: 40
+  kind: stat
+  map_layer: false
+  icon: "🌊"
+
+fallback:
+  on_offline: skip
+  message: NOAA tidesandcurrents endpoint unreachable.

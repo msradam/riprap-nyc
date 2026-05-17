@@ -1,0 +1,52 @@
+id: sf_311
+type: live
+title: San Francisco 311 service requests near this address
+stone: touchstone
+adapter: socrata_records
+
+spatial:
+  scope: point
+  crs: EPSG:4326
+
+# San Francisco open-data portal (data.sfgov.org) — 311 service requests.
+# SF311 stores location as a Socrata "Location" type field named `point`
+# (a {latitude, longitude} object). `within_circle(point, lat, lon, m)`
+# is the geo filter.
+config:
+  base_url: https://data.sfgov.org/resource/vw6y-z8j6.json
+  radius_m: 300
+  location_field: point
+  limit: 200
+  sample_cap: 5
+  sample_fields:
+    - service_name
+    - service_subtype
+    - status_description
+    - requested_datetime
+    - analysis_neighborhood
+  count_by_field: service_name
+  order: requested_datetime DESC
+  cache_ttl_s: 1800
+
+provenance:
+  source_name: San Francisco Open Data — 311 / service requests (vw6y-z8j6)
+  source_url: https://data.sfgov.org/d/vw6y-z8j6
+  license: San Francisco Open Data Terms of Use
+  doc_id: sf_311
+  citation: San Francisco Open Data 311 service requests within 300 m of address.
+
+narration:
+  short: San Francisco 311 service requests filed within 300 m of this address (all categories).
+  template: >-
+    San Francisco 311 received {n_records} service requests within {radius_m} m
+    of this address.
+
+display:
+  order: 20
+  kind: list
+  map_layer: true
+  icon: "📞"
+
+fallback:
+  on_offline: skip
+  message: San Francisco Open Data SODA endpoint unreachable.

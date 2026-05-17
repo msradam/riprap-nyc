@@ -1,0 +1,30 @@
+# Seattle — flood-exposure briefing deployment.
+#
+# Same architecture as the NYC reference. Federal pebbles (NWS, NOAA)
+# port unchanged; city-specific pebbles point at data.seattle.gov.
+stones:
+  - id: cornerstone
+    name: Cornerstone
+    tagline: The Hazard Reader
+    description: Reads what Seattle remembers about flooding — Puget Sound shoreline, salmon-corridor streams, and Pacific Northwest precipitation.
+    order: 1
+  - id: touchstone
+    name: Touchstone
+    tagline: The Live Observer
+    description: Watches current flood signals — Seattle CSR (Find It Fix It), NWS Seattle, Puget Sound water levels.
+    order: 2
+  - id: keystone
+    name: Keystone
+    tagline: The Asset Register
+    description: Counts public assets exposed — Seattle Public Schools, King County libraries, hospitals.
+    order: 3
+  - id: lodestone
+    name: Lodestone
+    tagline: The Projector
+    description: Projects what's coming — NWS Pacific Northwest forecasts, NOAA Puget Sound projections.
+    order: 4
+  - id: capstone
+    name: Capstone
+    tagline: The Synthesiser
+    description: Writes the cited briefing — Granite 4.1 + Mellea grounding check.
+    order: 5

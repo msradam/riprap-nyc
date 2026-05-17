@@ -1,0 +1,30 @@
+# San Francisco — flood-exposure briefing deployment.
+#
+# Same architecture as the NYC reference. Federal pebbles (NWS, NOAA)
+# port unchanged; city-specific pebbles point at data.sfgov.org.
+stones:
+  - id: cornerstone
+    name: Cornerstone
+    tagline: The Hazard Reader
+    description: Reads what SF remembers about flooding — Bay shoreline, fog-prone microclimates, fault-adjacent fills, and Pacific storm exposure.
+    order: 1
+  - id: touchstone
+    name: Touchstone
+    tagline: The Live Observer
+    description: Watches current flood signals — SF311 cases, NWS Bay Area, SF Bay tide observations.
+    order: 2
+  - id: keystone
+    name: Keystone
+    tagline: The Asset Register
+    description: Counts public assets exposed — SFUSD schools, City and County of SF public assets, hospitals.
+    order: 3
+  - id: lodestone
+    name: Lodestone
+    tagline: The Projector
+    description: Projects what's coming — NWS Bay Area forecasts, NOAA SLR Viewer for SF Bay.
+    order: 4
+  - id: capstone
+    name: Capstone
+    tagline: The Synthesiser
+    description: Writes the cited briefing — Granite 4.1 + Mellea grounding check.
+    order: 5

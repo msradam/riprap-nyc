@@ -1,0 +1,50 @@
+id: chicago_311
+type: live
+title: Chicago 311 service requests near this address
+stone: touchstone
+adapter: socrata_records
+
+spatial:
+  scope: point
+  crs: EPSG:4326
+
+# Chicago Data Portal (Socrata) — 311 service requests dataset.
+# Same SODA API NYC uses, just a different host + resource ID.
+# Filter to a small radius for address-level relevance.
+config:
+  base_url: https://data.cityofchicago.org/resource/v6vf-nfxy.json
+  radius_m: 200
+  location_field: location
+  limit: 200
+  sample_cap: 5
+  sample_fields:
+    - sr_type
+    - sr_short_code
+    - status
+    - created_date
+  count_by_field: sr_type
+  order: created_date DESC
+  cache_ttl_s: 1800
+
+provenance:
+  source_name: Chicago Data Portal — 311 Service Requests (v6vf-nfxy)
+  source_url: https://data.cityofchicago.org/Service-Requests/311-Service-Requests/v6vf-nfxy
+  license: Chicago Open Data Terms of Use
+  doc_id: chicago_311
+  citation: Chicago Data Portal 311 Service Requests, all categories within 200 m of address.
+
+narration:
+  short: Chicago 311 service requests filed within 200 m of this address (all categories).
+  template: >-
+    Chicago 311 received {n_records} service requests within {radius_m} m
+    of this address.
+
+display:
+  order: 20
+  kind: list
+  map_layer: true
+  icon: "📞"
+
+fallback:
+  on_offline: skip
+  message: Chicago Data Portal SODA endpoint unreachable.

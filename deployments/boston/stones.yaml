@@ -1,0 +1,31 @@
+# Boston — flood-exposure briefing deployment.
+#
+# First CKAN-backed Riprap deployment. Federal pebbles (NWS, NOAA) port
+# unchanged; the city-specific pebble queries data.boston.gov via
+# CKAN's `datastore_search_sql` API.
+stones:
+  - id: cornerstone
+    name: Cornerstone
+    tagline: The Hazard Reader
+    description: Reads what Boston remembers about flooding — Back Bay landfill, Boston Harbor surge exposure, nor'easter shoreline impact.
+    order: 1
+  - id: touchstone
+    name: Touchstone
+    tagline: The Live Observer
+    description: Watches current flood signals — Boston 311 cases, NWS Boston/Norton, Boston Harbor tide observations.
+    order: 2
+  - id: keystone
+    name: Keystone
+    tagline: The Asset Register
+    description: Counts public assets exposed — BPS schools, City of Boston facilities, hospitals.
+    order: 3
+  - id: lodestone
+    name: Lodestone
+    tagline: The Projector
+    description: Projects what's coming — NWS Boston/Norton forecasts, NOAA SLR Viewer for Boston Harbor.
+    order: 4
+  - id: capstone
+    name: Capstone
+    tagline: The Synthesiser
+    description: Writes the cited briefing — Granite 4.1 + Mellea grounding check.
+    order: 5

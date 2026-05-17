@@ -1,0 +1,45 @@
+id: water_level
+type: live
+title: Local water level — NOAA Seattle, WA (station 9447130)
+stone: touchstone
+adapter: python_call
+
+spatial:
+  scope: point
+  crs: EPSG:4326
+
+# `app.context.noaa_tides.summary_for_point` finds the nearest NOAA
+# tide / water-level station automatically; for Seattle addresses
+# that's typically station 9447130 (Seattle, WA).
+config:
+  module: app.context.noaa_tides
+  function: summary_for_point
+  args:
+    - {source: lat}
+    - {source: lon}
+  on_none: passthrough
+
+trace_summary:
+  station: station_id
+  observed_ft_mllw: observed_ft_mllw
+  residual_ft: residual_ft
+
+provenance:
+  source_name: NOAA CO-OPS — water level (nearest station to Seattle)
+  source_url: https://tidesandcurrents.noaa.gov/stationhome.html?id=9447130
+  license: U.S. Public Domain
+  doc_id: noaa_tides
+  citation: NOAA CO-OPS water-level observations, nearest station to address.
+
+narration:
+  short: Recent NOAA water-level reading at the nearest station to this address.
+
+display:
+  order: 40
+  kind: stat
+  map_layer: false
+  icon: "🌊"
+
+fallback:
+  on_offline: skip
+  message: NOAA tidesandcurrents endpoint unreachable.

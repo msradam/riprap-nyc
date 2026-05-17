@@ -1,0 +1,54 @@
+id: boston_311
+type: live
+title: Boston 311 service requests near this address
+stone: touchstone
+adapter: ckan_records
+
+spatial:
+  scope: point
+  crs: EPSG:4326
+
+# Boston Open Data (data.boston.gov) — runs CKAN, not Socrata.
+# The 311 dataset stores lat/lon as separate numeric columns, so the
+# ckan_records adapter does bbox SQL push-down + haversine refine.
+# Resource ID below is the 2026 311 table.
+config:
+  ckan_base: https://data.boston.gov
+  resource_id: 1a0b420d-99f1-4887-9851-990b2a5a6e17
+  lat_field: latitude
+  lon_field: longitude
+  radius_m: 300
+  limit: 500
+  sample_cap: 5
+  sample_fields:
+    - case_title
+    - reason
+    - type
+    - open_dt
+    - neighborhood
+  count_by_field: reason
+  order: open_dt DESC
+  cache_ttl_s: 1800
+
+provenance:
+  source_name: Analyze Boston — 311 service requests (2026)
+  source_url: https://data.boston.gov/dataset/311-service-requests
+  license: Analyze Boston Terms of Use
+  doc_id: boston_311
+  citation: Analyze Boston 311 service requests within 300 m of address.
+
+narration:
+  short: Boston 311 service requests filed within 300 m of this address (all reasons).
+  template: >-
+    Boston 311 received {n_records} service requests within {radius_m} m
+    of this address.
+
+display:
+  order: 20
+  kind: list
+  map_layer: true
+  icon: "📞"
+
+fallback:
+  on_offline: skip
+  message: Analyze Boston CKAN endpoint unreachable.
