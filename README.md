@@ -22,6 +22,18 @@ surges, and refuses to ship a sentence it cannot ground in a citation.
 
 Live demo: <https://lablab-ai-amd-developer-hackathon-riprap-nyc.hf.space>
 
+> **Now an open-source civic-tech framework.** NYC is the reference
+> deployment. Five live deployments share the same code (NYC, Chicago,
+> Seattle, San Francisco, Boston) — adding your city is a directory of
+> YAML, not a fork.
+>
+> - **[`docs/multi-city.md`](docs/multi-city.md)** — five cities, two
+>   open-data platforms (Socrata + CKAN), one codebase.
+> - **[`docs/byod.md`](docs/byod.md)** — drop your own data in via
+>   `.riprap/` auto-discovery or the `RIPRAP_EXTRA_MANIFESTS` env var.
+> - **[`docs/PORT-YOUR-CITY.md`](docs/PORT-YOUR-CITY.md)** — walkthrough
+>   for adding a new city, using the Boston port as the worked example.
+
 ---
 
 ## The problem Riprap solves
@@ -46,7 +58,7 @@ back to a `[doc_id]` in public-record data.
 
 ## Quickstart
 
-Three ways to use Riprap, in increasing order of self-host:
+Four ways to use Riprap, in increasing order of self-host:
 
 ### 1. Try the live demo
 
@@ -107,6 +119,33 @@ RIPRAP_LLM_API_KEY=<token> \
 # End-to-end address suite (5 NYC addresses, intent-aware checks)
 .venv/bin/python scripts/probe_addresses.py
 ```
+
+### 4. Run with your city's data
+
+Riprap ships with five working deployments (`deployments/{nyc,chicago,
+seattle,sf,boston}/`). Each is a directory of YAML pebble manifests plus
+a `stones.yaml`. Switch deployments with one env var:
+
+```bash
+# Brief 233 S Wacker Dr, Chicago — no code changes, real upstream data
+RIPRAP_DEPLOYMENT=deployments/chicago RIPRAP_RECONCILER_TIER=no_llm \
+.venv/bin/python -c "import riprap.core.burr.app as a; \
+  print(a.run('233 S Wacker Dr, Chicago, IL')['paragraph'])"
+```
+
+Layer your own data on top of any deployment via [`docs/byod.md`](docs/byod.md):
+
+```bash
+# .riprap/ in your CWD is auto-discovered
+mkdir -p .riprap && cp examples/byod/fdny_firehouses.{yaml,csv} .riprap/
+
+# Same effect via env var (a colon-separated list of dirs or yaml files)
+RIPRAP_EXTRA_MANIFESTS=examples/byod \
+RIPRAP_DEPLOYMENT=deployments/nyc \
+.venv/bin/uvicorn web.main:app --port 7860
+```
+
+Add your own city: see [`docs/PORT-YOUR-CITY.md`](docs/PORT-YOUR-CITY.md).
 
 ---
 

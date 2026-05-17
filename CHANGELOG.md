@@ -4,6 +4,49 @@ All notable changes to Riprap. The hackathon submission tag is
 `v0.5.0` (build 2026-05-07); subsequent dates record polish work
 that landed on the hackathon-period production deploys.
 
+## [Unreleased] — 2026-05-16 (Saturday, post-hackathon OSS polish)
+
+### Added
+- **Five-city framework generalisation.** NYC is now the reference
+  deployment; four new deployments ship alongside it on the same code:
+  - `deployments/chicago/` — Socrata 311 (`v6vf-nfxy`), NOAA Calumet Harbor 9087044
+  - `deployments/seattle/` — federal pebbles only (Seattle CSR lacks point geometry)
+  - `deployments/sf/` — DataSF 311 (`vw6y-z8j6`, `point` field), NOAA SF Bay
+  - `deployments/boston/` — Analyze Boston 311 via CKAN, NOAA Boston Harbor 8443970
+- **`ckan_records` adapter** (`riprap/core/pebbles/adapters/ckan_records.py`)
+  — bbox SQL push-down + haversine refine, since CKAN datasets usually
+  ship lat/lon as numeric columns rather than a geometry-typed field.
+  Unlocks Boston, Philadelphia, Toronto, EU portals.
+- **BYOD load paths.** `load_registry` now merges manifests from
+  `${CWD}/.riprap/` and from `RIPRAP_EXTRA_MANIFESTS` (colon-separated
+  paths). Relative paths in BYOD manifests resolve against the
+  manifest's own directory, so a user can ship a manifest + data file
+  side-by-side anywhere on disk. Worked example in `examples/byod/`
+  using real FDNY firehouses data (NYC Open Data `hc8x-tcnd`, 219
+  records). Full walkthrough in `docs/byod.md`.
+- **`scripts/probe_cities.py`** — 5-deployment sweep, runs in ~110 s
+  against real upstream APIs, asserts 13/13 compliance per city.
+  Reproducible regression check.
+- **`docs/multi-city.md`, `docs/byod.md`, `docs/VERIFICATION.md`,
+  `docs/PORT-YOUR-CITY.md`** — open-source onboarding surface.
+- **`tests/test_byod_load.py`** — 7 tests covering both load paths,
+  manifest-dir path resolution, cross-deployment portability, and
+  override warnings.
+
+### Changed
+- `web/main.py:_run_compare` — fixed B023 loop-variable closure capture
+  in the per-target trace wrapper (`_TaggedQ` now binds via `__init__`
+  params, not closure). Latent footgun made deterministic.
+- `tests/test_stone_envelope.py::test_step_to_stone_mapping_covers_known_steps`
+  — was grep-based on `web/main.py` source; the pebble refactor moved
+  `_STEP_TO_STONE` to a runtime dict comp. Test now asserts against the
+  imported runtime dict.
+- README banner re-pitched for OSS: framework, not just NYC.
+- CONTRIBUTING re-framed from "hackathon submission" to "civic-tech
+  framework that began as a hackathon project."
+- `.github/ISSUE_TEMPLATE/port_to_new_city.yml` — refreshed to cite
+  the 5 existing deployments + Socrata/CKAN adapters as starting points.
+
 ## [Unreleased] — 2026-05-09 (Saturday)
 
 ### Added

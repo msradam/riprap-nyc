@@ -79,8 +79,19 @@ scripts/point_lablab_at_vllm_space.sh
 scripts/probe_30.py
 scripts/runpod_setup.sh
 riprap.sh
+riprap-continue.sh
+refactor.sh
 SAT_MAY_9.md
 github_repo_cleanup.prompt
+
+# Burr persisted runs (per-invocation artifacts)
+.burr/
+
+# Local Triton test rig — model weights + cached patches are huge.
+# The scripts (entrypoint.sh, run.sh, test_*.py, proxy_launcher.py)
+# are kept under version control.
+load/triton-local/model_repository/
+load/triton-local/hf_cache/
 
 # Internal docs (→ riprap-work)
 docs/HF_BLOG.md

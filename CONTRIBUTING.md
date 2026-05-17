@@ -1,9 +1,26 @@
 # Contributing
 
-Riprap is the hackathon submission for the AMD × lablab.ai
-Developer Hackathon, but the source ships under Apache 2.0 and is
-intended to be reusable as a template for citation-grounded civic
-AI in any flood-vulnerable region. Pull requests welcome.
+Riprap is an open-source civic-tech framework that began as the
+AMD × lablab.ai Developer Hackathon submission and now ships under
+Apache 2.0. NYC is the reference deployment; five cities run on the
+same code (NYC, Chicago, Seattle, San Francisco, Boston). The
+architecture is hazard-, city-, and platform-agnostic — the easiest
+contribution is to add your jurisdiction.
+
+PRs welcome. Three high-leverage paths in:
+
+- **Port your city** — fork the closest existing `deployments/<city>/`
+  and replace the data sources. Most US cities are a manifest directory
+  away because they expose a Socrata or CKAN open-data portal. See
+  [`docs/PORT-YOUR-CITY.md`](docs/PORT-YOUR-CITY.md) for the
+  step-by-step using Boston as the worked example.
+- **Bring your own data** — drop a YAML manifest into `${CWD}/.riprap/`
+  or point `RIPRAP_EXTRA_MANIFESTS` at it. No fork needed. See
+  [`docs/byod.md`](docs/byod.md).
+- **Write a new adapter** — if your data source isn't covered by
+  `socrata_records`, `ckan_records`, `csv_points`, `baked_vector`,
+  `rest_json`, or `python_call`, drop a new adapter into
+  `riprap/core/pebbles/adapters/` and register it in `__init__.py`.
 
 ## Quickstart
 
@@ -44,22 +61,28 @@ ollama pull granite4.1:3b granite4.1:8b
 
 ## Verifying changes
 
-Two probe scripts exercise the live deployment end-to-end:
+Three probe scripts exercise the framework at three different scales —
+run all three before opening a PR that touches anything load-bearing.
 
 ```bash
-# All five Stones must fire on the canonical address; emissions
-# block must carry nvidia_l4 hardware; no torchvision/terratorch
-# dep regressions in the trace.
-PYTHONPATH=. uv run python scripts/probe_stones_fire.py --timeout 600
+# 1. Five-deployment sweep (no LLM, real upstream APIs, ~110s total).
+#    Each deployment's compliance must report 13/13 PASS.
+.venv/bin/python scripts/probe_cities.py --json outputs/probe_cities.json
 
-# Full canonical suite — five NYC addresses, intent-aware checks,
-# Mellea grounding budget, no specialist crashes.
+# 2. Unit + integration tests (skip live-server tests by default).
+.venv/bin/python -m pytest tests/ -q \
+    --ignore=tests/integration --ignore=tests/test_integration.py \
+    --ignore=tests/test_sample_queries.py \
+    --ignore=tests/test_agent_e2e.py --ignore=tests/test_agent_full.py
+
+# 3. NYC end-to-end suite with full LLM specialist stack.
 .venv/bin/python scripts/probe_addresses.py \
     --base https://lablab-ai-amd-developer-hackathon-riprap-nyc.hf.space
 ```
 
-Both default to the lablab UI Space; pass `--base http://127.0.0.1:7860`
-to hit a local server.
+Pass `--base http://127.0.0.1:7860` on (3) to hit a local server.
+See [`docs/VERIFICATION.md`](docs/VERIFICATION.md) for the current
+snapshot of what's verified deterministically.
 
 ## Structure
 
@@ -121,7 +144,9 @@ tests/                     pytest suite (envelope + compare-shape tests)
 ## Reporting issues
 
 GitHub issues at <https://github.com/msradam/riprap-nyc/issues>.
-For hackathon-period demo issues during May 4–10 2026, the live
-deploy at
-<https://lablab-ai-amd-developer-hackathon-riprap-nyc.hf.space>
-is the source of truth.
+Templates:
+
+- **[Port your city](https://github.com/msradam/riprap-nyc/issues/new?template=port_to_new_city.yml)** —
+  scope an add-a-deployment effort.
+- **[Bug report](https://github.com/msradam/riprap-nyc/issues/new?template=bug_report.yml)**.
+- **[Feature request](https://github.com/msradam/riprap-nyc/issues/new?template=feature_request.yml)**.
