@@ -70,8 +70,8 @@ class _StoneMapActions(MapActions):
     def actions(
         self,
         state: State,
-        inputs: dict[str, Any],
-        context: ApplicationContext,
+        inputs: dict[str, Any],  # noqa: ARG002 — Burr API signature
+        context: ApplicationContext,  # noqa: ARG002 — Burr API signature
     ) -> Generator[Any, None, None]:
         # The pebble_action factory sets __name__ = f"pebble_{pid}", which
         # Burr picks up as the action name (no with_name() needed since
@@ -79,7 +79,7 @@ class _StoneMapActions(MapActions):
         for pid in _pebbles_for(self.stone_id):
             yield pebble_action(pid)
 
-    def state(self, state: State, inputs: dict[str, Any]) -> State:
+    def state(self, state: State, inputs: dict[str, Any]) -> State:  # noqa: ARG002 — Burr API signature
         # Each fan-out task starts with the same parent state slice:
         # lat, lon, and an empty trace (each task adds its own rec; the
         # reduce merges them back).

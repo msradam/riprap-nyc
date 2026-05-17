@@ -1,0 +1,12 @@
+# Riprap is an open civic-tech climate-briefing framework. Crawl freely.
+# Methodology + sources are documented at /docs and at the github repo.
+User-agent: *
+Allow: /
+
+# Per-address briefing pages are deterministic on first run but expensive
+# to regenerate (federal API quotas, LLM tokens). Crawlers are welcome
+# to index them, but please pace yourselves.
+Crawl-delay: 5
+
+# Canonical documentation lives in the repo, not on a CDN.
+# Sitemap: https://github.com/msradam/riprap-nyc#documentation

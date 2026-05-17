@@ -94,5 +94,10 @@ ignore = [
 [tool.vulture]
 min_confidence = 80
 ignore_decorators = ["@app.get", "@app.post", "@action"]
-ignore_names = ["request"]  # FastAPI handler signatures
+# Names that LOOK unused but are required by external API contracts:
+#   request   — FastAPI route handler signature
+#   query_id  — FastAPI captured-param routes that forward to the SvelteKit
+#               SPA fallback (the SPA reads it from window.location)
+#   engine    — _hardware_for() param sliced by docstring contract, not by body
+ignore_names = ["request", "query_id", "engine"]
 paths = ["app", "web", "scripts", "riprap.py", "agent.py"]
