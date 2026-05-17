@@ -93,12 +93,53 @@ ADAPTERS = {
 }
 ```
 
-## What's still pending
+## Reproducibility — pinned versions
 
-- **LLM happy-path UI smoke** — gated on RunPod L4 reaching healthz green
-  (pod `9qziz4l893tbkq`, bring-up in progress at writing).
-- **Triton bring-up runbook** — once the pod is verified, document the
-  one-command spin-up + env propagation back to `RIPRAP_LLM_BASE_URL`.
-- **Token hygiene** — the `runpodctl pod get` response surfaces the
-  `HF_TOKEN` and `RIPRAP_PROXY_TOKEN` env vars in plaintext; rotate
-  after teardown.
+For full release reproducibility. Anyone cloning the repo should be
+able to recreate the verified state from these versions + the
+checked-in `requirements.txt`.
+
+**Foundation models (all Apache 2.0):**
+- `ibm-granite/granite-4.1-8b` — reconciler LLM
+- `ibm-granite/granite-embedding-278m-multilingual` — RAG embedding
+- `ibm-granite/granite-timeseries-ttm-r2` (+ Riprap fine-tunes) — TTM forecasts
+- `ibm-nasa-geospatial/Prithvi-EO-2.0-NYC-Pluvial` — satellite flood segmentation
+- `msradam/TerraMind-NYC-Adapters` — LULC / buildings via LoRA on TerraMind v1
+- `flair/ner-english-ontonotes-large` — typed entity extraction (replaced GLiNER)
+
+**Verified-at:**
+- `mellea==0.3.x` (rejection-sampling reconciler)
+- `burr==0.32.x` (Application + MapActions)
+- `transformers>=4.45`, `sentence-transformers>=5.0`
+- `torch==2.5.1` (CPU on local; CUDA on remote)
+- `granite-tsfm==0.3.3` (pinned — 0.3.4+ drops py3.10)
+
+**Per-deployment data sources (citation manifests in
+`deployments/<city>/manifests/*.yaml`):**
+- NYC: 23 pebbles; Sandy 2012 extent, NYC DEP stormwater scenarios,
+  Ida HWMs, Prithvi-EO Ida polygons, USGS 3DEP DEM + HAND/TWI,
+  FloodNet, NYC 311 (`erm2-nwe9`), NWS METAR + alerts, NOAA Battery
+  (8518750), NPCC4 (`doi:10.1111/nyas.15116`), MTA / NYCHA / DOE / DOH
+  registers, policy corpus (Comptroller, DEP, ConEd, MTA, NYCHA PDFs)
+- Chicago: 4 pebbles via Socrata `v6vf-nfxy` + NOAA Calumet Harbor 9087044
+- Seattle: 3 federal pebbles (CSR 311 has no Point geometry; skipped)
+- SF: 4 pebbles via DataSF `vw6y-z8j6` + NOAA SF Bay
+- Boston: 4 pebbles via Analyze Boston `1a0b420d-...` (CKAN) + NOAA Boston Harbor 8443970
+
+## Known follow-ups
+
+- **LLM happy-path UI smoke against RunPod** — verified locally on M3
+  via Ollama + Triton-on-Docker. Cloud-GPU bring-up runbook lives in
+  `~/hackathons/riprap-triton/` (separate repo).
+- **Triton bring-up runbook** — the local-Docker rig at
+  `load/triton-local/` doubles as the canonical bring-up reference for
+  fixing `riprap-triton/scripts/runpod_triton_setup.sh` (missing
+  `python3.12-venv`, numpy<2 pin).
+- **`app/context/*.py` → proper pebble adapters** — currently called via
+  `python_call`. Moving each to a typed adapter would close the
+  "manifests, not code" loop fully.
+- **Capstone provenance reads `policy_corpus` state key** — Phase 5 of
+  the UI ↔ backend alignment; deferred from the Option II refactor.
+- **Unified citation namespace under `policy_corpus`** — Phase 6 of
+  the same plan; replaces the `rag_*` per-PDF citation chips with a
+  single parent chip whose children are the individual sources.

@@ -10,21 +10,34 @@ permissions:
   contents: read
 
 jobs:
-  check:
-    name: import + lightweight tests
+  lint:
+    name: ruff lint
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-
       - name: Install uv
         uses: astral-sh/setup-uv@v3
         with:
           enable-cache: true
+      - run: uv pip install --system ruff
+      # The riprap/ package + my new scripts/tests/load surface should
+      # always lint clean. Pre-session app/* legacy code has known noise
+      # we don't want to gate PRs on; tighten that scope as it lands.
+      - run: ruff check riprap/ scripts/probe_cities.py tests/test_byod_load.py tests/test_stone_envelope.py load/triton-local/ app/geocode.py
 
+  tests:
+    name: tests (pebble framework + BYOD)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
       - name: Set up Python 3.12
         run: uv python install 3.12
-
       - name: Create venv and install deps
         run: |
           uv venv --python 3.12
@@ -36,8 +49,18 @@ jobs:
         run: |
           uv run python -c "from app import fsm, llm, inference, emissions; from web import main"
 
-      - name: Lightweight pytest subset
+      # Framework + BYOD tests — fast, no network, no LLM.
+      - name: Pebble framework + BYOD tests
         env:
           PYTHONPATH: .
         run: |
-          uv run pytest -q tests/test_stones.py tests/test_compare_shape.py tests/test_stone_envelope.py
+          uv run pytest -q tests/test_stones.py tests/test_compare_shape.py \
+            tests/test_stone_envelope.py tests/test_byod_load.py
+
+  # `probe_cities.py --offline` would be ideal here, but the current
+  # script hits real upstream APIs (NWS, Socrata, CKAN, NOAA). Those
+  # endpoints are unauthed but rate-limited and occasionally flaky;
+  # gating PRs on remote uptime is a poor trade. The lint + tests jobs
+  # above cover the regression surface that matters for code review.
+  # Run `.venv/bin/python scripts/probe_cities.py` locally before
+  # tagging a release — that's the 5/5 PASS gate.

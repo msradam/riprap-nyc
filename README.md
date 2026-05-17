@@ -13,6 +13,13 @@ pinned: false
 
 # Riprap
 
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![CI](https://github.com/msradam/riprap-nyc/actions/workflows/check.yml/badge.svg)](https://github.com/msradam/riprap-nyc/actions/workflows/check.yml)
+[![Deployments](https://img.shields.io/badge/deployments-NYC%20·%20Chicago%20·%20Seattle%20·%20SF%20·%20Boston-005EA2)](docs/multi-city.md)
+[![Civic Hydrology](https://img.shields.io/badge/palette-civic%20hydrology-005EA2)](web/sveltekit/src/lib/tokens.css)
+[![Apache-2.0 foundation models](https://img.shields.io/badge/models-Apache--2.0%20end--to--end-1A4480)](#nyc-specialised-foundation-models-apache-20)
+
 ## Flood risk analysis for any NYC address.
 
 A multi-agent AI system that reads satellites, watches sensors, forecasts

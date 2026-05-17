@@ -1,0 +1,75 @@
+# Citation File Format — https://citation-file-format.github.io/
+# Run `cffconvert -i CITATION.cff -f bibtex` to get a BibTeX entry.
+cff-version: 1.2.0
+title: "Riprap: composable citation-grounded climate briefings for any US place"
+type: software
+message: >-
+  If you use Riprap, or its multi-city framework / BYOD pebble system,
+  in research or applied civic work, please cite it.
+authors:
+  - given-names: Adam
+    family-names: Rahman
+    name-particle: Munawar
+    email: msrahmanadam@gmail.com
+    affiliation: "Independent"
+repository-code: "https://github.com/msradam/riprap-nyc"
+url: "https://lablab-ai-amd-developer-hackathon-riprap-nyc.hf.space"
+abstract: >-
+  Riprap composes ~25 federal, state, and city public-record data
+  sources into a citation-grounded climate-exposure briefing for any
+  US address. NYC is the reference deployment; Chicago, Seattle, San
+  Francisco, and Boston run on the same code via per-city YAML pebble
+  manifests. Every numeric claim in a briefing links back to a
+  primary public-record source; the reconciler (IBM Granite 4.1 with
+  Mellea rejection sampling) refuses to ship a sentence it cannot
+  ground. Compliance audit covers 13 predicates derived from FEMA,
+  IPCC AR6, TCFD, ASTM E1527-21, EPA/CDC CERC, AP Stylebook, SPJ.
+keywords:
+  - civic-tech
+  - flood-risk
+  - climate-exposure
+  - citation-grounded
+  - rag
+  - grounded-llm
+  - open-data
+  - socrata
+  - ckan
+  - fema-nfhl
+  - noaa-coops
+  - npcc4
+license: Apache-2.0
+version: 0.6.0
+date-released: "2026-05-17"
+
+# How Riprap depends on prior work. We cite the data sources Riprap
+# composes in each per-pebble manifest's `provenance` block (see
+# deployments/<city>/manifests/*.yaml); the items below are the
+# foundation-model and methodology references.
+references:
+  - type: article
+    title: "Granite 4.1 Language Models"
+    authors:
+      - family-names: "IBM Research"
+    year: 2025
+    notes: "Reconciler LLM. Apache-2.0. https://huggingface.co/ibm-granite"
+  - type: article
+    title: "Prithvi-EO 2.0: A versatile multi-temporal foundation model for Earth observation"
+    authors:
+      - family-names: "Jakubik"
+        given-names: "Johannes"
+    year: 2024
+    notes: "Satellite-attributable flood segmentation. Apache-2.0."
+  - type: software
+    title: "TerraMind: a foundation model for Earth observation"
+    authors:
+      - family-names: "ESA"
+    notes: "LULC + buildings. Apache-2.0."
+  - type: article
+    title: "New York City Panel on Climate Change 2024 Report (NPCC4)"
+    authors:
+      - family-names: "Rosenzweig"
+        given-names: "Cynthia"
+    year: 2024
+    journal: "Annals of the New York Academy of Sciences"
+    volume: 1539
+    doi: "10.1111/nyas.15116"

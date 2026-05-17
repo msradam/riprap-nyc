@@ -1,0 +1,29 @@
+# Pre-commit hooks — install with: pre-commit install
+# Run on demand: pre-commit run --all-files
+#
+# These are the same checks CI runs on every PR, surfaced locally so
+# contributors don't burn a CI cycle on a trailing-whitespace miss.
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: ^(web/sveltekit/build/|experiments/|outputs/|.*\.svg$)
+      - id: end-of-file-fixer
+        exclude: ^(web/sveltekit/build/|experiments/|outputs/|.*\.(svg|png|jpg|pdf)$)
+      - id: check-yaml
+        exclude: ^(web/sveltekit/|experiments/)
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ["--maxkb=2000"]
+        exclude: ^(data/|examples/byod/|assets/)
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      - id: ruff
+        args: [--fix]
+        files: ^(riprap|app|web|scripts|tests|load)/
+        exclude: ^(experiments/|web/sveltekit/build/)
