@@ -1,7 +1,7 @@
 /**
  * Browser-side BYOD file ingest + adapter detection.
  *
- * Per Claude Design HANDOFF §BYOD: files stay on the user's machine.
+ * Privacy posture: files stay on the user's machine.
  * No server upload. PapaParse for CSV, native fetch's JSON parser
  * for .json / .geojson, js-yaml for .yaml / .yml. Adapter auto-detect
  * looks at filename extension first, then sniffs the first ~100 rows

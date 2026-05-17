@@ -1,11 +1,11 @@
 <script lang="ts">
   /** SourceStrip — trust-signal numbers.
    *
-   *  Per Claude Design handoff §8: surfaces the data-source counts
-   *  inline (23 sources · 9 agencies · 5 cities · 3 hazards) so the
-   *  "every claim cites a public record" promise from the deck is
-   *  visually substantiated. Last reviewed date is the live-data
-   *  vintage marker; update when the methodology page changes.
+   *  Surfaces the data-source counts inline (23 sources · 9 agencies ·
+   *  5 cities · 3 hazards) so the "every claim cites a public record"
+   *  promise from the deck is visually substantiated. Last reviewed
+   *  date is the live-data vintage marker; update when the methodology
+   *  page changes.
    *
    *  Values are props so a different deployment (or an automated
    *  pre-build pass scanning manifests) can drive them dynamically.

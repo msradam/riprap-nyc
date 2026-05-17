@@ -1,10 +1,10 @@
 <script lang="ts">
   /** PhaseBanner — GOV.UK / USWDS open-beta banner.
    *
-   *  Per Claude Design handoff §6: communicates that methodology and
-   *  source attribution are stable, but per-city coverage is still
-   *  expanding. Conventional pattern in federal civic-tech sites
-   *  (cf. gov.uk, sam.gov, login.gov phase banners).
+   *  Communicates that methodology and source attribution are stable,
+   *  but per-city coverage is still expanding. Conventional pattern in
+   *  federal civic-tech sites (cf. gov.uk, sam.gov, login.gov phase
+   *  banners).
    */
   interface Props {
     /** Phase label — "Beta", "Alpha", etc. Defaults to "Beta". */

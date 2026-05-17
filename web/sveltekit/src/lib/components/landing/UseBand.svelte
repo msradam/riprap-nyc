@@ -1,10 +1,10 @@
 <script lang="ts">
   /** UseBand — Responsible-use disclaimer.
    *
-   *  Per Claude Design handoff §7: pairs the federal civic-tech
-   *  evidence-not-advice pattern with the explicit non-affiliation note
-   *  required by Plain Writing Act voice. Left border is amber-800 to
-   *  cue "warning register" without going red.
+   *  Pairs the federal civic-tech evidence-not-advice pattern with the
+   *  explicit non-affiliation note required by Plain Writing Act voice.
+   *  Left border is amber-800 to cue "warning register" without going
+   *  red.
    *
    *  Aria-label declares this as a Responsible-use region for screen
    *  readers — the heading-as-paragraph pattern is deliberate so the

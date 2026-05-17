@@ -1,10 +1,9 @@
 <script lang="ts">
   /** SkipLink — USWDS-canonical pattern.
    *
-   *  Per Claude Design handoff §10: keyboard users land on the
-   *  first focusable element; "Skip to main content" lets them
-   *  bypass repeated nav. Hidden visually until focused (NOT
-   *  display:none, which removes from a11y tree).
+   *  Keyboard users land on the first focusable element; "Skip to main
+   *  content" lets them bypass repeated nav. Hidden visually until
+   *  focused (NOT display:none, which removes from a11y tree).
    *
    *  Existing per-route `Skip to briefing / map / trace` links in
    *  the app shell continue to work; this one is the top-level

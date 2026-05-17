@@ -2,7 +2,7 @@
  * BYOD pebble registry — persistent across browser tabs / reloads,
  * scoped to this browser's IndexedDB instance.
  *
- * Per HANDOFF.md §BYOD: files stay on the user's machine. We store
+ * Privacy posture: files stay on the user's machine. We store
  * (a) the generated manifest object and (b) the parsed payload (CSV
  * rows / GeoJSON features) so a briefing run can merge them with the
  * server-side deployment registry. Cross-session sharing is

@@ -3,10 +3,9 @@
 
   /** CityPicker — five-city selector row below the search input.
    *
-   *  Per Claude Design handoff §5: showcases the multi-city
-   *  generalisation claim without requiring text input. Each pill
-   *  jumps to a curated anchor address in that city so the user
-   *  immediately sees a working cross-city briefing.
+   *  Showcases the multi-city generalisation claim without requiring
+   *  text input. Each pill jumps to a curated anchor address in that
+   *  city so the user immediately sees a working cross-city briefing.
    *
    *  Anchors match probe_cities.py's smoke-test addresses so what
    *  loads here is identical to what `scripts/probe_cities.py`

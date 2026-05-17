@@ -1,11 +1,11 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
 
-  /** Landing hero — Civic-Hydrology voice (Claude Design handoff, 2026-05-17).
+  /** Landing hero — Civic-Hydrology voice.
    *  H1: "A climate-exposure briefing for <city>." with rotating city.
    *  Deck names the four primary source families (FEMA / NOAA / USGS /
    *  city open data) so the trust-strip claim is foreshadowed inline.
-   *  Cycling "Try:" rail still rotates real probe examples.
+   *  Cycling "Try:" rail rotates real probe examples.
    */
 
   // "New York City" rather than "NYC" so the H1 line-break rhythm

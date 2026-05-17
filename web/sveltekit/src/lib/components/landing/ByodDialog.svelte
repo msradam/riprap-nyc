@@ -11,18 +11,17 @@
   } from '$lib/client/byod';
   import { byodRegistry } from '$lib/stores/byodRegistry.svelte';
 
-  /** BYOD modal — three-section workflow per Claude Design HANDOFF §BYOD.
+  /** BYOD modal — three-section workflow:
    *
-   *  §1 File     — drop / click-to-choose. Files stay in browser.
-   *  §2 Adapter  — auto-detect from extension + header sniff. User
-   *                can override.
-   *  §3 Pebble   — name + stone + tier + radius. Live manifest YAML
-   *                preview.
+   *    §1 File     — drop / click-to-choose. Files stay in browser.
+   *    §2 Adapter  — auto-detect from extension + header sniff. User
+   *                  can override.
+   *    §3 Pebble   — name + stone + tier + radius. Live manifest YAML
+   *                  preview.
    *
    *  On commit, the parsed payload + generated manifest are persisted
    *  to IndexedDB via the byodRegistry store. Cross-session sharing
-   *  + server-side merge are out of scope for v0.5; that's a follow-
-   *  up wiring task (see HANDOFF.md "Out of scope for v0.5").
+   *  + server-side merge into a live briefing run are deferred.
    */
 
   interface Props {

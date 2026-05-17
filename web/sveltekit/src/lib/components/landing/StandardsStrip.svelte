@@ -1,12 +1,11 @@
 <script lang="ts">
   /** StandardsStrip — compliance badges.
    *
-   *  Per Claude Design handoff §9: surfaces the civic-tech compliance
-   *  registers the design and implementation satisfy. Aspirational
-   *  badges (USWDS, WCAG 2.2 AA, Section 508, Plain Writing Act, OSS)
-   *  serve as a procurement/audit shorthand for federal + state
-   *  buyers. Drop badges that no longer hold; don't add badges the
-   *  implementation can't substantiate.
+   *  Surfaces the civic-tech compliance registers the design and
+   *  implementation satisfy. Aspirational badges (USWDS, WCAG 2.2 AA,
+   *  Section 508, Plain Writing Act, OSS) serve as a procurement/audit
+   *  shorthand for federal + state buyers. Drop badges that no longer
+   *  hold; don't add badges the implementation can't substantiate.
    */
 </script>
 
