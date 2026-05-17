@@ -12,21 +12,17 @@ import threading as _threading
 import time
 from typing import Any
 
-import geopandas as gpd
 from burr.core import ApplicationBuilder, State, action, expr
 from burr.lifecycle import PostRunStepHook
 from burr.tracking import LocalTrackingClient
-from shapely.geometry import Point
 
 from app import emissions
-from app.context import floodnet, microtopo, noaa_tides, npcc4_slr, nws_alerts, nws_obs, nyc311
+from app.context import npcc4_slr
 from app.energy import estimate as energy_estimate
-from app.flood_layers import dep_stormwater, ida_hwm, prithvi_water, sandy_inundation
 from app.geocode import geocode_one
-from app.live import floodnet_forecast as fn_forecast
-from app.live import ttm_forecast
 from app.rag import retrieve as rag_retrieve
-from app.reconcile import citations_from_docs, reconcile as run_reconcile
+from app.reconcile import citations_from_docs
+from app.reconcile import reconcile as run_reconcile
 from app.registers import doe_schools as r_schools
 from app.registers import doh_hospitals as r_hospitals
 from app.registers import mta_entrances as r_mta
@@ -165,15 +161,17 @@ def _make_rec(name: str) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 def _run_sandy(lat, lon) -> tuple[str, Any, dict]:
+    from riprap.core.pebbles.bridge import fetch_pebble  # noqa: PLC0415
     rec = _make_rec("sandy_inundation")
     try:
         if not _in_nyc(lat, lon):
             rec["ok"] = False; rec["err"] = "out of NYC scope"
             return "sandy", None, rec
-        pt_geom = (gpd.GeoDataFrame(geometry=[Point(lon, lat)], crs="EPSG:4326")
-                   .to_crs("EPSG:2263").iloc[0].geometry)
-        flag = sandy_inundation.inside_raster(pt_geom)
-        rec["ok"] = True; rec["result"] = {"inside": flag}
+        flag, trace_summary, err = fetch_pebble("sandy", lat, lon)
+        if err is not None:
+            rec["ok"] = False; rec["err"] = err
+            return "sandy", None, rec
+        rec["ok"] = True; rec["result"] = trace_summary
         return "sandy", flag, rec
     except Exception as e:
         rec["ok"] = False; rec["err"] = str(e)
@@ -183,22 +181,28 @@ def _run_sandy(lat, lon) -> tuple[str, Any, dict]:
         rec["elapsed_s"] = round(time.time() - rec["started_at"], 2)
 
 
+_DEP_SCENARIOS = ("dep_extreme_2080", "dep_moderate_2050", "dep_moderate_current")
+
+
 def _run_dep(lat, lon) -> tuple[str, Any, dict]:
+    from riprap.core.pebbles.bridge import fetch_pebble  # noqa: PLC0415
     rec = _make_rec("dep_stormwater")
     try:
         if not _in_nyc(lat, lon):
             rec["ok"] = False; rec["err"] = "out of NYC scope"
             return "dep", None, rec
-        pt_geom = (gpd.GeoDataFrame(geometry=[Point(lon, lat)], crs="EPSG:4326")
-                   .to_crs("EPSG:2263").iloc[0].geometry)
         out: dict[str, Any] = {}
-        for scen in ["dep_extreme_2080", "dep_moderate_2050", "dep_moderate_current"]:
-            cls = dep_stormwater.join_raster(pt_geom, scen)
-            out[scen] = {
-                "depth_class": cls,
-                "depth_label": dep_stormwater.DEPTH_CLASS.get(cls, "outside"),
-                "citation": f"NYC DEP Stormwater Flood Map — {dep_stormwater.label(scen)}",
-            }
+        for scen in _DEP_SCENARIOS:
+            value, _, err = fetch_pebble(scen, lat, lon)
+            if value is None:
+                # Skip this scenario; keep going. _run_dep historically
+                # raised if any scenario failed — bridge degrades gracefully.
+                log.warning("dep scenario %s offline: %s", scen, err)
+                continue
+            out[scen] = value
+        if not out:
+            rec["ok"] = False; rec["err"] = "all DEP scenarios offline"
+            return "dep", None, rec
         rec["ok"] = True; rec["result"] = {k: v["depth_label"] for k, v in out.items()}
         return "dep", out, rec
     except Exception as e:
@@ -210,16 +214,18 @@ def _run_dep(lat, lon) -> tuple[str, Any, dict]:
 
 
 def _run_floodnet(lat, lon) -> tuple[str, Any, dict]:
+    from riprap.core.pebbles.bridge import fetch_pebble  # noqa: PLC0415
     rec = _make_rec("floodnet")
     try:
         if not _in_nyc(lat, lon):
             rec["ok"] = False; rec["err"] = "out of NYC scope"
             return "floodnet", None, rec
-        s = floodnet.summary_for_point(lat, lon, radius_m=600)
-        s["radius_m"] = 600
-        rec["ok"] = True
-        rec["result"] = {"n_sensors": s["n_sensors"], "n_events_3y": s["n_flood_events_3y"]}
-        return "floodnet", s, rec
+        value, trace_summary, err = fetch_pebble("floodnet", lat, lon)
+        if value is None:
+            rec["ok"] = False; rec["err"] = err or "floodnet offline"
+            return "floodnet", None, rec
+        rec["ok"] = True; rec["result"] = trace_summary
+        return "floodnet", value, rec
     except Exception as e:
         rec["ok"] = False; rec["err"] = str(e)
         log.exception("floodnet failed")
@@ -229,14 +235,18 @@ def _run_floodnet(lat, lon) -> tuple[str, Any, dict]:
 
 
 def _run_311(lat, lon) -> tuple[str, Any, dict]:
+    from riprap.core.pebbles.bridge import fetch_pebble  # noqa: PLC0415
     rec = _make_rec("nyc311")
     try:
         if not _in_nyc(lat, lon):
             rec["ok"] = False; rec["err"] = "out of NYC scope"
             return "nyc311", None, rec
-        s = nyc311.summary_for_point(lat, lon, radius_m=200, years=5)
-        rec["ok"] = True; rec["result"] = {"n": s["n"]}
-        return "nyc311", s, rec
+        value, trace_summary, err = fetch_pebble("nyc311", lat, lon)
+        if value is None:
+            rec["ok"] = False; rec["err"] = err or "311 offline"
+            return "nyc311", None, rec
+        rec["ok"] = True; rec["result"] = trace_summary
+        return "nyc311", value, rec
     except Exception as e:
         rec["ok"] = False; rec["err"] = str(e)
         log.exception("311 failed")
@@ -246,19 +256,16 @@ def _run_311(lat, lon) -> tuple[str, Any, dict]:
 
 
 def _run_ida_hwm(lat, lon) -> tuple[str, Any, dict]:
+    from riprap.core.pebbles.bridge import fetch_pebble  # noqa: PLC0415
     rec = _make_rec("ida_hwm_2021")
     try:
-        s = ida_hwm.summary_for_point(lat, lon, radius_m=800)
-        if s is None:
-            rec["ok"] = False; rec["err"] = "HWM data missing"
+        value, trace_summary, err = fetch_pebble("ida_hwm", lat, lon)
+        if value is None:
+            rec["ok"] = False; rec["err"] = err or "HWM data missing"
             return "ida_hwm", None, rec
         rec["ok"] = True
-        rec["result"] = {
-            "n_within_800m": s.n_within_radius,
-            "max_height_above_gnd_ft": s.max_height_above_gnd_ft,
-            "nearest_m": s.nearest_dist_m,
-        }
-        return "ida_hwm", vars(s), rec
+        rec["result"] = trace_summary
+        return "ida_hwm", value, rec
     except Exception as e:
         rec["ok"] = False; rec["err"] = str(e)
         log.exception("ida_hwm failed")
@@ -268,22 +275,18 @@ def _run_ida_hwm(lat, lon) -> tuple[str, Any, dict]:
 
 
 def _run_prithvi(lat, lon) -> tuple[str, Any, dict]:
+    from riprap.core.pebbles.bridge import fetch_pebble  # noqa: PLC0415
     rec = _make_rec("prithvi_eo_v2")
     try:
         if not _in_nyc(lat, lon):
             rec["ok"] = False; rec["err"] = "out of NYC scope"
             return "prithvi_water", None, rec
-        s = prithvi_water.summary_for_point(lat, lon)
-        if s is None:
-            rec["ok"] = False; rec["err"] = "Prithvi mask missing"
+        value, trace_summary, err = fetch_pebble("prithvi_water", lat, lon)
+        if value is None:
+            rec["ok"] = False; rec["err"] = err or "Prithvi mask missing"
             return "prithvi_water", None, rec
-        rec["ok"] = True
-        rec["result"] = {
-            "inside_water_polygon": s.inside_water_polygon,
-            "nearest_distance_m": s.nearest_distance_m,
-            "n_polygons_within_500m": s.n_polygons_within_500m,
-        }
-        return "prithvi_water", vars(s), rec
+        rec["ok"] = True; rec["result"] = trace_summary
+        return "prithvi_water", value, rec
     except Exception as e:
         rec["ok"] = False; rec["err"] = str(e)
         log.exception("prithvi failed")
@@ -293,22 +296,18 @@ def _run_prithvi(lat, lon) -> tuple[str, Any, dict]:
 
 
 def _run_microtopo(lat, lon) -> tuple[str, Any, dict]:
+    from riprap.core.pebbles.bridge import fetch_pebble  # noqa: PLC0415
     rec = _make_rec("microtopo_lidar")
     try:
         if not _in_nyc(lat, lon):
             rec["ok"] = False; rec["err"] = "out of NYC scope"
             return "microtopo", None, rec
-        m = microtopo.microtopo_at(lat, lon)
-        if m is None:
-            rec["ok"] = False; rec["err"] = "DEM fetch failed"
+        value, trace_summary, err = fetch_pebble("microtopo", lat, lon)
+        if value is None:
+            rec["ok"] = False; rec["err"] = err or "DEM fetch failed"
             return "microtopo", None, rec
-        rec["ok"] = True
-        rec["result"] = {
-            "elev_m": m.point_elev_m,
-            "pct_200m": m.rel_elev_pct_200m,
-            "relief_m": m.basin_relief_m,
-        }
-        return "microtopo", vars(m), rec
+        rec["ok"] = True; rec["result"] = trace_summary
+        return "microtopo", value, rec
     except Exception as e:
         rec["ok"] = False; rec["err"] = str(e)
         log.exception("microtopo failed")
@@ -403,6 +402,7 @@ def step_geocode(state: State) -> State:
 
 @action(reads=["lat", "lon"], writes=["sandy", "trace"])
 def step_sandy(state: State) -> State:
+    from riprap.core.pebbles.bridge import fetch_pebble  # noqa: PLC0415
     rec, trace = _step(state, "sandy_inundation")
     try:
         if state.get("lat") is None:
@@ -411,11 +411,11 @@ def step_sandy(state: State) -> State:
         if not _in_nyc(state["lat"], state["lon"]):
             rec["ok"] = False; rec["err"] = "out of NYC scope"
             return state.update(sandy=None, trace=trace)
-        pt_geom = (gpd.GeoDataFrame(geometry=[Point(state["lon"], state["lat"])],
-                                    crs="EPSG:4326")
-                   .to_crs("EPSG:2263").iloc[0].geometry)
-        flag = sandy_inundation.inside_raster(pt_geom)
-        rec["ok"] = True; rec["result"] = {"inside": flag}
+        flag, trace_summary, err = fetch_pebble("sandy", state["lat"], state["lon"])
+        if err is not None:
+            rec["ok"] = False; rec["err"] = err
+            return state.update(sandy=None, trace=trace)
+        rec["ok"] = True; rec["result"] = trace_summary
         return state.update(sandy=flag, trace=trace)
     except Exception as e:
         rec["ok"] = False; rec["err"] = str(e)
@@ -427,6 +427,7 @@ def step_sandy(state: State) -> State:
 
 @action(reads=["lat", "lon"], writes=["dep", "trace"])
 def step_dep(state: State) -> State:
+    from riprap.core.pebbles.bridge import fetch_pebble  # noqa: PLC0415
     rec, trace = _step(state, "dep_stormwater")
     try:
         if state.get("lat") is None:
@@ -435,17 +436,16 @@ def step_dep(state: State) -> State:
         if not _in_nyc(state["lat"], state["lon"]):
             rec["ok"] = False; rec["err"] = "out of NYC scope"
             return state.update(dep=None, trace=trace)
-        pt_geom = (gpd.GeoDataFrame(geometry=[Point(state["lon"], state["lat"])],
-                                    crs="EPSG:4326")
-                   .to_crs("EPSG:2263").iloc[0].geometry)
         out: dict[str, Any] = {}
-        for scen in ["dep_extreme_2080", "dep_moderate_2050", "dep_moderate_current"]:
-            cls = dep_stormwater.join_raster(pt_geom, scen)
-            out[scen] = {
-                "depth_class": cls,
-                "depth_label": dep_stormwater.DEPTH_CLASS.get(cls, "outside"),
-                "citation": f"NYC DEP Stormwater Flood Map — {dep_stormwater.label(scen)}",
-            }
+        for scen in _DEP_SCENARIOS:
+            value, _, err = fetch_pebble(scen, state["lat"], state["lon"])
+            if value is None:
+                log.warning("dep scenario %s offline: %s", scen, err)
+                continue
+            out[scen] = value
+        if not out:
+            rec["ok"] = False; rec["err"] = "all DEP scenarios offline"
+            return state.update(dep=None, trace=trace)
         rec["ok"] = True; rec["result"] = {k: v["depth_label"] for k, v in out.items()}
         return state.update(dep=out, trace=trace)
     except Exception as e:
@@ -458,6 +458,7 @@ def step_dep(state: State) -> State:
 
 @action(reads=["lat", "lon"], writes=["floodnet", "trace"])
 def step_floodnet(state: State) -> State:
+    from riprap.core.pebbles.bridge import fetch_pebble  # noqa: PLC0415
     rec, trace = _step(state, "floodnet")
     try:
         if state.get("lat") is None:
@@ -466,12 +467,12 @@ def step_floodnet(state: State) -> State:
         if not _in_nyc(state["lat"], state["lon"]):
             rec["ok"] = False; rec["err"] = "out of NYC scope"
             return state.update(floodnet=None, trace=trace)
-        s = floodnet.summary_for_point(state["lat"], state["lon"], radius_m=600)
-        s["radius_m"] = 600
-        rec["ok"] = True
-        rec["result"] = {"n_sensors": s["n_sensors"],
-                         "n_events_3y": s["n_flood_events_3y"]}
-        return state.update(floodnet=s, trace=trace)
+        value, trace_summary, err = fetch_pebble("floodnet", state["lat"], state["lon"])
+        if value is None:
+            rec["ok"] = False; rec["err"] = err or "floodnet offline"
+            return state.update(floodnet=None, trace=trace)
+        rec["ok"] = True; rec["result"] = trace_summary
+        return state.update(floodnet=value, trace=trace)
     except Exception as e:
         rec["ok"] = False; rec["err"] = str(e)
         log.exception("floodnet failed")
@@ -482,6 +483,7 @@ def step_floodnet(state: State) -> State:
 
 @action(reads=["lat", "lon"], writes=["nyc311", "trace"])
 def step_311(state: State) -> State:
+    from riprap.core.pebbles.bridge import fetch_pebble  # noqa: PLC0415
     rec, trace = _step(state, "nyc311")
     try:
         if state.get("lat") is None:
@@ -490,9 +492,12 @@ def step_311(state: State) -> State:
         if not _in_nyc(state["lat"], state["lon"]):
             rec["ok"] = False; rec["err"] = "out of NYC scope"
             return state.update(nyc311=None, trace=trace)
-        s = nyc311.summary_for_point(state["lat"], state["lon"], radius_m=200, years=5)
-        rec["ok"] = True; rec["result"] = {"n": s["n"]}
-        return state.update(nyc311=s, trace=trace)
+        value, trace_summary, err = fetch_pebble("nyc311", state["lat"], state["lon"])
+        if value is None:
+            rec["ok"] = False; rec["err"] = err or "311 offline"
+            return state.update(nyc311=None, trace=trace)
+        rec["ok"] = True; rec["result"] = trace_summary
+        return state.update(nyc311=value, trace=trace)
     except Exception as e:
         rec["ok"] = False; rec["err"] = str(e)
         log.exception("311 failed")
@@ -503,22 +508,19 @@ def step_311(state: State) -> State:
 
 @action(reads=["lat", "lon"], writes=["ida_hwm", "trace"])
 def step_ida_hwm(state: State) -> State:
+    from riprap.core.pebbles.bridge import fetch_pebble  # noqa: PLC0415
     rec, trace = _step(state, "ida_hwm_2021")
     try:
         if state.get("lat") is None:
             rec["ok"] = False; rec["err"] = "no coords"
             return state.update(ida_hwm=None, trace=trace)
-        s = ida_hwm.summary_for_point(state["lat"], state["lon"], radius_m=800)
-        if s is None:
-            rec["ok"] = False; rec["err"] = "HWM data missing"
+        value, trace_summary, err = fetch_pebble("ida_hwm", state["lat"], state["lon"])
+        if value is None:
+            rec["ok"] = False; rec["err"] = err or "HWM data missing"
             return state.update(ida_hwm=None, trace=trace)
         rec["ok"] = True
-        rec["result"] = {
-            "n_within_800m": s.n_within_radius,
-            "max_height_above_gnd_ft": s.max_height_above_gnd_ft,
-            "nearest_m": s.nearest_dist_m,
-        }
-        return state.update(ida_hwm=vars(s), trace=trace)
+        rec["result"] = trace_summary
+        return state.update(ida_hwm=value, trace=trace)
     except Exception as e:
         rec["ok"] = False; rec["err"] = str(e)
         log.exception("ida_hwm failed")
@@ -529,6 +531,7 @@ def step_ida_hwm(state: State) -> State:
 
 @action(reads=["lat", "lon"], writes=["prithvi_water", "trace"])
 def step_prithvi(state: State) -> State:
+    from riprap.core.pebbles.bridge import fetch_pebble  # noqa: PLC0415
     rec, trace = _step(state, "prithvi_eo_v2")
     try:
         if state.get("lat") is None:
@@ -537,17 +540,12 @@ def step_prithvi(state: State) -> State:
         if not _in_nyc(state["lat"], state["lon"]):
             rec["ok"] = False; rec["err"] = "out of NYC scope"
             return state.update(prithvi_water=None, trace=trace)
-        s = prithvi_water.summary_for_point(state["lat"], state["lon"])
-        if s is None:
-            rec["ok"] = False; rec["err"] = "Prithvi mask missing"
+        value, trace_summary, err = fetch_pebble("prithvi_water", state["lat"], state["lon"])
+        if value is None:
+            rec["ok"] = False; rec["err"] = err or "Prithvi mask missing"
             return state.update(prithvi_water=None, trace=trace)
-        rec["ok"] = True
-        rec["result"] = {
-            "inside_water_polygon": s.inside_water_polygon,
-            "nearest_distance_m": s.nearest_distance_m,
-            "n_polygons_within_500m": s.n_polygons_within_500m,
-        }
-        return state.update(prithvi_water=vars(s), trace=trace)
+        rec["ok"] = True; rec["result"] = trace_summary
+        return state.update(prithvi_water=value, trace=trace)
     except Exception as e:
         rec["ok"] = False; rec["err"] = str(e)
         log.exception("prithvi failed")
@@ -561,9 +559,11 @@ def step_prithvi_live(state: State) -> State:
     """Live Sentinel-2 water segmentation via Prithvi-EO 2.0.
 
     Network + 300M-param forward pass per query, so it's the slowest
-    specialist by far. Gracefully no-ops via the underlying module if
-    `RIPRAP_PRITHVI_LIVE_ENABLE=0` or if STAC / model load fails.
+    specialist by far. Pebble layer treats the legacy fetch as a model
+    pebble that returns {ok: False, ...} when offline — downstream
+    callers handle that explicit shape rather than relying on None.
     """
+    from riprap.core.pebbles.bridge import fetch_pebble  # noqa: PLC0415
     rec, trace = _step(state, "prithvi_eo_live")
     try:
         if state.get("lat") is None:
@@ -572,19 +572,20 @@ def step_prithvi_live(state: State) -> State:
         if not _in_nyc(state["lat"], state["lon"]):
             rec["ok"] = False; rec["err"] = "out of NYC scope"
             return state.update(prithvi_live=None, trace=trace)
-        from app.flood_layers import prithvi_live
-        s = prithvi_live.fetch(state["lat"], state["lon"])
-        rec["ok"] = bool(s.get("ok"))
-        if not s.get("ok"):
-            rec["err"] = s.get("err") or s.get("skipped") or "no observation"
+        value, trace_summary, err = fetch_pebble("prithvi_live", state["lat"], state["lon"])
+        if value is None:
+            rec["ok"] = False; rec["err"] = err or "prithvi_live unavailable"
+            return state.update(prithvi_live=None, trace=trace)
+        rec["ok"] = bool(value.get("ok"))
+        if not value.get("ok"):
+            rec["err"] = value.get("err") or value.get("skipped") or "no observation"
         else:
-            rec["result"] = {
-                "scene_date": (s.get("item_datetime") or "")[:10],
-                "cloud_cover": s.get("cloud_cover"),
-                "pct_water_500m": s.get("pct_water_within_500m"),
-                "pct_water_5km": s.get("pct_water_full"),
-            }
-        return state.update(prithvi_live=s, trace=trace)
+            # trim scene_date to YYYY-MM-DD even though trace_summary is
+            # generic dict-key passthrough.
+            sd = trace_summary.get("scene_date") or ""
+            trace_summary["scene_date"] = sd[:10]
+            rec["result"] = trace_summary
+        return state.update(prithvi_live=value, trace=trace)
     except Exception as e:
         rec["ok"] = False; rec["err"] = str(e)
         log.exception("prithvi_live failed")
@@ -595,9 +596,8 @@ def step_prithvi_live(state: State) -> State:
 
 @action(reads=["lat", "lon"], writes=["ttm_311_forecast", "trace"])
 def step_ttm_311_forecast(state: State) -> State:
-    """TTM r2 zero-shot forecast on weekly 311 flood-complaint counts
-    at this specific address (200 m radius). 52 weeks of context →
-    4 weeks of forecast. Per-query, per-address, citable."""
+    """TTM r2 zero-shot forecast on weekly 311 flood-complaint counts."""
+    from riprap.core.pebbles.bridge import fetch_pebble  # noqa: PLC0415
     rec, trace = _step(state, "ttm_311_forecast")
     try:
         if state.get("lat") is None:
@@ -606,19 +606,16 @@ def step_ttm_311_forecast(state: State) -> State:
         if not _in_nyc(state["lat"], state["lon"]):
             rec["ok"] = False; rec["err"] = "out of NYC scope"
             return state.update(ttm_311_forecast=None, trace=trace)
-        s = ttm_forecast.weekly_311_forecast_for_point(state["lat"], state["lon"])
-        rec["ok"] = bool(s.get("available"))
+        value, trace_summary, err = fetch_pebble("ttm_311_forecast", state["lat"], state["lon"])
+        if value is None:
+            rec["ok"] = False; rec["err"] = err or "TTM 311 unavailable"
+            return state.update(ttm_311_forecast=None, trace=trace)
+        rec["ok"] = bool(value.get("available"))
         if not rec["ok"]:
-            rec["err"] = s.get("reason", "unavailable")
+            rec["err"] = value.get("reason", "unavailable")
         else:
-            rec["result"] = {
-                "history_total": s.get("history_total_complaints"),
-                "history_recent_mean": s.get("history_recent_3mo_mean"),
-                "forecast_mean": s.get("forecast_mean_per_week"),
-                "forecast_peak": s.get("forecast_peak_per_week"),
-                "accelerating": s.get("accelerating"),
-            }
-        return state.update(ttm_311_forecast=s, trace=trace)
+            rec["result"] = trace_summary
+        return state.update(ttm_311_forecast=value, trace=trace)
     except Exception as e:
         rec["ok"] = False; rec["err"] = str(e)
         log.exception("ttm_311_forecast failed")
@@ -653,20 +650,20 @@ def step_terramind(state: State) -> State:
 
 @action(reads=["lat", "lon"], writes=["noaa_tides", "trace"])
 def step_noaa_tides(state: State) -> State:
+    from riprap.core.pebbles.bridge import fetch_pebble  # noqa: PLC0415
     rec, trace = _step(state, "noaa_tides")
     try:
         if state.get("lat") is None:
             rec["ok"] = False; rec["err"] = "no coords"
             return state.update(noaa_tides=None, trace=trace)
-        s = noaa_tides.summary_for_point(state["lat"], state["lon"])
-        rec["ok"] = s.get("error") is None
-        rec["result"] = {
-            "station": s["station_id"],
-            "observed_ft_mllw": s["observed_ft_mllw"],
-            "residual_ft": s["residual_ft"],
-        }
-        if s.get("error"): rec["err"] = s["error"]
-        return state.update(noaa_tides=s, trace=trace)
+        value, trace_summary, err = fetch_pebble("noaa_tides", state["lat"], state["lon"])
+        if value is None:
+            rec["ok"] = False; rec["err"] = err or "noaa_tides offline"
+            return state.update(noaa_tides=None, trace=trace)
+        rec["ok"] = value.get("error") is None
+        rec["result"] = trace_summary
+        if value.get("error"): rec["err"] = value["error"]
+        return state.update(noaa_tides=value, trace=trace)
     except Exception as e:
         rec["ok"] = False; rec["err"] = str(e)
         log.exception("noaa_tides failed")
@@ -677,16 +674,20 @@ def step_noaa_tides(state: State) -> State:
 
 @action(reads=["lat", "lon"], writes=["nws_alerts", "trace"])
 def step_nws_alerts(state: State) -> State:
+    from riprap.core.pebbles.bridge import fetch_pebble  # noqa: PLC0415
     rec, trace = _step(state, "nws_alerts")
     try:
         if state.get("lat") is None:
             rec["ok"] = False; rec["err"] = "no coords"
             return state.update(nws_alerts=None, trace=trace)
-        s = nws_alerts.summary_for_point(state["lat"], state["lon"])
-        rec["ok"] = s.get("error") is None
-        rec["result"] = {"n_active": s["n_active"]}
-        if s.get("error"): rec["err"] = s["error"]
-        return state.update(nws_alerts=s, trace=trace)
+        value, trace_summary, err = fetch_pebble("nws_alerts", state["lat"], state["lon"])
+        if value is None:
+            rec["ok"] = False; rec["err"] = err or "nws_alerts offline"
+            return state.update(nws_alerts=None, trace=trace)
+        rec["ok"] = value.get("error") is None
+        rec["result"] = trace_summary
+        if value.get("error"): rec["err"] = value["error"]
+        return state.update(nws_alerts=value, trace=trace)
     except Exception as e:
         rec["ok"] = False; rec["err"] = str(e)
         log.exception("nws_alerts failed")
@@ -697,20 +698,20 @@ def step_nws_alerts(state: State) -> State:
 
 @action(reads=["lat", "lon"], writes=["nws_obs", "trace"])
 def step_nws_obs(state: State) -> State:
+    from riprap.core.pebbles.bridge import fetch_pebble  # noqa: PLC0415
     rec, trace = _step(state, "nws_obs")
     try:
         if state.get("lat") is None:
             rec["ok"] = False; rec["err"] = "no coords"
             return state.update(nws_obs=None, trace=trace)
-        s = nws_obs.summary_for_point(state["lat"], state["lon"])
-        rec["ok"] = s.get("error") is None
-        rec["result"] = {
-            "station": s["station_id"],
-            "p1h_mm": s["precip_last_hour_mm"],
-            "p6h_mm": s["precip_last_6h_mm"],
-        }
-        if s.get("error"): rec["err"] = s["error"]
-        return state.update(nws_obs=s, trace=trace)
+        value, trace_summary, err = fetch_pebble("nws_obs", state["lat"], state["lon"])
+        if value is None:
+            rec["ok"] = False; rec["err"] = err or "nws_obs offline"
+            return state.update(nws_obs=None, trace=trace)
+        rec["ok"] = value.get("error") is None
+        rec["result"] = trace_summary
+        if value.get("error"): rec["err"] = value["error"]
+        return state.update(nws_obs=value, trace=trace)
     except Exception as e:
         rec["ok"] = False; rec["err"] = str(e)
         log.exception("nws_obs failed")
@@ -722,25 +723,22 @@ def step_nws_obs(state: State) -> State:
 @action(reads=["lat", "lon"], writes=["ttm_forecast", "trace"])
 def step_ttm_forecast(state: State) -> State:
     """Granite TTM r2 zero-shot forecast of the Battery surge residual."""
+    from riprap.core.pebbles.bridge import fetch_pebble  # noqa: PLC0415
     rec, trace = _step(state, "ttm_forecast")
     try:
         if state.get("lat") is None:
             rec["ok"] = False; rec["err"] = "no coords"
             return state.update(ttm_forecast=None, trace=trace)
-        s = ttm_forecast.summary_for_point(state["lat"], state["lon"])
-        if not s.get("available"):
-            rec["ok"] = False
-            rec["err"] = s.get("reason", "TTM unavailable")
+        value, trace_summary, err = fetch_pebble("ttm_forecast", state["lat"], state["lon"])
+        if value is None:
+            rec["ok"] = False; rec["err"] = err or "TTM unavailable"
             return state.update(ttm_forecast=None, trace=trace)
-        rec["ok"] = True
-        rec["result"] = {
-            "context": s["context_length"],
-            "horizon": s["horizon_steps"],
-            "forecast_peak_ft": s["forecast_peak_ft"],
-            "forecast_peak_min_ahead": s["forecast_peak_minutes_ahead"],
-            "interesting": s["interesting"],
-        }
-        return state.update(ttm_forecast=s, trace=trace)
+        if not value.get("available"):
+            rec["ok"] = False
+            rec["err"] = value.get("reason", "TTM unavailable")
+            return state.update(ttm_forecast=None, trace=trace)
+        rec["ok"] = True; rec["result"] = trace_summary
+        return state.update(ttm_forecast=value, trace=trace)
     except Exception as e:
         rec["ok"] = False; rec["err"] = str(e)
         log.exception("ttm_forecast failed")
@@ -758,27 +756,23 @@ def step_ttm_battery_surge(state: State) -> State:
     MI300X. Hourly cadence vs the zero-shot's 6-min, 4-day vs 9.6 h
     horizon. Both can fire on the same query — the reconciler frames
     each as a distinct forecast in the briefing."""
+    from riprap.core.pebbles.bridge import fetch_pebble  # noqa: PLC0415
     rec, trace = _step(state, "ttm_battery_surge")
     try:
         if state.get("lat") is None:
             rec["ok"] = False; rec["err"] = "no coords"
             return state.update(ttm_battery_surge=None, trace=trace)
-        # Battery gauge is a single point; the forecast applies citywide
-        # to NYC harbor entrance, so we don't gate by NYC bbox.
-        from app.live import ttm_battery_surge
-        s = ttm_battery_surge.fetch()
-        rec["ok"] = bool(s.get("available"))
-        if not rec["ok"]:
-            rec["err"] = s.get("reason", "unavailable")
+        # Battery gauge applies citywide to NYC harbor entrance; no bbox gate.
+        value, trace_summary, err = fetch_pebble("ttm_battery_surge", state["lat"], state["lon"])
+        if value is None:
+            rec["ok"] = False; rec["err"] = err or "unavailable"
             return state.update(ttm_battery_surge=None, trace=trace)
-        rec["result"] = {
-            "context_h": s.get("context_hours"),
-            "horizon_h": s.get("horizon_hours"),
-            "forecast_peak_m": s.get("forecast_peak_m"),
-            "forecast_peak_hours_ahead": s.get("forecast_peak_hours_ahead"),
-            "interesting": s.get("interesting"),
-        }
-        return state.update(ttm_battery_surge=s, trace=trace)
+        rec["ok"] = bool(value.get("available"))
+        if not rec["ok"]:
+            rec["err"] = value.get("reason", "unavailable")
+            return state.update(ttm_battery_surge=None, trace=trace)
+        rec["result"] = trace_summary
+        return state.update(ttm_battery_surge=value, trace=trace)
     except Exception as e:
         rec["ok"] = False; rec["err"] = str(e)
         log.exception("ttm_battery_surge failed")
@@ -793,6 +787,7 @@ def step_floodnet_forecast(state: State) -> State:
     sensor. Reuses the same (512, 96) singleton as ttm_311_forecast — no
     additional model loaded into memory. Silent when the sensor has too
     few historical events for a defensible forecast."""
+    from riprap.core.pebbles.bridge import fetch_pebble  # noqa: PLC0415
     rec, trace = _step(state, "floodnet_forecast")
     try:
         if state.get("lat") is None:
@@ -801,19 +796,16 @@ def step_floodnet_forecast(state: State) -> State:
         if not _in_nyc(state["lat"], state["lon"]):
             rec["ok"] = False; rec["err"] = "out of NYC scope"
             return state.update(floodnet_forecast=None, trace=trace)
-        s = fn_forecast.summary_for_point(state["lat"], state["lon"])
-        rec["ok"] = bool(s.get("available"))
+        value, trace_summary, err = fetch_pebble("floodnet_forecast", state["lat"], state["lon"])
+        if value is None:
+            rec["ok"] = False; rec["err"] = err or "unavailable"
+            return state.update(floodnet_forecast=None, trace=trace)
+        rec["ok"] = bool(value.get("available"))
         if not rec["ok"]:
-            rec["err"] = s.get("reason", "unavailable")
+            rec["err"] = value.get("reason", "unavailable")
         else:
-            rec["result"] = {
-                "sensor_id": s.get("sensor_id"),
-                "distance_m": s.get("distance_from_query_m"),
-                "history_28d": s.get("history_recent_28d_events"),
-                "forecast_28d": s.get("forecast_28d_expected_events"),
-                "accelerating": s.get("accelerating"),
-            }
-        return state.update(floodnet_forecast=s if rec["ok"] else None,
+            rec["result"] = trace_summary
+        return state.update(floodnet_forecast=value if rec["ok"] else None,
                             trace=trace)
     except Exception as e:
         rec["ok"] = False; rec["err"] = str(e)
@@ -963,6 +955,7 @@ def step_doh_hospitals(state: State) -> State:
 
 @action(reads=["lat", "lon"], writes=["microtopo", "trace"])
 def step_microtopo(state: State) -> State:
+    from riprap.core.pebbles.bridge import fetch_pebble  # noqa: PLC0415
     rec, trace = _step(state, "microtopo_lidar")
     try:
         if state.get("lat") is None:
@@ -971,17 +964,12 @@ def step_microtopo(state: State) -> State:
         if not _in_nyc(state["lat"], state["lon"]):
             rec["ok"] = False; rec["err"] = "out of NYC scope"
             return state.update(microtopo=None, trace=trace)
-        m = microtopo.microtopo_at(state["lat"], state["lon"])
-        if m is None:
-            rec["ok"] = False; rec["err"] = "DEM fetch failed"
+        value, trace_summary, err = fetch_pebble("microtopo", state["lat"], state["lon"])
+        if value is None:
+            rec["ok"] = False; rec["err"] = err or "DEM fetch failed"
             return state.update(microtopo=None, trace=trace)
-        rec["ok"] = True
-        rec["result"] = {
-            "elev_m": m.point_elev_m,
-            "pct_200m": m.rel_elev_pct_200m,
-            "relief_m": m.basin_relief_m,
-        }
-        return state.update(microtopo=vars(m), trace=trace)
+        rec["ok"] = True; rec["result"] = trace_summary
+        return state.update(microtopo=value, trace=trace)
     except Exception as e:
         rec["ok"] = False; rec["err"] = str(e)
         log.exception("microtopo failed")
@@ -1446,7 +1434,7 @@ def build_app(query: str, step_queue=None):
     keys = list(actions.keys())
     # Build sequential pairs, but replace geocode→cornerstone with a conditional.
     transitions = []
-    for src, dst in zip(keys, keys[1:]):
+    for src, dst in zip(keys, keys[1:], strict=False):
         if src == "geocode" and dst == "cornerstone":
             transitions.append(("geocode", "cornerstone", expr("lat is not None")))
             transitions.append(("geocode", "reconcile"))  # geocode failed → skip all

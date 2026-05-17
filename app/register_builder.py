@@ -15,8 +15,7 @@ from typing import Any
 
 import geopandas as gpd
 
-from app.context import floodnet, microtopo, nyc311
-from app.flood_layers import dep_stormwater, ida_hwm, sandy_inundation
+from app.flood_layers import dep_stormwater, sandy_inundation
 from app.rag import retrieve as rag_retrieve
 from app.rag import warm as rag_warm
 from app.reconcile import reconcile as run_reconcile
@@ -28,22 +27,19 @@ REGISTERS_DIR = ROOT / "data" / "registers"
 
 def _build_one(row_meta: dict, geom_2263, lat: float, lon: float,
                with_paragraph: bool) -> dict:
-    pt = gpd.GeoDataFrame(geometry=[geom_2263], crs="EPSG:2263")
-    sandy = bool(sandy_inundation.join(pt).iloc[0])
+    from riprap.core.pebbles.bridge import fetch_pebble  # noqa: PLC0415
+    gpd.GeoDataFrame(geometry=[geom_2263], crs="EPSG:2263")
+    sandy_val, _, _ = fetch_pebble("sandy", lat, lon)
+    sandy = bool(sandy_val) if sandy_val is not None else False
     dep = {}
-    for scen in ["dep_extreme_2080", "dep_moderate_2050", "dep_moderate_current"]:
-        j = dep_stormwater.join(pt, scen).iloc[0]
-        dep[scen] = {
-            "depth_class": int(j["depth_class"]),
-            "depth_label": j["depth_label"],
-            "citation": f"NYC DEP Stormwater Flood Map — {dep_stormwater.label(scen)}",
-        }
-    fn = floodnet.summary_for_point(lat, lon, 600); fn["radius_m"] = 600
-    n311 = nyc311.summary_for_point(lat, lon, 200, 5)
-    mt_obj = microtopo.microtopo_at(lat, lon)
-    mt = vars(mt_obj) if mt_obj else None
-    ida_obj = ida_hwm.summary_for_point(lat, lon, 800)
-    ida = vars(ida_obj) if ida_obj else None
+    for scen in ("dep_extreme_2080", "dep_moderate_2050", "dep_moderate_current"):
+        value, _, _ = fetch_pebble(scen, lat, lon)
+        if value is not None:
+            dep[scen] = value
+    fn, _, _ = fetch_pebble("floodnet", lat, lon)
+    n311, _, _ = fetch_pebble("nyc311", lat, lon)
+    mt, _, _ = fetch_pebble("microtopo", lat, lon)
+    ida, _, _ = fetch_pebble("ida_hwm", lat, lon)
 
     snap = {
         "geocode": {**row_meta, "lat": lat, "lon": lon},

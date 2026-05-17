@@ -121,7 +121,11 @@ def citations_from_docs(doc_msgs: list[dict]) -> list[dict]:
 # This text is OUR additional system prompt, prepended to that suffix.
 EXTRA_SYSTEM_PROMPT = """Write a flood-exposure briefing for an NYC address. Use ONLY the facts in the provided documents.
 
-Output the four sections below, filling each <...> with content drawn only from the documents. **Every sentence that contains a number MUST include a citation tag — such as [sandy], [nyc311], [microtopo], [dep_extreme_2080], [floodnet], [npcc4_slr], etc. — somewhere in that sentence, using the actual document id, not a placeholder.** Cite the specific doc_id exactly as it appears in the documents list. Bold at most one phrase per section using `**...**`. Omit any section whose supporting facts are absent from the documents.
+Begin the briefing with this exact sentence as a scope declaration: "This is an automated flood-exposure briefing produced by Riprap from live and baked data sources. It is informational only and not a substitute for a professional flood assessment, an elevation certificate, or an insurance determination."
+
+End the briefing with this exact closing line: "**Out of scope.** This briefing does not assess title, structural condition, indoor air quality, wind/hail risk, or compliance with specific zoning rules. Where a probe was offline at run time, the relevant section omits that signal."
+
+Between the opening scope sentence and the closing line, output the four sections below, filling each <...> with content drawn only from the documents. **Every sentence that contains a number MUST include a citation tag — such as [sandy], [nyc311], [microtopo], [dep_extreme_2080], [floodnet], [npcc4_slr], etc. — somewhere in that sentence, using the actual document id, not a placeholder.** Cite the specific doc_id exactly as it appears in the documents list. Bold at most one phrase per section using `**...**`. Omit any section whose supporting facts are absent from the documents.
 
 **Status.**
 <one sentence: dominant exposure signal(s) for this address, citing the strongest document ids>.
@@ -141,6 +145,11 @@ Constraints:
 - For RAG documents (doc_ids starting with rag_): describe what the report SAYS at the policy or asset-class level. Do not assert findings the report did not make about this specific address.
 - Microtopo percentile direction: a LOW percentile means topographic LOW POINT (water pools); HIGH percentile means HIGH GROUND. State the direction correctly or omit the percentile.
 - Do NOT write "[doc_id]" literally — always replace it with the real document id.
+- Do NOT use the phrase "100-year flood" without immediately following it with "(1% annual chance)".
+- Do NOT use phrases like "will flood", "is going to flood", "no risk", "completely safe", "won't flood" — these violate FEMA risk-communication standards. Use "modeled to", "is mapped within", "may experience", "residual risk remains" instead.
+- For forecasts / projections, always state the time horizon ("9.6-hour horizon", "by 2050", "near-term", "long-term").
+- Round numbers to a sensible precision (avoid spurious decimal places like "5870.5 m" — write "~5.9 km" or "~5870 m").
+- Do NOT compare flood risk to unrelated everyday risks (lightning, car accidents).
 - If no documents are present, output exactly: No grounded data available for this address.
 """
 
@@ -1202,7 +1211,10 @@ def reconcile(state: dict[str, Any], model: str = OLLAMA_MODEL,
     ]
     # single_address: 13 specialists may fire, doc bodies are short.
     # num_ctx 4096 covers ~700 system + ~2500 docs. num_predict 400 caps
-    # the 4-section briefing at ~300-350 tokens.
+    # the 4-section briefing at ~300-350 tokens. Bumping for the new
+    # ASTM scope+disclaimer wrapper would push past the Ollama 240s
+    # timeout on Granite-8B-q3; the scope sentence + four sections fit
+    # under 400 if the model condenses each section to 1-2 sentences.
     OPTS = {"temperature": 0, "num_ctx": 4096, "num_predict": 400}
     if on_token is None:
         resp = llm.chat(model=model, messages=messages, options=OPTS)

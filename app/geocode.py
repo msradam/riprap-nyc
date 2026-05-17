@@ -118,21 +118,58 @@ def geocode_nominatim(text: str) -> GeocodeHit | None:
         raw={"source": "nominatim", **row},
     )
 
+# Any of these in the query string strongly signals NOT-NYC — skip
+# the NYC Geosearch step entirely. NYC Geosearch will fuzzy-match
+# e.g. "401 N Wabash Ave, Chicago, IL" to "401 AVENUE N, Brooklyn"
+# if we let it try, which then passes the broad NYC-bbox check
+# downstream because the bad match happens to fall inside NYC.
+_NON_NYC_HINT_RE = re.compile(
+    r",\s*(?:"
+    # US state codes other than NY (the ones with significant cities)
+    r"AL|AK|AZ|AR|CA|CO|CT|DE|DC|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|"
+    r"MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NC|ND|OH|OK|OR|PA|RI|SC|SD|"
+    r"TN|TX|UT|VT|VA|WA|WV|WI|WY|"
+    # Major non-NYC US cities (common quick-test names)
+    r"chicago|los angeles|san francisco|seattle|boston|philadelphia|"
+    r"philly|houston|dallas|austin|miami|atlanta|denver|portland|"
+    r"san diego|phoenix|minneapolis|detroit|baltimore|washington dc"
+    r")\b",
+    re.IGNORECASE,
+)
+
+
+def _looks_non_nyc(text: str) -> bool:
+    """Returns True only when the query explicitly names a non-NYC
+    place. Bare addresses without city/state info still try NYC
+    Geosearch first (the NYC bias is intentional — most callers are
+    NYC users)."""
+    return bool(_NON_NYC_HINT_RE.search(text))
+
+
 def geocode_one(text: str) -> GeocodeHit | None:
-    """Dynamic geocoder with failover."""
-    # 1. Try Geosearch
+    """Dynamic geocoder with failover.
+
+    NYC Geosearch is the primary because it gives BBL/BIN identifiers
+    needed by NYC-flood pebbles. National OSM Nominatim is the fallback
+    when the address clearly names a non-NYC place, when Geosearch
+    returns nothing, or when its top match falls outside the NYC bbox.
+    """
+    if _looks_non_nyc(text):
+        log.info("geocode_one: query %r names a non-NYC place; skipping Geosearch", text)
+        return geocode_nominatim(text)
+
     hits = geocode(text)
     hint = _detect_borough(text)
-    
+
     if hint:
         in_boro = [h for h in hits if h.borough and h.borough.lower() == hint.lower()]
-        if in_boro: return in_boro[0]
-    
+        if in_boro:
+            return in_boro[0]
+
     if hits:
         top = hits[0]
-        if top.lat and 40.4 <= top.lat <= 41.0: # Broad NYC check
+        if top.lat and 40.4 <= top.lat <= 41.0:  # Broad NYC check
             return top
 
-    # 2. Fall back to Nominatim
     log.info("Falling back to Nominatim for %r", text)
     return geocode_nominatim(text)

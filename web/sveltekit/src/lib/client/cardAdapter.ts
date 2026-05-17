@@ -17,11 +17,12 @@
  * a `meta` card listing whatever scalars it returned.
  */
 import type {
-  Card, FindingsData, StoneKey, StoneMember, StoneTrace
+  Card, CardVariant, FindingsData, StoneKey, StoneMember, StoneTrace
 } from '$lib/types/card';
 import type { TraceNode, TraceStatus } from '$lib/types/trace';
 import type { FinalResult } from '$lib/client/agentStream';
 import { fillRosterForStone } from '$lib/data/stoneRegistry';
+import { pebbleManifest, type PebbleManifest } from '$lib/stores/pebbleManifest.svelte';
 
 /** Reasonable defaults — when the FSM doesn't supply a vintage, fall
  *  back to the Riprap publication date. */
@@ -721,6 +722,132 @@ function buildCapstoneMeta(final: FinalResult, wallSeconds?: number): Card {
   };
 }
 
+/* ── Templated card builder (BYOD path).
+ *
+ * For every pebble in `/api/pebbles` that doesn't have a special builder
+ * above, we render a generic evidence card driven entirely by the
+ * manifest + the pebble's value dict. This is what makes BYOD work:
+ * declaring a new pebble in YAML produces a real card with zero
+ * frontend code edits.
+ *
+ * Mapping from `display.kind` → CardVariant:
+ *    text     → headline   (narration.short fills `headline`)
+ *    stat     → scalars    (every numeric field becomes a scalar cell)
+ *    list     → tabular    (features[] becomes rows)
+ *    chart    → meta       (no canonical chart shape yet; falls back to meta)
+ *    map_only → null       (no card body; data only appears on the map)
+ *
+ * Chrome (source / agency / title / docId / cites) comes from
+ * `manifest.provenance` + `manifest.title`.
+ */
+const KIND_TO_VARIANT: Record<PebbleManifest['display']['kind'], CardVariant | null> = {
+  text: 'headline',
+  stat: 'scalars',
+  list: 'tabular',
+  chart: 'meta',
+  map_only: null,
+};
+
+/** Set of pebble ids that already have a special builder above. The
+ *  templated pass skips these; they appear via the curated path. */
+const SPECIAL_BUILT_IDS = new Set<string>([
+  // Cornerstone
+  'sandy', 'dep_extreme_2080', 'dep_moderate_2050', 'dep_moderate_current',
+  'ida_hwm', 'prithvi_water', 'microtopo',
+  // Touchstone
+  'floodnet', 'nyc311', 'nws_obs', 'noaa_tides', 'prithvi_live',
+  // Lodestone
+  'nws_alerts', 'ttm_forecast', 'ttm_battery_surge', 'ttm_311_forecast',
+  'floodnet_forecast',
+  // Keystone — the four asset-class registers are rendered together
+  // by buildRegisters() as a single `register`-variant card, not four
+  // separate cards. Listing them here keeps the templated pass from
+  // emitting duplicates.
+  'mta_entrances', 'nycha_developments', 'doe_schools', 'doh_hospitals',
+]);
+
+function buildTemplated(m: PebbleManifest, value: unknown): Card | null {
+  const variant = KIND_TO_VARIANT[m.display.kind];
+  if (variant === null) return null;
+  const tier = m.type === 'model' ? 'modeled'
+             : m.type === 'live'  ? 'empirical'
+             : 'empirical';
+  const source = m.provenance.source_name.split(/[—-]/)[0].trim();
+  const vintage = m.provenance.last_updated ?? RIPRAP_VINTAGE;
+  const base: Card = {
+    id: `pebble-${m.id}`,
+    stone: m.stone,
+    tier,
+    variant: variant ?? 'meta',
+    source,
+    agency: m.provenance.source_name,
+    vintage,
+    title: m.title,
+    docId: m.provenance.doc_id ?? m.id,
+    citeId: m.provenance.doc_id ?? m.id,
+    mapLayer: m.display.map_layer ? m.id : null,
+  };
+  // Pebble offline / no value → render a "no data" headline card so the
+  // pebble is still surfaced (with its provenance) instead of vanishing.
+  if (value === null || value === undefined) {
+    return { ...base, variant: 'headline',
+             headline: m.fallback.message ?? 'No data',
+             subhead: m.narration.short ?? undefined };
+  }
+  if (variant === 'headline') {
+    return { ...base,
+             headline: m.narration.short ?? m.title,
+             body: (typeof value === 'string') ? value
+                 : (m.narration.template ?? undefined) };
+  }
+  if (variant === 'scalars') {
+    const scalars: NonNullable<Card['scalars']> = [];
+    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+        if (typeof v === 'number' && Number.isFinite(v)) {
+          scalars.push({ value: `${v}`, label: k });
+        }
+      }
+    } else if (typeof value === 'number') {
+      scalars.push({ value: `${value}`, label: m.title });
+    } else if (typeof value === 'boolean') {
+      scalars.push({ value: value ? 'yes' : 'no', label: m.title });
+    }
+    if (!scalars.length) {
+      return { ...base, variant: 'headline',
+               headline: String(value), subhead: m.narration.short ?? undefined };
+    }
+    return { ...base, scalars };
+  }
+  if (variant === 'tabular') {
+    const v = value as { features?: { properties?: Record<string, unknown>; distance_m?: number }[] };
+    const feats = Array.isArray(v?.features) ? v.features : [];
+    if (!feats.length) return null;
+    // Pick all property keys present in the first row for columns.
+    const cols = Object.keys(feats[0]?.properties ?? {});
+    const rows: (string | number)[][] = [];
+    for (const f of feats.slice(0, 8)) {
+      const row: (string | number)[] = [];
+      for (const c of cols) {
+        const val = f.properties?.[c];
+        row.push(typeof val === 'number' || typeof val === 'string' ? val : '—');
+      }
+      rows.push(row);
+    }
+    return { ...base, columns: cols.length ? cols : ['feature'], rows,
+             sub: `${feats.length} feature${feats.length === 1 ? '' : 's'} within range` };
+  }
+  // meta fallback (chart pebbles without a special builder)
+  const metaRows: { k: string; v: string }[] = [];
+  if (typeof value === 'object' && value !== null) {
+    for (const [k, v] of Object.entries(value as Record<string, unknown>).slice(0, 6)) {
+      metaRows.push({ k, v: typeof v === 'object' ? JSON.stringify(v).slice(0, 40) : String(v) });
+    }
+  }
+  return { ...base, variant: 'meta', metaRows,
+           sub: m.narration.short ?? undefined };
+}
+
 /** Public adapter. Combines per-specialist card builders with the trace
  *  → StoneTrace mapper into a single FindingsData payload.
  *
@@ -766,8 +893,23 @@ export function adaptFinalToFindings(
     hasFinal ? buildCapstoneMeta((final ?? { paragraph: '' }) as FinalResult, wallSeconds) : null,
   ];
 
+  const curatedCards = cards.filter((c): c is Card => c != null);
+
+  // Phase 2 — templated cards for every manifest pebble that didn't get a
+  // curated special-builder card. New BYOD pebbles defined only in YAML
+  // appear here automatically.
+  const templatedCards: Card[] = [];
+  for (const stone of pebbleManifest.stones) {
+    for (const m of pebbleManifest.byStone[stone.id] ?? []) {
+      if (SPECIAL_BUILT_IDS.has(m.id)) continue;
+      const value = (f as Record<string, unknown>)[m.id];
+      const card = buildTemplated(m, value);
+      if (card) templatedCards.push(card);
+    }
+  }
+
   return {
-    cards: cards.filter((c): c is Card => c != null),
+    cards: [...curatedCards, ...templatedCards],
     stones: buildStoneTraces(trace),
     wallSeconds,
     emissions: (f as { emissions?: FindingsData['emissions'] }).emissions,
