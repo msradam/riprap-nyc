@@ -44,7 +44,7 @@ def pebble_action(pebble_id: str):
     what the cardAdapter expects (`state["sandy"]`, `state["floodnet"]`,
     etc.).
     """
-    @action(reads=["lat", "lon"], writes=[pebble_id, "trace"])
+    @action(reads=["lat", "lon", "deployment"], writes=[pebble_id, "trace"])
     def _step(state: State) -> State:
         trace = list(state.get("trace", []))
         rec = trace_rec_for(pebble_id)
@@ -55,7 +55,17 @@ def pebble_action(pebble_id: str):
                 rec["err"] = "no coords"
                 trace.append(rec)
                 return state.update(**{pebble_id: None}, trace=trace)
-            value, trace_summary, err = fetch_pebble(pebble_id, lat, lon)
+            # Per-query deployment routing: fetch_pebble must look up
+            # this pebble in the SELECTED deployment's registry, not in
+            # whatever the env var defaulted to. Without this, a Boston
+            # query would route to the Boston deployment for fan-out
+            # (correct) but then call fetch_pebble against the NYC
+            # registry — which doesn't contain boston_311 — and crash
+            # with KeyError('boston_311').
+            deployment = state.get("deployment")
+            value, trace_summary, err = fetch_pebble(
+                pebble_id, lat, lon, deployment=deployment,
+            )
             if value is None:
                 rec["ok"] = False
                 rec["err"] = err or "no value"

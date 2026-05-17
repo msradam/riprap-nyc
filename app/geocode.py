@@ -138,7 +138,7 @@ def geocode_nominatim(text: str) -> GeocodeHit | None:
 # if we let it try, which then passes the broad NYC-bbox check
 # downstream because the bad match happens to fall inside NYC.
 _NON_NYC_HINT_RE = re.compile(
-    r",\s*(?:"
+    r"(?:,|\s)\s*(?:"
     # US state codes other than NY (the ones with significant cities)
     r"AL|AK|AZ|AR|CA|CO|CT|DE|DC|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|"
     r"MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NC|ND|OH|OK|OR|PA|RI|SC|SD|"
@@ -146,7 +146,17 @@ _NON_NYC_HINT_RE = re.compile(
     # Major non-NYC US cities (common quick-test names)
     r"chicago|los angeles|san francisco|seattle|boston|philadelphia|"
     r"philly|houston|dallas|austin|miami|atlanta|denver|portland|"
-    r"san diego|phoenix|minneapolis|detroit|baltimore|washington dc"
+    r"san diego|phoenix|minneapolis|detroit|baltimore|washington dc|"
+    # Non-US countries (catches "Tokyo Tower, Minato, Tokyo, Japan"
+    # which NYC Geosearch otherwise fuzzy-matches to a Manhattan
+    # building called MELTZER TOWER). Nominatim handles these
+    # globally — better to defer to it than return a wrong NYC hit.
+    r"japan|china|korea|mexico|canada|uk|united kingdom|france|germany|"
+    r"italy|spain|portugal|netherlands|belgium|sweden|norway|denmark|"
+    r"australia|new zealand|india|brazil|argentina|chile|colombia|"
+    r"russia|poland|turkey|egypt|south africa|israel|"
+    # Common country/region suffix tokens that hint non-US.
+    r"prefecture|province|kingdom of"
     r")\b",
     re.IGNORECASE,
 )

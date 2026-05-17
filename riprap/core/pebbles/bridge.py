@@ -18,6 +18,11 @@ from riprap.core.pebbles import SpatialQuery, load_registry
 from riprap.core.pebbles.registry import Registry
 
 _REGISTRY: Registry | None = None
+# Per-deployment registry cache. Keyed by short name (`'nyc'`,
+# `'boston'`, ...). Per-query routing needs to load whatever the
+# router picked; a single global cache would re-introduce the
+# cross-city leak fixed in 22de646.
+_REGISTRIES: dict[str, Registry] = {}
 
 
 def _repo_root() -> Path:
@@ -25,11 +30,36 @@ def _repo_root() -> Path:
     return Path(__file__).resolve().parent.parent.parent.parent
 
 
-def get_registry() -> Registry:
+def get_registry(deployment: str | None = None) -> Registry:
+    """Return the pebble registry for `deployment` (a short name like
+    `'boston'`). When None, falls back to the `RIPRAP_DEPLOYMENT` env
+    var and caches the result globally — back-compat for callers that
+    pre-date per-query routing.
+
+    Per-query callers pass `deployment` from `state.get("deployment")`;
+    each deployment's registry is loaded once and cached.
+    """
+    if deployment and deployment != "__none__":
+        cached = _REGISTRIES.get(deployment)
+        if cached is not None:
+            return cached
+        # Resolve `nyc` → deployments/nyc; also accept absolute paths.
+        from riprap.core.pebbles.deployments import deployment_by_name
+        dep = deployment_by_name(deployment)
+        if dep is not None:
+            reg = load_registry(dep.root)
+        else:
+            path = Path(deployment)
+            if not path.is_absolute():
+                path = _repo_root() / path
+            reg = load_registry(path)
+        _REGISTRIES[deployment] = reg
+        return reg
+
     global _REGISTRY
     if _REGISTRY is None:
-        deployment = os.environ.get("RIPRAP_DEPLOYMENT", "deployments/nyc")
-        path = Path(deployment)
+        dep_str = os.environ.get("RIPRAP_DEPLOYMENT", "deployments/nyc")
+        path = Path(dep_str)
         if not path.is_absolute():
             path = _repo_root() / path
         _REGISTRY = load_registry(path)
@@ -37,7 +67,8 @@ def get_registry() -> Registry:
 
 
 def fetch_pebble(pebble_id: str, lat: float, lon: float,
-                 extras: dict | None = None) -> tuple[Any, dict, str | None]:
+                 extras: dict | None = None,
+                 deployment: str | None = None) -> tuple[Any, dict, str | None]:
     """Run one pebble. Return (value_dict_for_state, trace_summary, err_msg).
 
     `value_dict_for_state` is None if the pebble was offline or errored.
@@ -48,8 +79,13 @@ def fetch_pebble(pebble_id: str, lat: float, lon: float,
     `extras` are passed into SpatialQuery.extras for adapters that need
     more context than lat/lon — text-mining pebbles need a search query
     string, dependent pebbles need an upstream pebble's value, etc.
+
+    `deployment` is the short name from per-query routing (e.g.
+    `'boston'`). When set, the pebble is looked up in that deployment's
+    registry — so a Boston run finds `boston_311` even when the server's
+    env var defaults to `nyc`.
     """
-    reg = get_registry()
+    reg = get_registry(deployment)
     pebble = reg.get(pebble_id)
     result = pebble.fetch(SpatialQuery(lat=lat, lon=lon, extras=extras or {}))
 

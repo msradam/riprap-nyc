@@ -496,19 +496,48 @@ def run(query: str) -> dict:
     app = build_app(query)
     _, _, final = app.run(halt_after=["reconcile"])
 
+    # `deployment` is the routing decision — None when no shipped deployment
+    # covers the geocoded point (sentinel "__none__" → presented as None).
+    chosen = final.get("deployment")
+    if chosen == "__none__":
+        chosen = None
     out: dict = {
         "query": query,
         "intent": final.get("intent"),
         "plan": final.get("plan"),
         "geocode": final.get("geocode"),
+        "lat": final.get("lat"),
+        "lon": final.get("lon"),
+        "deployment": chosen,
     }
 
-    # Pull every pebble's state value from the active deployment's
-    # registry. Adding a pebble manifest = it shows up in the response.
+    # Pull every pebble's state value from the deployment that was
+    # actually selected for this query (per-query routing). Falling back
+    # to the env-var registry would re-introduce the cross-city leak —
+    # a Boston query routed to the Boston deployment would surface NYC
+    # pebble keys (all None) and drop boston_311.
     try:
-        reg = get_registry()
-        for pid in reg.ids():
-            out[pid] = final.get(pid)
+        from riprap.core.pebbles.deployments import deployment_by_name
+        from riprap.core.pebbles import load_registry as _load_registry
+        dep_for_out = deployment_by_name(chosen) if chosen else None
+        if dep_for_out is not None:
+            reg = _load_registry(dep_for_out.root)
+            for pid in reg.ids():
+                out[pid] = final.get(pid)
+        else:
+            # Out-of-coverage queries: still surface any pebble keys
+            # state happens to carry (federal pebbles fire even without
+            # a deployment — they're CONUS-wide).
+            for k in final.keys():
+                if k.startswith(("plan", "geocode", "intent", "trace",
+                                 "lat", "lon", "deployment", "query",
+                                 "rag", "gliner", "paragraph", "audit",
+                                 "mellea", "citations", "dep",
+                                 "terramind", "eo_chip")):
+                    continue
+                v = final.get(k)
+                if v is not None:
+                    out[k] = v
     except Exception:  # noqa: BLE001 — registry load is defensive
         pass
 
