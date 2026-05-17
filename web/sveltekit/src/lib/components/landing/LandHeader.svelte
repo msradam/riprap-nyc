@@ -8,7 +8,7 @@
 <header class="land-header">
   <span class="riprap-wordmark"><RipMark size={22} />riprap</span>
   <span class="land-header-sep">/</span>
-  <span class="land-header-context">Flood Exposure Briefing · NYC</span>
+  <span class="land-header-context">Climate-exposure briefing</span>
   <nav class="land-header-nav">
     <a href="#methodology">Methodology</a>
     <a href="#sources">Sources</a>

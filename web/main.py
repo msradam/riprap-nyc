@@ -523,6 +523,22 @@ def api_pebbles():
     return JSONResponse({"stones": stones, "pebbles": pebbles})
 
 
+@app.get("/api/deployment")
+def api_deployment():
+    """Active-deployment descriptor for the UI shell.
+
+    Returns the city + hazard names the chrome renders in the header
+    chip + browser title. Pulled from each deployment's `stones.yaml`
+    `deployment:` block (with sensible defaults derived from the
+    deployment directory name when the block is absent).
+    """
+    return JSONResponse({
+        "name": _DEPLOYMENT.name,            # directory name (canonical id)
+        "city": _STONES.city,                # display name (NYC, Boston, ...)
+        "hazard": _STONES.hazard,            # 'Flood-exposure briefing', etc.
+    })
+
+
 @app.get("/api/backend")
 async def api_backend():
     """Live LLM-backend descriptor for the UI's hardware badge.

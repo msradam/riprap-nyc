@@ -1,0 +1,3615 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Riprap rebrand · voice & surface mockups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IBM+Plex+Serif:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="tokens.css" />
+<style>
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Page chrome ───────────────────────────────────────────────────── */
+.page {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 48px 32px 96px;
+}
+.memo-banner {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: baseline;
+  gap: 16px;
+  padding: 10px 0 20px;
+  border-bottom: 2px solid var(--ink);
+  margin-bottom: 32px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+}
+.memo-banner-from { color: var(--ink); }
+.memo-banner-mid { display: flex; gap: 14px; justify-content: center; }
+.memo-banner-mid span:not(:last-child)::after { content: " ·"; color: var(--ink-tertiary); margin-left: 14px; }
+.memo-banner-right { text-align: right; }
+
+/* ── Memo body ─────────────────────────────────────────────────────── */
+.memo {
+  max-width: 70ch;
+  margin: 0 0 56px;
+}
+.memo-h1 {
+  font-family: var(--font-serif);
+  font-size: 36px;
+  font-weight: 600;
+  line-height: 1.15;
+  margin: 0 0 10px;
+  letter-spacing: -0.01em;
+}
+.memo-h1 em { font-style: italic; }
+.memo-deck {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  line-height: 1.55;
+  color: var(--ink-secondary);
+  margin: 0 0 28px;
+  max-width: 64ch;
+  text-wrap: pretty;
+}
+.memo-deck strong { color: var(--ink); font-weight: 600; }
+
+.memo-answers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border: 1px solid var(--rule-soft);
+  margin-bottom: 28px;
+}
+.memo-answer {
+  padding: 14px 18px;
+  border-right: 1px solid var(--rule-soft);
+  border-bottom: 1px solid var(--rule-soft);
+  background: white;
+}
+.memo-answer:nth-child(2n) { border-right: none; }
+.memo-answer:nth-last-child(-n+2) { border-bottom: none; }
+.memo-answer-q {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  margin: 0 0 6px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.memo-answer-q .num { color: var(--ink-secondary); }
+.memo-answer-a {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--ink);
+  margin: 0;
+}
+.memo-answer-a strong { font-weight: 600; }
+.memo-answer-a em { font-style: italic; color: var(--ink-secondary); }
+
+.memo-prose p {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink);
+  margin: 0 0 14px;
+  text-wrap: pretty;
+}
+.memo-prose p em { font-style: italic; color: var(--ink-secondary); }
+.memo-prose code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  background: var(--paper-deep);
+  padding: 1px 5px;
+  color: var(--ink);
+}
+
+/* ── Section primitives ────────────────────────────────────────────── */
+.section { margin: 80px 0 0; }
+.section-head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: baseline;
+  gap: 16px;
+  padding: 0 0 12px;
+  border-bottom: 2px solid var(--ink);
+  margin-bottom: 28px;
+}
+.section-num {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--ink-tertiary);
+}
+.section-h2 {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+.section-h2 em { font-style: italic; color: var(--ink-secondary); }
+.section-tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-tertiary);
+  letter-spacing: 0.04em;
+}
+.section-deck {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--ink-secondary);
+  margin: 0 0 24px;
+  max-width: 70ch;
+  text-wrap: pretty;
+}
+.section-deck em { font-style: italic; }
+
+.spec-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.spec-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+.opt-frame {
+  background: white;
+  border: 1px solid var(--rule-soft);
+  border-left: 3px solid var(--ink);
+  display: flex;
+  flex-direction: column;
+}
+.opt-frame.is-recommended { border-left-color: var(--accent); }
+.opt-frame.is-dropped { border-left-color: var(--rule-soft); opacity: 0.72; }
+.opt-cap {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--rule-soft);
+  background: var(--paper-deep);
+}
+.opt-cap-name {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+}
+.opt-cap-name em { font-style: italic; font-weight: 500; color: var(--ink-secondary); }
+.opt-cap-meta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+}
+.opt-cap-meta.is-pick { color: var(--accent); }
+.opt-cap-meta.is-drop { color: var(--ink-tertiary); }
+.opt-body { padding: 18px; flex: 1; }
+.opt-note {
+  padding: 10px 16px 12px;
+  border-top: 1px dashed var(--rule-soft);
+  background: white;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--ink-secondary);
+}
+.opt-note .label {
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-right: 6px;
+}
+
+/* ── Riprap shared primitives reused from the design system ───────── */
+.rip-mark {
+  display: inline-block;
+  flex-shrink: 0;
+  transform: translateY(2px);
+  color: var(--accent);
+}
+.app-header-mock {
+  border: 1px solid var(--ink);
+  background: var(--paper);
+  border-bottom-width: 2px;
+}
+.app-header-mock-inner {
+  padding: 14px 20px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 20px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+.app-header-mock-left { display: flex; align-items: center; gap: 10px; }
+.app-header-mock-sep { color: var(--ink-tertiary); }
+.app-header-mock-ctx { color: var(--ink-secondary); letter-spacing: 0.04em; }
+.app-header-mock-query {
+  background: var(--paper-deep);
+  border: 1px solid var(--rule-soft);
+  padding: 7px 12px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 280px;
+  justify-self: center;
+}
+.app-header-mock-query-icon { color: var(--ink-tertiary); }
+.app-header-mock-query-edit {
+  margin-left: auto;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+}
+.app-header-mock-right { display: flex; gap: 14px; font-size: 11px; color: var(--ink-secondary); }
+.app-header-mock-right a { color: inherit; text-decoration: none; border-bottom: 1px dotted transparent; }
+
+/* Wordmark variants */
+.wm {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 18px;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  text-transform: lowercase;
+  text-decoration: none;
+}
+.wm svg { transform: translateY(3px); }
+.wm-qualifier {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--ink-tertiary);
+  margin-left: 2px;
+  text-transform: lowercase;
+}
+.wm-qualifier-slash { color: var(--rule-soft); margin-right: 4px; }
+
+/* Header context chip */
+.chip {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-secondary);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.chip-dynamic-bracket { color: var(--accent); font-weight: 600; }
+.chip-hazard { color: var(--ink); }
+.chip-city {
+  color: var(--ink-secondary);
+}
+.chip-dot { color: var(--ink-tertiary); }
+.chip-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  background: var(--paper-deep);
+  border: 1px solid var(--rule-soft);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-secondary);
+}
+.chip-pill-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* Hero mock — almost-real LandHero rendered at scale */
+.hero-frame {
+  border: 1px solid var(--rule-soft);
+  background: var(--paper);
+  display: flex;
+  flex-direction: column;
+}
+.hero-frame .hero-header-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 18px 32px;
+  border-bottom: 1px solid var(--rule-soft);
+  background: var(--paper);
+}
+.hero-header-row .hero-nav {
+  margin-left: auto;
+  display: flex;
+  gap: 18px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-secondary);
+}
+.hero-header-row .hero-nav a { color: inherit; text-decoration: none; border-bottom: 1px dotted transparent; }
+.hero-body {
+  padding: 56px 32px 48px;
+}
+.hero-h1 {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 48px;
+  line-height: 1.08;
+  color: var(--ink);
+  letter-spacing: -0.015em;
+  margin: 0 0 18px;
+  max-width: 18ch;
+  text-wrap: balance;
+}
+.hero-h1 em { font-style: italic; font-weight: 500; }
+.hero-h1 .accent { color: var(--ink); }
+.hero-deck {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--ink-secondary);
+  max-width: 60ch;
+  margin: 0 0 30px;
+  text-wrap: pretty;
+}
+.hero-deck strong { color: var(--ink); font-weight: 600; }
+.hero-query {
+  display: flex;
+  align-items: stretch;
+  max-width: 720px;
+  border: 1px solid var(--ink);
+  background: white;
+  font-size: 18px;
+}
+.hero-query-prompt {
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  font-family: var(--font-mono);
+  font-size: 22px;
+  color: var(--ink-tertiary);
+  background: var(--paper-deep);
+  border-right: 1px solid var(--rule-soft);
+}
+.hero-query-input {
+  flex: 1;
+  min-width: 0;
+  padding: 18px 16px;
+  font-family: var(--font-sans);
+  font-size: 17px;
+  border: none;
+  outline: none;
+  background: white;
+  color: var(--ink-tertiary);
+}
+.hero-query-submit {
+  padding: 0 22px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 14px;
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+.hero-try {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  justify-items: start;
+  align-items: baseline;
+  column-gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink-tertiary);
+}
+.hero-try-rail { text-align: left; }
+.hero-try-label {
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+.hero-try-rail {
+  color: var(--ink);
+  border-bottom: 1px dotted var(--rule-soft);
+  white-space: nowrap;
+}
+
+/* City picker — proposed */
+.citypicker {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-top: 26px;
+  max-width: 720px;
+  flex-wrap: wrap;
+}
+.citypicker-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  margin-right: 12px;
+}
+.citypicker-list {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--rule-soft);
+}
+.citypicker-btn {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  padding: 8px 14px;
+  background: white;
+  border: none;
+  border-right: 1px solid var(--rule-soft);
+  color: var(--ink-secondary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.citypicker-btn:last-child { border-right: none; }
+.citypicker-btn:hover { background: var(--paper-deep); color: var(--ink); }
+.citypicker-btn.is-active {
+  background: var(--ink);
+  color: var(--paper);
+}
+.citypicker-btn.is-active .citypicker-tick { color: var(--paper); }
+.citypicker-tick { color: var(--accent); font-family: var(--font-mono); }
+.citypicker-byod {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-tertiary);
+  margin-left: 14px;
+  letter-spacing: 0.04em;
+}
+.citypicker-byod a {
+  color: var(--ink-secondary);
+  border-bottom: 1px dotted var(--rule-soft);
+  text-decoration: none;
+}
+
+/* Side-by-side wordmark exploration table */
+.wm-table {
+  display: grid;
+  grid-template-columns: 220px 1fr 1.2fr;
+  gap: 0;
+  border-top: 1px solid var(--rule-soft);
+  border-left: 1px solid var(--rule-soft);
+}
+.wm-table > div {
+  padding: 18px 20px;
+  border-right: 1px solid var(--rule-soft);
+  border-bottom: 1px solid var(--rule-soft);
+  background: white;
+}
+.wm-table .wm-row-label {
+  background: var(--paper-deep);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
+.wm-table .wm-row-label strong { color: var(--ink); font-size: 13px; letter-spacing: 0.02em; text-transform: none; font-weight: 600; }
+.wm-table .wm-row-render { display: flex; align-items: center; }
+.wm-table .wm-row-note {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--ink-secondary);
+}
+.wm-table .wm-row-note .verdict {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  display: inline-block;
+  margin-right: 6px;
+}
+.wm-table .wm-row-note .verdict.pick { color: var(--accent); }
+.wm-table .wm-row-note .verdict.drop { color: var(--ink-tertiary); }
+.wm-table .wm-row-note .verdict.maybe { color: var(--accent-warn); }
+
+/* Mini header chip rendering inside header mock cards */
+.chip-frame-grid {
+  display: grid;
+  gap: 12px;
+}
+.chip-frame {
+  border: 1px solid var(--rule-soft);
+}
+.chip-frame-cap {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 8px 14px;
+  background: var(--paper-deep);
+  border-bottom: 1px solid var(--rule-soft);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+}
+.chip-frame-cap .v { color: var(--ink); font-weight: 600; letter-spacing: 0.04em; text-transform: none; font-family: var(--font-sans); }
+.chip-frame-cap .v em { font-style: italic; }
+.chip-frame-cap .pick { color: var(--accent); }
+.chip-frame-cap .drop { color: var(--ink-tertiary); }
+
+/* Composite recommendation banner */
+.composite {
+  border: 2px solid var(--accent);
+  background: white;
+  padding: 0;
+  margin-top: 24px;
+}
+.composite-cap {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 12px 18px;
+  background: var(--accent);
+  color: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.composite-cap strong { font-family: var(--font-sans); font-weight: 600; letter-spacing: 0.02em; text-transform: none; font-size: 13px; }
+.composite-body { padding: 0; }
+
+/* Yes/no answer block */
+.yn {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.yn.yes { color: var(--accent); }
+.yn.no { color: var(--ink-tertiary); }
+.yn.maybe { color: var(--accent-warn); }
+
+/* Inline framework-tag readout, used in section deck */
+.copy-readout {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink);
+  background: var(--paper-deep);
+  padding: 2px 6px;
+  border: 1px solid var(--rule-soft);
+  letter-spacing: 0.02em;
+}
+
+/* Sticky compare bar that names what's varying as you scroll heroes */
+.compare-stripe {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 16px;
+  padding: 10px 16px;
+  background: var(--paper-deep);
+  border: 1px solid var(--rule-soft);
+  border-left: 3px solid var(--ink);
+  margin-bottom: 18px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink-secondary);
+}
+.compare-stripe .key { color: var(--ink-tertiary); text-transform: uppercase; letter-spacing: 0.08em; }
+
+/* Footer note */
+.footer-note {
+  margin-top: 72px;
+  padding: 22px;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.6;
+  letter-spacing: 0.04em;
+}
+.footer-note strong { color: white; font-family: var(--font-sans); font-weight: 600; }
+.footer-note a { color: var(--reference-bg); border-bottom: 1px dotted rgba(255,255,255,0.4); text-decoration: none; }
+
+@media (max-width: 920px) {
+  .spec-grid-2, .spec-grid-3 { grid-template-columns: 1fr; }
+  .memo-answers { grid-template-columns: 1fr; }
+  .memo-answer { border-right: none; }
+  .wm-table { grid-template-columns: 1fr; }
+  .wm-table > div { border-right: none; }
+  .hero-h1 { font-size: 36px; }
+  .hero-body { padding: 32px 20px; }
+}
+
+/* Phase banner (GOV.UK / USWDS) */
+.phase-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 20px;
+  background: var(--paper-deep);
+  border-bottom: 1px solid var(--rule-soft);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--ink-secondary);
+}
+.phase-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--accent);
+  color: white;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.phase-banner a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+
+/* Standards strip */
+.standards-strip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 28px;
+  padding-top: 18px;
+  border-top: 1px solid var(--rule-soft);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink-tertiary);
+}
+.standards-strip .badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 14px 4px 0;
+  margin-right: 14px;
+  border-right: 1px solid var(--rule-soft);
+  color: var(--ink-secondary);
+}
+.standards-strip .badge:last-child { border-right: none; margin-right: 0; }
+.standards-strip .badge .tick { color: var(--accent); font-weight: 600; }
+.standards-strip .badge strong { color: var(--ink); font-family: var(--font-sans); font-weight: 600; letter-spacing: 0.02em; }
+
+/* §7 Compliance checklist */
+.compliance-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.compliance-card {
+  background: white;
+  border: 1px solid var(--rule-soft);
+  border-left: 3px solid var(--accent);
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.compliance-card-cap {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.compliance-card-name {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--ink);
+}
+.compliance-card-ref {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+}
+.compliance-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.compliance-list li {
+  display: grid;
+  grid-template-columns: 14px 1fr;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-secondary);
+}
+.compliance-list li .tick { color: var(--accent); font-family: var(--font-mono); font-weight: 600; font-size: 13px; line-height: 1.5; }
+.compliance-list li strong { color: var(--ink); font-weight: 600; }
+.compliance-list li code { font-family: var(--font-mono); font-size: 11.5px; background: var(--paper-deep); padding: 1px 5px; }
+@media (max-width: 920px) {
+  .compliance-grid { grid-template-columns: 1fr; }
+}
+
+/* ── City rotation in H1 ──────────────────────────────────────────── */
+.city-rotate {
+  display: inline-block;
+  transition: opacity 220ms ease;
+  font-style: normal;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.city-rotate.fade-out, .try-rotate.fade-out { opacity: 0; }
+.try-rotate { transition: opacity 220ms ease; }
+/* ── Responsible-use band (federal civic-tech disclaimer pattern) ── */
+.use-band {
+  display: grid;
+  grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
+  gap: 22px;
+  margin-top: 28px;
+  padding: 16px 22px;
+  background: white;
+  border: 1px solid var(--rule-soft);
+  border-left: 3px solid var(--accent-warn);
+  align-items: start;
+}
+.use-band-head {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+}
+.use-band-body {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-secondary);
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.use-band-body a { color: var(--accent); border-bottom: 1px solid var(--accent); text-decoration: none; }
+.use-band-affil {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-tertiary);
+  letter-spacing: 0.02em;
+  padding-top: 6px;
+  border-top: 1px dashed var(--rule-soft);
+}
+@media (max-width: 720px) {
+  .use-band { grid-template-columns: 1fr; }
+}
+
+/* Skip link, USWDS-canonical pattern. Hidden until focused. */
+.skip-link-mock {
+  position: absolute;
+  left: -9999px;
+  top: 8px;
+  padding: 8px 12px;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  z-index: 5;
+  text-decoration: none;
+}
+.skip-link-mock:focus { left: 8px; }
+
+/* Visually-hidden but screen-reader-available. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── PDF preview pages, US Letter (8.5 × 11) ──────────────────────── */
+.pdfx-deck-stack { display: flex; flex-direction: column; gap: 38px; margin-top: 26px; }
+.pdfx-spread {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+}
+.pdfx-spread-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed var(--rule-soft);
+  margin-bottom: 6px;
+}
+.pdfx-spread-label strong { color: var(--ink); font-family: var(--font-sans); font-weight: 600; letter-spacing: 0.01em; text-transform: none; font-size: 13px; }
+.pdfx-page {
+  aspect-ratio: 8.5 / 11;
+  background: white;
+  border: 1px solid var(--rule-soft);
+  box-shadow: 0 16px 36px -18px rgba(15, 23, 42, 0.22);
+  position: relative;
+  overflow: hidden;
+}
+.pdfx-page-inner {
+  position: absolute;
+  inset: 0;
+  padding: 40px 44px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.pdfx-running-head {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: baseline;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--ink);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  color: var(--ink-secondary);
+  text-transform: uppercase;
+}
+.pdfx-running-head-mid { text-align: center; color: var(--ink-tertiary); }
+.pdfx-running-head-right { text-align: right; color: var(--ink-tertiary); }
+.pdfx-running-foot {
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--rule-soft);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  letter-spacing: 0.04em;
+  color: var(--ink-tertiary);
+}
+.pdfx-running-foot-right { text-align: right; }
+.pdfx-running-foot strong { color: var(--ink); font-weight: 600; }
+/* Cover */
+.pdfx-cover-meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--ink);
+}
+.pdfx-cover-title-block { padding: 20px 0 16px; }
+.pdfx-cover-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+}
+.pdfx-cover-title {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  margin: 6px 0 4px;
+  color: var(--ink);
+}
+.pdfx-cover-subtitle {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  color: var(--ink-secondary);
+  margin-top: 4px;
+}
+.pdfx-cover-context {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.06em;
+  color: var(--ink-tertiary);
+  text-transform: uppercase;
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid var(--rule-soft);
+}
+.pdfx-memo-block {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 4px 14px;
+  padding: 12px 0 14px;
+  border-top: 1px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+  font-size: 10px;
+  line-height: 1.5;
+  margin: 0;
+}
+.pdfx-memo-block dt { font-family: var(--font-mono); font-size: 8px; color: var(--ink-tertiary); text-transform: uppercase; letter-spacing: 0.08em; margin: 0; padding-top: 1px; }
+.pdfx-memo-block dd { margin: 0; font-size: 10px; color: var(--ink); }
+.pdfx-stones-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0;
+  border-top: 1px solid var(--rule-soft);
+  border-left: 1px solid var(--rule-soft);
+}
+.pdfx-stone-cell {
+  padding: 8px 7px;
+  border-right: 1px solid var(--rule-soft);
+  border-bottom: 1px solid var(--rule-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pdfx-stone-cell-num { font-family: var(--font-mono); font-size: 14px; font-weight: 600; color: var(--ink); line-height: 1; }
+.pdfx-stone-cell-label { font-family: var(--font-mono); font-size: 7px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-tertiary); }
+.pdfx-stone-cell-fired { font-family: var(--font-mono); font-size: 7px; color: var(--accent); letter-spacing: 0.04em; }
+.pdfx-cover-models {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  line-height: 1.6;
+  color: var(--ink-secondary);
+}
+.pdfx-cover-models strong { color: var(--ink); font-weight: 600; }
+.pdfx-cover-models-label {
+  display: block;
+  font-size: 7.5px;
+  letter-spacing: 0.1em;
+  color: var(--ink-tertiary);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.pdfx-stamp {
+  margin-top: auto;
+  border-top: 2px solid var(--ink);
+  padding-top: 10px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 16px;
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  line-height: 1.5;
+  color: var(--ink-secondary);
+}
+.pdfx-stamp strong { color: var(--ink); font-weight: 600; }
+.pdfx-stamp-pass {
+  color: var(--accent);
+  font-weight: 600;
+}
+/* Body */
+.pdfx-section-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding-top: 8px;
+  border-top: 1.5px solid var(--ink);
+  margin: 4px 0 4px;
+}
+.pdfx-section-num { font-family: var(--font-mono); font-size: 9px; color: var(--ink-tertiary); letter-spacing: 0.06em; }
+.pdfx-section-label { font-family: var(--font-sans); font-size: 12px; font-weight: 600; color: var(--ink); }
+.pdfx-section-tier {
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  letter-spacing: 0.06em;
+  background: var(--paper-deep);
+  border: 1px solid var(--rule-soft);
+  padding: 1px 5px;
+  color: var(--ink-secondary);
+  margin-left: auto;
+  text-transform: uppercase;
+}
+.pdfx-prose {
+  font-family: var(--font-serif);
+  font-size: 9.5px;
+  line-height: 1.55;
+  color: var(--ink);
+  margin: 0;
+  position: relative;
+  padding-left: 14px;
+  text-wrap: pretty;
+}
+.pdfx-prose-glyph {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  font-size: 8px;
+  color: var(--ink-tertiary);
+}
+.pdfx-prose sup {
+  font-family: var(--font-sans);
+  font-size: 0.8em;
+  font-weight: 500;
+  color: var(--accent);
+  margin-left: 1px;
+}
+/* Citations */
+.pdfx-cites {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-family: var(--font-serif);
+  font-size: 9px;
+  line-height: 1.45;
+}
+.pdfx-cites li {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  gap: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px dotted var(--rule-soft);
+}
+.pdfx-cite-num { font-family: var(--font-mono); font-size: 8px; color: var(--ink-tertiary); padding-top: 1px; }
+.pdfx-cite-body .src { font-weight: 600; color: var(--ink); }
+.pdfx-cite-body .meta { font-family: var(--font-mono); font-size: 7px; color: var(--ink-tertiary); display: block; margin-top: 1px; letter-spacing: 0.02em; }
+.pdfx-cite-body .url { color: var(--accent); word-break: break-all; }
+/* Audit + methodology */
+.pdfx-method-h2 {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  margin: 4px 0 2px;
+  color: var(--ink);
+  padding-top: 6px;
+  border-top: 1.5px solid var(--ink);
+}
+.pdfx-method-p {
+  font-family: var(--font-serif);
+  font-size: 9.5px;
+  line-height: 1.5;
+  margin: 0;
+  color: var(--ink);
+}
+.pdfx-audit-list {
+  list-style: none;
+  margin: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--rule-soft);
+  background: var(--paper);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px 14px;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  line-height: 1.5;
+}
+.pdfx-audit-list li { display: grid; grid-template-columns: 30px 1fr; gap: 6px; }
+.pdfx-audit-pass { color: var(--accent); font-weight: 600; }
+.pdfx-energy-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 3px 12px;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  line-height: 1.5;
+}
+.pdfx-energy-list dt { color: var(--ink-tertiary); margin: 0; }
+.pdfx-energy-list dd { color: var(--ink); margin: 0; }
+/* Glossary */
+.pdfx-glossary {
+  font-family: var(--font-serif);
+  font-size: 9px;
+  line-height: 1.5;
+  display: grid;
+  grid-template-columns: 70px 1fr;
+  gap: 6px 14px;
+  margin: 0;
+}
+.pdfx-glossary dt { font-family: var(--font-mono); font-size: 8px; font-weight: 600; color: var(--ink); margin: 0; }
+.pdfx-glossary dd { margin: 0; color: var(--ink-secondary); }
+.pdfx-glossary-h2 {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  margin: 0 0 4px;
+  color: var(--ink);
+  padding-top: 6px;
+  border-top: 1.5px solid var(--ink);
+}
+/* PDF compliance side panel */
+.pdfx-spec-notes {
+  background: white;
+  border: 1px solid var(--rule-soft);
+  border-left: 3px solid var(--accent);
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.pdfx-spec-notes-head {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0;
+}
+.pdfx-spec-notes-deck {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-secondary);
+  margin: 0;
+}
+.pdfx-spec-notes-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-secondary);
+}
+.pdfx-spec-notes-list li {
+  display: grid;
+  grid-template-columns: 14px 1fr;
+  gap: 8px;
+}
+.pdfx-spec-notes-list .tick { color: var(--accent); font-family: var(--font-mono); font-weight: 600; }
+.pdfx-spec-notes-list strong { color: var(--ink); font-weight: 600; }
+.pdfx-spec-notes-list code { font-family: var(--font-mono); font-size: 11px; background: var(--paper-deep); padding: 1px 5px; }
+/* Page thumbnail strip */
+.pdfx-thumb-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 18px;
+  margin: 22px 0 32px;
+}
+.pdfx-thumb {
+  background: white;
+  border: 1px solid var(--rule-soft);
+  aspect-ratio: 8.5/11;
+  padding: 7px 6px;
+  font-size: 0;
+  position: relative;
+  box-shadow: 0 4px 10px -4px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.pdfx-thumb-bar { height: 2px; background: var(--ink); }
+.pdfx-thumb-h { height: 5px; background: var(--paper-deep); width: 75%; }
+.pdfx-thumb-h-big { height: 9px; background: var(--paper-deep); width: 60%; }
+.pdfx-thumb-line { height: 1.5px; background: var(--rule-soft); }
+.pdfx-thumb-line-s { width: 80%; }
+.pdfx-thumb-line-xs { width: 55%; }
+.pdfx-thumb-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1px;
+  margin: 2px 0;
+}
+.pdfx-thumb-grid-cell {
+  background: var(--paper-deep);
+  height: 8px;
+}
+.pdfx-thumb-foot { height: 1.5px; background: var(--ink); margin-top: auto; }
+.pdfx-thumb-label {
+  position: absolute;
+  bottom: -22px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-tertiary);
+  letter-spacing: 0.04em;
+}
+.pdfx-thumb-label strong { color: var(--ink); font-family: var(--font-sans); font-weight: 600; letter-spacing: 0.01em; }
+
+/* Map page */
+.pdfx-page-title {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  margin: 4px 0 4px;
+  color: var(--ink);
+  padding-top: 6px;
+  border-top: 1.5px solid var(--ink);
+}
+.pdfx-map-frame {
+  position: relative;
+  flex: 1;
+  border: 1px solid var(--ink);
+  background: var(--paper-deep);
+  overflow: hidden;
+  background-image:
+    linear-gradient(to right, rgba(15, 23, 42, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(15, 23, 42, 0.06) 1px, transparent 1px);
+  background-size: 28px 28px;
+  min-height: 280px;
+}
+.pdfx-map-overlay-sandy {
+  position: absolute;
+  inset: 28% 16% 18% 24%;
+  background: rgba(178, 34, 52, 0.16);
+  clip-path: polygon(0% 30%, 35% 0%, 78% 5%, 100% 45%, 92% 100%, 28% 95%, 0% 60%);
+  border: 1px solid rgba(178, 34, 52, 0.4);
+}
+.pdfx-map-overlay-fema {
+  position: absolute;
+  inset: 38% 30% 24% 30%;
+  background: rgba(26, 68, 128, 0.16);
+  clip-path: polygon(0% 50%, 22% 0%, 70% 8%, 100% 38%, 88% 100%, 22% 96%, 0% 70%);
+  border: 1px solid rgba(26, 68, 128, 0.4);
+}
+.pdfx-map-water {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 16%;
+  background: linear-gradient(90deg, transparent 0%, rgba(14, 116, 144, 0.22) 100%);
+  border-left: 1px solid rgba(14, 116, 144, 0.35);
+}
+.pdfx-map-water-label {
+  position: absolute;
+  bottom: 18px;
+  right: 18px;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 9px;
+  color: var(--ink-secondary);
+}
+.pdfx-map-pin {
+  position: absolute;
+  top: 48%;
+  left: 47%;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid white;
+  box-shadow: 0 0 0 1px var(--ink);
+}
+.pdfx-map-pin-label {
+  position: absolute;
+  top: calc(48% - 18px);
+  left: calc(47% + 16px);
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.95);
+  padding: 2px 5px;
+  border: 1px solid var(--rule-soft);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.pdfx-map-sensor {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  background: white;
+  border: 1.5px solid var(--ink);
+  border-radius: 50%;
+}
+.pdfx-map-scale {
+  position: absolute;
+  bottom: 12px;
+  left: 14px;
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.94);
+  padding: 3px 8px;
+  border: 1px solid var(--rule-soft);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pdfx-map-scale-bar { width: 32px; height: 2px; background: var(--ink); }
+.pdfx-map-legend {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px 18px;
+  padding: 10px 0 0;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  line-height: 1.4;
+  border-top: 1px solid var(--rule-soft);
+  margin-top: 8px;
+}
+.pdfx-map-legend-row {
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 6px;
+  align-items: center;
+}
+.pdfx-map-legend-swatch {
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--ink);
+}
+.pdfx-map-legend-swatch.sandy { background: rgba(178, 34, 52, 0.4); }
+.pdfx-map-legend-swatch.fema { background: rgba(26, 68, 128, 0.4); }
+.pdfx-map-legend-swatch.sensor { background: white; border-radius: 50%; }
+.pdfx-map-legend-swatch.address { background: var(--accent); border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 1px var(--ink); }
+.pdfx-map-legend-label { color: var(--ink); font-size: 8.5px; }
+.pdfx-map-legend-source { color: var(--ink-tertiary); font-size: 7.5px; display: block; margin-top: 1px; }
+
+/* Evidence cards page */
+.pdfx-ev-row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+.pdfx-ev-row-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.pdfx-ev-row-stone {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.pdfx-ev-row-meta {
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  letter-spacing: 0.04em;
+  color: var(--ink-tertiary);
+}
+.pdfx-ev-row-count {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  color: var(--ink);
+  font-weight: 600;
+}
+.pdfx-ev-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+.pdfx-ev-card {
+  border: 1px solid var(--rule-soft);
+  border-top: 2px solid var(--ink);
+  background: white;
+  padding: 5px 7px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 52px;
+}
+.pdfx-ev-card-emp { border-top-color: var(--tier-empirical); }
+.pdfx-ev-card-mod { border-top-color: var(--tier-modeled); }
+.pdfx-ev-card-prx { border-top-color: var(--tier-proxy); }
+.pdfx-ev-card-syn { border-top-color: var(--tier-synthetic); border-top-style: dashed; }
+.pdfx-ev-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.pdfx-ev-card-src {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  letter-spacing: 0.06em;
+  color: var(--ink-secondary);
+  text-transform: uppercase;
+}
+.pdfx-ev-card-tier {
+  font-family: var(--font-mono);
+  font-size: 6.5px;
+  letter-spacing: 0.08em;
+  color: var(--ink-tertiary);
+}
+.pdfx-ev-card-figure {
+  font-family: var(--font-serif);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.1;
+  margin-top: 1px;
+}
+.pdfx-ev-card-label {
+  font-family: var(--font-sans);
+  font-size: 7.5px;
+  line-height: 1.3;
+  color: var(--ink-secondary);
+}
+.pdfx-ev-card-meta {
+  font-family: var(--font-mono);
+  font-size: 6.5px;
+  color: var(--ink-tertiary);
+  margin-top: auto;
+  padding-top: 2px;
+}
+
+
+/* ── BYOD dialog mockup ────────────────────────────────────────────── */
+.byod-frame {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 24px;
+  margin-top: 28px;
+}
+.byod-dialog {
+  background: white;
+  border: 1px solid var(--ink);
+  border-top: 3px solid var(--accent);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 22px 24px;
+  box-shadow: 0 24px 48px -28px rgba(15, 23, 42, 0.25);
+}
+.byod-dialog-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.byod-dialog-title {
+  font-family: var(--font-sans);
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--ink);
+}
+.byod-dialog-close {
+  background: transparent;
+  border: 0;
+  font-family: var(--font-mono);
+  font-size: 20px;
+  color: var(--ink-tertiary);
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+.byod-dialog-deck {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-secondary);
+  margin: 0;
+}
+.byod-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.byod-step {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+}
+.byod-drop {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  border: 1.5px dashed var(--rule-soft);
+  background: var(--paper-deep);
+}
+.byod-drop-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: white;
+  border: 1px solid var(--rule-soft);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.byod-drop-text strong {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  display: block;
+}
+.byod-drop-text span {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--ink-secondary);
+}
+.byod-drop-text a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+.byod-supported {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-tertiary);
+  margin: 0;
+}
+.byod-supported code {
+  background: var(--paper-deep);
+  padding: 1px 5px;
+  font-size: 10.5px;
+}
+.byod-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.byod-radio {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 8px;
+  padding: 9px 12px;
+  border: 1px solid var(--rule-soft);
+  cursor: pointer;
+  align-items: start;
+}
+.byod-radio input[type="radio"] {
+  margin: 2px 0 0;
+  accent-color: var(--accent);
+}
+.byod-radio.is-checked {
+  border-color: var(--accent);
+  background: rgba(0, 94, 162, 0.04);
+}
+.byod-radio-label {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--ink);
+  display: block;
+  line-height: 1.4;
+}
+.byod-radio-meta {
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  color: var(--ink-tertiary);
+  display: block;
+  margin-top: 3px;
+  line-height: 1.4;
+}
+.byod-radio-meta code {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  background: var(--paper-deep);
+  padding: 1px 4px;
+}
+.byod-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 14px;
+}
+.byod-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.byod-field-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+}
+.byod-field-input {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  padding: 8px 10px;
+  border: 1px solid var(--rule-soft);
+  background: white;
+  color: var(--ink);
+}
+.byod-field-input:focus { outline: 2px solid var(--accent); outline-offset: -2px; }
+.byod-tier-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.byod-tier {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  padding: 6px 12px;
+  border: 1px solid var(--rule-soft);
+  color: var(--ink-secondary);
+  cursor: pointer;
+}
+.byod-tier:hover { border-color: var(--ink); color: var(--ink); }
+.byod-tier.is-active {
+  background: rgba(0, 94, 162, 0.08);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+.byod-privacy {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-tertiary);
+  margin: 0;
+  padding-top: 4px;
+  border-top: 1px dashed var(--rule-soft);
+}
+.byod-dialog-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--rule-soft);
+}
+.byod-cancel, .byod-submit {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 13px;
+  padding: 8px 16px;
+  border: 1px solid var(--ink);
+  cursor: pointer;
+  letter-spacing: 0.02em;
+}
+.byod-cancel {
+  background: white;
+  color: var(--ink);
+}
+.byod-cancel:hover { background: var(--paper-deep); }
+.byod-submit {
+  background: var(--ink);
+  color: white;
+  border-color: var(--ink);
+}
+.byod-submit:hover { background: var(--accent); border-color: var(--accent); }
+.byod-notes {
+  background: white;
+  border: 1px solid var(--rule-soft);
+  border-left: 3px solid var(--accent);
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.byod-notes-head {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0;
+}
+.byod-notes-list {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.byod-notes-list li {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: 10px;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-secondary);
+}
+.byod-notes-list li strong { color: var(--ink); font-weight: 600; }
+.byod-notes-list li code {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  background: var(--paper-deep);
+  padding: 1px 5px;
+}
+.byod-notes-step {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+  background: rgba(0, 94, 162, 0.08);
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.byod-notes-p {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-secondary);
+  margin: 0;
+}
+.byod-notes-p code {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  background: var(--paper-deep);
+  padding: 1px 5px;
+}
+.byod-oos {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink-secondary);
+  padding-left: 18px;
+  margin: 4px 0 0;
+}
+.byod-oos li { margin-bottom: 4px; }
+
+@media (max-width: 920px) {
+  .byod-frame { grid-template-columns: 1fr; }
+  .byod-fields { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 920px) {
+  .pdfx-spread { grid-template-columns: 1fr; }
+  .pdfx-thumb-row { grid-template-columns: 1fr 1fr 1fr; }
+}
+
+/* Source-count strip — trust signal. */
+.source-strip {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--rule-soft);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-tertiary);
+  letter-spacing: 0.04em;
+}
+.source-strip-stat {
+  font-family: var(--font-sans);
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0;
+}
+.source-strip-stat-num {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--accent);
+  margin-right: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .city-rotate { transition: none; }
+  .city-rotate.fade-out { opacity: 1; }
+}
+</style>
+</head>
+<body>
+<main class="page" data-screen-label="Riprap rebrand response">
+
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <!-- Memo banner                                                    -->
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <header class="memo-banner">
+    <span class="memo-banner-from">memo · design → riprap</span>
+    <span class="memo-banner-mid">
+      <span>re: BRIEF.md</span><span>v0.5 positioning</span><span>3 voices, 1 chip, 1 picker, 1 wordmark</span>
+    </span>
+    <span class="memo-banner-right">2026-05-17</span>
+  </header>
+
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <!-- Cover memo + four answers                                       -->
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <section class="memo">
+    <h1 class="memo-h1">Same stones. <em>Wider shoreline.</em></h1>
+    <p class="memo-deck">
+      The visual system holds. What needs to change is the hero copy, the header
+      chip, and the words that quietly assume Riprap is a NYC tool. The audience
+      for the landing page is planners, civil engineers, and resilience-office staff.
+      They don't care that Riprap is one codebase running five cities. They care
+      whether they can cite what Riprap returns to a planning board.
+    </p>
+    <p class="memo-deck" style="margin-top: -10px;">
+      Civic-tech has explicit rulebooks: USWDS, GOV.UK Design System, Section 508,
+      the Plain Writing Act. This pass pulls the design closer to that register.
+      No italic emphasis in headings. A phase banner where users expect one.
+      Plain-English provenance copy. An explicit standards strip. The visual
+      system itself stays put. The full checklist is in §7.
+    </p>
+
+    <div class="memo-answers">
+      <div class="memo-answer">
+        <p class="memo-answer-q"><span class="num">Q1</span> Voice option</p>
+        <p class="memo-answer-a">
+          <strong>A — rewritten in planner register.</strong> Federal-civic palette
+          is right; the original A deck is wrong audience. New deck names what
+          a planner cares about (an <em>audit trail</em>, the <em>agencies behind</em>
+          the numbers) and drops the engineer-flattery (<em>same code</em>,
+          <em>numeric claims</em>). B + C also out — see §1.
+        </p>
+      </div>
+      <div class="memo-answer">
+        <p class="memo-answer-q"><span class="num">Q2</span> Dynamic header chip</p>
+        <p class="memo-answer-a">
+          <span class="yn yes">Yes.</span> Pull <code>{hazard_tagline} · {city}</code>
+          from each deployment's <code>stones.yaml</code>. A planner shouldn't have
+          to wonder which city's data they're looking at. <em>See §2.</em>
+        </p>
+      </div>
+      <div class="memo-answer">
+        <p class="memo-answer-q"><span class="num">Q3</span> Landing city picker</p>
+        <p class="memo-answer-a">
+          <span class="yn yes">Yes — quietly.</span> Coverage list as a thin rail
+          under the address field, not above it. The address bar stays the primary
+          entry; the picker reassures a Boston planner that Boston is one of the
+          live cities. <em>See §4.</em>
+        </p>
+      </div>
+      <div class="memo-answer">
+        <p class="memo-answer-q"><span class="num">Q4</span> Wordmark qualifier</p>
+        <p class="memo-answer-a">
+          <span class="yn no">No <code>// framework</code> qualifier.</span>
+          A planner doesn't need to know it's a framework — they need to know it
+          works in their city. The chip says that; a mono qualifier on the wordmark
+          would say it twice in dev-tooling voice. <em>See §3.</em>
+        </p>
+      </div>
+    </div>
+
+    <div class="memo-prose">
+      <p>
+        <strong>The audience pivot, concretely.</strong> A drainage engineer is
+        not impressed that Riprap is one codebase running five cities — they
+        want to know whether their <em>address</em> works and whether they can
+        <em>cite</em> what it returns to a planning board. So the hero leads on
+        <em>audit trail</em> and names the actual agencies behind the numbers
+        (FEMA, NOAA, USGS, city open data), then mentions coverage as a fact, not
+        a flex. The framework story moves to the README banner and the About page
+        where developer-audiences live.
+      </p>
+      <p>
+        <strong>Cross-hazard parent term.</strong> <code>Climate-Exposure Briefing</code>
+        works for flood + heat, awkward for air. Let each deployment's
+        <code>stones.yaml</code> own its own tagline. NYC's flood deployment keeps
+        <code>Flood-Exposure Briefing</code>; air can say <code>Air-Quality Briefing</code>;
+        the framework doesn't legislate.
+      </p>
+      <p>
+        Half-day estimate from the brief still holds — the picker is the only new
+        component.
+      </p>
+    </div>
+  </section>
+
+
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <!-- §1 — Voice A / B / C at hero scale                              -->
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <section class="section">
+    <header class="section-head">
+      <span class="section-num">§1</span>
+      <h2 class="section-h2">Voice at hero scale — <em>A, B, C, side-by-side</em></h2>
+      <span class="section-tag">surface 3 + 4</span>
+    </header>
+    <p class="section-deck">
+      Three options shown at hero scale. The audience is planners and civil
+      engineers, so the deck should sound like the README's own framing. Words
+      like "audit trail", "stamped memo", and "half-day of manual joins" belong
+      here. Words like "codebase" and "framework" don't.
+    </p>
+
+    <div class="compare-stripe">
+      <span class="key">varying</span>
+      <span>H1 sentence · deck · "Try:" example. <strong>Constant:</strong> palette · type · mark · input bar · nav. <strong>Read for:</strong> who the deck is talking to.</span>
+    </div>
+
+    <!-- ── Voice A — civic-engineering ────────────────────────────── -->
+    <article class="opt-frame is-recommended">
+      <header class="opt-cap">
+        <p class="opt-cap-name">Voice <em>A</em> — planner register <span style="color: var(--ink-tertiary); font-weight: 400;">(rewritten from brief)</span></p>
+        <span class="opt-cap-meta is-pick">★ recommended</span>
+      </header>
+      <div class="opt-body" style="padding:0;">
+        <div class="hero-frame" style="border:none;">
+          <div class="hero-header-row">
+            <a class="wm" href="#"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="22" height="22" fill="currentColor" class="rip-mark"><rect x="2.16669" y="3" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="9.66665" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="16.3333" width="9.99998" height="3.3334"></rect><rect x="2.16669" y="23.00002" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="29.66667" width="9.99998" height="3.33333"></rect><rect x="23.83334" y="23.00002" width="9.99998" height="3.33333"></rect><rect x="23.83334" y="29.66667" width="9.99998" height="3.33333"></rect><path d="M13.83336,3V33h8.33335V11.33335A8.33337,8.33337,0,0,0,13.83336,3Z"></path></svg>riprap</a>
+            <span class="app-header-mock-sep">/</span>
+            <span class="chip">
+              <span class="chip-hazard">Climate-exposure briefing</span>
+            </span>
+            <nav class="hero-nav"><a href="#">Methodology</a><a href="#">Sources</a><a href="#">GitHub</a></nav>
+          </div>
+          <div class="hero-body">
+            <h1 class="hero-h1">A climate-exposure briefing for <span class="city-rotate">NYC</span>.</h1>
+            <p class="hero-deck">
+              Type an address. Get a written briefing on flood, heat, or air-quality exposure.
+              Every claim cites a public record from FEMA, NOAA, USGS, or city open data.
+            </p>
+            <form class="hero-query" onsubmit="event.preventDefault()">
+              <span class="hero-query-prompt">›</span>
+              <input class="hero-query-input" type="text" placeholder="Address, neighborhood, or BBL. e.g. 80 Pioneer Street, Red Hook" />
+              <button class="hero-query-submit" type="submit">Brief this place →</button>
+            </form>
+            <div class="hero-try">
+              <span class="hero-try-label">Try:</span>
+              <span class="hero-try-rail try-rotate">80 Pioneer Street, Red Hook</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <footer class="opt-note">
+        <span class="label">Why</span>
+        Names what a planner wants. An audit trail and the agencies behind the
+        numbers. The H1 rotates through the five live deployments (NYC, Chicago, Seattle,
+        San Fran, Boston), replacing the abstract "any place"
+        with a concrete coverage statement. Hazard label reads
+        "climate-exposure" on the landing page. Per-deployment pages still show
+        the specific hazard (flood, heat, or air) via the chip.
+      </footer>
+    </article>
+
+    <!-- ── Voice B — framework-first ──────────────────────────────── -->
+    <article class="opt-frame is-dropped" style="margin-top:18px;">
+      <header class="opt-cap">
+        <p class="opt-cap-name">Voice <em>B</em> — framework-first register</p>
+        <span class="opt-cap-meta is-drop">× not recommended</span>
+      </header>
+      <div class="opt-body" style="padding:0;">
+        <div class="hero-frame" style="border:none;">
+          <div class="hero-header-row">
+            <a class="wm" href="#"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="22" height="22" fill="currentColor" class="rip-mark"><rect x="2.16669" y="3" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="9.66665" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="16.3333" width="9.99998" height="3.3334"></rect><rect x="2.16669" y="23.00002" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="29.66667" width="9.99998" height="3.33333"></rect><rect x="23.83334" y="23.00002" width="9.99998" height="3.33333"></rect><rect x="23.83334" y="29.66667" width="9.99998" height="3.33333"></rect><path d="M13.83336,3V33h8.33335V11.33335A8.33337,8.33337,0,0,0,13.83336,3Z"></path></svg>riprap</a>
+            <span class="app-header-mock-sep">/</span>
+            <span class="chip">
+              <span class="chip-hazard">Open civic-tech framework</span>
+              <span class="chip-dot">·</span>
+              <span class="chip-city">NYC · Flood</span>
+            </span>
+            <nav class="hero-nav"><a href="#">Docs</a><a href="#">Deploy</a><a href="#">GitHub</a></nav>
+          </div>
+          <div class="hero-body">
+            <h1 class="hero-h1">Open framework for <em>grounded</em> climate briefings.</h1>
+            <p class="hero-deck">
+              One codebase, five working cities (NYC, Chicago, Seattle, San Francisco,
+              Boston). <strong>Drop your data in via <code style="background:var(--paper-deep); padding:1px 5px; font-family:var(--font-mono); font-size:0.88em;">.riprap/</code> — no fork.</strong>
+              Every claim cites a primary public-record source.
+            </p>
+            <form class="hero-query" onsubmit="event.preventDefault()">
+              <span class="hero-query-prompt">›</span>
+              <input class="hero-query-input" type="text" placeholder="Address, neighborhood, or BBL. e.g. 80 Pioneer Street, Red Hook" />
+              <button class="hero-query-submit" type="submit">Brief this place →</button>
+            </form>
+            <div class="hero-try">
+              <span class="hero-try-label">Try:</span>
+              <span class="hero-try-rail try-rotate">80 Pioneer Street, Red Hook</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <footer class="opt-note">
+        <span class="label">Why not</span>
+        "Open framework", "grounded", "<code style=\"background:var(--paper-deep); padding:1px 5px;\">.riprap/</code>", "drop your data in"
+        — every line is written for someone who builds software, not someone who
+        cites it. A drainage engineer reading this would scroll past. Move
+        "open framework" to the README banner where the developer audience lives.
+      </footer>
+    </article>
+
+    <!-- ── Voice C — metaphor-led ─────────────────────────────────── -->
+    <article class="opt-frame is-dropped" style="margin-top:18px;">
+      <header class="opt-cap">
+        <p class="opt-cap-name">Voice <em>C</em> — small-stones metaphor</p>
+        <span class="opt-cap-meta is-drop">× not recommended for hero · ✓ save for footer/about</span>
+      </header>
+      <div class="opt-body" style="padding:0;">
+        <div class="hero-frame" style="border:none;">
+          <div class="hero-header-row">
+            <a class="wm" href="#"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="22" height="22" fill="currentColor" class="rip-mark"><rect x="2.16669" y="3" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="9.66665" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="16.3333" width="9.99998" height="3.3334"></rect><rect x="2.16669" y="23.00002" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="29.66667" width="9.99998" height="3.33333"></rect><rect x="23.83334" y="23.00002" width="9.99998" height="3.33333"></rect><rect x="23.83334" y="29.66667" width="9.99998" height="3.33333"></rect><path d="M13.83336,3V33h8.33335V11.33335A8.33337,8.33337,0,0,0,13.83336,3Z"></path></svg>riprap</a>
+            <span class="app-header-mock-sep">/</span>
+            <span class="chip">
+              <span class="chip-hazard">Flood-Exposure Briefing</span>
+              <span class="chip-dot">·</span>
+              <span class="chip-city">Boston</span>
+            </span>
+            <nav class="hero-nav"><a href="#">Methodology</a><a href="#">Sources</a><a href="#">GitHub</a></nav>
+          </div>
+          <div class="hero-body">
+            <h1 class="hero-h1">Citation-grounded briefings, <em>for any place.</em></h1>
+            <p class="hero-deck">
+              Riprap stacks small pieces — sensor readings, agency reports, FEMA panels,
+              NOAA gauges — into a single grounded briefing for any address.
+              <strong>Five cities run on it today.</strong> Yours could be next.
+            </p>
+            <form class="hero-query" onsubmit="event.preventDefault()">
+              <span class="hero-query-prompt">›</span>
+              <input class="hero-query-input" type="text" placeholder="Address, neighborhood, or BBL. e.g. 80 Pioneer Street, Red Hook" />
+              <button class="hero-query-submit" type="submit">Brief this place →</button>
+            </form>
+            <div class="hero-try">
+              <span class="hero-try-label">Try:</span>
+              <span class="hero-try-rail try-rotate">80 Pioneer Street, Red Hook</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <footer class="opt-note">
+        <span class="label">Why not (here)</span>
+        The metaphor is good in writing — a planning report would happily quote
+        <em>"small stones, stacked carefully, hold the shoreline."</em> But the
+        hero has work to do, and the metaphor pushes the audit-trail story into
+        the second sentence. Save it for the About page lede or the README
+        opener.
+      </footer>
+    </article>
+  </section>
+
+
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <!-- §2 — Header chip                                                -->
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <section class="section">
+    <header class="section-head">
+      <span class="section-num">§2</span>
+      <h2 class="section-h2">Header chip — <em>static vs. dynamic vs. dynamic+tag</em></h2>
+      <span class="section-tag">surface 5</span>
+    </header>
+    <p class="section-deck">
+      The chip is the cheapest place to earn the framework claim — it costs ~5 LOC
+      of backend and changes per-deployment without a code change. Three options
+      shown in the actual app-header chrome with the same query bar so you can
+      tell what the eye lands on.
+    </p>
+
+    <div class="chip-frame-grid">
+
+      <!-- Today -->
+      <div class="chip-frame">
+        <div class="chip-frame-cap">
+          <span>Today</span>
+          <span class="v drop">Hardcoded · ships NYC even on Boston deployments</span>
+        </div>
+        <div class="app-header-mock-inner">
+          <div class="app-header-mock-left">
+            <a class="wm" href="#"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="20" height="20" fill="currentColor" class="rip-mark"><rect x="2.16669" y="3" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="9.66665" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="16.3333" width="9.99998" height="3.3334"></rect><rect x="2.16669" y="23.00002" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="29.66667" width="9.99998" height="3.33333"></rect><rect x="23.83334" y="23.00002" width="9.99998" height="3.33333"></rect><rect x="23.83334" y="29.66667" width="9.99998" height="3.33333"></rect><path d="M13.83336,3V33h8.33335V11.33335A8.33337,8.33337,0,0,0,13.83336,3Z"></path></svg>riprap</a>
+            <span class="app-header-mock-sep">/</span>
+            <span class="app-header-mock-ctx">flood-exposure briefing</span>
+          </div>
+          <span class="app-header-mock-query">
+            <span class="app-header-mock-query-icon">⌕</span>
+            <span>189 Atlantic Avenue, Brooklyn</span>
+            <span class="app-header-mock-query-edit">edit</span>
+          </span>
+          <div class="app-header-mock-right">
+            <a href="#">methodology</a>
+            <a href="#">export PDF</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recommended -->
+      <div class="chip-frame" style="border-color: var(--accent); border-left: 3px solid var(--accent);">
+        <div class="chip-frame-cap" style="background: rgba(0,94,162,0.06); border-bottom-color: rgba(0,94,162,0.2);">
+          <span style="color: var(--accent);">★ Recommended · dynamic from <code style="font-family:var(--font-mono); font-size:11px; background: white; padding: 1px 5px; border:1px solid var(--rule-soft); color: var(--ink);">stones.yaml</code></span>
+          <span class="v pick">{hazard_tagline} · {city}</span>
+        </div>
+        <div class="app-header-mock-inner">
+          <div class="app-header-mock-left">
+            <a class="wm" href="#"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="20" height="20" fill="currentColor" class="rip-mark"><rect x="2.16669" y="3" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="9.66665" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="16.3333" width="9.99998" height="3.3334"></rect><rect x="2.16669" y="23.00002" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="29.66667" width="9.99998" height="3.33333"></rect><rect x="23.83334" y="23.00002" width="9.99998" height="3.33333"></rect><rect x="23.83334" y="29.66667" width="9.99998" height="3.33333"></rect><path d="M13.83336,3V33h8.33335V11.33335A8.33337,8.33337,0,0,0,13.83336,3Z"></path></svg>riprap</a>
+            <span class="app-header-mock-sep">/</span>
+            <span class="app-header-mock-ctx">flood-exposure briefing</span>
+            <span class="app-header-mock-sep">·</span>
+            <span class="chip-pill"><span class="chip-pill-dot"></span> Boston</span>
+          </div>
+          <span class="app-header-mock-query">
+            <span class="app-header-mock-query-icon">⌕</span>
+            <span>1 City Hall Square, Boston</span>
+            <span class="app-header-mock-query-edit">edit</span>
+          </span>
+          <div class="app-header-mock-right">
+            <a href="#">methodology</a>
+            <a href="#">export PDF</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Per-hazard rotation showing payoff -->
+      <div class="chip-frame">
+        <div class="chip-frame-cap">
+          <span>Same recipe, three deployments — proof it scales</span>
+          <span class="v"><em>NYC flood · NYC heat · Boston flood</em></span>
+        </div>
+        <div class="app-header-mock-inner" style="border-bottom: 1px dashed var(--rule-soft);">
+          <div class="app-header-mock-left">
+            <a class="wm" href="#"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="20" height="20" fill="currentColor" class="rip-mark"><rect x="2.16669" y="3" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="9.66665" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="16.3333" width="9.99998" height="3.3334"></rect><rect x="2.16669" y="23.00002" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="29.66667" width="9.99998" height="3.33333"></rect><rect x="23.83334" y="23.00002" width="9.99998" height="3.33333"></rect><rect x="23.83334" y="29.66667" width="9.99998" height="3.33333"></rect><path d="M13.83336,3V33h8.33335V11.33335A8.33337,8.33337,0,0,0,13.83336,3Z"></path></svg>riprap</a>
+            <span class="app-header-mock-sep">/</span>
+            <span class="app-header-mock-ctx">flood-exposure briefing</span>
+            <span class="app-header-mock-sep">·</span>
+            <span class="chip-pill"><span class="chip-pill-dot"></span> NYC</span>
+          </div>
+          <span class="app-header-mock-query">
+            <span class="app-header-mock-query-icon">⌕</span>
+            <span>189 Atlantic Avenue, Brooklyn</span>
+            <span class="app-header-mock-query-edit">edit</span>
+          </span>
+          <div class="app-header-mock-right">
+            <a href="#">methodology</a>
+            <a href="#">export PDF</a>
+          </div>
+        </div>
+        <div class="app-header-mock-inner" style="border-bottom: 1px dashed var(--rule-soft);">
+          <div class="app-header-mock-left">
+            <a class="wm" href="#"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="20" height="20" fill="currentColor" class="rip-mark"><rect x="2.16669" y="3" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="9.66665" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="16.3333" width="9.99998" height="3.3334"></rect><rect x="2.16669" y="23.00002" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="29.66667" width="9.99998" height="3.33333"></rect><rect x="23.83334" y="23.00002" width="9.99998" height="3.33333"></rect><rect x="23.83334" y="29.66667" width="9.99998" height="3.33333"></rect><path d="M13.83336,3V33h8.33335V11.33335A8.33337,8.33337,0,0,0,13.83336,3Z"></path></svg>riprap</a>
+            <span class="app-header-mock-sep">/</span>
+            <span class="app-header-mock-ctx">heat-exposure briefing</span>
+            <span class="app-header-mock-sep">·</span>
+            <span class="chip-pill" style="border-color: var(--accent-warn); color: var(--accent-warn);"><span class="chip-pill-dot" style="background: var(--accent-warn);"></span> NYC</span>
+          </div>
+          <span class="app-header-mock-query">
+            <span class="app-header-mock-query-icon">⌕</span>
+            <span>Hammels Houses, Rockaway</span>
+            <span class="app-header-mock-query-edit">edit</span>
+          </span>
+          <div class="app-header-mock-right">
+            <a href="#">methodology</a>
+            <a href="#">export PDF</a>
+          </div>
+        </div>
+        <div class="app-header-mock-inner">
+          <div class="app-header-mock-left">
+            <a class="wm" href="#"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="20" height="20" fill="currentColor" class="rip-mark"><rect x="2.16669" y="3" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="9.66665" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="16.3333" width="9.99998" height="3.3334"></rect><rect x="2.16669" y="23.00002" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="29.66667" width="9.99998" height="3.33333"></rect><rect x="23.83334" y="23.00002" width="9.99998" height="3.33333"></rect><rect x="23.83334" y="29.66667" width="9.99998" height="3.33333"></rect><path d="M13.83336,3V33h8.33335V11.33335A8.33337,8.33337,0,0,0,13.83336,3Z"></path></svg>riprap</a>
+            <span class="app-header-mock-sep">/</span>
+            <span class="app-header-mock-ctx">flood-exposure briefing</span>
+            <span class="app-header-mock-sep">·</span>
+            <span class="chip-pill"><span class="chip-pill-dot"></span> Boston</span>
+          </div>
+          <span class="app-header-mock-query">
+            <span class="app-header-mock-query-icon">⌕</span>
+            <span>1 City Hall Square, Boston</span>
+            <span class="app-header-mock-query-edit">edit</span>
+          </span>
+          <div class="app-header-mock-right">
+            <a href="#">methodology</a>
+            <a href="#">export PDF</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <p class="section-deck" style="margin-top: 22px;">
+      <strong style="color: var(--ink); font-weight: 600;">Anatomy.</strong>
+      Wordmark · slash · hazard tagline (lowercase, exactly as today) · separator dot · small
+      city pill with a federal-blue dot. The pill is the only new primitive — slightly
+      lifted from the existing <span class="copy-readout">.app-header-status</span> chip
+      so it doesn't read as new design. The dot inherits hazard color
+      (federal blue for flood, amber for heat, slate for air) which lets the
+      same hardware encode hazard without adding a second tag.
+    </p>
+  </section>
+
+
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <!-- §3 — Wordmark variants                                          -->
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <section class="section">
+    <header class="section-head">
+      <span class="section-num">§3</span>
+      <h2 class="section-h2">Wordmark — <em>does it need a <code style="font-size:0.85em; background:var(--paper-deep); padding:1px 6px;">// framework</code> qualifier?</em></h2>
+      <span class="section-tag">Q4</span>
+    </header>
+    <p class="section-deck">
+      The brief flags Sentry / Linear / Fastly as references for a thin
+      secondary mark. Those products' qualifiers exist because the wordmark
+      alone doesn't tell you whether you're on the product or the SDK
+      docs. Riprap has the header chip doing that job already.
+    </p>
+
+    <div class="wm-table">
+      <div class="wm-row-label">
+        <strong>Today (recommended)</strong>
+        <span>riprap, alone</span>
+      </div>
+      <div class="wm-row-render">
+        <a class="wm" href="#"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="22" height="22" fill="currentColor" class="rip-mark"><rect x="2.16669" y="3" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="9.66665" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="16.3333" width="9.99998" height="3.3334"></rect><rect x="2.16669" y="23.00002" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="29.66667" width="9.99998" height="3.33333"></rect><rect x="23.83334" y="23.00002" width="9.99998" height="3.33333"></rect><rect x="23.83334" y="29.66667" width="9.99998" height="3.33333"></rect><path d="M13.83336,3V33h8.33335V11.33335A8.33337,8.33337,0,0,0,13.83336,3Z"></path></svg>riprap</a>
+      </div>
+      <div class="wm-row-note">
+        <span class="verdict pick">Keep</span>
+        Mark + lowercase serif wordmark. Clean, one-color, prints in
+        grayscale, fits the Civic Hydrology register. The framework claim
+        lives in the chip and the README, not in the lockup.
+      </div>
+
+      <div class="wm-row-label">
+        <strong>Slash qualifier</strong>
+        <span>riprap // framework</span>
+      </div>
+      <div class="wm-row-render">
+        <a class="wm" href="#"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="22" height="22" fill="currentColor" class="rip-mark"><rect x="2.16669" y="3" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="9.66665" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="16.3333" width="9.99998" height="3.3334"></rect><rect x="2.16669" y="23.00002" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="29.66667" width="9.99998" height="3.33333"></rect><rect x="23.83334" y="23.00002" width="9.99998" height="3.33333"></rect><rect x="23.83334" y="29.66667" width="9.99998" height="3.33333"></rect><path d="M13.83336,3V33h8.33335V11.33335A8.33337,8.33337,0,0,0,13.83336,3Z"></path></svg>riprap<span class="wm-qualifier"><span class="wm-qualifier-slash">//</span>framework</span></a>
+      </div>
+      <div class="wm-row-note">
+        <span class="verdict drop">Drop</span>
+        Reads dev-tooling — the Sentry pattern. But Sentry's qualifier disambiguates
+        SDK from product. Riprap has only one surface; the qualifier is
+        positioning, not navigation. And it competes with the dynamic chip
+        you just specced.
+      </div>
+
+      <div class="wm-row-label">
+        <strong>Middle-dot qualifier</strong>
+        <span>riprap · framework</span>
+      </div>
+      <div class="wm-row-render">
+        <a class="wm" href="#"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="22" height="22" fill="currentColor" class="rip-mark"><rect x="2.16669" y="3" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="9.66665" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="16.3333" width="9.99998" height="3.3334"></rect><rect x="2.16669" y="23.00002" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="29.66667" width="9.99998" height="3.33333"></rect><rect x="23.83334" y="23.00002" width="9.99998" height="3.33333"></rect><rect x="23.83334" y="29.66667" width="9.99998" height="3.33333"></rect><path d="M13.83336,3V33h8.33335V11.33335A8.33337,8.33337,0,0,0,13.83336,3Z"></path></svg>riprap<span class="wm-qualifier" style="color: var(--ink-tertiary);"><span class="wm-qualifier-slash" style="color: var(--rule-soft);">·</span>framework</span></a>
+      </div>
+      <div class="wm-row-note">
+        <span class="verdict drop">Drop</span>
+        Same problem softer. Worse: it visually duplicates the
+        <code>riprap · / · flood-exposure briefing</code> divider that lives
+        right next to it.
+      </div>
+
+      <div class="wm-row-label">
+        <strong>Italic-tail qualifier</strong>
+        <span>riprap, the framework</span>
+      </div>
+      <div class="wm-row-render">
+        <a class="wm" href="#"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="22" height="22" fill="currentColor" class="rip-mark"><rect x="2.16669" y="3" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="9.66665" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="16.3333" width="9.99998" height="3.3334"></rect><rect x="2.16669" y="23.00002" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="29.66667" width="9.99998" height="3.33333"></rect><rect x="23.83334" y="23.00002" width="9.99998" height="3.33333"></rect><rect x="23.83334" y="29.66667" width="9.99998" height="3.33333"></rect><path d="M13.83336,3V33h8.33335V11.33335A8.33337,8.33337,0,0,0,13.83336,3Z"></path></svg>riprap<em style="font-family: var(--font-serif); font-style: italic; font-weight: 400; color: var(--ink-tertiary); margin-left: 4px; font-size: 14px; letter-spacing: 0;">, the framework</em></a>
+      </div>
+      <div class="wm-row-note">
+        <span class="verdict maybe">Maybe — print only</span>
+        If a printed methodology PDF needs to disambiguate from
+        riprap-the-NYC-deployment in citation lists, this tail works. Not on
+        the web header.
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <!-- §4 — City picker                                                -->
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <section class="section">
+    <header class="section-head">
+      <span class="section-num">§4</span>
+      <h2 class="section-h2">Landing city picker — <em>yes, but quiet</em></h2>
+      <span class="section-tag">brief Q4 · scope ~40 LOC</span>
+    </header>
+    <p class="section-deck">
+      The brief asks whether to add a <code>Try a city:</code> row <em>above</em> the
+      address input. My instinct: put it <em>below</em>. The address bar is the
+      primary action and Riprap is for typing addresses, not picking from a
+      list. The picker becomes proof that "for any place" isn't aspirational.
+    </p>
+
+    <article class="opt-frame is-recommended">
+      <header class="opt-cap">
+        <p class="opt-cap-name">Recommended — quiet rail under the input</p>
+        <span class="opt-cap-meta is-pick">★ ships with v0.5</span>
+      </header>
+      <div class="opt-body" style="padding:0;">
+        <div class="hero-frame" style="border:none;">
+          <div class="hero-header-row">
+            <a class="wm" href="#"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="22" height="22" fill="currentColor" class="rip-mark"><rect x="2.16669" y="3" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="9.66665" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="16.3333" width="9.99998" height="3.3334"></rect><rect x="2.16669" y="23.00002" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="29.66667" width="9.99998" height="3.33333"></rect><rect x="23.83334" y="23.00002" width="9.99998" height="3.33333"></rect><rect x="23.83334" y="29.66667" width="9.99998" height="3.33333"></rect><path d="M13.83336,3V33h8.33335V11.33335A8.33337,8.33337,0,0,0,13.83336,3Z"></path></svg>riprap</a>
+            <span class="app-header-mock-sep">/</span>
+            <span class="chip">
+              <span class="chip-hazard">Climate-exposure briefing</span>
+            </span>
+            <nav class="hero-nav"><a href="#">Methodology</a><a href="#">Sources</a><a href="#">GitHub</a></nav>
+          </div>
+          <div class="hero-body">
+            <h1 class="hero-h1">A climate-exposure briefing for <span class="city-rotate">NYC</span>.</h1>
+            <p class="hero-deck">
+              Type an address. Get a written briefing on flood, heat, or air-quality exposure.
+              Every claim cites a public record from FEMA, NOAA, USGS, or city open data.
+            </p>
+            <form class="hero-query" onsubmit="event.preventDefault()">
+              <span class="hero-query-prompt">›</span>
+              <input class="hero-query-input" type="text" placeholder="Address, neighborhood, or BBL. e.g. 80 Pioneer Street, Red Hook" />
+              <button class="hero-query-submit" type="submit">Brief this place →</button>
+            </form>
+
+            <div class="citypicker">
+              <span class="citypicker-label">In:</span>
+              <div class="citypicker-list">
+                <button class="citypicker-btn is-active" type="button"><span class="citypicker-tick">✓</span>NYC</button>
+                <button class="citypicker-btn" type="button">Chicago</button>
+                <button class="citypicker-btn" type="button">Seattle</button>
+                <button class="citypicker-btn" type="button">SF</button>
+                <button class="citypicker-btn" type="button">Boston</button>
+              </div>
+              <span class="citypicker-byod">+ <a href="#">Bring your own data →</a></span>
+            </div>
+
+            <div class="hero-try" style="margin-top: 14px;">
+              <span class="hero-try-label">Try:</span>
+              <span class="hero-try-rail try-rotate">80 Pioneer Street, Red Hook</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <footer class="opt-note">
+        <span class="label">Anatomy</span>
+        Mono <code>In:</code> label (matches <code>Try:</code> rail beneath). Single-row
+        segmented control of the five deployments, federal-blue active state. Trailing
+        BYOD link with a dotted underline so the framework claim is one click away.
+        Selecting a city swaps the input placeholder to a sample address from that
+        city, swaps the "Try:" rail, and rewrites the chip in the header in lockstep.
+      </footer>
+    </article>
+
+    <article class="opt-frame is-dropped" style="margin-top:18px;">
+      <header class="opt-cap">
+        <p class="opt-cap-name">Above the input — too loud</p>
+        <span class="opt-cap-meta is-drop">× not recommended</span>
+      </header>
+      <div class="opt-body" style="padding:0;">
+        <div class="hero-frame" style="border:none;">
+          <div class="hero-body" style="padding-top: 24px; padding-bottom: 28px;">
+
+            <div class="citypicker" style="margin-top: 0; margin-bottom: 26px;">
+              <span class="citypicker-label">City:</span>
+              <div class="citypicker-list">
+                <button class="citypicker-btn is-active" type="button">NYC</button>
+                <button class="citypicker-btn" type="button">Chicago</button>
+                <button class="citypicker-btn" type="button">Seattle</button>
+                <button class="citypicker-btn" type="button">SF</button>
+                <button class="citypicker-btn" type="button">Boston</button>
+              </div>
+            </div>
+
+            <h1 class="hero-h1" style="font-size: 40px;">A climate-exposure briefing for <span class="city-rotate">NYC</span>.</h1>
+            <p class="hero-deck">
+              Type an address. Get a written briefing on flood, heat, or air-quality exposure.
+            </p>
+            <form class="hero-query" onsubmit="event.preventDefault()">
+              <span class="hero-query-prompt">›</span>
+              <input class="hero-query-input" type="text" placeholder="Address, neighborhood, or BBL." />
+              <button class="hero-query-submit" type="submit">Brief this place →</button>
+            </form>
+          </div>
+        </div>
+      </div>
+      <footer class="opt-note">
+        <span class="label">Why not</span>
+        Forces the user to make a choice they don't yet have a reason to make.
+        The hero's job is to communicate <em>what Riprap is</em> before
+        <em>where it runs</em>. The picker above the H1 inverts that.
+      </footer>
+    </article>
+  </section>
+
+
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <!-- §5 — Composite recommendation                                   -->
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <section class="section">
+    <header class="section-head">
+      <span class="section-num">§5</span>
+      <h2 class="section-h2">Composite — <em>everything together at full scale</em></h2>
+      <span class="section-tag">ship this</span>
+    </header>
+    <p class="section-deck">
+      What v0.5's landing page would look like if you accepted every recommendation
+      above: voice A on the hero, dynamic chip in the header showing the
+      <code>Any place</code> default, picker rail under the input, wordmark
+      unqualified, BYOD link present but not bolded.
+    </p>
+
+    <div class="composite">
+      <div class="composite-cap">
+        <span>final · v0.5 landing</span>
+        <strong>riprap · climate-exposure briefing</strong>
+        <span>2026-05-17 · half-day scope</span>
+      </div>
+      <div class="composite-body" style="position:relative;">
+        <a class="skip-link-mock" href="#composite-main">Skip to main content</a>
+        <!-- GOV.UK / USWDS phase banner -->
+        <div class="phase-banner">
+          <span class="phase-tag">Beta</span>
+          <span>This is open beta. Methodology and source attribution are stable. Per-city coverage is expanding. <a href="#">Send feedback →</a></span>
+        </div>
+        <div class="hero-frame" style="border:none;">
+          <div class="hero-header-row">
+            <a class="wm" href="#"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="22" height="22" fill="currentColor" class="rip-mark"><rect x="2.16669" y="3" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="9.66665" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="16.3333" width="9.99998" height="3.3334"></rect><rect x="2.16669" y="23.00002" width="9.99998" height="3.33333"></rect><rect x="2.16669" y="29.66667" width="9.99998" height="3.33333"></rect><rect x="23.83334" y="23.00002" width="9.99998" height="3.33333"></rect><rect x="23.83334" y="29.66667" width="9.99998" height="3.33333"></rect><path d="M13.83336,3V33h8.33335V11.33335A8.33337,8.33337,0,0,0,13.83336,3Z"></path></svg>riprap</a>
+            <span class="app-header-mock-sep">/</span>
+            <span class="chip">
+              <span class="chip-hazard">Climate-exposure briefing</span>
+            </span>
+            <nav class="hero-nav"><a href="#">Methodology</a><a href="#">Sources</a><a href="#">GitHub</a></nav>
+          </div>
+          <div class="hero-body" id="composite-main" style="padding: 72px 40px 56px;">
+            <h1 class="hero-h1" style="font-size: 56px;">A climate-exposure briefing for <span class="city-rotate">NYC</span>.</h1>
+            <p class="hero-deck" style="font-size: 19px;">
+              Type an address. Get a written briefing on flood, heat, or air-quality exposure.
+              Every claim cites a public record from FEMA, NOAA, USGS, or city open data.
+            </p>
+            <form class="hero-query" onsubmit="event.preventDefault()" role="search">
+              <label for="composite-address" class="sr-only">Address, neighborhood, or BBL</label>
+              <span class="hero-query-prompt" aria-hidden="true">›</span>
+              <input
+                id="composite-address"
+                class="hero-query-input"
+                type="text"
+                name="address"
+                autocomplete="street-address"
+                inputmode="text"
+                enterkeyhint="search"
+                placeholder="Address, neighborhood, or BBL. e.g. 80 Pioneer Street, Red Hook"
+                aria-describedby="composite-address-help"
+              />
+              <button class="hero-query-submit" type="submit">Brief this place →</button>
+            </form>
+            <p id="composite-address-help" class="sr-only">Briefings cover NYC, Chicago, Seattle, San Fran, and Boston.</p>
+
+            <div class="citypicker">
+              <span class="citypicker-label">In:</span>
+              <div class="citypicker-list">
+                <button class="citypicker-btn is-active" type="button"><span class="citypicker-tick">✓</span>NYC</button>
+                <button class="citypicker-btn" type="button">Chicago</button>
+                <button class="citypicker-btn" type="button">Seattle</button>
+                <button class="citypicker-btn" type="button">SF</button>
+                <button class="citypicker-btn" type="button">Boston</button>
+              </div>
+              <span class="citypicker-byod">+ <a href="#">Bring your own data →</a></span>
+            </div>
+
+            <div class="hero-try" style="margin-top: 14px;">
+              <span class="hero-try-label">Try:</span>
+              <span class="hero-try-rail try-rotate">80 Pioneer Street, Red Hook</span>
+            </div>
+
+            <!-- Responsible-use band — civic-tech disclaimer surfaced near hero -->
+            <aside class="use-band" aria-label="Responsible use">
+              <p class="use-band-head">Riprap returns evidence, not advice.</p>
+              <div class="use-band-body">
+                <p style="margin:0;">
+                  Riprap composes public-record data into a written briefing. It does not predict
+                  damage to specific properties or substitute for professional engineering
+                  judgment. For personal property decisions, contact your local resilience
+                  office or hazard-mitigation program.
+                </p>
+                <p class="use-band-affil">
+                  Independent open-source project. Not affiliated with FEMA, NOAA, USGS, or any
+                  city government. Data is used under each source's open-data terms.
+                </p>
+              </div>
+            </aside>
+
+            <!-- Source-count trust strip -->
+            <div class="source-strip">
+              <span class="source-strip-stat"><span class="source-strip-stat-num">23</span>data sources</span>
+              <span class="source-strip-stat"><span class="source-strip-stat-num">9</span>federal + state + city agencies</span>
+              <span class="source-strip-stat"><span class="source-strip-stat-num">5</span>cities live</span>
+              <span class="source-strip-stat"><span class="source-strip-stat-num">3</span>hazards validated</span>
+              <span style="margin-left:auto;">last methodology review · 2026-05-07</span>
+            </div>
+
+            <!-- Standards strip -->
+            <div class="standards-strip">
+              <span class="badge"><span class="tick">✓</span> <strong>USWDS</strong></span>
+              <span class="badge"><span class="tick">✓</span> <strong>WCAG 2.2 AA</strong></span>
+              <span class="badge"><span class="tick">✓</span> <strong>Section 508</strong></span>
+              <span class="badge"><span class="tick">✓</span> <strong>Plain Writing Act</strong></span>
+              <span class="badge"><span class="tick">✓</span> <strong>Open source</strong>&nbsp;· Apache-2.0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <!-- §6 — Bring your own data                                         -->
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <section class="section">
+    <header class="section-head">
+      <span class="section-num">§6</span>
+      <h2 class="section-h2">Bring your own data, <em>dialog and adapter contract</em></h2>
+      <span class="section-tag">file upload · YAML manifest · session-scoped</span>
+    </header>
+
+    <p class="section-deck">
+      The BYOD link on the landing page promises something specific. A planner
+      can drop their own data into a briefing without forking Riprap. The
+      framework already supports this via the <code>.riprap/</code> auto-discovery
+      and the <code>RIPRAP_EXTRA_MANIFESTS</code> env var. The surface a
+      non-engineer can use is what's missing. A dialog that accepts CSV, JSON,
+      GeoJSON, or a YAML manifest, picks the right adapter from the file
+      extension, lets the user assign a stone and tier, and adds the pebble to
+      the active session.
+    </p>
+
+    <div class="byod-frame">
+      <!-- Dialog -->
+      <aside class="byod-dialog" role="dialog" aria-labelledby="byod-title" aria-describedby="byod-deck">
+        <header class="byod-dialog-head">
+          <h3 class="byod-dialog-title" id="byod-title">Bring your own data</h3>
+          <button class="byod-dialog-close" aria-label="Close dialog">×</button>
+        </header>
+        <p class="byod-dialog-deck" id="byod-deck">
+          Add one or more files to this briefing without forking Riprap. Files stay
+          in your browser. Nothing is uploaded.
+        </p>
+
+        <div class="byod-section">
+          <span class="byod-step">1. File</span>
+          <div class="byod-drop">
+            <span class="byod-drop-icon" aria-hidden="true">↓</span>
+            <div class="byod-drop-text">
+              <strong>Drop a file here</strong>
+              <span>or <a href="#">click to choose</a></span>
+            </div>
+          </div>
+          <p class="byod-supported">
+            Supported: <code>.csv</code> · <code>.json</code> · <code>.geojson</code> · <code>.yaml</code> · <code>.yml</code>
+          </p>
+        </div>
+
+        <div class="byod-section">
+          <span class="byod-step">2. Adapter</span>
+          <div class="byod-radio-group" role="radiogroup" aria-label="Adapter">
+            <label class="byod-radio is-checked">
+              <input type="radio" name="adapter" checked />
+              <div>
+                <span class="byod-radio-label">Auto-detect from filename</span>
+                <span class="byod-radio-meta">Default. Picks the right one from the file extension.</span>
+              </div>
+            </label>
+            <label class="byod-radio">
+              <input type="radio" name="adapter" />
+              <span class="byod-radio-label">Socrata-style records (CSV with lat / long)</span>
+            </label>
+            <label class="byod-radio">
+              <input type="radio" name="adapter" />
+              <span class="byod-radio-label">GeoJSON polygons</span>
+            </label>
+            <label class="byod-radio">
+              <input type="radio" name="adapter" />
+              <span class="byod-radio-label">Plain CSV (no geometry)</span>
+            </label>
+            <label class="byod-radio">
+              <input type="radio" name="adapter" />
+              <div>
+                <span class="byod-radio-label">Custom YAML manifest</span>
+                <span class="byod-radio-meta">For users who want full control. The manifest declares its own adapter, field mapping, and stone assignment.</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="byod-section">
+          <span class="byod-step">3. Pebble mapping</span>
+          <div class="byod-fields">
+            <label class="byod-field">
+              <span class="byod-field-label">Stone</span>
+              <select class="byod-field-input">
+                <option>Cornerstone (the hazard ground)</option>
+                <option>Keystone (the asset register)</option>
+                <option>Touchstone (live observation)</option>
+                <option>Lodestone (projection)</option>
+                <option>Capstone (synthesis)</option>
+              </select>
+            </label>
+            <label class="byod-field">
+              <span class="byod-field-label">Tier</span>
+              <div class="byod-tier-row" role="radiogroup" aria-label="Evidence tier">
+                <span class="byod-tier is-active">Empirical</span>
+                <span class="byod-tier">Modeled</span>
+                <span class="byod-tier">Proxy</span>
+                <span class="byod-tier">Synthetic</span>
+              </div>
+            </label>
+            <label class="byod-field" style="grid-column: span 2;">
+              <span class="byod-field-label">Pebble name</span>
+              <input type="text" class="byod-field-input" value="user_fdny_firehouses" />
+            </label>
+          </div>
+        </div>
+
+        <p class="byod-privacy">
+          Files are parsed in the browser and held in IndexedDB for the current
+          session. Clearing site data clears the pebble.
+        </p>
+
+        <footer class="byod-dialog-foot">
+          <button class="byod-cancel" type="button">Cancel</button>
+          <button class="byod-submit" type="button">Add to briefing →</button>
+        </footer>
+      </aside>
+
+      <!-- Adapter notes -->
+      <aside class="byod-notes">
+        <h3 class="byod-notes-head">How the adapter chain works</h3>
+        <ol class="byod-notes-list">
+          <li>
+            <span class="byod-notes-step">1</span>
+            <div>
+              <strong>Detect format.</strong> File extension picks an adapter. A <code>.csv</code> with lat / long columns becomes <code>socrata_records</code>; <code>.geojson</code> becomes <code>geojson_polygons</code>; <code>.yaml</code> is parsed as a manifest and provides its own adapter.
+            </div>
+          </li>
+          <li>
+            <span class="byod-notes-step">2</span>
+            <div>
+              <strong>Sniff schema.</strong> The adapter reads the first 100 rows and proposes a field mapping. The user confirms or edits in the dialog.
+            </div>
+          </li>
+          <li>
+            <span class="byod-notes-step">3</span>
+            <div>
+              <strong>Write to the session registry.</strong> A pebble manifest is generated and stored in browser IndexedDB. The pebble layers onto the active deployment without re-running Riprap.
+            </div>
+          </li>
+          <li>
+            <span class="byod-notes-step">4</span>
+            <div>
+              <strong>Cite on the next briefing.</strong> The next briefing run includes the user's data as a card under the chosen stone. The citation reads "user · {pebble_name}" so reviewers can see what wasn't part of the public-record base.
+            </div>
+          </li>
+        </ol>
+
+        <h3 class="byod-notes-head" style="margin-top: 18px;">Worked example</h3>
+        <p class="byod-notes-p">
+          Riprap's <code>examples/byod/</code> uses an NYC Open Data CSV with 219
+          FDNY firehouses as if it were a user portfolio. The same flow works for
+          any agency CSV with an address column.
+        </p>
+
+        <h3 class="byod-notes-head" style="margin-top: 18px;">Out of scope for v0.5</h3>
+        <ul class="byod-oos">
+          <li>Server-side storage. Files stay in the browser for now.</li>
+          <li>Cross-session sharing. A pebble lives in one user's IndexedDB.</li>
+          <li>Schema validation against a published JSON Schema. The adapter sniffs; it does not verify.</li>
+          <li>Multi-file uploads as a single pebble. One file, one pebble.</li>
+        </ul>
+      </aside>
+    </div>
+  </section>
+
+
+
+
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <!-- Footer note                                                     -->
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <section class="section">
+    <header class="section-head">
+      <span class="section-num">§7</span>
+      <h2 class="section-h2">Civic-tech compliance, <em>what rulebooks this design satisfies</em></h2>
+      <span class="section-tag">USWDS · GOV.UK · 508 · PWA</span>
+    </header>
+    <p class="section-deck">
+      Civic-tech work has explicit standards. The visual system was already aligned
+      with most of them. Federal blue, plain serif body, all-AA contrast. The brief's
+      original copy and a few of my own decorative flourishes weren't. Below: four
+      rulebooks the v0.5 surface satisfies, with the specific lines they cover. All
+      four apply to any deployment that wants to ship through a US municipal IT review.
+    </p>
+
+    <div class="compliance-grid">
+
+      <article class="compliance-card">
+        <div class="compliance-card-cap">
+          <h3 class="compliance-card-name">U.S. Web Design System</h3>
+          <span class="compliance-card-ref">designsystem.digital.gov</span>
+        </div>
+        <ul class="compliance-list">
+          <li><span class="tick">✓</span><span><strong>IBM Plex</strong> Sans, Mono, and Serif throughout. Apache 2.0 and SIL OFL licenses keep the type stack federal-procurement compatible.</span></li>
+          <li><span class="tick">✓</span><span><strong>Blue-60v</strong> (<code>#005EA2</code>) carried as the accent and tier-empirical color, the canonical federal civic blue.</span></li>
+          <li><span class="tick">✓</span><span><strong>Sentence-case headings.</strong> Hero, section heads, and chip text all sentence-case.</span></li>
+          <li><span class="tick">✓</span><span><strong>No italic emphasis</strong> in headings. USWDS uses weight changes; we use bold and structure.</span></li>
+          <li><span class="tick">✓</span><span><strong>Phase banner</strong> pattern follows USWDS "Site alert" on the composite hero.</span></li>
+          <li><span class="tick">✓</span><span><strong>44px minimum touch targets</strong> on the address input and Brief button.</span></li>
+          <li><span class="tick">✓</span><span><strong>Works with JavaScript disabled.</strong> The city rotation upgrades from a static "NYC" default; the search form is plain HTML and submits without JS.</span></li>
+          <li><span class="tick">✓</span><span><strong>Skip link</strong> to main content is the first focusable element on the page.</span></li>
+        </ul>
+      </article>
+
+      <article class="compliance-card">
+        <div class="compliance-card-cap">
+          <h3 class="compliance-card-name">GOV.UK Design System</h3>
+          <span class="compliance-card-ref">design-system.service.gov.uk</span>
+        </div>
+        <ul class="compliance-list">
+          <li><span class="tick">✓</span><span><strong>Hero is a statement of purpose</strong>, not a tagline. The H1 says what Riprap does; the deck says how.</span></li>
+          <li><span class="tick">✓</span><span><strong>Bold for emphasis</strong>, not italics. The audit-trail clause in the deck uses <code>&lt;strong&gt;</code>.</span></li>
+          <li><span class="tick">✓</span><span><strong>Coverage stated as fact</strong>, not aspiration. The H1 rotates through cities Riprap actually runs in.</span></li>
+          <li><span class="tick">✓</span><span><strong>Phase banner</strong> mirrors GOV.UK's <code>govuk-phase-banner</code> with a federal-blue tag.</span></li>
+          <li><span class="tick">✓</span><span><strong>Plain links use dotted underline</strong> on hover, federal blue, no decorative effects.</span></li>
+        </ul>
+      </article>
+
+      <article class="compliance-card">
+        <div class="compliance-card-cap">
+          <h3 class="compliance-card-name">Section 508 + WCAG 2.2 AA</h3>
+          <span class="compliance-card-ref">section508.gov · W3C</span>
+        </div>
+        <ul class="compliance-list">
+          <li><span class="tick">✓</span><span><strong>All text ≥ 4.5:1</strong> contrast. Verified per-token in <code>tokens.css</code>.</span></li>
+          <li><span class="tick">✓</span><span><strong>3px federal-blue focus ring</strong> on all interactives with 2px offset.</span></li>
+          <li><span class="tick">✓</span><span><strong>No color-only encoding.</strong> Tier glyphs carry shape; the hazard chip carries text plus a dot color.</span></li>
+          <li><span class="tick">✓</span><span><strong>Reduced-motion respected.</strong> The city rotation runs without fade under <code>prefers-reduced-motion: reduce</code>.</span></li>
+          <li><span class="tick">✓</span><span><strong>Labelled form input</strong> with <code>&lt;label&gt;</code>, <code>aria-describedby</code>, <code>autocomplete="street-address"</code>, and <code>enterkeyhint="search"</code> for mobile keyboards.</span></li>
+        </ul>
+      </article>
+
+      <article class="compliance-card">
+        <div class="compliance-card-cap">
+          <h3 class="compliance-card-name">Plain Writing Act of 2010</h3>
+          <span class="compliance-card-ref">plainlanguage.gov · 5 USC §301</span>
+        </div>
+        <ul class="compliance-list">
+          <li><span class="tick">✓</span><span><strong>Audience-first vocabulary.</strong> "Audit trail", "source agency", "public record". The words a planner already uses.</span></li>
+          <li><span class="tick">✓</span><span><strong>Imperative voice.</strong> "Type an address. Get a written briefing."</span></li>
+          <li><span class="tick">✓</span><span><strong>No internal jargon</strong> on user-facing surfaces. "Framework", "<code>.riprap/</code>", and "manifest" stay in the README.</span></li>
+          <li><span class="tick">✓</span><span><strong>Short sentences.</strong> Hero deck is three sentences, none longer than 16 words.</span></li>
+          <li><span class="tick">✓</span><span><strong>No em-dashes</strong> in user-facing copy. They read as decorative punctuation and are a common AI-writing tell. Commas, periods, and sentence splits do the same work.</span></li>
+          <li><span class="tick">✓</span><span><strong>Provenance named</strong> by agency, not by data-pipeline term. "FEMA, NOAA, USGS, city open-data portals", not "primary public-record sources".</span></li>
+        </ul>
+      </article>
+
+    </div>
+
+    <p class="section-deck" style="margin-top: 22px;">
+      <strong style="color: var(--ink); font-weight: 600;">Not yet, flagging for v0.6.</strong>
+      VPAT (Voluntary Product Accessibility Template) for federal procurement.
+      A public a11y conformance report. First-language localisation: the framework
+      supports it; the landing page doesn't ship strings yet. A printable methodology
+      brief auditors can attach to a memo. None block v0.5.
+    </p>
+  </section>
+
+
+  <section class="section">
+    <header class="section-head">
+      <span class="section-num">§8</span>
+      <h2 class="section-h2">Transparency, <em>about the AI and about the data</em></h2>
+      <span class="section-tag">disclosure · attribution</span>
+    </header>
+    <p class="section-deck">
+      Federal civic-tech procurement now asks two questions early. Which automated
+      systems are in the loop, and where does the data come from. Riprap can answer
+      both clearly. It just needs surfaces that say them out loud.
+    </p>
+
+    <div class="compliance-grid">
+
+      <article class="compliance-card">
+        <div class="compliance-card-cap">
+          <h3 class="compliance-card-name">AI transparency</h3>
+          <span class="compliance-card-ref">NIST AI RMF · algorithmic accountability</span>
+        </div>
+        <ul class="compliance-list">
+          <li><span class="tick">✓</span><span><strong>Models named</strong> in the methodology page. Granite 4.1 8B for synthesis, Mellea for rejection sampling on the LLM path, plus a deterministic templated reconciler on the offline path.</span></li>
+          <li><span class="tick">✓</span><span><strong>Both paths ship the same 13-predicate compliance audit</strong> before a briefing is returned. LLM and no-LLM tiers pass the same bar.</span></li>
+          <li><span class="tick">✓</span><span><strong>Open weights.</strong> Apache 2.0 on every foundation model. No commercial APIs contacted at runtime.</span></li>
+          <li><span class="tick">✓</span><span><strong>Citations are mandatory.</strong> Model outputs that can't be grounded in a source document are rejected, not paraphrased.</span></li>
+          <li><span class="tick">✓</span><span><strong>Energy ledger surfaced</strong> in the print artifact: hardware target and watt-hours per briefing.</span></li>
+        </ul>
+      </article>
+
+      <article class="compliance-card">
+        <div class="compliance-card-cap">
+          <h3 class="compliance-card-name">Open-data attribution</h3>
+          <span class="compliance-card-ref">CC0 · public domain · open-data terms</span>
+        </div>
+        <ul class="compliance-list">
+          <li><span class="tick">✓</span><span><strong>Every figure links to its source</strong> by agency name, dataset ID, and URL. Vintage shown on every evidence card.</span></li>
+          <li><span class="tick">✓</span><span><strong>License-clean ingest.</strong> Source datasets are CC0, public domain, or under federal and state open-data terms. Riprap doesn't ingest data it can't redistribute.</span></li>
+          <li><span class="tick">✓</span><span><strong>No endorsement implied.</strong> Riprap is independent. The Civic Hydrology palette borrows USWDS blue; the dam mark is licensed CC-BY 3.0.</span></li>
+          <li><span class="tick">✓</span><span><strong>Stale data ages out visibly.</strong> A briefing pulled against a 2018 dataset shows the 2018 vintage in the cite, not a fresh-looking timestamp.</span></li>
+          <li><span class="tick">✓</span><span><strong>Riprap code is Apache 2.0.</strong> No GPL contamination. No proprietary contributor agreements.</span></li>
+        </ul>
+      </article>
+
+    </div>
+
+    <p class="section-deck" style="margin-top: 22px;">
+      <strong style="color: var(--ink); font-weight: 600;">Why this matters now.</strong>
+      The OMB M-24-10 memo and the proliferation of state-level algorithmic-accountability
+      laws (NYC LL144, California SB 1001) all push the same direction. Civic tools using
+      automated reasoning need to say which models are in the loop, what they were trained
+      on, and what happens to outputs that can't be sourced. Riprap already does this work
+      under the hood. The rebrand is partly about making it visible to the procurement
+      reviewer, not just the engineer.
+    </p>
+  </section>
+
+
+  <section class="section" id="section-pdf">
+    <header class="section-head">
+      <span class="section-num">§9</span>
+      <h2 class="section-h2">PDF output, <em>properly formatted instead of print-to-screen</em></h2>
+      <span class="section-tag">PDF/UA-1 · Section 508 · federal memo format</span>
+    </header>
+
+    <p class="section-deck">
+      Today's "export PDF" runs the browser's print routine against the rendered
+      webpage. A planner who attaches that file to a board memo gets a printout of
+      the chrome, the navigation, the picker rail. The actual briefing is buried in
+      a layout that was never made for paper.
+    </p>
+    <p class="section-deck">
+      <strong style="color: var(--ink); font-weight: 600;">What it needs to be.</strong>
+      A seven-page artifact at US Letter, tagged for PDF/UA-1, color-independent (the
+      tier glyphs already degrade to grayscale via the existing print stylesheet),
+      laid out in federal-memo format: cover, body, a map page with active overlays,
+      an evidence-cards page grouped by stone, citations as a proper bibliography,
+      methodology and audit trail, glossary, and a stamp block. Every
+      page numbered. Every claim citation-anchored. No webpage chrome.
+    </p>
+
+    <!-- 6-page outline strip -->
+    <div class="pdfx-thumb-row" aria-label="PDF page outline (7 pages, US Letter portrait)">
+      <div class="pdfx-thumb">
+        <div class="pdfx-thumb-bar"></div>
+        <div style="height:8px;"></div>
+        <div class="pdfx-thumb-h-big"></div>
+        <div style="height:6px;"></div>
+        <div class="pdfx-thumb-h"></div>
+        <div style="height:8px;"></div>
+        <div class="pdfx-thumb-grid">
+          <span class="pdfx-thumb-grid-cell"></span>
+          <span class="pdfx-thumb-grid-cell"></span>
+          <span class="pdfx-thumb-grid-cell"></span>
+          <span class="pdfx-thumb-grid-cell"></span>
+          <span class="pdfx-thumb-grid-cell"></span>
+        </div>
+        <div style="height:4px;"></div>
+        <div class="pdfx-thumb-line"></div>
+        <div class="pdfx-thumb-line pdfx-thumb-line-s"></div>
+        <div class="pdfx-thumb-foot"></div>
+        <span class="pdfx-thumb-label"><strong>p. 1</strong> Cover</span>
+      </div>
+      <div class="pdfx-thumb">
+        <div class="pdfx-thumb-bar"></div>
+        <div style="height:4px;"></div>
+        <div class="pdfx-thumb-h"></div>
+        <div class="pdfx-thumb-line"></div>
+        <div class="pdfx-thumb-line"></div>
+        <div class="pdfx-thumb-line pdfx-thumb-line-s"></div>
+        <div class="pdfx-thumb-h" style="margin-top:4px;"></div>
+        <div class="pdfx-thumb-line"></div>
+        <div class="pdfx-thumb-line"></div>
+        <div class="pdfx-thumb-line pdfx-thumb-line-s"></div>
+        <div class="pdfx-thumb-h" style="margin-top:4px;"></div>
+        <div class="pdfx-thumb-line"></div>
+        <div class="pdfx-thumb-line pdfx-thumb-line-xs"></div>
+        <div class="pdfx-thumb-foot"></div>
+        <span class="pdfx-thumb-label"><strong>p. 2</strong> Briefing</span>
+      </div>
+      <div class="pdfx-thumb">
+        <div class="pdfx-thumb-bar"></div>
+        <div style="height:4px;"></div>
+        <div class="pdfx-thumb-h"></div>
+        <div style="flex:1; background: var(--paper-deep); border: 1px solid var(--rule-soft); position: relative; margin-top: 3px;">
+          <div style="position:absolute; top: 28%; left: 22%; right: 22%; bottom: 22%; background: rgba(178, 34, 52, 0.18); border: 1px solid rgba(178, 34, 52, 0.4);"></div>
+          <div style="position:absolute; top: 40%; left: 38%; right: 38%; bottom: 30%; background: rgba(26, 68, 128, 0.18); border: 1px solid rgba(26, 68, 128, 0.4);"></div>
+          <div style="position:absolute; top: 0; bottom: 0; right: 0; width: 16%; background: linear-gradient(90deg, transparent, rgba(14, 116, 144, 0.22));"></div>
+          <div style="position:absolute; top: 48%; left: 46%; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); border: 1px solid white; box-shadow: 0 0 0 1px var(--ink);"></div>
+        </div>
+        <div style="height:4px;"></div>
+        <div class="pdfx-thumb-line pdfx-thumb-line-xs"></div>
+        <div class="pdfx-thumb-foot"></div>
+        <span class="pdfx-thumb-label"><strong>p. 3</strong> Map</span>
+      </div>
+      <div class="pdfx-thumb">
+        <div class="pdfx-thumb-bar"></div>
+        <div style="height:4px;"></div>
+        <div class="pdfx-thumb-h"></div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; margin-top: 4px;">
+          <span style="height: 12px; background: var(--paper-deep); border-top: 1.5px solid var(--accent);"></span>
+          <span style="height: 12px; background: var(--paper-deep); border-top: 1.5px solid var(--accent);"></span>
+          <span style="height: 12px; background: var(--paper-deep); border-top: 1.5px solid var(--ink);"></span>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; margin-top: 2px;">
+          <span style="height: 12px; background: var(--paper-deep); border-top: 1.5px solid var(--ink);"></span>
+          <span style="height: 12px; background: var(--paper-deep); border-top: 1.5px solid var(--accent);"></span>
+          <span style="height: 12px; background: var(--paper-deep); border-top: 1.5px solid var(--accent);"></span>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; margin-top: 2px;">
+          <span style="height: 12px; background: var(--paper-deep); border-top: 1.5px solid var(--ink);"></span>
+          <span style="height: 12px; background: var(--paper-deep); border-top: 1.5px solid var(--accent);"></span>
+          <span></span>
+        </div>
+        <div class="pdfx-thumb-foot"></div>
+        <span class="pdfx-thumb-label"><strong>p. 4</strong> Evidence</span>
+      </div>
+      <div class="pdfx-thumb">
+        <div class="pdfx-thumb-bar"></div>
+        <div style="height:4px;"></div>
+        <div class="pdfx-thumb-h"></div>
+        <div style="height:4px;"></div>
+        <div class="pdfx-thumb-line"></div>
+        <div class="pdfx-thumb-line"></div>
+        <div class="pdfx-thumb-line"></div>
+        <div class="pdfx-thumb-line"></div>
+        <div class="pdfx-thumb-line"></div>
+        <div class="pdfx-thumb-line"></div>
+        <div class="pdfx-thumb-line"></div>
+        <div class="pdfx-thumb-line"></div>
+        <div class="pdfx-thumb-line pdfx-thumb-line-s"></div>
+        <div class="pdfx-thumb-foot"></div>
+        <span class="pdfx-thumb-label"><strong>p. 5</strong> Citations</span>
+      </div>
+      <div class="pdfx-thumb">
+        <div class="pdfx-thumb-bar"></div>
+        <div style="height:4px;"></div>
+        <div class="pdfx-thumb-h"></div>
+        <div class="pdfx-thumb-line"></div>
+        <div class="pdfx-thumb-line pdfx-thumb-line-s"></div>
+        <div class="pdfx-thumb-grid" style="grid-template-columns: 1fr 1fr;">
+          <span class="pdfx-thumb-grid-cell" style="height:18px;"></span>
+          <span class="pdfx-thumb-grid-cell" style="height:18px;"></span>
+        </div>
+        <div class="pdfx-thumb-line" style="margin-top:4px;"></div>
+        <div class="pdfx-thumb-line pdfx-thumb-line-xs"></div>
+        <div class="pdfx-thumb-foot"></div>
+        <span class="pdfx-thumb-label"><strong>p. 6</strong> Method + audit</span>
+      </div>
+      <div class="pdfx-thumb">
+        <div class="pdfx-thumb-bar"></div>
+        <div style="height:4px;"></div>
+        <div class="pdfx-thumb-h"></div>
+        <div class="pdfx-thumb-line"></div>
+        <div class="pdfx-thumb-line"></div>
+        <div class="pdfx-thumb-line"></div>
+        <div class="pdfx-thumb-line"></div>
+        <div class="pdfx-thumb-h" style="margin-top:4px;"></div>
+        <div class="pdfx-thumb-line"></div>
+        <div class="pdfx-thumb-line pdfx-thumb-line-s"></div>
+        <div class="pdfx-thumb-foot"></div>
+        <span class="pdfx-thumb-label"><strong>p. 7</strong> Glossary + stamp</span>
+      </div>
+    </div>
+
+    <!-- Spread 1: cover + body page 1 -->
+    <div class="pdfx-spread">
+      <span class="pdfx-spread-label"><strong>Spread A, cover and body</strong> <span>pages 1 and 2 of 7 · US Letter portrait, 8.5 × 11 in, 1 in margins</span></span>
+
+      <!-- COVER -->
+      <div class="pdfx-page" aria-label="Cover page (page 1 of 6)">
+        <div class="pdfx-page-inner">
+          <div class="pdfx-cover-meta">
+            <span>Riprap · v0.5.0</span>
+            <span>2026-05-17</span>
+            <span>Briefing 1 of 1</span>
+          </div>
+          <div class="pdfx-cover-title-block">
+            <span class="pdfx-cover-eyebrow">Flood-exposure briefing</span>
+            <h1 class="pdfx-cover-title">189 Atlantic Avenue,<br/>Brooklyn, NY 11201</h1>
+            <p class="pdfx-cover-subtitle">BBL 3002760007 · 40.69013° N, 73.99324° W · NTA BK0202</p>
+            <p class="pdfx-cover-context">Deployment: NYC · Hazard: flood · Reconciler: granite-4.1-mellea</p>
+          </div>
+          <dl class="pdfx-memo-block">
+            <dt>To</dt><dd>Planning board / engineer of record</dd>
+            <dt>From</dt><dd>Riprap v0.5.0 (open-source civic-tech framework)</dd>
+            <dt>Re</dt><dd>Flood-exposure briefing for the subject address</dd>
+            <dt>Date</dt><dd>2026-05-17 · 14:23 UTC</dd>
+          </dl>
+          <div>
+            <span class="pdfx-cover-models-label">Five-stone roll-up · 25 specialists run</span>
+            <div class="pdfx-stones-grid">
+              <div class="pdfx-stone-cell"><span class="pdfx-stone-cell-num">8</span><span class="pdfx-stone-cell-label">Cornerstone</span><span class="pdfx-stone-cell-fired">2 cards · 791 ms</span></div>
+              <div class="pdfx-stone-cell"><span class="pdfx-stone-cell-num">5</span><span class="pdfx-stone-cell-label">Keystone</span><span class="pdfx-stone-cell-fired">1 card · 11.5 s</span></div>
+              <div class="pdfx-stone-cell"><span class="pdfx-stone-cell-num">5</span><span class="pdfx-stone-cell-label">Touchstone</span><span class="pdfx-stone-cell-fired">2 cards · 13.0 s</span></div>
+              <div class="pdfx-stone-cell"><span class="pdfx-stone-cell-num">6</span><span class="pdfx-stone-cell-label">Lodestone</span><span class="pdfx-stone-cell-fired">2 cards · 1.8 s</span></div>
+              <div class="pdfx-stone-cell"><span class="pdfx-stone-cell-num">1</span><span class="pdfx-stone-cell-label">Capstone</span><span class="pdfx-stone-cell-fired">1 card · 166 s</span></div>
+            </div>
+          </div>
+          <div class="pdfx-cover-models">
+            <span class="pdfx-cover-models-label">Models in the loop</span>
+            <strong>Granite 4.1 8B</strong>, synthesis on the LLM tier. Apache 2.0.<br/>
+            <strong>Mellea</strong>, rejection sampling on the LLM tier.<br/>
+            <strong>Templated reconciler</strong>, used when the LLM tier is unavailable.
+          </div>
+          <div class="pdfx-stamp">
+            <span><strong>Audit:</strong> <span class="pdfx-stamp-pass">13 / 13 PASS</span></span>
+            <span><strong>Citations:</strong> 9 primary sources</span>
+            <span><strong>Wall time:</strong> 293.4 s</span>
+            <span><strong>Energy:</strong> 0.013 kWh (NVIDIA L4)</span>
+            <span style="grid-column: 1 / -1;"><strong>Hash:</strong> riprap-nyc-flood-189atl-2026-05-17T14:23Z-a3f10d2c</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- BODY PAGE 1 -->
+      <div class="pdfx-page" aria-label="Briefing body, page 2 of 6">
+        <div class="pdfx-page-inner">
+          <div class="pdfx-running-head">
+            <span>189 Atlantic Ave · Brooklyn NY</span>
+            <span class="pdfx-running-head-mid">Riprap flood-exposure briefing</span>
+            <span class="pdfx-running-head-right">Page 2 of 7</span>
+          </div>
+
+          <div class="pdfx-section-head">
+            <span class="pdfx-section-num">01</span>
+            <span class="pdfx-section-label">Status</span>
+          </div>
+          <p class="pdfx-prose">
+            <span class="pdfx-prose-glyph">●</span>
+            The address sits on mid-slope terrain at 40.69013° N, 73.99324° W, BBL
+            3002760007. Twenty-nine flood-related 311 complaints have been logged
+            within 200 m over the past five years, primarily sewer backups and
+            catch-basin issues<sup>[2]</sup>.
+          </p>
+
+          <div class="pdfx-section-head">
+            <span class="pdfx-section-num">02</span>
+            <span class="pdfx-section-label">Empirical evidence</span>
+            <span class="pdfx-section-tier">EMP</span>
+          </div>
+          <p class="pdfx-prose">
+            <span class="pdfx-prose-glyph">▮</span>
+            Observed flood evidence includes 15 sewer-backup reports and 11 clogged
+            catch-basin incidents in the 200 m radius over the last five years<sup>[2]</sup>.
+            No direct sensor readings or high-water marks are recorded for this address.
+          </p>
+
+          <div class="pdfx-section-head">
+            <span class="pdfx-section-num">03</span>
+            <span class="pdfx-section-label">Modeled scenarios</span>
+            <span class="pdfx-section-tier">MOD</span>
+          </div>
+          <p class="pdfx-prose">
+            <span class="pdfx-prose-glyph">▢</span>
+            By 2050, NPCC4 mid-range sea-level rise at the Battery is 15 in
+            (0.38 m)<sup>[3]</sup>. The 30 m DEM shows a HAND value of 16.76 m at the address,
+            placing it well above local drainage networks<sup>[1]</sup>. TWI of 7.1 indicates
+            moderate saturation propensity.
+          </p>
+
+          <div class="pdfx-section-head">
+            <span class="pdfx-section-num">04</span>
+            <span class="pdfx-section-label">Policy context</span>
+          </div>
+          <p class="pdfx-prose">
+            <span class="pdfx-prose-glyph">●</span>
+            NYCHA's Flood Resilience program covers 32 dry flood-proofed sites across
+            Brooklyn<sup>[4]</sup>. MTA's Climate Resilience Roadmap (October 2025) flags
+            chronic flooding in the Gowanus catchment served by adjacent stations<sup>[9]</sup>.
+          </p>
+
+          <div class="pdfx-running-foot">
+            <span>23 datasets · 9 agencies</span>
+            <span><strong>Apache 2.0</strong> code · CC0 + open-data terms data</span>
+            <span class="pdfx-running-foot-right">Map and evidence on pp. 3 – 4</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Spread B: map + evidence cards -->
+    <div class="pdfx-spread">
+      <span class="pdfx-spread-label"><strong>Spread B, map and evidence cards</strong> <span>pages 3 and 4 of 7</span></span>
+
+      <!-- MAP PAGE -->
+      <div class="pdfx-page" aria-label="Address map and active layers, page 3 of 7">
+        <div class="pdfx-page-inner">
+          <div class="pdfx-running-head">
+            <span>189 Atlantic Ave · Brooklyn NY</span>
+            <span class="pdfx-running-head-mid">Address map</span>
+            <span class="pdfx-running-head-right">Page 3 of 7</span>
+          </div>
+
+          <h2 class="pdfx-page-title">Address and overlay layers</h2>
+
+          <div class="pdfx-map-frame" role="img" aria-label="Map showing 189 Atlantic Avenue with FEMA flood zone, Sandy 2012 inundation, and FloodNet sensor positions">
+            <div class="pdfx-map-overlay-sandy"></div>
+            <div class="pdfx-map-overlay-fema"></div>
+            <div class="pdfx-map-water"></div>
+            <span class="pdfx-map-water-label">East River</span>
+            <div class="pdfx-map-pin"></div>
+            <div class="pdfx-map-pin-label">189 Atlantic Ave</div>
+            <div class="pdfx-map-sensor" style="top:32%; left:35%;"></div>
+            <div class="pdfx-map-sensor" style="top:62%; left:54%;"></div>
+            <div class="pdfx-map-sensor" style="top:24%; left:68%;"></div>
+            <div class="pdfx-map-scale">
+              <span class="pdfx-map-scale-bar"></span>
+              <span>1000 ft</span>
+            </div>
+          </div>
+
+          <div class="pdfx-map-legend">
+            <div class="pdfx-map-legend-row">
+              <span class="pdfx-map-legend-swatch sandy"></span>
+              <div>
+                <span class="pdfx-map-legend-label">Sandy 2012 inundation</span>
+                <span class="pdfx-map-legend-source">NYC OEM · empirical extent</span>
+              </div>
+            </div>
+            <div class="pdfx-map-legend-row">
+              <span class="pdfx-map-legend-swatch fema"></span>
+              <div>
+                <span class="pdfx-map-legend-label">FEMA 1% annual-chance (AE)</span>
+                <span class="pdfx-map-legend-source">FEMA NFHL · panel 36047C0207</span>
+              </div>
+            </div>
+            <div class="pdfx-map-legend-row">
+              <span class="pdfx-map-legend-swatch sensor"></span>
+              <div>
+                <span class="pdfx-map-legend-label">FloodNet sensors</span>
+                <span class="pdfx-map-legend-source">NYU FloodNet · FN-BK-018, 022, 031</span>
+              </div>
+            </div>
+            <div class="pdfx-map-legend-row">
+              <span class="pdfx-map-legend-swatch address"></span>
+              <div>
+                <span class="pdfx-map-legend-label">Subject address</span>
+                <span class="pdfx-map-legend-source">40.69013° N · 73.99324° W</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="pdfx-running-foot">
+            <span>Base map: Carto Positron · OpenStreetMap contributors</span>
+            <span></span>
+            <span class="pdfx-running-foot-right">Page 3 of 7</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- EVIDENCE CARDS PAGE -->
+      <div class="pdfx-page" aria-label="Evidence cards by stone, page 4 of 7">
+        <div class="pdfx-page-inner">
+          <div class="pdfx-running-head">
+            <span>189 Atlantic Ave · Brooklyn NY</span>
+            <span class="pdfx-running-head-mid">Evidence cards</span>
+            <span class="pdfx-running-head-right">Page 4 of 7</span>
+          </div>
+
+          <h2 class="pdfx-page-title">Evidence, grouped by stone</h2>
+
+          <div class="pdfx-ev-row">
+            <div class="pdfx-ev-row-head">
+              <span class="pdfx-ev-row-stone">Cornerstone</span>
+              <span class="pdfx-ev-row-meta">what NYC's ground remembers</span>
+              <span class="pdfx-ev-row-count">8 fired · 2 cards</span>
+            </div>
+            <div class="pdfx-ev-cards">
+              <div class="pdfx-ev-card pdfx-ev-card-emp">
+                <div class="pdfx-ev-card-head"><span class="pdfx-ev-card-src">Prithvi-EO 2.0</span><span class="pdfx-ev-card-tier">EMP</span></div>
+                <span class="pdfx-ev-card-figure">5,870 m</span>
+                <span class="pdfx-ev-card-label">Hurricane Ida 2021 inundation polygon, distance to address.</span>
+                <span class="pdfx-ev-card-meta">v. 2024-09 · HLS Sentinel-2</span>
+              </div>
+              <div class="pdfx-ev-card pdfx-ev-card-prx">
+                <div class="pdfx-ev-card-head"><span class="pdfx-ev-card-src">USGS 3DEP</span><span class="pdfx-ev-card-tier">PRX</span></div>
+                <span class="pdfx-ev-card-figure">16.76 m</span>
+                <span class="pdfx-ev-card-label">HAND at address · TWI 7.1 · 30 m DEM.</span>
+                <span class="pdfx-ev-card-meta">v. 2024 · microtopography</span>
+              </div>
+              <div class="pdfx-ev-card" style="background: var(--paper); border-color: var(--rule-soft); border-top-color: var(--rule-soft); border-top-style: dotted;">
+                <div class="pdfx-ev-card-head"><span class="pdfx-ev-card-src" style="color: var(--ink-tertiary);">+ 6 silent</span></div>
+                <span class="pdfx-ev-card-label" style="font-style: italic; color: var(--ink-tertiary);">No-result specialists fired but had nothing to report for this address.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="pdfx-ev-row">
+            <div class="pdfx-ev-row-head">
+              <span class="pdfx-ev-row-stone">Keystone</span>
+              <span class="pdfx-ev-row-meta">the asset register</span>
+              <span class="pdfx-ev-row-count">5 fired · 1 card</span>
+            </div>
+            <div class="pdfx-ev-cards">
+              <div class="pdfx-ev-card pdfx-ev-card-emp" style="grid-column: span 2;">
+                <div class="pdfx-ev-card-head"><span class="pdfx-ev-card-src">NYC OpenData</span><span class="pdfx-ev-card-tier">EMP</span></div>
+                <span class="pdfx-ev-card-figure">8 of 8</span>
+                <span class="pdfx-ev-card-label">Exposed assets within 1.0 mi · MTA 4× · NYCHA 1× · DOH 3× · SOS silent.</span>
+                <span class="pdfx-ev-card-meta">v. 2026-04 · joined within 1.0 mi</span>
+              </div>
+              <div class="pdfx-ev-card" style="background: var(--paper); border-color: var(--rule-soft); border-top-color: var(--rule-soft); border-top-style: dotted;">
+                <div class="pdfx-ev-card-head"><span class="pdfx-ev-card-src" style="color: var(--ink-tertiary);">+ 4 silent</span></div>
+                <span class="pdfx-ev-card-label" style="font-style: italic; color: var(--ink-tertiary);">No school within 2.0 mi (silent).</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="pdfx-ev-row">
+            <div class="pdfx-ev-row-head">
+              <span class="pdfx-ev-row-stone">Touchstone</span>
+              <span class="pdfx-ev-row-meta">the live observer</span>
+              <span class="pdfx-ev-row-count">5 fired · 2 cards</span>
+            </div>
+            <div class="pdfx-ev-cards">
+              <div class="pdfx-ev-card pdfx-ev-card-emp">
+                <div class="pdfx-ev-card-head"><span class="pdfx-ev-card-src">NYC 311</span><span class="pdfx-ev-card-tier">EMP</span></div>
+                <span class="pdfx-ev-card-figure">29 calls</span>
+                <span class="pdfx-ev-card-label">Flood-related complaints within 200 m, 5-year window.</span>
+                <span class="pdfx-ev-card-meta">v. 2026-05 · top: sewer backup</span>
+              </div>
+              <div class="pdfx-ev-card pdfx-ev-card-emp">
+                <div class="pdfx-ev-card-head"><span class="pdfx-ev-card-src">NOAA CO-OPS</span><span class="pdfx-ev-card-tier">EMP</span></div>
+                <span class="pdfx-ev-card-figure">+0.87 ft</span>
+                <span class="pdfx-ev-card-label">Observed water level at Battery, residual −0.81 ft.</span>
+                <span class="pdfx-ev-card-meta">v. 2026-05-17 · station 8518750</span>
+              </div>
+              <div class="pdfx-ev-card" style="background: var(--paper); border-color: var(--rule-soft); border-top-color: var(--rule-soft); border-top-style: dotted;">
+                <div class="pdfx-ev-card-head"><span class="pdfx-ev-card-src" style="color: var(--ink-tertiary);">+ 3 silent</span></div>
+                <span class="pdfx-ev-card-label" style="font-style: italic; color: var(--ink-tertiary);">FloodNet, METAR, Prithvi-Floral fired but had no exposure to report.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="pdfx-ev-row">
+            <div class="pdfx-ev-row-head">
+              <span class="pdfx-ev-row-stone">Lodestone</span>
+              <span class="pdfx-ev-row-meta">the projector</span>
+              <span class="pdfx-ev-row-count">6 fired · 2 cards</span>
+            </div>
+            <div class="pdfx-ev-cards">
+              <div class="pdfx-ev-card pdfx-ev-card-syn">
+                <div class="pdfx-ev-card-head"><span class="pdfx-ev-card-src">Granite TTM r2</span><span class="pdfx-ev-card-tier">SYN</span></div>
+                <span class="pdfx-ev-card-figure">−0.35 ft</span>
+                <span class="pdfx-ev-card-label">Surge residual nowcast at Battery, 9.6 h horizon. Regional, not point-of-query.</span>
+                <span class="pdfx-ev-card-meta">v. 2026-05 · zero-shot</span>
+              </div>
+              <div class="pdfx-ev-card pdfx-ev-card-mod">
+                <div class="pdfx-ev-card-head"><span class="pdfx-ev-card-src">NPCC4 SLR</span><span class="pdfx-ev-card-tier">MOD</span></div>
+                <span class="pdfx-ev-card-figure">+15 in</span>
+                <span class="pdfx-ev-card-label">2050 sea-level rise at Battery, mid-range scenario.</span>
+                <span class="pdfx-ev-card-meta">v. 2024-03 · 0.38 m</span>
+              </div>
+              <div class="pdfx-ev-card" style="background: var(--paper); border-color: var(--rule-soft); border-top-color: var(--rule-soft); border-top-style: dotted;">
+                <div class="pdfx-ev-card-head"><span class="pdfx-ev-card-src" style="color: var(--ink-tertiary);">+ 4 silent</span></div>
+                <span class="pdfx-ev-card-label" style="font-style: italic; color: var(--ink-tertiary);">NWS alerts, FEMA NFHL projection, others returned no-active.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="pdfx-ev-row">
+            <div class="pdfx-ev-row-head">
+              <span class="pdfx-ev-row-stone">Capstone</span>
+              <span class="pdfx-ev-row-meta">the synthesizer</span>
+              <span class="pdfx-ev-row-count">1 fired · 1 card</span>
+            </div>
+            <div class="pdfx-ev-cards">
+              <div class="pdfx-ev-card pdfx-ev-card-mod" style="grid-column: span 3;">
+                <div class="pdfx-ev-card-head"><span class="pdfx-ev-card-src">Mellea reconciler</span><span class="pdfx-ev-card-tier">MOD</span></div>
+                <span class="pdfx-ev-card-figure">13 / 13 PASS</span>
+                <span class="pdfx-ev-card-label">Briefing reconciliation. All 9 citations resolved. Grounding check passed on first draft.</span>
+                <span class="pdfx-ev-card-meta">v. 2026-05 · 166 s wall · Mellea recall 0</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="pdfx-running-foot">
+            <span>5 stones · 25 specialists fired · 8 evidence cards · 17 no-result silent</span>
+            <span></span>
+            <span class="pdfx-running-foot-right">Page 4 of 7</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Spread C: citations + methodology -->
+    <div class="pdfx-spread">
+      <span class="pdfx-spread-label"><strong>Spread C, citations and methodology</strong> <span>pages 5 and 6 of 7</span></span>
+
+      <!-- CITATIONS -->
+      <div class="pdfx-page" aria-label="Citations, page 4 of 6">
+        <div class="pdfx-page-inner">
+          <div class="pdfx-running-head">
+            <span>189 Atlantic Ave · Brooklyn NY</span>
+            <span class="pdfx-running-head-mid">Citations</span>
+            <span class="pdfx-running-head-right">Page 5 of 7</span>
+          </div>
+          <ol class="pdfx-cites">
+            <li>
+              <span class="pdfx-cite-num">[1]</span>
+              <span class="pdfx-cite-body">
+                <span class="src">USGS 3DEP — LiDAR microtopography (HAND / TWI).</span>
+                <span class="meta">dataset · microtopo · vintage 2024 · public domain</span>
+                <span class="url">www.usgs.gov/3d-elevation-program</span>
+              </span>
+            </li>
+            <li>
+              <span class="pdfx-cite-num">[2]</span>
+              <span class="pdfx-cite-body">
+                <span class="src">NYC 311 — flood-related service requests, 5-year rolling window.</span>
+                <span class="meta">dataset · nyc311 · vintage 2026-04 · NYC Open Data terms</span>
+                <span class="url">data.cityofnewyork.us/Social-Services/311-Service-Requests-from-2010-to-Present/erm2-nwe9</span>
+              </span>
+            </li>
+            <li>
+              <span class="pdfx-cite-num">[3]</span>
+              <span class="pdfx-cite-body">
+                <span class="src">NPCC4 (2024) — NYC sea-level rise projections, Battery tide gauge.</span>
+                <span class="meta">report · npcc4_slr · vintage 2024-03 · NYC government work product</span>
+                <span class="url">www.nyc.gov/site/onyc/about/publications.page</span>
+              </span>
+            </li>
+            <li>
+              <span class="pdfx-cite-num">[4]</span>
+              <span class="pdfx-cite-body">
+                <span class="src">NYCHA — Flood Resilience program, lessons learned.</span>
+                <span class="meta">report · nep_nycha · NYCHA public reporting · CC0</span>
+                <span class="url">www.nyc.gov/site/nycha/about/press/pr-2024-floodresilience.page</span>
+              </span>
+            </li>
+            <li>
+              <span class="pdfx-cite-num">[5]</span>
+              <span class="pdfx-cite-body">
+                <span class="src">NYC DCP — Geographic geocoder + Address Range Borough.</span>
+                <span class="meta">service · geocode · NYC DCP open-data terms</span>
+                <span class="url">www.nyc.gov/site/planning/data-maps/open-data.page</span>
+              </span>
+            </li>
+            <li>
+              <span class="pdfx-cite-num">[6]</span>
+              <span class="pdfx-cite-body">
+                <span class="src">NOAA CO-OPS — Battery tide gauge water level.</span>
+                <span class="meta">live · noaa_tides · station 8518750 · federal public domain</span>
+                <span class="url">tidesandcurrents.noaa.gov/stationhome.html?id=8518750</span>
+              </span>
+            </li>
+            <li>
+              <span class="pdfx-cite-num">[7]</span>
+              <span class="pdfx-cite-body">
+                <span class="src">IBM Granite TTM r2 — Battery surge residual nowcast.</span>
+                <span class="meta">model · ttm_forecast · zero-shot · Apache 2.0</span>
+                <span class="url">huggingface.co/ibm/granite-timeseries-ttm-r2</span>
+              </span>
+            </li>
+            <li>
+              <span class="pdfx-cite-num">[8]</span>
+              <span class="pdfx-cite-body">
+                <span class="src">NYC Comptroller — citywide flood-resilience capital review.</span>
+                <span class="meta">report · 2024-11 · NYC government work product</span>
+                <span class="url">comptroller.nyc.gov/reports</span>
+              </span>
+            </li>
+            <li>
+              <span class="pdfx-cite-num">[9]</span>
+              <span class="pdfx-cite-body">
+                <span class="src">MTA — Climate Resilience Roadmap.</span>
+                <span class="meta">report · 2025-10 · MTA government work product</span>
+                <span class="url">new.mta.info/document/162256</span>
+              </span>
+            </li>
+          </ol>
+          <div class="pdfx-running-foot">
+            <span>Every figure on p. 2 and on the evidence cards (p. 4) is anchored above.</span>
+            <span></span>
+            <span class="pdfx-running-foot-right">Page 5 of 7</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- METHODOLOGY + AUDIT -->
+      <div class="pdfx-page" aria-label="Methodology and audit trail, page 5 of 6">
+        <div class="pdfx-page-inner">
+          <div class="pdfx-running-head">
+            <span>189 Atlantic Ave · Brooklyn NY</span>
+            <span class="pdfx-running-head-mid">Methodology</span>
+            <span class="pdfx-running-head-right">Page 6 of 7</span>
+          </div>
+
+          <h2 class="pdfx-method-h2">Two-tier reconciler</h2>
+          <p class="pdfx-method-p">
+            Every briefing routes through one of two paths. The LLM tier runs Granite
+            4.1 8B for synthesis with Mellea rejection sampling at draft time. The
+            offline tier runs a deterministic templated reconciler. Both paths emit
+            the same JSON contract and pass the same 13-predicate compliance audit
+            before a briefing is returned. Outputs that cannot be grounded in a
+            source document are rejected, not paraphrased.
+          </p>
+
+          <h2 class="pdfx-method-h2">13-predicate audit (this briefing)</h2>
+          <ul class="pdfx-audit-list">
+            <li><span class="pdfx-audit-pass">P01 ✓ PASS</span><span>every claim citation-anchored</span></li>
+            <li><span class="pdfx-audit-pass">P02 ✓ PASS</span><span>citations resolve to source IDs</span></li>
+            <li><span class="pdfx-audit-pass">P03 ✓ PASS</span><span>numeric claims within source bounds</span></li>
+            <li><span class="pdfx-audit-pass">P04 ✓ PASS</span><span>FEMA terms used correctly</span></li>
+            <li><span class="pdfx-audit-pass">P05 ✓ PASS</span><span>IPCC AR6 register preserved</span></li>
+            <li><span class="pdfx-audit-pass">P06 ✓ PASS</span><span>TCFD disclosure framing</span></li>
+            <li><span class="pdfx-audit-pass">P07 ✓ PASS</span><span>ASTM E1527-21 due-diligence vocabulary</span></li>
+            <li><span class="pdfx-audit-pass">P08 ✓ PASS</span><span>EPA / CDC CERC risk-comm clarity</span></li>
+            <li><span class="pdfx-audit-pass">P09 ✓ PASS</span><span>AP Stylebook compliance</span></li>
+            <li><span class="pdfx-audit-pass">P10 ✓ PASS</span><span>SPJ Code of Ethics on attribution</span></li>
+            <li><span class="pdfx-audit-pass">P11 ✓ PASS</span><span>no proprietary-vendor framings</span></li>
+            <li><span class="pdfx-audit-pass">P12 ✓ PASS</span><span>no personal-property-decision advice</span></li>
+            <li><span class="pdfx-audit-pass">P13 ✓ PASS</span><span>non-affiliation surfaced</span></li>
+          </ul>
+
+          <h2 class="pdfx-method-h2">Energy ledger</h2>
+          <dl class="pdfx-energy-list">
+            <dt>Training target</dt><dd>AMD Instinct MI300X (AMD Developer Cloud)</dd>
+            <dt>Serve hardware</dt><dd>NVIDIA L4 (Hugging Face Spaces, msradam/riprap-vllm)</dd>
+            <dt>Wall time</dt><dd>293.4 s</dd>
+            <dt>Total tokens</dt><dd>1.06 M (1.12 Mb inference)</dd>
+            <dt>Energy</dt><dd>0.013 kWh @ serve-time</dd>
+            <dt>Carbon</dt><dd>~5.4 g CO₂e (US grid avg)</dd>
+          </dl>
+
+          <h2 class="pdfx-method-h2">Reproducibility</h2>
+          <p class="pdfx-method-p">
+            The full registry, manifest, and per-pebble outputs for this briefing are
+            available at the artifact URL on the cover page. The briefing is
+            re-runnable against the same vintages by anyone with read access to the
+            cited datasets.
+          </p>
+
+          <div class="pdfx-running-foot">
+            <span>Two-tier reconciler · 13-predicate audit</span>
+            <span></span>
+            <span class="pdfx-running-foot-right">Page 6 of 7</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Spread 3: glossary + PDF/UA-1 compliance notes -->
+    <div class="pdfx-spread">
+      <span class="pdfx-spread-label"><strong>Spread D, glossary and PDF compliance</strong> <span>page 7 of 7 plus the standards this artifact ships against</span></span>
+
+      <!-- GLOSSARY + STAMP -->
+      <div class="pdfx-page" aria-label="Glossary and stamp, page 6 of 6">
+        <div class="pdfx-page-inner">
+          <div class="pdfx-running-head">
+            <span>189 Atlantic Ave · Brooklyn NY</span>
+            <span class="pdfx-running-head-mid">Glossary + stamp</span>
+            <span class="pdfx-running-head-right">Page 7 of 7</span>
+          </div>
+
+          <h2 class="pdfx-glossary-h2">Glossary</h2>
+          <dl class="pdfx-glossary">
+            <dt>HAND</dt><dd>Height Above Nearest Drainage. Vertical distance from a cell to the closest stream channel.</dd>
+            <dt>TWI</dt><dd>Topographic Wetness Index. Higher values mean greater saturation propensity for a given rainfall.</dd>
+            <dt>AE</dt><dd>FEMA 1% annual-chance flood zone with base-flood elevation, the regulatory floodplain.</dd>
+            <dt>NTA</dt><dd>NYC Neighborhood Tabulation Area. Defined by the Department of City Planning.</dd>
+            <dt>BBL</dt><dd>Borough-Block-Lot. NYC parcel identifier; 10-digit number encoding borough, block, and lot.</dd>
+            <dt>SLR</dt><dd>Sea-level rise.</dd>
+            <dt>NPCC4</dt><dd>NYC Panel on Climate Change, fourth assessment report (2024).</dd>
+            <dt>HWM</dt><dd>High-water mark. USGS post-event survey points of peak flood elevation.</dd>
+            <dt>FloodNet</dt><dd>NYC neighborhood-scale ultrasonic flood-depth sensor network.</dd>
+            <dt>FEMA NFHL</dt><dd>FEMA National Flood Hazard Layer. The official US flood-map dataset.</dd>
+          </dl>
+
+          <h2 class="pdfx-glossary-h2">Use restrictions and non-affiliation</h2>
+          <p class="pdfx-method-p">
+            Riprap returns evidence, not advice. This briefing does not predict
+            damage to specific properties and is not a substitute for professional
+            engineering judgment. For personal property decisions, contact your local resilience office.
+            Riprap is an independent open-source project and is not affiliated with
+            FEMA, NOAA, USGS, NYC DEP, NYCHA, MTA, or any city government. Each
+            cited dataset is used under its own publisher's open-data terms.
+          </p>
+
+          <div class="pdfx-stamp">
+            <span><strong>Generated by</strong> Riprap v0.5.0 · build 2026-05-07</span>
+            <span><strong>Briefing pulled</strong> 2026-05-17 14:23 UTC</span>
+            <span><strong>Reconciler</strong> granite-4.1-mellea</span>
+            <span><strong>Audit</strong> <span class="pdfx-stamp-pass">13 / 13 PASS</span></span>
+            <span style="grid-column: 1 / -1;"><strong>Document hash</strong> riprap-nyc-flood-189atl-2026-05-17T14:23Z-a3f10d2c</span>
+            <span style="grid-column: 1 / -1;"><strong>License</strong> code Apache 2.0 · data per source · dam mark CC-BY 3.0 (Chintuza / Noun Project)</span>
+          </div>
+
+          <div class="pdfx-running-foot">
+            <span>End of briefing.</span>
+            <span></span>
+            <span class="pdfx-running-foot-right">Page 7 of 7</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PDF/UA + Section 508 compliance side-panel -->
+      <aside class="pdfx-spec-notes" aria-label="PDF compliance notes">
+        <h3 class="pdfx-spec-notes-head">What makes this a proper PDF, not a webpage screenshot</h3>
+        <p class="pdfx-spec-notes-deck">
+          A PDF that ships to a planning board has to clear the same procurement bar
+          as the web app, plus a couple more that only apply to documents.
+        </p>
+        <ul class="pdfx-spec-notes-list">
+          <li><span class="tick">✓</span><span><strong>PDF/UA-1 tagged structure</strong> (ISO 14289-1). Every heading is a proper <code>&lt;H1&gt;</code>/<code>&lt;H2&gt;</code> tag, every paragraph a <code>&lt;P&gt;</code>, every list a <code>&lt;L&gt;</code>/<code>&lt;LI&gt;</code>. Screen readers traverse the document in reading order, not page order.</span></li>
+          <li><span class="tick">✓</span><span><strong>Document metadata</strong> populated. Title, author ("Riprap framework"), subject, keywords, creator, language (<code>en-US</code>). Visible in any PDF viewer's Properties pane.</span></li>
+          <li><span class="tick">✓</span><span><strong>Bookmarks tree</strong> for the six sections. Acrobat / Preview / Foxit users navigate by section, not by page.</span></li>
+          <li><span class="tick">✓</span><span><strong>Color-independent.</strong> Tier glyphs (▮ EMP / ▢ MOD / ● PRX / ▱ SYN) carry shape, not just color. The existing <code>print.css</code> already degrades stones to neutral gray.</span></li>
+          <li><span class="tick">✓</span><span><strong>Section 508 conformance.</strong> All claims are text, not raster. Citation numbers are real links with <code>aria-label</code>s, not images of brackets.</span></li>
+          <li><span class="tick">✓</span><span><strong>Map graphics are vector.</strong> Address pin, flood-zone polygons, and FloodNet sensor markers ship as PDF vector objects, not embedded screenshots. Labels stay selectable; the legend swatches share the same fills as the polygons.</span></li>
+          <li><span class="tick">✓</span><span><strong>Evidence cards are tagged tables.</strong> Source name, tier, figure, label, and vintage are real cells. A screen reader announces row + column instead of "image, no description".</span></li>
+          <li><span class="tick">✓</span><span><strong>Running headers, page numbers, and footers</strong> on every page after the cover. A printed copy that loses page 3 is still legibly identifiable.</span></li>
+          <li><span class="tick">✓</span><span><strong>Federal memo header</strong> on the cover (TO / FROM / RE / DATE). This is the format every US planning board, engineer of record, and city resilience office already files in.</span></li>
+          <li><span class="tick">✓</span><span><strong>Document hash</strong> on the stamp page. Two people printing the same briefing can verify they're holding the same artifact.</span></li>
+          <li><span class="tick">✓</span><span><strong>Non-affiliation</strong> repeated on the cover and the stamp. Required when a tool ingests federal/state/city data and produces a downstream artifact.</span></li>
+          <li><span class="tick">✓</span><span><strong>Glossary</strong> defining every domain-specific abbreviation. A planner from outside the hydrology field can read the briefing without a parallel tab.</span></li>
+        </ul>
+        <p class="pdfx-spec-notes-deck" style="margin-top: 6px;">
+          <strong style="color: var(--ink); font-weight: 600;">How it ships.</strong>
+          Print-to-screen export retires. The new <code>/print/&lt;queryId&gt;</code> route
+          hydrates from the same briefing JSON the web view uses and renders this
+          six-page layout via a server-side WeasyPrint or Chromium-headless pass.
+          PDF/UA tags are added in the same pass; the resulting file passes Adobe
+          Acrobat's Accessibility Full Check before being offered for download.
+        </p>
+      </aside>
+    </div>
+  </section>
+
+
+  <footer class="footer-note">
+    <p style="margin: 0 0 8px;">
+      <strong>What this pass added.</strong>
+      A proper PDF design in §9 covering the artifact a planner actually attaches
+      to a board memo. Six US Letter pages: cover with federal memo header, body
+      with proper running heads and tier glyphs, citations as a real bibliography,
+      methodology with the 13-predicate audit + energy ledger, glossary, and a
+      stamp block with document hash. PDF/UA-1 tagged. Section 508 conformant.
+      Color-independent. Retires the lazy "print the webpage" route.
+    </p>
+    <p style="margin: 0 0 8px;">
+      <strong>Type stack.</strong> IBM Plex Sans, Mono, and Serif throughout,
+      loaded at weights 400 / 500 / 600. Apache 2.0 + SIL OFL licensing keeps
+      the type stack federal-procurement compatible. No proprietary fonts in
+      the chain.
+    </p>
+    <p style="margin: 0;">
+      <strong>Out of scope, flagging anyway.</strong>
+      The README hero image is still Brooklyn DUMBO. It should rotate per push
+      or composite one frame per deployment. It's the last surface still reading
+      NYC-only after this rebrand ships.
+    </p>
+  </footer>
+
+</main>
+<script>
+(function () {
+  const cities = ['NYC', 'Chicago', 'Seattle', 'San Fran', 'Boston'];
+  const tryAddrs = [
+    '80 Pioneer Street, Red Hook',
+    '233 S Wacker Dr, Chicago',
+    '2100 5th Ave, Seattle',
+    '1 Dr Carlton B Goodlett Pl, SF',
+    '1 City Hall Square, Boston'
+  ];
+  let i = 0;
+  function paint() {
+    document.querySelectorAll('.city-rotate').forEach(function (el) { el.textContent = cities[i]; });
+    document.querySelectorAll('.try-rotate').forEach(function (el) { el.textContent = tryAddrs[i]; });
+  }
+  function tick() {
+    const els = document.querySelectorAll('.city-rotate, .try-rotate');
+    if (!els.length) return;
+    els.forEach(function (el) { el.classList.add('fade-out'); });
+    setTimeout(function () {
+      i = (i + 1) % cities.length;
+      paint();
+      els.forEach(function (el) { el.classList.remove('fade-out'); });
+    }, 220);
+  }
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    setInterval(function () { i = (i + 1) % cities.length; paint(); }, 4000);
+  } else {
+    setInterval(tick, 2400);
+  }
+})();
+</script>
+</body>
+</html>

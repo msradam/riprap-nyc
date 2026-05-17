@@ -1,27 +1,35 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
 
-  /** v0.4.5 landing hero: serif italic emphasis on "any place", deck,
-   *  query box, cycling examples on a fixed dotted-underline rail.
-   *  Mirrors docs/design_handoff/design_files/Riprap Landing.html. */
+  /** Landing hero — Civic-Hydrology voice (Claude Design handoff, 2026-05-17).
+   *  H1: "A climate-exposure briefing for <city>." with rotating city.
+   *  Deck names the four primary source families (FEMA / NOAA / USGS /
+   *  city open data) so the trust-strip claim is foreshadowed inline.
+   *  Cycling "Try:" rail still rotates real probe examples.
+   */
+
+  const CITIES = ['NYC', 'Chicago', 'Seattle', 'San Francisco', 'Boston'];
 
   const SAMPLE_QUERIES = [
     '80 Pioneer Street, Red Hook',
-    'Coney Island Hospital',
+    '233 S Wacker Dr, Chicago',
+    '1 City Hall Square, Boston',
+    '2100 5th Ave, Seattle',
+    '1 Dr Carlton B Goodlett Pl, San Francisco',
     'PS 188, Lower East Side',
     'Hammels Houses, Rockaway',
-    'Bowling Green station',
-    '555 W 57th Street',
   ];
 
   let q = $state('');
-  let i = $state(0);
+  let cityIdx = $state(0);
+  let queryIdx = $state(0);
 
   $effect(() => {
     if (typeof window === 'undefined') return;
     const t = setInterval(() => {
-      i = (i + 1) % SAMPLE_QUERIES.length;
-    }, 2200);
+      cityIdx = (cityIdx + 1) % CITIES.length;
+      queryIdx = (queryIdx + 1) % SAMPLE_QUERIES.length;
+    }, 2400);
     return () => clearInterval(t);
   });
 
@@ -32,27 +40,40 @@
   }
 
   function pickExample() {
-    const v = SAMPLE_QUERIES[i];
+    const v = SAMPLE_QUERIES[queryIdx];
     goto(`/q/${encodeURIComponent(v)}`);
   }
 </script>
 
 <main class="land-hero">
   <h1 class="land-hero-h1">
-    <span class="land-hero-headline">A flood exposure briefing<br /> for <em>any place</em> in New York City.</span>
+    <span class="land-hero-headline">
+      A climate-exposure briefing for
+      <span class="city-rotate" aria-live="polite">
+        {#each CITIES as c, idx (c)}
+          <span class="city-rotate-item" class:is-active={idx === cityIdx} aria-hidden={idx !== cityIdx}>{c}</span>
+        {/each}
+      </span>.
+    </span>
     <span class="land-hero-deck">
-      Type an address. Get a written briefing where every numeric claim links to its primary public-record source.
+      Type an address. Get a written briefing on flood, heat, or air-quality
+      exposure. Every claim cites a public record from FEMA, NOAA, USGS, or
+      city open data.
     </span>
   </h1>
 
   <form class="land-query" onsubmit={(e) => { e.preventDefault(); submit(); }} role="search">
     <span class="land-query-prompt" aria-hidden="true">›</span>
+    <label class="visually-hidden" for="land-query-input">Address, neighborhood, or BBL</label>
     <input
+      id="land-query-input"
       type="text"
       bind:value={q}
       placeholder="Address, neighborhood, or BBL. e.g. 80 Pioneer Street, Red Hook"
       class="land-query-input"
-      aria-label="Query an address, neighborhood, or BBL"
+      autocomplete="street-address"
+      enterkeyhint="search"
+      aria-label="Address, neighborhood, or BBL"
     />
     <button type="submit" class="land-query-submit">Brief this place →</button>
   </form>
@@ -61,7 +82,7 @@
     <span class="land-cycling-label">Try:</span>
     <button type="button" class="land-cycling-rail" onclick={pickExample} title="Run this example">
       {#each SAMPLE_QUERIES as s, idx (s)}
-        <span class="land-cycling-item" class:is-active={idx === i} aria-hidden={idx !== i}>
+        <span class="land-cycling-item" class:is-active={idx === queryIdx} aria-hidden={idx !== queryIdx}>
           {s}
         </span>
       {/each}
@@ -86,13 +107,44 @@
     color: var(--ink);
     letter-spacing: -0.015em;
   }
-  .land-hero-headline em { font-style: italic; font-weight: 500; }
   .land-hero-deck {
     font-family: var(--font-serif);
     font-size: 18px;
     line-height: 1.55;
     color: var(--ink-secondary);
     max-width: 64ch;
+  }
+
+  /* City-rotate — same inset/opacity pattern as the cycling rail
+     so the H1 line height stays stable as the city swaps. */
+  .city-rotate {
+    position: relative;
+    display: inline-block;
+    min-width: 5.2ch;
+    height: 1em;
+    line-height: 1em;
+    vertical-align: baseline;
+  }
+  .city-rotate-item {
+    position: absolute;
+    inset: 0;
+    line-height: 1em;
+    opacity: 0;
+    transition: opacity 320ms ease;
+    color: var(--accent);
+    font-style: italic;
+    white-space: nowrap;
+  }
+  .city-rotate-item.is-active { opacity: 1; }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
   }
 
   .land-query {

@@ -32,14 +32,36 @@ class StoneManifest(BaseModel):
     order: int = 100  # bigger = lower in the UI
 
 
+class DeploymentDescriptor(BaseModel):
+    """Optional top-level block in stones.yaml carrying the human-readable
+    deployment descriptors the UI shell renders in the chip + page title:
+
+        deployment:
+          city: Boston                 # for the chip pill / browser title
+          hazard: Flood-exposure briefing   # for the chip text on app pages
+
+    Both are optional; load_stones() fills sensible defaults when the
+    block is missing or partial. The default city is derived from the
+    deployment directory name (`deployments/<name>/`); the default
+    hazard is `Flood-exposure briefing`.
+    """
+    model_config = ConfigDict(extra="forbid")
+
+    city: str | None = None
+    hazard: str | None = None
+
+
 class _StonesFile(BaseModel):
     model_config = ConfigDict(extra="forbid")
+    deployment: DeploymentDescriptor = Field(default_factory=DeploymentDescriptor)
     stones: list[StoneManifest]
 
 
 @dataclass
 class StoneRegistry:
     stones: list[StoneManifest]
+    city: str
+    hazard: str
 
     def get(self, stone_id: str) -> StoneManifest:
         return next(s for s in self.stones if s.id == stone_id)
@@ -51,12 +73,36 @@ class StoneRegistry:
         return any(s.id == stone_id for s in self.stones)
 
 
+# Casing overrides for the deployment-dir → display-name fallback.
+# Most cities are correctly title-cased (`chicago` → `Chicago`); a few
+# need explicit casing the simple `.title()` can't produce.
+_CITY_FALLBACK = {
+    "nyc": "NYC",
+    "sf": "SF",
+    "la": "LA",
+    "dc": "DC",
+    "heat": "NYC",  # heat + air are NYC-scoped hazards
+    "air": "NYC",
+    "pi": "NYC",
+}
+
+_HAZARD_FALLBACK = {
+    "heat": "Heat-exposure briefing",
+    "air": "Air-quality briefing",
+}
+
+
 def load_stones(deployment_root: str | Path) -> StoneRegistry:
     root = Path(deployment_root).resolve()
     path = root / "stones.yaml"
     if not path.is_file():
         raise FileNotFoundError(f"no stones.yaml at {path}")
-    with open(path) as f:
+    with path.open() as f:
         raw = yaml.safe_load(f)
     parsed = _StonesFile.model_validate(raw)
-    return StoneRegistry(stones=list(parsed.stones))
+
+    dep_name = root.name.lower()
+    city = parsed.deployment.city or _CITY_FALLBACK.get(dep_name, root.name.title())
+    hazard = parsed.deployment.hazard or _HAZARD_FALLBACK.get(dep_name, "Flood-exposure briefing")
+
+    return StoneRegistry(stones=list(parsed.stones), city=city, hazard=hazard)
