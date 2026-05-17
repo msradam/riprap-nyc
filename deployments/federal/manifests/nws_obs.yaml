@@ -1,17 +1,20 @@
 id: nws_obs
 type: live
-title: NWS hourly METAR observations (current temperature)
+title: NWS hourly METAR observations (nearest station)
 stone: touchstone
+tier: empirical
 adapter: python_call
+
+# Federal pebble — api.weather.gov resolves any CONUS lat/lon to its
+# nearest METAR station, so a single manifest serves every spatially-
+# routed deployment.
+coverage:
+  region: us_conus
 
 spatial:
   scope: point
   crs: EPSG:4326
 
-# Reuses the same NWS observation probe Riprap-flood uses, just
-# re-framed for the heat deployment. The probe returns hourly METAR
-# including temperature_c, dewpoint_c, relative_humidity, etc. —
-# heat-relevant fields the templated reconciler narrates.
 config:
   module: app.context.nws_obs
   function: summary_for_point
@@ -22,7 +25,8 @@ config:
 
 trace_summary:
   station: station_id
-  t1h_c: temperature_c
+  p1h_mm: precip_last_hour_mm
+  p6h_mm: precip_last_6h_mm
 
 provenance:
   source_name: National Weather Service (NOAA) — nearest METAR station
@@ -32,14 +36,15 @@ provenance:
   citation: NWS hourly METAR observations, nearest station to address.
 
 narration:
-  short: Most recent NWS hourly observation at the nearest METAR station — temperature, humidity, and dewpoint.
-
-display:
-  order: 20
-  kind: text
-  map_layer: false
-  icon: "🌤️"
+  short: Most recent National Weather Service hourly observation at the nearest METAR station.
 
 fallback:
   on_offline: skip
   message: NWS api.weather.gov unreachable.
+
+display:
+  variant: scalars
+  order: 30
+  kind: text
+  map_layer: false
+  icon: "🌦️"

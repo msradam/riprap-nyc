@@ -1,15 +1,20 @@
 id: nws_alerts
 type: live
-title: NWS active alerts (flood, severe weather, lake-related)
+title: NWS active alerts (flood/coastal/wind)
 stone: lodestone
+tier: modeled
 adapter: python_call
+
+# Federal pebble — the NWS Alerts API (api.weather.gov) resolves any
+# CONUS lat/lon to its active alert set, so this single manifest serves
+# every spatially-routed deployment.
+coverage:
+  region: us_conus
 
 spatial:
   scope: point
   crs: EPSG:4326
 
-# Federal pebble. NWS alerts API auto-resolves any US point to its
-# active alerts (Chicago / Romeoville WFO for Cook County area).
 config:
   module: app.context.nws_alerts
   function: summary_for_point
@@ -26,17 +31,18 @@ provenance:
   source_url: https://api.weather.gov/
   license: U.S. Public Domain
   doc_id: nws_alerts
-  citation: NWS active alerts at address (flood / severe weather / coastal).
+  citation: NWS active alerts at address (flood / coastal / wind).
 
 narration:
   short: Currently active NWS alerts intersecting this address.
 
+fallback:
+  on_offline: skip
+  message: NWS alerts endpoint unreachable.
+
 display:
+  variant: tabular
   order: 10
   kind: list
   map_layer: false
   icon: "⚠️"
-
-fallback:
-  on_offline: skip
-  message: NWS alerts endpoint unreachable.

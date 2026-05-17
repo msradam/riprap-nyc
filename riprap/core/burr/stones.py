@@ -25,14 +25,24 @@ from riprap.core.burr.pebble import pebble_action
 from riprap.core.pebbles import load_registry
 
 
-def _pebbles_for(stone_id: str, deployment: str | None = None) -> list[str]:
+def _pebbles_for(
+    stone_id: str,
+    deployment: str | None = None,
+    lat: float | None = None,
+    lon: float | None = None,
+) -> list[str]:
     """Pebble ids for a stone, ordered by display.order (UI-friendly).
+
+    Two-stage filter:
+      1. Load the deployment's registry (which auto-merges federal pebbles).
+      2. Per-pebble: keep only pebbles whose `coverage` contains the
+         query point. Pebbles without a `coverage` block inherit their
+         deployment's bbox (back-compat).
 
     `deployment` is a deployment directory name (e.g. `'boston'`) or a
     path. When None, falls back to `RIPRAP_DEPLOYMENT` env var.
     Sentinel `"__none__"` (set by `select_deployment` when no deployment
-    covers the geocoded point) returns [] — out-of-coverage queries
-    fan out to zero pebbles.
+    covers the geocoded point) returns [].
     """
     import os
     from pathlib import Path
@@ -47,14 +57,24 @@ def _pebbles_for(stone_id: str, deployment: str | None = None) -> list[str]:
     dep = deployment_by_name(deployment)
     if dep is not None:
         p = dep.root
+        deployment_bbox = dep.bbox
     else:
         p = Path(deployment)
         if not p.is_absolute():
             p = Path(__file__).resolve().parent.parent.parent.parent / deployment
+        deployment_bbox = None
     if not p.exists() or not (p / "manifests").is_dir():
         return []
     reg = load_registry(p)
     pebbles = [pb for pb in reg.all() if pb.stone == stone_id]
+
+    # Per-pebble coverage filter. Skip when we have no coords — the
+    # union-of-writes path needs a complete list (it's lat/lon-blind),
+    # and the empty-fan-out case is already handled by the __none__
+    # sentinel above.
+    if lat is not None and lon is not None:
+        pebbles = [pb for pb in pebbles if pb.fires_at(lat, lon, deployment_bbox)]
+
     pebbles.sort(key=lambda pb: (
         pb.manifest.display.order if pb.manifest.display.order is not None else 999,
         pb.id,
@@ -74,12 +94,19 @@ def _all_pebbles_for_stone(stone_id: str) -> list[str]:
     `writes` is read once at graph-build time, before any query lands,
     so it can't depend on the per-query deployment. The reducer fills
     any union-declared key that the active deployment didn't write with
-    None so Burr's write-validation passes."""
+    None so Burr's write-validation passes.
+
+    Federal pebbles get auto-merged into every city deployment by
+    `load_registry`, so the per-deployment listings already include
+    them — no separate federal pass needed."""
     from riprap.core.pebbles.deployments import discover_deployments  # noqa: PLC0415
     seen: set[str] = set()
     for dep in discover_deployments():
         if dep.bbox is None:
             continue
+        # lat/lon omitted → no per-pebble filter; the union spans
+        # everything that COULD fire for this stone, regardless of
+        # geocoded point. Coverage filtering happens at run time.
         seen.update(_pebbles_for(stone_id, dep.name))
     # Stable order keeps debug output reproducible.
     return sorted(seen)
@@ -115,7 +142,9 @@ class _StoneMapActions(MapActions):
         # Burr picks up as the action name (no with_name() needed since
         # @action returns a plain function, not an Action object).
         deployment = state.get("deployment")
-        for pid in _pebbles_for(self.stone_id, deployment):
+        lat = state.get("lat")
+        lon = state.get("lon")
+        for pid in _pebbles_for(self.stone_id, deployment, lat=lat, lon=lon):
             yield pebble_action(pid)
 
     def state(self, state: State, inputs: dict[str, Any]) -> State:  # noqa: ARG002 — Burr API signature

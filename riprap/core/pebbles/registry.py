@@ -123,6 +123,21 @@ def _byod_yaml_sources() -> list[Path]:
     return out
 
 
+def _federal_manifests_dir() -> Path | None:
+    """Path to deployments/federal/manifests/ if it exists.
+
+    The federal directory holds pebbles whose data covers the whole US
+    (NWS, NOAA, EPA) — one canonical manifest each, auto-merged into
+    every spatially-routed deployment so we never duplicate them per
+    city. Returns None when the directory is absent (e.g. tests pointing
+    at a temp deployment root).
+    """
+    # registry.py → repo root is 4 levels up.
+    repo = Path(__file__).resolve().parent.parent.parent.parent
+    fed = repo / "deployments" / "federal" / "manifests"
+    return fed if fed.is_dir() else None
+
+
 def load_registry(deployment_root: str | Path) -> Registry:
     root = Path(deployment_root).resolve()
     manifests_dir = root / "manifests"
@@ -136,6 +151,20 @@ def load_registry(deployment_root: str | Path) -> Registry:
         if pid in pebbles:
             raise ValueError(f"duplicate pebble id {pid!r} in {yaml_path.name}")
         pebbles[pid] = pebble
+
+    # Auto-merge federal pebbles into every non-federal deployment.
+    # A federal pebble carrying the same id as a base-deployment pebble
+    # is treated as an override candidate, but in practice the deployment
+    # owns the id (base-deployment pebbles win) so federal duplicates
+    # are skipped silently. The federal directory itself doesn't trigger
+    # a recursive merge.
+    fed_dir = _federal_manifests_dir()
+    if fed_dir is not None and fed_dir.resolve() != manifests_dir.resolve():
+        for yaml_path in sorted(fed_dir.glob("*.yaml")):
+            pid, pebble = _instantiate(yaml_path, root, manifest_dir=None)
+            if pid in pebbles:
+                continue  # deployment-owned pebble of the same id wins
+            pebbles[pid] = pebble
 
     for yaml_path in _byod_yaml_sources():
         pid, pebble = _instantiate(yaml_path, root, manifest_dir=yaml_path.parent)

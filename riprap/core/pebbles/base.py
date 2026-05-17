@@ -112,5 +112,38 @@ class BasePebble:
     def fallback(self):
         return self.manifest.fallback
 
+    def fires_at(self, lat: float | None, lon: float | None,
+                 deployment_bbox: tuple[float, float, float, float] | None = None) -> bool:
+        """Does this pebble's coverage contain the geocoded point?
+
+        Resolution order:
+          1. Manifest-declared `coverage`:
+               region: us_conus → CONUS bbox
+               region: global   → always True
+               bbox: [...]      → bbox containment
+          2. Otherwise inherit the deployment's bbox (back-compat path —
+             every existing manifest works unchanged).
+          3. If neither is set, fall back to True (assume nationwide).
+
+        None for lat/lon means geocode failed → False (don't fire).
+        """
+        if lat is None or lon is None:
+            return False
+        cov = self.manifest.coverage
+        if cov is not None:
+            if cov.region == "global":
+                return True
+            if cov.region == "us_conus":
+                # CONUS lower-48 bbox (excludes AK + HI by design).
+                min_lon, min_lat, max_lon, max_lat = -125.0, 24.5, -66.9, 49.4
+                return (min_lat <= lat <= max_lat) and (min_lon <= lon <= max_lon)
+            if cov.bbox is not None and len(cov.bbox) == 4:
+                min_lon, min_lat, max_lon, max_lat = cov.bbox
+                return (min_lat <= lat <= max_lat) and (min_lon <= lon <= max_lon)
+        if deployment_bbox is not None:
+            min_lon, min_lat, max_lon, max_lat = deployment_bbox
+            return (min_lat <= lat <= max_lat) and (min_lon <= lon <= max_lon)
+        return True
+
     def _fetch_raw(self, query: SpatialQuery) -> PebbleResult:  # pragma: no cover
         raise NotImplementedError

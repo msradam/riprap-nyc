@@ -91,3 +91,67 @@ def test_pebbles_for_none_sentinel_returns_empty():
     from riprap.core.burr.stones import _pebbles_for
     assert _pebbles_for("cornerstone", "__none__") == []
     assert _pebbles_for("touchstone", "__none__") == []
+
+
+def test_federal_pebbles_auto_merge_into_every_city():
+    """nws_alerts + nws_obs live in deployments/federal/ and auto-merge
+    into every spatially-routed deployment. No city should re-declare
+    them (deduped); every city should still fan out federal pebbles
+    when fed CONUS coords."""
+    from riprap.core.burr.stones import _pebbles_for
+
+    for city, lat, lon in [
+        ("nyc",     40.7128, -74.0060),
+        ("boston",  42.3601, -71.0589),
+        ("chicago", 41.8781, -87.6298),
+        ("seattle", 47.6094, -122.3422),
+        ("sf",      37.7793, -122.4192),
+    ]:
+        touchstone = _pebbles_for("touchstone", city, lat=lat, lon=lon)
+        lodestone = _pebbles_for("lodestone", city, lat=lat, lon=lon)
+        assert "nws_obs" in touchstone, (
+            f"{city}: federal nws_obs failed to auto-merge into touchstone"
+        )
+        assert "nws_alerts" in lodestone, (
+            f"{city}: federal nws_alerts failed to auto-merge into lodestone"
+        )
+
+
+def test_federal_pebbles_not_duplicated_in_city_dirs():
+    """Each federal pebble exists in exactly one manifest file — the
+    federal one. Drift here defeats the dedup."""
+    from pathlib import Path
+    repo = Path(__file__).resolve().parent.parent
+    for fid in ("nws_alerts", "nws_obs"):
+        matches = list(repo.glob(f"deployments/*/manifests/{fid}.yaml"))
+        assert len(matches) == 1, (
+            f"federal pebble {fid!r} found in {len(matches)} manifests: "
+            f"{[str(m.relative_to(repo)) for m in matches]} — expected exactly one (federal)."
+        )
+        assert "federal" in str(matches[0]), (
+            f"federal pebble {fid!r} is in {matches[0]}, not deployments/federal/"
+        )
+
+
+def test_per_pebble_coverage_filter_out_of_conus():
+    """A point outside CONUS (e.g. Tokyo) fires zero pebbles even when
+    we point at a known deployment — the per-pebble coverage filter
+    catches global queries that bypassed the deployment router."""
+    from riprap.core.burr.stones import _pebbles_for
+    # Tokyo — outside CONUS, outside every city bbox.
+    assert _pebbles_for("touchstone", "nyc", lat=35.6762, lon=139.6503) == []
+    assert _pebbles_for("lodestone", "nyc", lat=35.6762, lon=139.6503) == []
+
+
+def test_per_pebble_coverage_filter_conus_but_not_city():
+    """A point inside CONUS but outside every city bbox still gets
+    federal pebbles (NWS Alerts works for Albuquerque too)."""
+    from riprap.core.burr.stones import _pebbles_for
+    abq = _pebbles_for("touchstone", "nyc", lat=35.0844, lon=-106.6504)
+    assert "nws_obs" in abq, (
+        "Albuquerque is in CONUS — NWS METAR observations should fire."
+    )
+    # NYC-specific pebbles (floodnet, nyc311, prithvi_live) should NOT
+    # fire for Albuquerque because they inherit the NYC bbox.
+    assert "floodnet" not in abq
+    assert "nyc311" not in abq

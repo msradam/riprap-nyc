@@ -55,6 +55,30 @@ class Spatial(BaseModel):
     crs: str = "EPSG:4326"
 
 
+# Coarse named regions for pebble coverage. `us_conus` matches anywhere
+# in the lower-48 (Hawaii + Alaska excluded by default); `global` always
+# matches. Concrete bboxes are also supported via Coverage.bbox.
+PebbleRegion = Literal["us_conus", "global"]
+
+
+class Coverage(BaseModel):
+    """Where this pebble's data is meaningful — the spatial gate the
+    routing layer uses to decide whether to fire it for a given query.
+
+    A pebble is fired for (lat, lon) when either:
+      - `region` covers the point (us_conus → CONUS bbox; global → always)
+      - `bbox` contains the point
+
+    When neither is set, the pebble inherits its deployment's coverage
+    (from stones.yaml). This is the back-compat path — every existing
+    manifest is left unchanged and still fires inside its deployment.
+    """
+    model_config = ConfigDict(extra="forbid")
+
+    region: PebbleRegion | None = None
+    bbox: list[float] | None = None  # [min_lon, min_lat, max_lon, max_lat]
+
+
 class Display(BaseModel):
     """UI render hints. The pebble → evidence card mapping lives here.
 
@@ -115,6 +139,8 @@ class _PebbleBase(BaseModel):
     #     n_within_800m: n_within_radius
     #     max_height_above_gnd_ft: max_height_above_gnd_ft
     spatial: Spatial = Field(default_factory=Spatial)
+    coverage: Coverage | None = None  # where this pebble fires; defaults
+                                      # to its deployment's bbox when None
     config: dict[str, Any] = Field(default_factory=dict)
     provenance: Provenance
     narration: Narration = Field(default_factory=Narration)

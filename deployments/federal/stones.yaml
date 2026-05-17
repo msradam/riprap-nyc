@@ -1,0 +1,40 @@
+# Federal — shared pebbles whose data covers the whole US.
+#
+# This is a virtual "deployment" that exists only to dedupe pebbles
+# whose data source (NWS Alerts, NWS hourly obs) is national in scope.
+# It carries no `coverage:` block because it isn't itself a spatial-
+# routing target — instead, every spatially-routed deployment auto-
+# merges these pebbles via `riprap.core.pebbles.registry.load_registry`.
+#
+# Each pebble in this directory MUST declare its own `coverage:` block
+# (currently all are `region: us_conus`). The per-pebble routing filter
+# then gates fan-out against the geocoded point.
+#
+# To add a new federal pebble: drop a manifest here with the canonical
+# `coverage.region: us_conus` (or a bbox). Don't touch the city dirs.
+stones:
+  - id: cornerstone
+    name: Cornerstone
+    tagline: The Hazard Reader
+    description: Federal hazard sources.
+    order: 1
+  - id: touchstone
+    name: Touchstone
+    tagline: The Live Observer
+    description: Federal live observations.
+    order: 2
+  - id: keystone
+    name: Keystone
+    tagline: The Asset Register
+    description: Federal asset registers.
+    order: 3
+  - id: lodestone
+    name: Lodestone
+    tagline: The Projector
+    description: Federal forecast and alert sources.
+    order: 4
+  - id: capstone
+    name: Capstone
+    tagline: The Synthesiser
+    description: Reconciler.
+    order: 5
