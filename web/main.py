@@ -6,13 +6,19 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import warnings
 from pathlib import Path
 
 warnings.filterwarnings("ignore")
 
 from fastapi import FastAPI, Request  # noqa: E402
-from fastapi.responses import FileResponse, JSONResponse, StreamingResponse  # noqa: E402
+from fastapi.responses import (  # noqa: E402
+    FileResponse,
+    JSONResponse,
+    Response,
+    StreamingResponse,
+)
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 
 from app import emissions  # noqa: E402
@@ -537,6 +543,67 @@ def api_deployment():
         "city": _STONES.city,                # display name (NYC, Boston, ...)
         "hazard": _STONES.hazard,            # 'Flood-exposure briefing', etc.
     })
+
+
+@app.post("/api/print")
+async def api_print(request: Request) -> Response:
+    """Render a completed briefing to PDF.
+
+    Accepts the briefing JSON in the request body (the same shape the
+    SSE stream emits as its final `final` event). Returns the PDF as
+    `application/pdf` with a sensible filename. The document carries a
+    SHA-256 hash on its stamp page that two reviewers comparing the
+    same briefing can verify by.
+
+    Requires WeasyPrint's system deps (pango + cairo) on the host:
+      macOS:  brew install pango
+      Linux:  apt-get install libpango-1.0-0 libpangoft2-1.0-0
+
+    Returns 503 with a structured error body when the deps are missing
+    so the UI can surface a helpful "PDF rendering unavailable" toast
+    instead of a stack trace.
+    """
+    from app.print_pdf import PdfRenderFailed, render_briefing_pdf  # noqa: PLC0415
+
+    try:
+        payload = await request.json()
+    except Exception as e:  # noqa: BLE001
+        return JSONResponse({"error": f"invalid JSON: {e}"}, status_code=400)
+    if not isinstance(payload, dict):
+        return JSONResponse({"error": "expected a JSON object body"}, status_code=400)
+
+    # Annotate with active deployment so the cover-page chip reads
+    # consistently with the web view, even if the client didn't post it.
+    payload.setdefault("deployment", {
+        "name": _DEPLOYMENT.name,
+        "city": _STONES.city,
+        "hazard": _STONES.hazard,
+    })
+
+    try:
+        pdf_bytes = render_briefing_pdf(payload)
+    except PdfRenderFailed as e:
+        return JSONResponse(
+            {"error": "pdf_unavailable", "detail": str(e)},
+            status_code=503,
+        )
+
+    # Filename: <city>-<slug-of-address>.pdf. Browsers honor
+    # Content-Disposition: attachment + the filename hint, while still
+    # letting users preview in a new tab.
+    addr = (payload.get("query") or payload.get("address") or "briefing")
+    slug = re.sub(r"[^a-z0-9]+", "-", str(addr).lower()).strip("-")[:60] or "briefing"
+    fname = f"riprap-{slug}.pdf"
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'inline; filename="{fname}"',
+            # Don't cache user-specific renders.
+            "Cache-Control": "no-store",
+        },
+    )
 
 
 @app.get("/api/backend")

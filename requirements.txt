@@ -19,6 +19,14 @@ rasterio>=1.4
 # Policy (specific User-Agent + 1 req/sec rate limit via RateLimiter).
 geopy>=2.4
 
+# weasyprint: server-side PDF rendering for /api/print. Requires the
+# pango + cairo + gobject system libraries:
+#   macOS:  brew install pango
+#   Linux:  apt-get install libpango-1.0-0 libpangoft2-1.0-0 libcairo2
+# On macOS, app/print_pdf.py sets DYLD_FALLBACK_LIBRARY_PATH at first
+# use so brew's /opt/homebrew/lib is findable.
+weasyprint>=68
+
 # Data
 pandas>=2.2
 pyarrow>=18.0

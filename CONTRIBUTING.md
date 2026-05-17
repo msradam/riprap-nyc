@@ -32,6 +32,20 @@ cd riprap-nyc
 uv venv && uv pip install -r requirements.txt
 ```
 
+The PDF route (`/api/print`) uses WeasyPrint, which needs pango / cairo
+system libraries:
+
+```bash
+# macOS
+brew install pango
+
+# Debian / Ubuntu
+sudo apt-get install libpango-1.0-0 libpangoft2-1.0-0 libcairo2
+```
+
+If you skip this, the rest of Riprap still works — `/api/print` will
+return 503 with a clear message until the deps are installed.
+
 SvelteKit (the build is committed; only rebuild when sources
 change under `web/sveltekit/src`):
 
