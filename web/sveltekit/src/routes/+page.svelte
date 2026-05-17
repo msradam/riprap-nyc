@@ -11,7 +11,10 @@
    *    5. Footer (tier legend + build line)
    *
    *  Cold-start (the analyst's "ready to query" page) lives at /app.
-   *  Live briefings remain at /q/<query>; sample at /q/sample.
+   *  Live briefings render at /q/<query>; CityPicker on this page
+   *  links each of the five shipped cities directly to its canonical
+   *  anchor address so first-time visitors can see a real briefing
+   *  without typing.
    */
   import SkipLink from '$lib/components/shell/SkipLink.svelte';
   import PhaseBanner from '$lib/components/landing/PhaseBanner.svelte';

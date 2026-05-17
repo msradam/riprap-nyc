@@ -41,7 +41,7 @@
    *  exporting a half-streamed report. */
   async function exportPdf() {
     if (typeof window === 'undefined') return;
-    const id = page.params.queryId ?? (page.url.pathname === '/q/sample' ? 'sample' : '');
+    const id = page.params.queryId;
     if (!id) return;
     exporting = true;
     exportError = null;

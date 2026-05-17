@@ -110,7 +110,7 @@ app = FastAPI(title="Riprap")
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
 # SvelteKit static build (adapter-static). Serves the new design-system UI
-# from /, /q/sample, /q/<query>. The legacy custom-element pages remain at
+# from / and /q/<query>. The legacy custom-element pages remain at
 # /legacy, /single, /compare, /register/* for as long as they're useful.
 if SVELTEKIT_BUILD.exists():
     app.mount("/_app", StaticFiles(directory=SVELTEKIT_BUILD / "_app"), name="sveltekit_assets")
@@ -657,11 +657,19 @@ def index():
 
 @app.get("/q/sample")
 def q_sample_page():
-    """The prerendered Red Hook demo briefing (no SSE)."""
-    sk = SVELTEKIT_BUILD / "q" / "sample.html"
-    if sk.exists():
-        return FileResponse(sk)
-    return JSONResponse({"error": "sveltekit build not present"}, status_code=503)
+    """Legacy `/q/sample` route — used to serve a prerendered Red Hook
+    demo briefing whose citations + numbers were fabricated. That violated
+    the Plain Writing Act voice the rest of the surface now commits to,
+    so the synthetic page was removed (see commit history). Redirect
+    to a real anchor address that runs an actual briefing through the
+    normal pipeline; CityPicker on the landing offers the same instant-
+    click affordance for each shipped city.
+    """
+    from fastapi.responses import RedirectResponse  # noqa: PLC0415
+    return RedirectResponse(
+        url="/q/189%20Atlantic%20Avenue%2C%20Brooklyn%2C%20NY",
+        status_code=308,
+    )
 
 
 @app.get("/q/{query_id}")

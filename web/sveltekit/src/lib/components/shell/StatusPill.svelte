@@ -8,9 +8,8 @@
    *  actually being crunched. Reads from the briefingState rune store
    *  which q/[queryId]/+page.svelte writes into from SSE callbacks.
    *
-   *  Visible only during a live run (phase != idle && != done). On the
-   *  prerendered /q/sample route the store stays at idle and the pill
-   *  stays hidden.
+   *  Visible only during a live run (phase != idle && != done). Hidden
+   *  before a briefing starts and after the streamed run settles.
    */
 
   // Pretty short labels for FSM step names. Lifted from the legacy

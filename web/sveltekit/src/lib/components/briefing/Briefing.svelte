@@ -56,10 +56,9 @@
 >
   {#each blocks.slice(0, visibleCount) as block, i (i)}
     {#if block.kind === 'status'}
-      <!-- briefing-status HTML comes from either:
-           (a) the static sample fixture (lib/data/sample.ts, trusted), or
-           (b) the parser's preamble fallback (currently disabled).
-           No user-supplied input flows here.
+      <!-- briefing-status HTML comes from the parser's preamble
+           fallback (currently disabled). No user-supplied input flows
+           through this @html sink.
         -->
       <!-- eslint-disable-next-line svelte/no-at-html-tags -->
       <div class="briefing-status briefing-fade-in">{@html block.html}</div>

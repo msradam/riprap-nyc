@@ -2,9 +2,8 @@
  * Cross-component "briefing is done" signal + snapshot for export-PDF.
  *
  * `ready` flips true only after the streaming pipeline has produced a
- * grounded briefing (or the prerendered /q/sample mounts). The header's
- * "export PDF" button keys off this — premature print of a half-streamed
- * briefing is bad UX.
+ * grounded briefing. The header's "export PDF" button keys off this —
+ * premature print of a half-streamed briefing is bad UX.
  *
  * `persistSnapshot` stashes the curated payload in localStorage under
  * `riprap:print:<queryId>` so the dedicated print tab (opened with
@@ -39,8 +38,7 @@ class BriefingState {
   ready = $state(false);
 
   /** Live phase indicator. AppHeader reads these to render the status
-   *  pill. /q/[queryId]/+page.svelte is the canonical writer; the
-   *  prerendered /q/sample route ignores them (it's complete on mount).
+   *  pill. /q/[queryId]/+page.svelte is the canonical writer.
    */
   phase = $state<RunPhase>('idle');
   /** The most recent step name the FSM emitted — e.g. `floodnet`,
