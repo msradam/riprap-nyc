@@ -2,6 +2,7 @@ id: floodnet
 type: live
 title: FloodNet ultrasonic depth sensors (NYC)
 stone: touchstone
+tier: empirical
 adapter: python_call
 
 spatial:
@@ -25,11 +26,14 @@ trace_summary:
   n_events_3y: n_flood_events_3y
 
 provenance:
-  source_name: FloodNet NYC — ultrasonic depth sensor network (CUNY/NYU)
-  source_url: https://www.floodnet.nyc/
-  license: CC-BY-NC-4.0
+  source_name: FloodNet NYC — ultrasonic depth sensor network (CUNY/NYU/Brooklyn College)
+  source_url: https://www.floodnet.nyc/data-downloads
+  license: CC-BY-NC-SA 4.0
   doc_id: floodnet
-  citation: FloodNet NYC — community ultrasonic flood-depth sensor network.
+  citation: >-
+    FloodNet NYC, community-led real-time street-flood sensor network.
+    Data CC-BY-NC-SA 4.0 — derivatives must carry the same license.
+    https://www.floodnet.nyc/data-downloads
 
 narration:
   short: FloodNet sensors and historical flood events near this address.
@@ -39,6 +43,7 @@ fallback:
   message: FloodNet GraphQL endpoint unreachable.
 
 display:
+  variant: spark
   order: 10
   kind: list
   map_layer: true

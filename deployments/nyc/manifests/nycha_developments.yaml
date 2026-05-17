@@ -2,6 +2,7 @@ id: nycha_developments
 type: baked
 title: NYCHA developments exposed nearby
 stone: keystone
+tier: empirical
 adapter: python_call
 
 spatial:
@@ -32,6 +33,7 @@ narration:
   short: NYCHA public housing developments within range of this address and their flood exposure.
 
 display:
+  variant: register
   order: 20
   kind: list
   map_layer: true

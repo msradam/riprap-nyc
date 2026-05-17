@@ -2,6 +2,7 @@ id: sandy
 type: baked
 title: NYC Sandy Inundation Zone (2012 empirical extent)
 stone: cornerstone
+tier: empirical
 adapter: python_call
 
 spatial:
@@ -39,6 +40,7 @@ fallback:
   message: Sandy raster + GeoJSON both unavailable.
 
 display:
+  variant: headline
   order: 10
   kind: stat
   map_layer: true

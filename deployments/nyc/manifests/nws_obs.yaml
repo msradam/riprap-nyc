@@ -2,6 +2,7 @@ id: nws_obs
 type: live
 title: NWS hourly METAR observations (nearest station)
 stone: touchstone
+tier: empirical
 adapter: python_call
 
 spatial:
@@ -36,6 +37,7 @@ fallback:
   message: NWS api.weather.gov unreachable.
 
 display:
+  variant: scalars
   order: 30
   kind: text
   map_layer: false

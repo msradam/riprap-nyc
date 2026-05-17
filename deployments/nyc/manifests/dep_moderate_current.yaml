@@ -2,6 +2,7 @@ id: dep_moderate_current
 type: baked
 title: NYC DEP Moderate Stormwater (2.13 in/hr, current SLR)
 stone: cornerstone
+tier: modeled
 adapter: python_call
 shaper: dep_scenario
 
@@ -36,6 +37,7 @@ fallback:
   message: DEP moderate current raster + GDB both unavailable.
 
 display:
+  variant: tabular
   order: 23
   kind: stat
   map_layer: true

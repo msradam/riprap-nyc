@@ -2,6 +2,7 @@ id: dep_extreme_2080
 type: baked
 title: NYC DEP Extreme Stormwater (3.66 in/hr, 2080 SLR)
 stone: cornerstone
+tier: modeled
 adapter: python_call
 shaper: dep_scenario
 
@@ -36,6 +37,7 @@ fallback:
   message: DEP extreme 2080 raster + GDB both unavailable.
 
 display:
+  variant: tabular
   order: 21
   kind: stat
   map_layer: true

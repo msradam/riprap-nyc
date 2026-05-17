@@ -2,6 +2,7 @@ id: nyc311
 type: live
 title: NYC 311 flood-related complaints (5y)
 stone: touchstone
+tier: proxy
 adapter: python_call
 
 spatial:
@@ -37,6 +38,7 @@ fallback:
   message: NYC 311 SOQL endpoint unreachable.
 
 display:
+  variant: histogram
   order: 20
   kind: list
   map_layer: true

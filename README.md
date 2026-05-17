@@ -56,6 +56,48 @@ back to a `[doc_id]` in public-record data.
 
 ---
 
+## What this is. What this isn't.
+
+Riprap is a **reference dossier generator** for analysts who already
+work with public-record climate data. It is **not** a stamped
+engineering memo, a risk score, a real-estate disclosure, or a
+substitute for a licensed professional.
+
+**Use Riprap if you are:**
+
+- A climate-adaptation or resilience consultant who currently opens
+  six tabs (NFHL, NOAA SLR, NPCC4 PDF, 311 portal, FloodNet, NWS),
+  screenshots them into a Word memo, and cites manually. Riprap
+  collapses that into one URL with a citation trail you can hand to
+  a client.
+- A Phase I ESA preparer adding a **Business Environmental Risk
+  addendum** under ASTM E1527-21. The compliance-audit predicates
+  are well-aimed at that scope.
+- An investigative journalist or civic researcher who needs
+  *defensible*, primary-source-linked numbers about flood-zone
+  exposure, asset proximity, or 311 patterns.
+- A resilience-office analyst (NYC MOCEJ, Chicago CDOT, etc.) who
+  needs to turn agency data into something a deputy commissioner
+  reads in five minutes.
+
+**Don't use Riprap for:**
+
+- **Drainage / hydraulic design.** Use HEC-RAS, SWMM, or a licensed
+  civil engineer's full hydraulic model. Riprap is triage, not design.
+- **Resident-facing flood guidance.** For NYC, defer to
+  [FloodHelpNY](https://www.floodhelpny.org) (Center for NYC
+  Neighborhoods, HUD CDBG-DR funded) and
+  [FloodNet NYC](https://www.floodnet.nyc) for sensor data.
+- **Mortgage / insurance underwriting.** Closed-model risk scores
+  have regulatory acceptance Riprap doesn't claim and doesn't seek.
+- **Personal property decisions or real-estate transactions.** The
+  briefing format is engineering-shaped, not consumer-shaped. Using a
+  Riprap citation as evidence in a transaction is outside the design
+  scope of this tool and outside the support scope of its
+  contributors.
+
+---
+
 ## Quickstart
 
 Four ways to use Riprap, in increasing order of self-host:

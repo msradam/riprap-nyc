@@ -485,9 +485,11 @@ def api_pebbles():
             "type": m.type,
             "title": m.title,
             "stone": m.stone,
+            "tier": m.tier,
             "display": {
                 "order": m.display.order,
                 "kind": m.display.kind,
+                "variant": m.display.variant,
                 "map_layer": m.display.map_layer,
                 "icon": m.display.icon,
             },

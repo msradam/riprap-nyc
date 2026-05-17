@@ -2,6 +2,7 @@ id: ida_hwm
 type: baked
 title: Hurricane Ida 2021 — USGS high-water marks
 stone: cornerstone
+tier: empirical
 adapter: baked_vector
 shaper: ida_hwm   # produces legacy HWMSummary-vars() dict shape for downstream FSM/score/reconcile
 
@@ -52,6 +53,7 @@ fallback:
   message: Ida HWM data file unavailable.
 
 display:
+  variant: tabular
   order: 30
   kind: list
   map_layer: true

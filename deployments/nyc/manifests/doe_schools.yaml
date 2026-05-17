@@ -2,6 +2,7 @@ id: doe_schools
 type: baked
 title: NYC DOE schools exposed nearby
 stone: keystone
+tier: empirical
 adapter: python_call
 
 spatial:
@@ -32,6 +33,7 @@ narration:
   short: NYC DOE schools within range of this address and their flood exposure.
 
 display:
+  variant: register
   order: 30
   kind: list
   map_layer: true

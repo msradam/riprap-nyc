@@ -2,6 +2,7 @@ id: policy_corpus
 type: baked
 title: NYC flood-policy corpus — agency reports + plans
 stone: cornerstone
+tier: empirical
 adapter: local_corpus_with_ner
 
 spatial:
@@ -38,6 +39,7 @@ narration:
   short: NYC flood-policy passages and typed entities (agency, dollar amount, date, location) extracted from agency reports relevant to this address.
 
 display:
+  variant: list
   order: 60
   kind: list
   map_layer: false

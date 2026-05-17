@@ -2,6 +2,7 @@ id: ttm_311_forecast
 type: model
 title: Granite TTM r2 — weekly 311 flood-complaint forecast at this address
 stone: lodestone
+tier: modeled
 adapter: python_call
 
 spatial:
@@ -40,6 +41,7 @@ fallback:
   message: TTM 311 forecast offline.
 
 display:
+  variant: timeseries
   order: 30
   kind: chart
   map_layer: false

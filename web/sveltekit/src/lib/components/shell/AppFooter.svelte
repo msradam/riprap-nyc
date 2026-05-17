@@ -1,9 +1,11 @@
 <footer class="app-footer no-print">
   <div class="app-footer-inner">
     <p class="app-footer-guard">
-      <strong>Riprap does not predict damage.</strong>
-      This tool is for professional analytical work, not personal property decisions.
-      For residents, see <a href="https://www.floodhelpny.org">FloodHelpNY</a>
+      <strong>Riprap is a reference dossier, not a stamped engineering memo, risk score, or disclosure.</strong>
+      It is informational only; not a substitute for a licensed professional, and
+      not designed for personal property decisions, real-estate transactions, or
+      mortgage / insurance underwriting. For residents, see
+      <a href="https://www.floodhelpny.org">FloodHelpNY</a>
       · <a href="https://www.floodnet.nyc">FloodNet NYC</a>.
     </p>
     <p class="app-footer-build">

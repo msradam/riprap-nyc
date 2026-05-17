@@ -65,6 +65,10 @@ class Display(BaseModel):
       - list     a list of features (e.g. Ida HWM sites, FloodNet sensors)
       - chart    a time-series chart (e.g. TTM forecasts)
       - map_only no card body; the data renders only on the map layer
+    `variant` is a finer-grained component hint within `kind` — the
+    SvelteKit cardAdapter uses it to pick the actual evidence-card
+    component (headline / tabular / spark / register / etc.). When
+    unspecified, the adapter falls back to a `kind`-derived default.
     `map_layer` indicates the value carries geometries the map should draw.
     `icon` is an optional short string the card heading can show (emoji ok).
     """
@@ -72,8 +76,19 @@ class Display(BaseModel):
 
     order: int | None = None
     kind: Literal["text", "stat", "list", "chart", "map_only"] = "text"
+    variant: str | None = None
     map_layer: bool = False
     icon: str | None = None
+
+
+# Epistemic tier — the kind of evidence this pebble produces.
+# Drives the small EMP / MOD / PRX / SYN chip on each evidence card.
+#
+#   empirical  — directly measured or observed (sensors, gauges, HWMs)
+#   modeled    — scenario-based prediction (DEM, flood-extent simulation)
+#   proxy      — indirect indicator (microtopo, complaint counts)
+#   synthetic  — generated / hallucinated by a model (TerraMind LULC)
+Tier = Literal["empirical", "modeled", "proxy", "synthetic"]
 
 
 class _PebbleBase(BaseModel):
@@ -83,6 +98,10 @@ class _PebbleBase(BaseModel):
     id: str = Field(..., pattern=r"^[a-z][a-z0-9_]*$")
     title: str
     stone: str  # which Stone this pebble rolls up to
+    tier: Tier | None = None  # epistemic tier (empirical/modeled/proxy/synthetic)
+                              # Required for production deployments; defaults
+                              # to None so existing manifests load without
+                              # edits — the UI renders "—" until declared.
     adapter: str  # short name resolved in adapters.ADAPTERS
     shaper: str | None = None  # optional short name resolved in shapers.SHAPERS;
                                # runs after adapter.fetch() to reshape value dict

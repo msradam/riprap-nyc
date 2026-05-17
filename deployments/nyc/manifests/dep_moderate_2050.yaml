@@ -2,6 +2,7 @@ id: dep_moderate_2050
 type: baked
 title: NYC DEP Moderate Stormwater (2.13 in/hr, 2050 SLR)
 stone: cornerstone
+tier: modeled
 adapter: python_call
 shaper: dep_scenario
 
@@ -36,6 +37,7 @@ fallback:
   message: DEP moderate 2050 raster + GDB both unavailable.
 
 display:
+  variant: tabular
   order: 22
   kind: stat
   map_layer: true

@@ -2,6 +2,7 @@ id: prithvi_water
 type: baked
 title: Prithvi-EO 2.0 — Hurricane Ida pre/post flood inundation polygons
 stone: cornerstone
+tier: modeled
 adapter: python_call
 
 spatial:
@@ -39,6 +40,7 @@ fallback:
   message: Prithvi Ida water mask unavailable.
 
 display:
+  variant: raster
   order: 40
   kind: text
   map_layer: true

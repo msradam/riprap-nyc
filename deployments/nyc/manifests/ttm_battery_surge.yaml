@@ -2,6 +2,7 @@ id: ttm_battery_surge
 type: model
 title: Granite TTM r2 Battery Surge — 96 h hourly nowcast (fine-tune)
 stone: lodestone
+tier: modeled
 adapter: python_call
 
 spatial:
@@ -39,6 +40,7 @@ fallback:
   message: TTM Battery surge forecast offline.
 
 display:
+  variant: timeseries-ft
   order: 21
   kind: chart
   map_layer: false

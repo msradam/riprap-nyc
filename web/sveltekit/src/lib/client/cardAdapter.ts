@@ -21,7 +21,6 @@ import type {
 } from '$lib/types/card';
 import type { TraceNode, TraceStatus } from '$lib/types/trace';
 import type { FinalResult } from '$lib/client/agentStream';
-import { fillRosterForStone } from '$lib/data/stoneRegistry';
 import { pebbleManifest, type PebbleManifest } from '$lib/stores/pebbleManifest.svelte';
 
 /** Reasonable defaults — when the FSM doesn't supply a vintage, fall
@@ -47,56 +46,110 @@ function flattenTrace(node: TraceNode): TraceNode[] {
   return [node, ...(node.children ?? []).flatMap(flattenTrace)];
 }
 
-/** Group leaf specialist nodes by the Stone their state-key belongs to.
- *  The trace's name often differs from the state key (e.g.
- *  `mta_entrance_exposure` vs state `mta_entrances`); we map both. */
+/** Group leaf specialist nodes by the Stone their pebble belongs to.
+ *  Source of truth: pebbleManifest.byId — populated from /api/pebbles
+ *  at app load, so every manifest in the active deployment is recognised
+ *  by definition. A small alias map keeps legacy step names (the
+ *  Capstone reconciler emits e.g. `reconcile_granite41`, not a
+ *  manifest id) routing to the right Stone. */
+const _LEGACY_STEP_TO_STONE: Record<string, StoneKey> = {
+  // NTA / neighborhood-aggregate steps don't have their own manifests yet
+  sandy_nta: 'cornerstone',
+  dep_extreme_2080_nta: 'cornerstone',
+  dep_moderate_2050_nta: 'cornerstone',
+  dep_moderate_current_nta: 'cornerstone',
+  microtopo_nta: 'cornerstone',
+  nyc311_nta: 'touchstone',
+  rag_nta: 'capstone',
+  // Asset-exposure step names that pre-date the matching pebble ids
+  mta_entrance_exposure: 'keystone',
+  nycha_development_exposure: 'keystone',
+  doe_school_exposure: 'keystone',
+  doh_hospital_exposure: 'keystone',
+  // Specialist clusters not yet ported to manifests
+  terramind_synthesis: 'keystone',
+  terramind_buildings: 'keystone',
+  terramind_lulc: 'touchstone',
+  eo_chip_fetch: 'keystone',
+  prithvi_eo_v2: 'cornerstone',
+  prithvi_eo_live: 'touchstone',
+  // Capstone reconciler variants
+  reconcile_granite41: 'capstone',
+  reconcile_neighborhood: 'capstone',
+  reconcile_development: 'capstone',
+  reconcile_live_now: 'capstone',
+  mellea_reconcile_address: 'capstone',
+  mellea_grounding: 'capstone',
+  rag_granite_embedding: 'capstone',
+  gliner_extract: 'capstone',
+};
+
 function stoneForStep(name: string): StoneKey | null {
   const n = name.toLowerCase();
-  // Single-address chain
-  if (n === 'sandy_inundation' || n === 'sandy') return 'cornerstone';
-  if (n === 'dep_stormwater' || n === 'dep') return 'cornerstone';
-  if (n === 'ida_hwm_2021' || n === 'ida_hwm') return 'cornerstone';
-  if (n === 'prithvi_eo_v2' || n === 'prithvi_water') return 'cornerstone';
-  if (n === 'microtopo_lidar' || n === 'microtopo') return 'cornerstone';
-  // Neighborhood NTA chain
-  if (n === 'sandy_nta') return 'cornerstone';
-  if (n === 'dep_extreme_2080_nta' || n === 'dep_moderate_2050_nta' ||
-      n === 'dep_moderate_current_nta') return 'cornerstone';
-  if (n === 'microtopo_nta') return 'cornerstone';
-  if (n === 'nyc311_nta') return 'touchstone';
-  if (n === 'rag_nta') return 'capstone';
-  if (n === 'mta_entrance_exposure' || n === 'mta_entrances') return 'keystone';
-  if (n === 'nycha_development_exposure' || n === 'nycha_developments') return 'keystone';
-  if (n === 'doe_school_exposure' || n === 'doe_schools') return 'keystone';
-  if (n === 'doh_hospital_exposure' || n === 'doh_hospitals') return 'keystone';
-  if (n === 'terramind_synthesis' || n === 'terramind' || n === 'terramind_buildings' ||
-      n === 'eo_chip_fetch') return 'keystone';
-  if (n === 'floodnet') return 'touchstone';
-  if (n === 'nyc311') return 'touchstone';
-  if (n === 'nws_obs') return 'touchstone';
-  if (n === 'noaa_tides') return 'touchstone';
-  if (n === 'prithvi_eo_live' || n === 'prithvi_live' || n === 'terramind_lulc')
-    return 'touchstone';
-  if (n === 'nws_alerts') return 'lodestone';
-  if (n === 'ttm_forecast' || n === 'ttm_311_forecast' || n === 'floodnet_forecast' ||
-      n === 'ttm_battery_surge' || n === 'npcc4_projection') return 'lodestone';
-  if (n.startsWith('reconcile') || n.startsWith('mellea') ||
-      n === 'rag_granite_embedding' || n === 'gliner_extract') return 'capstone';
-  return null;
+  // Manifest is the truth: any pebble id in the active deployment maps
+  // to its stone by definition.
+  const pebble = pebbleManifest.byId[n];
+  if (pebble) return pebble.stone;
+  return _LEGACY_STEP_TO_STONE[n] ?? null;
+}
+
+/** Project the live trace against the deployment's pebble roster.
+ *
+ *  v0.4.5 §3: every Stone's expander shows the full intended roster —
+ *  present specialists keep their live status; absent ones land as
+ *  `not_invoked` with their declared fallback message. The roster
+ *  source is the active deployment's manifests (pebbleManifest.byStone),
+ *  not a frontend-hardcoded list, so adding a city = no TS edits.
+ */
+function fillRosterFromManifests(
+  stone: StoneKey,
+  liveByName: Map<string, StoneMember>,
+): StoneMember[] {
+  const roster = pebbleManifest.byStone[stone] ?? [];
+  const out: StoneMember[] = [];
+  const used = new Set<string>();
+  for (const p of roster) {
+    const live = liveByName.get(p.id);
+    if (live) {
+      used.add(p.id);
+      out.push({
+        ...live,
+        // Override id/name with the manifest's display strings so
+        // provenance row chrome is consistent across deployments.
+        id: p.id,
+        name: p.title,
+        tier: live.tier ?? p.tier ?? null,
+      });
+    } else {
+      out.push({
+        id: p.id,
+        name: p.title,
+        status: 'not_invoked',
+        tier: p.tier ?? null,
+        note: p.narration?.short ?? undefined,
+      });
+    }
+  }
+  // Any live members the manifest doesn't know about (legacy aliases
+  // like `reconcile_granite41`) get appended so we never silently drop
+  // a trace row.
+  for (const [k, m] of liveByName) {
+    if (!used.has(k)) out.push(m);
+  }
+  return out;
 }
 
 function buildStoneTraces(root: TraceNode | undefined | null): StoneTrace[] {
-  const buckets: Record<StoneKey, StoneMember[]> = {
-    cornerstone: [], keystone: [], touchstone: [], lodestone: [], capstone: [],
+  const buckets: Record<StoneKey, Map<string, StoneMember>> = {
+    cornerstone: new Map(), keystone: new Map(),
+    touchstone: new Map(), lodestone: new Map(), capstone: new Map(),
   };
   if (root) {
     for (const node of flattenTrace(root)) {
       const stone = stoneForStep(node.name);
       if (!stone) continue;
-      buckets[stone].push({
+      buckets[stone].set(node.name, {
         id: node.id || node.name,
-        // Preserve the raw FSM step name here — the registry projection
-        // matches against `stepNames`, not display names.
         name: node.name,
         status: mapStatus(node.status),
         tier: node.tier,
@@ -105,12 +158,9 @@ function buildStoneTraces(root: TraceNode | undefined | null): StoneTrace[] {
       });
     }
   }
-  // v0.4.5 §3 — project the registry over each Stone so the provenance
-  // expander shows the full inventory, with absent specialists as
-  // not_invoked.
   return (Object.keys(buckets) as StoneKey[]).map((key) => ({
     key,
-    members: fillRosterForStone(key, buckets[key]),
+    members: fillRosterFromManifests(key, buckets[key]),
   }));
 }
 

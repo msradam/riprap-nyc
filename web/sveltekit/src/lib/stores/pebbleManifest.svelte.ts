@@ -31,9 +31,15 @@ export interface PebbleManifest {
   type: 'live' | 'baked' | 'model';
   title: string;
   stone: StoneKey;
+  /** Epistemic tier — drives the EMP/MOD/PRX/SYN chip on the card. */
+  tier: 'empirical' | 'modeled' | 'proxy' | 'synthetic' | null;
   display: {
     order: number | null;
     kind: 'text' | 'stat' | 'list' | 'chart' | 'map_only';
+    /** Finer-grained component hint within kind — cardAdapter uses this
+     *  to pick which evidence-card component to render. Optional;
+     *  unset falls back to a kind-derived default. */
+    variant: string | null;
     map_layer: boolean;
     icon: string | null;
   };

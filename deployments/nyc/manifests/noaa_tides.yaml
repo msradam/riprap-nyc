@@ -2,6 +2,7 @@ id: noaa_tides
 type: live
 title: NOAA tide-gauge water level (nearest station)
 stone: touchstone
+tier: empirical
 adapter: python_call
 
 spatial:
@@ -38,6 +39,7 @@ fallback:
   message: NOAA tidesandcurrents endpoint unreachable.
 
 display:
+  variant: scalars
   order: 40
   kind: stat
   map_layer: false

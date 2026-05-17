@@ -2,6 +2,7 @@ id: mta_entrances
 type: baked
 title: MTA subway/rail entrances exposed nearby
 stone: keystone
+tier: empirical
 adapter: python_call
 
 spatial:
@@ -32,6 +33,7 @@ narration:
   short: MTA subway / rail entrances within range of this address and their flood exposure.
 
 display:
+  variant: register
   order: 10
   kind: list
   map_layer: true

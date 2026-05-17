@@ -2,6 +2,7 @@ id: floodnet_forecast
 type: model
 title: Granite TTM r2 — flood-event recurrence at nearest FloodNet sensor
 stone: lodestone
+tier: modeled
 adapter: python_call
 
 spatial:
@@ -40,6 +41,7 @@ fallback:
   message: TTM FloodNet forecast offline.
 
 display:
+  variant: timeseries
   order: 40
   kind: chart
   map_layer: false

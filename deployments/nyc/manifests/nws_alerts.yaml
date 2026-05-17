@@ -2,6 +2,7 @@ id: nws_alerts
 type: live
 title: NWS active alerts (flood/coastal/wind)
 stone: lodestone
+tier: modeled
 adapter: python_call
 
 spatial:
@@ -34,6 +35,7 @@ fallback:
   message: NWS alerts endpoint unreachable.
 
 display:
+  variant: tabular
   order: 10
   kind: list
   map_layer: false

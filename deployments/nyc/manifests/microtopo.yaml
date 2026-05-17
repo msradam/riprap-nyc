@@ -2,6 +2,7 @@ id: microtopo
 type: baked
 title: LiDAR / DEM-derived micro-topography
 stone: cornerstone
+tier: proxy
 adapter: python_call
 
 spatial:
@@ -36,6 +37,7 @@ fallback:
   message: DEM unavailable.
 
 display:
+  variant: scalars
   order: 50
   kind: text
   map_layer: false

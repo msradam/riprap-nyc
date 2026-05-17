@@ -2,6 +2,7 @@ id: prithvi_live
 type: model
 title: Prithvi-EO 2.0 NYC-Pluvial — live Sentinel-2 water segmentation
 stone: touchstone
+tier: modeled
 adapter: python_call
 
 spatial:
@@ -49,6 +50,7 @@ fallback:
   message: Prithvi-EO live inference offline.
 
 display:
+  variant: raster-pred
   order: 50
   kind: text
   map_layer: true

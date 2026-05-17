@@ -2,6 +2,7 @@ id: doh_hospitals
 type: baked
 title: NYC DOH hospitals exposed nearby
 stone: keystone
+tier: empirical
 adapter: python_call
 
 spatial:
@@ -32,6 +33,7 @@ narration:
   short: NYC DOH-licensed hospitals within range of this address and their flood exposure.
 
 display:
+  variant: register
   order: 40
   kind: list
   map_layer: true
