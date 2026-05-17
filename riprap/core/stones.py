@@ -51,9 +51,21 @@ class DeploymentDescriptor(BaseModel):
     hazard: str | None = None
 
 
+class CoverageDescriptor(BaseModel):
+    """Optional top-level block declaring this deployment's spatial
+    coverage. Used by `riprap.core.pebbles.deployments.pick_deployment`
+    to route each query to the deployment whose bbox contains the
+    geocoded point — so a Boston query never fires NYC's `ida_hwm`."""
+    model_config = ConfigDict(extra="forbid")
+    bbox: list[float] | None = None  # [min_lon, min_lat, max_lon, max_lat]
+    city: str | None = None
+    state: str | None = None
+
+
 class _StonesFile(BaseModel):
     model_config = ConfigDict(extra="forbid")
     deployment: DeploymentDescriptor = Field(default_factory=DeploymentDescriptor)
+    coverage: CoverageDescriptor = Field(default_factory=CoverageDescriptor)
     stones: list[StoneManifest]
 
 

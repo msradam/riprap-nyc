@@ -2,6 +2,10 @@
 #
 # Same architecture as the NYC reference. Federal pebbles (NWS, NOAA)
 # port unchanged; city-specific pebbles point at data.sfgov.org.
+coverage:
+  bbox: [-122.52, 37.70, -122.35, 37.84]
+  city: San Francisco
+  state: CA
 stones:
   - id: cornerstone
     name: Cornerstone

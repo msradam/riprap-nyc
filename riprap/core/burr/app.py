@@ -34,7 +34,12 @@ from riprap.core.burr.capstone import (
     step_policy_corpus,
     step_reconcile,
 )
-from riprap.core.burr.intake import geocode_target, plan_heuristic, plan_intent
+from riprap.core.burr.intake import (
+    geocode_target,
+    plan_heuristic,
+    plan_intent,
+    select_deployment,
+)
 from riprap.core.burr.stones import (
     CornerstoneAction,
     KeystoneAction,
@@ -164,6 +169,7 @@ def build_app_from_plan(
         .with_hooks(StepEventHook(step_queue))
         .with_actions(
             geocode_target=geocode_target,
+            select_deployment=select_deployment,
             cornerstone=CornerstoneAction(),
             touchstone=TouchstoneAction(),
             lodestone=LodestoneAction(),
@@ -173,7 +179,8 @@ def build_app_from_plan(
             **_chip_cluster_actions(),
         )
         .with_transitions(
-            ("geocode_target", "cornerstone"),
+            ("geocode_target", "select_deployment"),
+            ("select_deployment", "cornerstone"),
             ("cornerstone", "touchstone"),
             ("touchstone", "lodestone"),
             ("lodestone", "keystone"),
@@ -291,6 +298,7 @@ def build_app(query: str, *, project: str = "riprap", step_queue=None):
         .with_actions(
             plan_intent=_planner_action(),
             geocode_target=geocode_target,
+            select_deployment=select_deployment,
             cornerstone=CornerstoneAction(),
             touchstone=TouchstoneAction(),
             lodestone=LodestoneAction(),
@@ -305,7 +313,8 @@ def build_app(query: str, *, project: str = "riprap", step_queue=None):
             # honest "we don't handle this kind of query" message.
             ("plan_intent", "reconcile", expr("intent == 'not_implemented'")),
             ("plan_intent", "geocode_target"),
-            ("geocode_target", "cornerstone"),
+            ("geocode_target", "select_deployment"),
+            ("select_deployment", "cornerstone"),
             ("cornerstone", "touchstone"),
             ("touchstone", "lodestone"),
             ("lodestone", "keystone"),
@@ -415,44 +424,34 @@ def iter_steps(query: str):
     }
 
 
+_PIPELINE_KEYS = (
+    "intent", "plan", "geocode", "lat", "lon", "deployment",
+    "trace",
+    "rag", "gliner", "policy_corpus",
+    "paragraph", "audit", "mellea", "citations",
+    "terramind", "eo_chip", "terramind_lulc", "terramind_buildings",
+)
+
+
 def _state_to_final(state) -> dict:
-    """Pluck the public state slice for the SSE final event. Same key set
-    `run()` returns so the SvelteKit cardAdapter sees identical shape."""
-    return {
-        "intent": state.get("intent"),
-        "plan": state.get("plan"),
-        "geocode": state.get("geocode"),
-        "sandy": state.get("sandy"),
-        "dep": state.get("dep"),
-        "ida_hwm": state.get("ida_hwm"),
-        "prithvi_water": state.get("prithvi_water"),
-        "microtopo": state.get("microtopo"),
-        "floodnet": state.get("floodnet"),
-        "nyc311": state.get("nyc311"),
-        "nws_obs": state.get("nws_obs"),
-        "noaa_tides": state.get("noaa_tides"),
-        "prithvi_live": state.get("prithvi_live"),
-        "nws_alerts": state.get("nws_alerts"),
-        "ttm_forecast": state.get("ttm_forecast"),
-        "ttm_311_forecast": state.get("ttm_311_forecast"),
-        "ttm_battery_surge": state.get("ttm_battery_surge"),
-        "floodnet_forecast": state.get("floodnet_forecast"),
-        "mta_entrances": state.get("mta_entrances"),
-        "nycha_developments": state.get("nycha_developments"),
-        "doe_schools": state.get("doe_schools"),
-        "doh_hospitals": state.get("doh_hospitals"),
-        "terramind": state.get("terramind"),
-        "eo_chip": state.get("eo_chip"),
-        "terramind_lulc": state.get("terramind_lulc"),
-        "terramind_buildings": state.get("terramind_buildings"),
-        "policy_corpus": state.get("policy_corpus"),
-        "rag": state.get("rag"),
-        "gliner": state.get("gliner"),
-        "paragraph": state.get("paragraph"),
-        "audit": state.get("audit"),
-        "mellea": state.get("mellea"),
-        "citations": state.get("citations"),
-    }
+    """Pluck the public state slice for the SSE final event.
+
+    Returns every pipeline-level field plus every pebble id that has a
+    value set in state. Pebble keys vary per deployment now (Boston
+    writes `boston_311`, Chicago writes `chicago_311`, etc.), so a
+    hand-curated whitelist would drift; this scans state instead.
+    """
+    out: dict = {k: state.get(k) for k in _PIPELINE_KEYS}
+    # Sweep up any pebble-id state keys whose value is non-None. With
+    # the writes-union, every Stone declares every place-routed pebble
+    # id; only the active deployment's pebbles get non-None values.
+    for k in state.keys():
+        if k in _PIPELINE_KEYS or k in ("query", "first_target"):
+            continue
+        v = state.get(k)
+        if v is not None:
+            out[k] = v
+    return out
 
 
 def _attach_compliance_audit(out: dict) -> dict:

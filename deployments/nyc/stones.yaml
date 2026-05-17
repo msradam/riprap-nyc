@@ -10,6 +10,16 @@
 #   3. Keystone    — what's exposed (assets)
 #   4. Lodestone   — what's coming (forecasts)
 #   5. Capstone    — the reconciled briefing (LLM synthesis)
+#
+# `coverage` is the bbox a query must land in for this deployment to be
+# chosen by per-query auto-routing. If a geocode resolves outside every
+# declared deployment, the run short-circuits to a "not covered yet"
+# briefing instead of fanning out every pebble against an out-of-area
+# point. Format: [min_lon, min_lat, max_lon, max_lat] (WGS84).
+coverage:
+  bbox: [-74.30, 40.49, -73.69, 40.92]
+  city: New York City
+  state: NY
 stones:
   - id: cornerstone
     name: Cornerstone

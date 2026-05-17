@@ -754,8 +754,25 @@
               {/if}
             </div>
           {:else}
+            <!-- Mirror StatusPill's phase logic so this stays in sync
+                 with the top-right progress indicator. Without this the
+                 static "Resolving address…" would persist while the
+                 header already shows "gathering evidence · floodnet · 8/11". -->
             <div class="generating-status" aria-live="polite">
-              <span class="pulse"></span> Resolving address…
+              <span class="pulse"></span>
+              {#if briefingState.phase === 'specialists'}
+                Gathering evidence{#if briefingState.totalSpecialists}
+                  ({briefingState.firedCount}/{briefingState.totalSpecialists}){/if}…
+              {:else if briefingState.phase === 'reconciling'}
+                Reconciling…
+              {:else if briefingState.phase === 'streaming'}
+                Writing briefing{#if briefingState.attempt > 1}
+                  (reroll {briefingState.attempt - 1}){/if}…
+              {:else if briefingState.phase === 'error'}
+                Error{#if briefingState.errorMessage}: {briefingState.errorMessage}{/if}
+              {:else}
+                Resolving address…
+              {/if}
             </div>
           {/if}
         {/if}

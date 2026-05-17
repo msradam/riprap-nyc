@@ -109,6 +109,47 @@ def plan_intent(state: State) -> State:
         rec["elapsed_s"] = round(time.time() - rec["started_at"], 2)
 
 
+@action(reads=["lat", "lon"], writes=["deployment", "trace"])
+def select_deployment(state: State) -> State:
+    """Pick the deployment whose coverage bbox contains the geocoded point.
+
+    The chosen deployment name (e.g. `nyc`, `boston`) is written to
+    state and read by every Stone's MapActions fan-out. When no
+    deployment covers the point, `deployment` is set to None and the
+    Stones fan out to zero pebbles — the reconciler then produces a
+    "Riprap doesn't cover this place yet" briefing.
+
+    This is what stops a Boston query from firing NYC's `ida_hwm` or
+    `sandy` pebble: per-query routing replaces the previous behaviour
+    where the server's boot-time `RIPRAP_DEPLOYMENT` env var dictated
+    which pebbles ran for every query.
+    """
+    from riprap.core.pebbles.deployments import pick_deployment  # noqa: PLC0415
+
+    trace = list(state.get("trace", []))
+    rec = trace_rec_for("select_deployment")
+    lat = state.get("lat")
+    lon = state.get("lon")
+    dep = pick_deployment(lat, lon)
+    if dep is None:
+        rec["ok"] = True  # not an error — just out-of-coverage
+        rec["result"] = {"deployment": None, "city": None,
+                         "lat": lat, "lon": lon,
+                         "reason": "no deployment covers this point"}
+        rec["elapsed_s"] = round(time.time() - rec["started_at"], 4)
+        trace.append(rec)
+        # Sentinel `__none__` (not None) so Stones can distinguish
+        # "explicitly out of coverage → fan out zero pebbles" from
+        # "no deployment resolved yet → fall back to env var".
+        return state.update(deployment="__none__", trace=trace)
+    rec["ok"] = True
+    rec["result"] = {"deployment": dep.name, "city": dep.city,
+                     "state": dep.state}
+    rec["elapsed_s"] = round(time.time() - rec["started_at"], 4)
+    trace.append(rec)
+    return state.update(deployment=dep.name, trace=trace)
+
+
 @action(reads=["first_target", "query"], writes=["geocode", "lat", "lon", "trace"])
 def geocode_target(state: State) -> State:
     """Resolve the first target (or the raw query if empty) to lat/lon

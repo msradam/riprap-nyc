@@ -3,6 +3,10 @@
 # Proof that Riprap's architecture generalises beyond NYC. Same five
 # stones; federal pebbles (NWS, NOAA, EPA) port unchanged; city-specific
 # pebbles point at Chicago Data Portal (Socrata) instead of NYC Open Data.
+coverage:
+  bbox: [-87.95, 41.64, -87.52, 42.02]
+  city: Chicago
+  state: IL
 stones:
   - id: cornerstone
     name: Cornerstone

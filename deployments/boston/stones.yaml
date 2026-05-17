@@ -3,6 +3,10 @@
 # First CKAN-backed Riprap deployment. Federal pebbles (NWS, NOAA) port
 # unchanged; the city-specific pebble queries data.boston.gov via
 # CKAN's `datastore_search_sql` API.
+coverage:
+  bbox: [-71.20, 42.23, -70.92, 42.40]
+  city: Boston
+  state: MA
 stones:
   - id: cornerstone
     name: Cornerstone
