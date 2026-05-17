@@ -1,0 +1,40 @@
+id: nws_alerts
+type: live
+title: NWS active alerts (heat advisories, excessive heat warnings)
+stone: lodestone
+adapter: python_call
+
+spatial:
+  scope: point
+  crs: EPSG:4326
+
+config:
+  module: app.context.nws_alerts
+  function: summary_for_point
+  args:
+    - {source: lat}
+    - {source: lon}
+  on_none: passthrough
+
+trace_summary:
+  n_active: n_active
+
+provenance:
+  source_name: National Weather Service (NOAA) — active alerts at point
+  source_url: https://api.weather.gov/
+  license: U.S. Public Domain
+  doc_id: nws_alerts
+  citation: NWS active alerts at address — heat advisories, excessive heat warnings.
+
+narration:
+  short: Currently active NWS alerts intersecting this address — heat advisories, excessive heat warnings, and related public-health alerts.
+
+display:
+  order: 10
+  kind: list
+  map_layer: false
+  icon: "⚠️"
+
+fallback:
+  on_offline: skip
+  message: NWS alerts endpoint unreachable.

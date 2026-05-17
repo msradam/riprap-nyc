@@ -1,0 +1,62 @@
+# Riprap — Raspberry Pi deployment (Shape B from docs/deployment-pi.md).
+#
+# This compose file specializes the default profile for ARM64 + the
+# Granite 3B model. Pi 5 8 GB is the target hardware. Run from this
+# directory:
+#
+#     docker compose -f deployments/pi/docker-compose.yml up -d
+#     docker compose -f deployments/pi/docker-compose.yml exec ollama \
+#         ollama pull granite4.1:3b
+#
+# For Shape A (no LLM, sub-second briefings) override:
+#     RIPRAP_RECONCILER_TIER=templated docker compose ... up
+# and skip the `ollama pull` step entirely.
+
+services:
+  riprap-app:
+    image: msradam/riprap-nyc:v0.5.0
+    build:
+      context: ../..
+      dockerfile: Dockerfile.app
+      platforms:
+        - linux/arm64
+    ports:
+      - "7860:7860"
+    environment:
+      # Reconciler defaults to Granite 3B on the Pi — faster on CPU,
+      # fits in the Pi 5 8 GB memory budget alongside Ollama.
+      - RIPRAP_RECONCILER_TIER=${RIPRAP_RECONCILER_TIER:-llm}
+      - RIPRAP_RECONCILER_MODEL=${RIPRAP_RECONCILER_MODEL:-granite4.1:3b}
+      - RIPRAP_LLM_PRIMARY=ollama
+      - OLLAMA_BASE_URL=http://ollama:11434
+      # ML specialists are not bundled on the Pi profile — Riprap
+      # gracefully reports inference-offline for the model pebbles
+      # (prithvi_live, terramind_lulc, etc.). The 18 non-model
+      # pebbles run unchanged.
+      - RIPRAP_ML_BACKEND=local
+      - RIPRAP_HARDWARE_LABEL=${RIPRAP_HARDWARE_LABEL:-Raspberry Pi 5}
+      - RIPRAP_ENGINE_LABEL=${RIPRAP_ENGINE_LABEL:-Granite 4.1 3B / Ollama}
+      # NYCHA / DOE / DOH register pebbles. Enable if the precomputed
+      # registers fit in the Pi's available disk (they're small JSON).
+      - RIPRAP_NYCHA_REGISTERS=${RIPRAP_NYCHA_REGISTERS:-1}
+    depends_on:
+      - ollama
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    environment:
+      # Pi RAM is tight; 2 parallel slots is comfortable on Pi 5 8 GB.
+      - OLLAMA_NUM_PARALLEL=${OLLAMA_NUM_PARALLEL:-2}
+      # Keep the model resident — cold reload kills first-briefing UX.
+      - OLLAMA_KEEP_ALIVE=24h
+      # CPU-only on Pi; Ollama auto-detects but make it explicit.
+      - OLLAMA_HOST=0.0.0.0
+    volumes:
+      - ollama-models:/root/.ollama
+    restart: unless-stopped
+
+volumes:
+  ollama-models:

@@ -1,0 +1,52 @@
+id: tree_canopy
+type: baked
+title: NYC tree canopy coverage near this address
+stone: cornerstone
+adapter: baked_vector
+
+spatial:
+  scope: point
+  crs: EPSG:4326
+
+config:
+  # NYC Forestry — Forestry Tree Points 2015/2016 census. ~600k points
+  # citywide; the registry will paginate via NYC Open Data SODA endpoint.
+  # For a Pi deployment a baked subset is preferable; keep the URL as a
+  # demo of the BYOD path.
+  path: https://data.cityofnewyork.us/resource/uvpi-gqnh.geojson?$limit=5000
+  query:
+    type: radius_point
+    radius_m: 200
+  feature_cap: 30
+  feature_properties:
+    - spc_common
+    - tree_dbh
+    - health
+  aggregations:
+    n_healthy:
+      op: count
+      field: tree_dbh
+  cache_ttl_s: 604800   # 1 week — tree census doesn't move fast
+
+provenance:
+  source_name: NYC Forestry — 2015 Street Tree Census
+  source_url: https://data.cityofnewyork.us/Environment/2015-Street-Tree-Census-Tree-Data/uvpi-gqnh
+  license: NYC Open Data Terms of Use
+  doc_id: tree_canopy
+  citation: NYC Forestry, 2015 Street Tree Census — tree points within 200 m of address.
+
+narration:
+  short: NYC street trees within 200 m of this address (heat-island mitigation proxy).
+  template: >-
+    NYC Forestry recorded {n_within_radius} street tree(s) within 200 m
+    of this address in the 2015 census.
+
+display:
+  order: 20
+  kind: list
+  map_layer: true
+  icon: "🌳"
+
+fallback:
+  on_offline: skip
+  message: NYC tree census dataset unreachable.

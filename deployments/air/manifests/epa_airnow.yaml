@@ -1,0 +1,39 @@
+id: epa_airnow
+type: live
+title: EPA AirNow — current AQI at this address
+stone: touchstone
+adapter: rest_json
+
+spatial:
+  scope: point
+  crs: EPSG:4326
+
+config:
+  # AirNow's current-observation-by-coords endpoint. Returns a list of
+  # observations (one per pollutant); we keep the full list and let
+  # the templated reconciler narrate the most-recent PM2.5 + O3.
+  # Requires a free API key — set RIPRAP_AIRNOW_API_KEY in the env.
+  url: "https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude={lat}&longitude={lon}&distance=25&API_KEY=${RIPRAP_AIRNOW_API_KEY}"
+  method: GET
+  cache_ttl_s: 600
+  timeout_s: 10
+
+provenance:
+  source_name: EPA AirNow — current AQI observations (free API)
+  source_url: https://docs.airnowapi.org/
+  license: U.S. Government — open
+  doc_id: epa_airnow
+  citation: EPA AirNow current-observation API, nearest reporting station to address.
+
+narration:
+  short: EPA AirNow current AQI observations near this address (PM2.5, ozone, etc., 25-mile radius).
+
+display:
+  order: 10
+  kind: list
+  map_layer: false
+  icon: "💨"
+
+fallback:
+  on_offline: skip
+  message: EPA AirNow API key unset or endpoint unreachable.

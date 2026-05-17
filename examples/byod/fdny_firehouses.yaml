@@ -1,0 +1,71 @@
+id: fdny_firehouses
+type: baked
+title: FDNY firehouses near this address
+stone: keystone
+adapter: csv_points
+
+spatial:
+  scope: point
+  crs: EPSG:4326
+
+# BYOD example pebble — real NYC Open Data, treated as a user-supplied
+# portfolio. 219 active FDNY firehouses across the five boroughs (one
+# per row, with address, lat/lon, and admin geography). Pulled from:
+#
+#   https://data.cityofnewyork.us/resource/hc8x-tcnd.csv?$limit=500
+#
+# This pebble is intentionally NOT in any base deployment — it's the
+# canonical demonstration of the BYOD load path. Load it via either:
+#
+#   1. `.riprap/` auto-discovery:
+#         cp examples/byod/fdny_firehouses.{yaml,csv} .riprap/
+#         RIPRAP_DEPLOYMENT=deployments/nyc \
+#           .venv/bin/python -m riprap probe "189 Atlantic Ave, Brooklyn"
+#
+#   2. RIPRAP_EXTRA_MANIFESTS env var:
+#         RIPRAP_DEPLOYMENT=deployments/nyc \
+#         RIPRAP_EXTRA_MANIFESTS=examples/byod \
+#           .venv/bin/python -m riprap probe "189 Atlantic Ave, Brooklyn"
+#
+# Swap the CSV for your own portfolio (lat/lon columns, anything else
+# carries through as `feature_properties`) and the rest works unchanged.
+config:
+  path: fdny_firehouses.csv
+  lat_col: latitude
+  lon_col: longitude
+  query:
+    type: radius_point
+    radius_m: 1500
+  feature_cap: 25
+  feature_properties:
+    - facilityname
+    - facilityaddress
+    - borough
+    - postcode
+    - community_board
+    - nta
+  aggregations:
+    n_firehouses_in_radius: {op: count, field: latitude}
+
+provenance:
+  source_name: NYC Open Data — FDNY Firehouses (hc8x-tcnd)
+  source_url: https://data.cityofnewyork.us/d/hc8x-tcnd
+  license: NYC Open Data Terms of Use
+  doc_id: fdny_firehouses
+  citation: NYC FDNY firehouses (real public dataset) loaded as a BYOD portfolio.
+
+narration:
+  short: FDNY firehouses within 1.5 km of this address, loaded as a BYOD portfolio.
+  template: >-
+    {n_within_radius} FDNY firehouses are located within {radius_m} m of
+    this address, treated as the user-supplied portfolio for this query.
+
+display:
+  order: 25
+  kind: list
+  map_layer: true
+  icon: "🚒"
+
+fallback:
+  on_offline: skip
+  message: BYOD portfolio CSV not found.

@@ -1,0 +1,56 @@
+id: nyc_hvi
+type: baked
+title: NYC Heat Vulnerability Index (NTA-level)
+stone: cornerstone
+adapter: baked_vector
+
+spatial:
+  scope: point
+  crs: EPSG:4326
+
+config:
+  # NYC DOHMH Heat Vulnerability Index, ZCTA-level 1-5 rank.
+  # Resource ID 4mhf-duep is the current Open Data hosting; the dataset
+  # ships without spatial geometry (HVI is keyed by ZCTA, not by point),
+  # so this pebble currently degrades to offline because baked_vector
+  # needs Point geometry. Production deployment would add a ZCTA-
+  # boundary join — a small followup. The manifest is kept here as the
+  # canonical reference for "what HVI looks like in NYC OpenData".
+  path: https://data.cityofnewyork.us/resource/4mhf-duep.geojson
+  query:
+    type: radius_point
+    radius_m: 500
+  feature_cap: 5
+  feature_properties:
+    - zcta20
+    - hvi
+  aggregations:
+    max_hvi_score:
+      op: max
+      field: hvi
+  cache_ttl_s: 86400
+
+provenance:
+  source_name: NYC DOHMH — Heat Vulnerability Index (NTA, 2018)
+  source_url: https://data.cityofnewyork.us/Health/Heat-Vulnerability-Index-Rankings/4xj4-2vap
+  license: NYC Open Data Terms of Use
+  doc_id: nyc_hvi
+  citation: NYC DOHMH Heat Vulnerability Index (2018), NTA-level 1-5 ranking.
+
+narration:
+  short: NYC DOHMH Heat Vulnerability Index for the surrounding NTA, current methodology.
+  template: >-
+    NYC DOHMH ranks {n_within_radius} surrounding neighborhood
+    tabulation areas by Heat Vulnerability Index; the highest score
+    near this address is {max_hvi_score} on the 1-5 scale (5 = highest
+    vulnerability).
+
+display:
+  order: 10
+  kind: stat
+  map_layer: true
+  icon: "🌡️"
+
+fallback:
+  on_offline: skip
+  message: NYC HVI dataset unreachable.

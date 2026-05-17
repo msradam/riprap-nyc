@@ -1,0 +1,31 @@
+# Heat — NYC heat-vulnerability briefing deployment.
+#
+# Same five-stone curatorial structure as flood. Taglines adapted for
+# the hazard but the metaphor holds: ground-record vs live observation
+# vs asset exposure vs forward-looking projection vs synthesis.
+stones:
+  - id: cornerstone
+    name: Cornerstone
+    tagline: The Heat Hazard Reader
+    description: Reads what NYC's neighborhoods remember about heat exposure — vulnerability indices, tree-canopy coverage, urban-heat-island intensity.
+    order: 1
+  - id: touchstone
+    name: Touchstone
+    tagline: The Live Observer
+    description: Watches the current state of the city's heat signals — temperature observations, NWS heat advisories, recent heat complaints.
+    order: 2
+  - id: keystone
+    name: Keystone
+    tagline: The Asset Register
+    description: Counts public assets exposed to heat — cooling centers, NYCHA developments, schools, hospitals — and their accessibility from this address.
+    order: 3
+  - id: lodestone
+    name: Lodestone
+    tagline: The Projector
+    description: Projects what's coming — NWS forecasts, NPCC4 temperature projections, seasonal heat-day counts.
+    order: 4
+  - id: capstone
+    name: Capstone
+    tagline: The Synthesiser
+    description: Writes the cited heat-exposure briefing — Granite 4.1 + Mellea grounding check.
+    order: 5

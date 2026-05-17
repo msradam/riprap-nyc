@@ -1,0 +1,30 @@
+# Air — NYC air-quality briefing deployment.
+#
+# Same five-stone curatorial structure as flood + heat. Each stone's
+# tagline framed for air-quality-specific signals.
+stones:
+  - id: cornerstone
+    name: Cornerstone
+    tagline: The Air Hazard Reader
+    description: Reads what NYC's neighborhoods carry as air-quality burden — Community Air Survey baselines, industrial-emitter proximity, traffic density.
+    order: 1
+  - id: touchstone
+    name: Touchstone
+    tagline: The Live Observer
+    description: Watches the current state of the city's air signals — EPA AirNow PM2.5/O3 levels, NWS air-quality alerts, smoke advisories, 311 odor complaints.
+    order: 2
+  - id: keystone
+    name: Keystone
+    tagline: The Asset Register
+    description: Counts sensitive public assets — schools, hospitals, NYCHA developments — and their air-burden context.
+    order: 3
+  - id: lodestone
+    name: Lodestone
+    tagline: The Projector
+    description: Projects forward — NWS air-quality forecasts, smoke transport projections from upwind wildfires.
+    order: 4
+  - id: capstone
+    name: Capstone
+    tagline: The Synthesiser
+    description: Writes the cited air-quality briefing — Granite 4.1 + Mellea grounding check.
+    order: 5
