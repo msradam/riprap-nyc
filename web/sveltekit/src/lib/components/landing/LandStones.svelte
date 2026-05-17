@@ -12,12 +12,17 @@
     tint: string;
   };
 
+  // Hazard- and city-agnostic taglines. Each Stone names a class of
+  // evidence; the concrete data sources vary by deployment (NYC ships
+  // 23 pebbles, Boston ships 4, etc.). The examples below are
+  // categories, not exhaustive lists, so they hold across every
+  // active deployment.
   const STONE_FRIEZE: Frieze[] = [
-    { name: 'Cornerstone', role: 'the hazard reader',  tag: "what NYC's ground remembers", sources: 'USGS HWMs · FEMA NFHL · DEP stormwater · Prithvi historical', tint: 'var(--stone-cornerstone)' },
-    { name: 'Keystone',    role: 'the asset register', tag: "what's exposed",              sources: 'MTA · NYCHA · DOE · DOH · PLUTO',                                tint: 'var(--stone-keystone)' },
-    { name: 'Touchstone',  role: 'the live observer',  tag: "what's happening now",        sources: 'FloodNet sensors · 311 complaints · NWS · NOAA tide gauges',     tint: 'var(--stone-touchstone)' },
-    { name: 'Lodestone',   role: 'the projector',      tag: "what's coming",               sources: 'NPCC4 · Granite TTM (zero-shot + NYC fine-tune) · NWS alerts',    tint: 'var(--stone-lodestone)' },
-    { name: 'Capstone',    role: 'the synthesizer',    tag: 'writes it all down',          sources: 'Granite 4.1 composer · Mellea grounding-check · WeasyPrint',     tint: 'var(--stone-capstone)' },
+    { name: 'Cornerstone', role: 'the hazard reader',  tag: 'what the ground remembers',     sources: 'Historical inundation extents · FEMA NFHL flood panels · LiDAR microtopography · published high-water marks', tint: 'var(--stone-cornerstone)' },
+    { name: 'Keystone',    role: 'the asset register', tag: "what's exposed",                sources: 'Transit entrances · public housing · schools · hospitals · whatever asset registers a jurisdiction publishes',  tint: 'var(--stone-keystone)' },
+    { name: 'Touchstone',  role: 'the live observer',  tag: "what's happening now",          sources: 'Real-time street-flood sensors · 311 service requests · NWS hourly observations · NOAA tide gauges',           tint: 'var(--stone-touchstone)' },
+    { name: 'Lodestone',   role: 'the projector',      tag: "what's coming",                 sources: 'Sea-level rise projections · time-series surge forecasts · 311 recurrence forecasts · NWS active alerts',         tint: 'var(--stone-lodestone)' },
+    { name: 'Capstone',    role: 'the synthesizer',    tag: 'writes the cited briefing',     sources: 'IBM Granite 4.1 reconciler · Mellea rejection sampling · 13-predicate compliance audit',                          tint: 'var(--stone-capstone)' },
   ];
 </script>
 

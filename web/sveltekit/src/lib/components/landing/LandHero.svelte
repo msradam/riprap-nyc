@@ -23,12 +23,21 @@
   let q = $state('');
   let cityIdx = $state(0);
   let queryIdx = $state(0);
+  let cityFading = $state(false);
 
   $effect(() => {
     if (typeof window === 'undefined') return;
+    // Fade-out → swap text → fade-in. Avoids the absolute-positioning
+    // layout drift that detaches the trailing period from the H1.
+    // Period stays glued to the city because the city is a single span
+    // whose text content swaps in place.
     const t = setInterval(() => {
-      cityIdx = (cityIdx + 1) % CITIES.length;
-      queryIdx = (queryIdx + 1) % SAMPLE_QUERIES.length;
+      cityFading = true;
+      setTimeout(() => {
+        cityIdx = (cityIdx + 1) % CITIES.length;
+        queryIdx = (queryIdx + 1) % SAMPLE_QUERIES.length;
+        cityFading = false;
+      }, 240);
     }, 2400);
     return () => clearInterval(t);
   });
@@ -48,12 +57,11 @@
 <main class="land-hero">
   <h1 class="land-hero-h1">
     <span class="land-hero-headline">
-      A climate-exposure briefing for
-      <span class="city-rotate" aria-live="polite">
-        {#each CITIES as c, idx (c)}
-          <span class="city-rotate-item" class:is-active={idx === cityIdx} aria-hidden={idx !== cityIdx}>{c}</span>
-        {/each}
-      </span>.
+      A climate-exposure briefing for <span
+        class="city-rotate"
+        class:is-fading={cityFading}
+        aria-live="polite"
+      >{CITIES[cityIdx]}</span>.
     </span>
     <span class="land-hero-deck">
       Type an address. Get a written briefing on flood, heat, or air-quality
@@ -115,27 +123,20 @@
     max-width: 64ch;
   }
 
-  /* City-rotate — same inset/opacity pattern as the cycling rail
-     so the H1 line height stays stable as the city swaps. */
+  /* City-rotate — fade-out → swap text → fade-in. Single span so the
+     trailing period stays glued to the city text. H1 reflows naturally
+     when the city width changes (San Francisco is the widest). */
   .city-rotate {
-    position: relative;
-    display: inline-block;
-    min-width: 5.2ch;
-    height: 1em;
-    line-height: 1em;
-    vertical-align: baseline;
-  }
-  .city-rotate-item {
-    position: absolute;
-    inset: 0;
-    line-height: 1em;
-    opacity: 0;
-    transition: opacity 320ms ease;
+    display: inline;
     color: var(--accent);
     font-style: italic;
     white-space: nowrap;
+    transition: opacity 240ms ease;
   }
-  .city-rotate-item.is-active { opacity: 1; }
+  .city-rotate.is-fading { opacity: 0; }
+  @media (prefers-reduced-motion: reduce) {
+    .city-rotate { transition: none; }
+  }
 
   .visually-hidden {
     position: absolute;
