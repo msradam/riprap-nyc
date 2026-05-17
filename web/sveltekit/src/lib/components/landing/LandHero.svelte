@@ -8,7 +8,13 @@
    *  Cycling "Try:" rail still rotates real probe examples.
    */
 
-  const CITIES = ['NYC', 'Chicago', 'Seattle', 'San Francisco', 'Boston'];
+  // "New York City" rather than "NYC" so the H1 line-break rhythm
+  // stays consistent across the rotation. NYC is short enough to fit
+  // beside "A climate-exposure briefing for", which makes the line
+  // visibly shorter than for Chicago / Seattle / San Francisco /
+  // Boston, where the city always falls to its own line. Using the
+  // long form keeps the city on the second line every cycle.
+  const CITIES = ['New York City', 'Chicago', 'Seattle', 'San Francisco', 'Boston'];
 
   const SAMPLE_QUERIES = [
     '80 Pioneer Street, Red Hook',
@@ -89,11 +95,7 @@
   <div class="land-cycling" aria-live="polite">
     <span class="land-cycling-label">Try:</span>
     <button type="button" class="land-cycling-rail" onclick={pickExample} title="Run this example">
-      {#each SAMPLE_QUERIES as s, idx (s)}
-        <span class="land-cycling-item" class:is-active={idx === queryIdx} aria-hidden={idx !== queryIdx}>
-          {s}
-        </span>
-      {/each}
+      <span class="land-cycling-item" class:is-fading={cityFading}>{SAMPLE_QUERIES[queryIdx]}</span>
     </button>
   </div>
 </main>
@@ -193,12 +195,18 @@
   }
   .land-query-submit:hover { background: #000; }
 
+  /* Try-row: single-span fade pattern. Label + cycling text share a
+     real text baseline so `align-items: baseline` aligns visually.
+     (Previously the rail used absolute-positioned items inside a
+     fixed-height button, which had no real baseline and floated the
+     label upward relative to the address.) Font-sizes still differ —
+     label is the small all-caps register — but baseline-align rather
+     than top/center keeps the descenders on the same line. */
   .land-cycling {
     margin-top: 18px;
-    display: grid;
-    grid-template-columns: auto 1fr;
+    display: flex;
     align-items: baseline;
-    column-gap: 10px;
+    gap: 10px;
     font-family: var(--font-mono);
     font-size: 13px;
     color: var(--ink-tertiary);
@@ -209,33 +217,34 @@
     text-transform: uppercase;
     font-size: 11px;
     line-height: 1.4em;
+    flex: 0 0 auto;
   }
   .land-cycling-rail {
-    position: relative;
+    flex: 1 1 auto;
     min-width: 0;
-    height: 1.4em;
-    line-height: 1.4em;
     background: transparent;
     border: 0;
     padding: 0;
     cursor: pointer;
     text-align: left;
+    line-height: 1.4em;
   }
   .land-cycling-item {
-    position: absolute;
-    inset: 0;
-    line-height: 1.4em;
-    opacity: 0;
-    transition: opacity 240ms ease;
+    display: inline-block;
     color: var(--ink);
     border-bottom: 1px dotted var(--rule-soft);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: 100%;
     font-family: var(--font-mono);
     font-size: 13px;
+    transition: opacity 240ms ease;
   }
-  .land-cycling-item.is-active { opacity: 1; }
+  .land-cycling-item.is-fading { opacity: 0; }
+  @media (prefers-reduced-motion: reduce) {
+    .land-cycling-item { transition: none; }
+  }
 
   @media (max-width: 640px) {
     .land-hero-headline { font-size: 38px; }
