@@ -23,6 +23,7 @@
   import { tierForStep } from '$lib/types/tier';
   import { briefingState, persistSnapshot } from '$lib/stores/briefingState.svelte';
   import { pebbleManifest } from '$lib/stores/pebbleManifest.svelte';
+  import { deployment } from '$lib/stores/deployment.svelte';
   import { openAgentStream, type PlanInfo, type FinalResult } from '$lib/client/agentStream';
   import { parseBriefing, citationFromMeta } from '$lib/client/parseBriefing';
   import {
@@ -439,6 +440,18 @@
         briefingState.phase = 'specialists';
         briefingState.totalSpecialists = p.specialists?.length ?? 0;
       },
+      onDeployment: async (d) => {
+        // Per-query routing handshake — the backend has resolved the
+        // deployment for this query. Pivot the header chip + reload
+        // the pebble scaffold so the findings rail renders the
+        // routed-to city's pebbles, not the server's boot deployment.
+        // Sentinel '__none__' is presented to the UI as out-of-coverage.
+        const name = d.name && d.name !== '__none__' ? d.name : null;
+        await Promise.all([
+          deployment.setForQuery(name),
+          pebbleManifest.loadForDeployment(name),
+        ]);
+      },
       onStep: (s) => {
         // Drive the header status pill — show the current step name and
         // increment the fired count for any specialist that returned
@@ -680,6 +693,14 @@
             generatedAt: new Date().toISOString(),
             attempts: finalResult?.mellea?.n_attempts ?? attempt
           });
+        }
+        // Always settle the live status indicator when the stream
+        // closes without an error — even in no-LLM templated mode
+        // where `blocks` stays empty (no streamed tokens, paragraph
+        // comes whole via FinalResult). Without this, the main pane
+        // would stay stuck on "Gathering evidence (9/10)…" forever
+        // after the briefing visibly says "✓ done".
+        if (!errorState) {
           briefingState.markReady();
         }
       }

@@ -120,6 +120,12 @@ export interface AgentStreamHandlers {
   onFinal?: (f: FinalResult) => void;
   onError?: (err: string) => void;
   onDone?: () => void;
+  /** Fired after the backend resolves the deployment for this query
+   *  (post-geocode). `name` is the deployment directory name (e.g.
+   *  `boston`) or null when out-of-coverage. Used by /q/[queryId] to
+   *  swap the header chip + reload the pebble scaffold so the UI
+   *  renders the routed-to city, not the server's boot deployment. */
+  onDeployment?: (d: { name: string | null; city?: string | null; state?: string | null }) => void;
 }
 
 export interface AgentStream {
@@ -161,6 +167,8 @@ export function openAgentStream(query: string, handlers: AgentStreamHandlers): A
   on<{ query: string }>('hello', (d) => handlers.onHello?.(d.query));
   on<{ delta: string }>('plan_token', (d) => handlers.onPlanToken?.(d.delta));
   on<PlanInfo>('plan', (d) => handlers.onPlan?.(d));
+  on<{ name: string | null; city?: string | null; state?: string | null }>(
+    'deployment', (d) => handlers.onDeployment?.(d));
   on<StepEvent>('step', (d) => handlers.onStep?.(d));
   on<{ delta: string; attempt?: number }>('token', (d) => {
     if (d.attempt !== currentAttempt) {

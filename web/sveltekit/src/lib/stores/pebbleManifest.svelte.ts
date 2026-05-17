@@ -78,10 +78,38 @@ class PebbleManifestStore {
   /** Last fetch error — exposed for any debug surface that wants it. */
   error = $state<string | null>(null);
 
+  /** Which deployment is currently loaded — `null` means the server's
+   *  boot-time deployment (back-compat). Set by loadForDeployment().
+   *  Used to short-circuit re-fetch when re-navigating to a query in
+   *  the same city. */
+  loadedFor = $state<string | null>(null);
+
   async load(): Promise<void> {
     if (this.loaded) return;
+    await this._fetchInto(null);
+  }
+
+  /** Re-fetch the manifest scoped to the deployment that was actually
+   *  routed-to for the current query (boston, chicago, …) instead of
+   *  the server's boot-time deployment. Called from /q/[queryId] when
+   *  the SSE stream emits the `deployment` event. No-op when the same
+   *  deployment is already loaded.
+   *
+   *  Falls through to the boot manifest when name is null
+   *  (out-of-coverage) so the page still has something to render. */
+  async loadForDeployment(name: string | null): Promise<void> {
+    if (this.loadedFor === name && this.loaded) return;
+    await this._fetchInto(name);
+  }
+
+  /** Internal: fetch /api/pebbles with optional ?deployment=<name> and
+   *  overwrite the store. Keeps load semantics in one place. */
+  private async _fetchInto(name: string | null): Promise<void> {
+    const url = name
+      ? '/api/pebbles?deployment=' + encodeURIComponent(name)
+      : '/api/pebbles';
     try {
-      const r = await fetch('/api/pebbles');
+      const r = await fetch(url);
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const data: PebbleManifestResponse = await r.json();
       const byId: Record<string, PebbleManifest> = {};
@@ -94,9 +122,11 @@ class PebbleManifestStore {
       this.stones = [...data.stones].sort((a, b) => a.order - b.order);
       this.byStone = byStone;
       this.loaded = true;
+      this.loadedFor = name;
+      this.error = null;
     } catch (e) {
       this.error = String(e);
-      // Leave loaded=false so a later retry is possible.
+      // Leave partial state alone — stale > broken.
     }
   }
 

@@ -23,10 +23,40 @@ class DeploymentStore {
   loaded = $state(false);
   error = $state<string | null>(null);
 
+  /** Load the server's boot-time deployment. Idempotent. */
   async load(): Promise<void> {
     if (this.loaded) return;
     try {
       const r = await fetch('/api/deployment');
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      this.current = (await r.json()) as Deployment;
+      this.loaded = true;
+    } catch (e) {
+      this.error = String(e);
+    }
+  }
+
+  /** Update the chip to reflect the deployment that was actually
+   *  routed-to for the current query — called by the /q/[queryId] SSE
+   *  handler when the backend emits the `deployment` event. Fetches
+   *  /api/deployment?deployment=<name> to pick up the right city +
+   *  hazard strings; without that the chip would just show the raw
+   *  directory name and miss the deployment-specific hazard text.
+   *  When name is null (out-of-coverage), falls back to a neutral
+   *  chip rather than claiming a city we don't have. */
+  async setForQuery(name: string | null): Promise<void> {
+    if (!name) {
+      this.current = {
+        name: 'unknown',
+        city: 'Not in any shipped deployment',
+        hazard: 'Climate-exposure briefing',
+      };
+      this.loaded = true;
+      return;
+    }
+    if (this.current?.name === name) return;
+    try {
+      const r = await fetch('/api/deployment?deployment=' + encodeURIComponent(name));
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       this.current = (await r.json()) as Deployment;
       this.loaded = true;

@@ -460,19 +460,48 @@ def api_debug_vllm_direct():
     })
 
 
-@app.get("/api/pebbles")
-def api_pebbles():
-    """Return the deployment's stones + pebbles for evidence-card rendering.
+def _stones_pebbles_for_deployment(deployment_name: str | None):
+    """Resolve (stones_registry, pebble_registry) for a deployment name.
 
-    The frontend fetches this once on load and uses it to:
-      - Group cards into rows (one row per stone, in stone.order)
-      - Render each pebble as an evidence card before any data arrives
-      - Render the offline/fallback stub when an SSE event signals failure
+    None → the server's boot-time deployment (back-compat). A bare name
+    like 'boston' resolves to `deployments/boston/` regardless of which
+    deployment the server booted with — this is what makes per-query
+    routing reach the UI scaffold.
+    """
+    from pathlib import Path
+    if not deployment_name:
+        return _STONES, _PEBBLES
+    from riprap.core.pebbles.deployments import deployment_by_name as _dep_by_name  # noqa: PLC0415
+    dep = _dep_by_name(deployment_name)
+    if dep is None:
+        # Try treating as a path / fallback to boot deployment so the UI
+        # never gets a 500 from a malformed query param.
+        p = Path(deployment_name)
+        if not p.is_absolute():
+            p = Path(__file__).resolve().parent.parent / deployment_name
+        if not p.exists():
+            return _STONES, _PEBBLES
+        stones_root = p
+    else:
+        stones_root = dep.root
+    return _load_stones(stones_root), _load_pebbles(stones_root)
+
+
+@app.get("/api/pebbles")
+def api_pebbles(deployment: str | None = None):
+    """Return a deployment's stones + pebbles for evidence-card rendering.
+
+    With per-query routing, the frontend MUST pass `?deployment=<name>`
+    once the SSE stream resolves the deployment for a given query —
+    otherwise the UI renders the server's boot-time scaffold (which
+    e.g. lists NYC pebbles for a Boston run, the exact bug the user
+    reported via the screenshot).
 
     Per-pebble payload is the manifest minus implementation guts (config /
     shaper / trace_summary / spatial.crs) — just the parts the UI needs to
     draw a card and show provenance.
     """
+    stones_reg, pebble_reg = _stones_pebbles_for_deployment(deployment)
     stones = [
         {
             "id": s.id,
@@ -481,10 +510,10 @@ def api_pebbles():
             "description": s.description,
             "order": s.order,
         }
-        for s in _STONES.all()
+        for s in stones_reg.all()
     ]
     pebbles = []
-    for p in _PEBBLES.all():
+    for p in pebble_reg.all():
         m = p.manifest
         pebbles.append({
             "id": m.id,
@@ -521,7 +550,7 @@ def api_pebbles():
         })
     pebbles.sort(
         key=lambda x: (
-            _STONES.get(x["stone"]).order if x["stone"] in _STONES else 99,
+            stones_reg.get(x["stone"]).order if x["stone"] in stones_reg else 99,
             x["display"]["order"] if x["display"]["order"] is not None else 999,
             x["id"],
         )
@@ -530,18 +559,30 @@ def api_pebbles():
 
 
 @app.get("/api/deployment")
-def api_deployment():
+def api_deployment(deployment: str | None = None):
     """Active-deployment descriptor for the UI shell.
 
     Returns the city + hazard names the chrome renders in the header
     chip + browser title. Pulled from each deployment's `stones.yaml`
     `deployment:` block (with sensible defaults derived from the
     deployment directory name when the block is absent).
+
+    Without `?deployment`, returns the server's boot-time deployment
+    (back-compat). With `?deployment=<name>` (e.g. `boston`), returns
+    that deployment's descriptor — what the per-query header chip
+    consumes once the SSE stream resolves the deployment for a query.
     """
+    if not deployment:
+        return JSONResponse({
+            "name": _DEPLOYMENT.name,
+            "city": _STONES.city,
+            "hazard": _STONES.hazard,
+        })
+    stones_reg, _ = _stones_pebbles_for_deployment(deployment)
     return JSONResponse({
-        "name": _DEPLOYMENT.name,            # directory name (canonical id)
-        "city": _STONES.city,                # display name (NYC, Boston, ...)
-        "hazard": _STONES.hazard,            # 'Flood-exposure briefing', etc.
+        "name": deployment,
+        "city": stones_reg.city,
+        "hazard": stones_reg.hazard,
     })
 
 
@@ -1147,6 +1188,18 @@ async def api_agent_stream(q: str):
 
             if kind == "step":
                 step_name = ev.get("step") or ""
+                # Per-query routing handshake — when the pipeline
+                # resolves the deployment, push it to the UI so the
+                # header chip + pebble scaffold can pivot off the
+                # deployment that actually fanned out, not whatever
+                # the server booted with.
+                if step_name == "select_deployment":
+                    result = ev.get("result") or {}
+                    dep_name = result.get("deployment")
+                    yield (
+                        "event: deployment\n"
+                        f"data: {json.dumps({'name': dep_name, 'city': result.get('city'), 'state': result.get('state')})}\n\n"
+                    )
                 stone = _STEP_TO_STONE.get(step_name)
                 if stone is not None:
                     if stone != current_stone:
