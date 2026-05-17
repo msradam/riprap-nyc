@@ -1,0 +1,42 @@
+id: mta_entrances
+type: baked
+title: MTA subway/rail entrances exposed nearby
+stone: keystone
+adapter: python_call
+
+spatial:
+  scope: point
+  crs: EPSG:4326
+
+config:
+  module: app.registers.mta_entrances
+  function: summary_for_point
+  args:
+    - {source: lat}
+    - {source: lon}
+  on_none: passthrough
+
+trace_summary:
+  n_entrances: n_entrances
+  n_inside_sandy_2012: n_inside_sandy_2012
+  n_in_dep_extreme_2080: n_in_dep_extreme_2080
+
+provenance:
+  source_name: MTA — subway/rail entrances register
+  source_url: https://data.ny.gov/Transportation/MTA-Subway-Entrances-and-Exits/i9wp-a4ja
+  license: MTA Open Data Terms
+  doc_id: mta_entrance_exposure
+  citation: MTA subway/rail entrances, cross-referenced with Sandy 2012 + DEP extreme 2080.
+
+narration:
+  short: MTA subway / rail entrances within range of this address and their flood exposure.
+
+display:
+  order: 10
+  kind: list
+  map_layer: true
+  icon: "🚇"
+
+fallback:
+  on_offline: skip
+  message: MTA entrance register unavailable.

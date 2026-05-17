@@ -1,0 +1,43 @@
+id: nyc311
+type: live
+title: NYC 311 flood-related complaints (5y)
+stone: touchstone
+adapter: python_call
+
+spatial:
+  scope: point
+  crs: EPSG:4326
+
+config:
+  module: app.context.nyc311
+  function: summary_for_point
+  args:
+    - {source: lat}
+    - {source: lon}
+  kwargs:
+    radius_m: {const: 200}
+    years: {const: 5}
+  on_none: offline
+
+trace_summary:
+  n: n
+
+provenance:
+  source_name: NYC 311 Service Requests (NYC Open Data)
+  source_url: https://data.cityofnewyork.us/Social-Services/311-Service-Requests-from-2010-to-Present/erm2-nwe9
+  license: NYC Open Data Terms of Use
+  doc_id: nyc311
+  citation: NYC 311 Service Requests, flood-related complaints (5-year window).
+
+narration:
+  short: NYC 311 flood-related complaints filed near this address over the past 5 years.
+
+fallback:
+  on_offline: skip
+  message: NYC 311 SOQL endpoint unreachable.
+
+display:
+  order: 20
+  kind: list
+  map_layer: true
+  icon: "📞"

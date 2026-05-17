@@ -1,17 +1,30 @@
 # Riprap — local + self-hosted orchestration.
 #
-# Default `docker compose up` starts only the app container, which
-# expects RIPRAP_LLM_BASE_URL / RIPRAP_ML_BASE_URL to point at an
-# external inference backend (the live HF Space, your own
-# self-hosted instance, etc. — see .env.example).
+# Three deployment shapes covered by profiles:
 #
-# Full self-host (requires an AMD ROCm or NVIDIA CUDA GPU):
+# 1. Default (no profile) — app container only. Expects an external
+#    OpenAI-compatible inference endpoint via RIPRAP_LLM_BASE_URL
+#    (the live HF Space, a hosted vLLM, etc.). See .env.example.
 #
-#     docker compose --profile with-models up
+#        docker compose up
 #
-# This adds the riprap-models GPU specialist service; you still need
-# a separate vLLM serving Granite 4.1 8B for the Capstone reconciler
-# (see docs/DROPLET-RUNBOOK.md for the canonical bring-up).
+# 2. Bundled local LLM — `local-llm` profile adds an Ollama service
+#    with OLLAMA_NUM_PARALLEL=4 so the app can serve 4 concurrent
+#    briefings on a single CPU box. One-time setup:
+#
+#        docker compose --profile local-llm up -d
+#        docker compose exec ollama ollama pull granite4.1:3b
+#        docker compose exec ollama ollama pull granite4.1:8b-q3_K_M
+#
+#    Right shape for NGO deployments without a GPU. Switch to
+#    `RIPRAP_RECONCILER_TIER=templated` for a fully offline,
+#    deterministic-prose mode that uses no LLM at all (see README).
+#
+# 3. Full GPU specialist stack — `with-models` profile adds the
+#    riprap-models GPU container. Requires CUDA/ROCm. See
+#    docs/DROPLET-RUNBOOK.md for the canonical bring-up.
+#
+#        docker compose --profile with-models up
 
 services:
   riprap-app:
@@ -29,6 +42,35 @@ services:
       - RIPRAP_ML_API_KEY=${RIPRAP_ML_API_KEY}
       - RIPRAP_HARDWARE_LABEL=${RIPRAP_HARDWARE_LABEL:-Self-hosted}
       - RIPRAP_ENGINE_LABEL=${RIPRAP_ENGINE_LABEL:-Granite 4.1 / vLLM}
+      # Reconciler tier: `llm` (default) or `no_llm` (disables Granite
+      # planner + reconciler; specialist ML pebbles — Prithvi, TerraMind,
+      # TTM, GLiNER — still run and feed the dashboards).
+      - RIPRAP_RECONCILER_TIER=${RIPRAP_RECONCILER_TIER:-llm}
+      # Reconciler model: granite4.1:8b (default), :8b-q3_K_M, or :3b.
+      # The 3B is the Pi profile — faster and smaller, leans on the
+      # compliance predicates to hold the briefing quality bar.
+      - RIPRAP_RECONCILER_MODEL=${RIPRAP_RECONCILER_MODEL:-granite4.1:8b}
+    restart: unless-stopped
+
+  # Bundled Ollama with parallel-slot serving for NGO deployments
+  # without an external LLM endpoint. Pulls `granite4.1:3b` (default
+  # planner / templated-tier reconciler) and `granite4.1:8b-q3_K_M`
+  # (default LLM-tier reconciler) on first boot.
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    environment:
+      # Allow 4 concurrent generations against the same loaded model.
+      # KV cache is per-slot (~500 MB at 4K ctx); weights are shared.
+      # On a 16 GB box this is comfortable for granite4.1:3b.
+      - OLLAMA_NUM_PARALLEL=${OLLAMA_NUM_PARALLEL:-4}
+      # Keep the model resident — avoids cold reload between briefings.
+      - OLLAMA_KEEP_ALIVE=24h
+    volumes:
+      - ollama-models:/root/.ollama
+    profiles:
+      - local-llm
     restart: unless-stopped
 
   riprap-models:
@@ -50,3 +92,6 @@ services:
     profiles:
       - with-models
     restart: unless-stopped
+
+volumes:
+  ollama-models:

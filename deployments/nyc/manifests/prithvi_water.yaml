@@ -1,0 +1,45 @@
+id: prithvi_water
+type: baked
+title: Prithvi-EO 2.0 — Hurricane Ida pre/post flood inundation polygons
+stone: cornerstone
+adapter: python_call
+
+spatial:
+  scope: point
+  crs: EPSG:4326
+
+config:
+  module: app.flood_layers.prithvi_water
+  function: summary_for_point
+  args:
+    - {source: lat}
+    - {source: lon}
+  on_none: offline
+
+trace_summary:
+  inside_water_polygon: inside_water_polygon
+  nearest_distance_m: nearest_distance_m
+  n_polygons_within_500m: n_polygons_within_500m
+
+provenance:
+  source_name: Prithvi-EO-2.0-300M-TL-Sen1Floods11 (NASA/IBM via TerraTorch) — Hurricane Ida pre/post HLS scenes
+  source_url: https://huggingface.co/ibm-nasa-geospatial
+  license: Apache-2.0
+  doc_id: prithvi_water
+  citation: >-
+    Prithvi-EO-2.0-300M-TL-Sen1Floods11 (NASA/IBM, Apache-2.0, via TerraTorch).
+    Hurricane Ida pre/post diff: pre HLS T18TWK 2021-08-25 (3% cloud),
+    post HLS T18TWK 2021-09-02 (1% cloud, ~12h after peak rainfall).
+
+narration:
+  short: Prithvi-EO satellite-derived Ida pre/post flood inundation polygons near this address.
+
+fallback:
+  on_offline: skip
+  message: Prithvi Ida water mask unavailable.
+
+display:
+  order: 40
+  kind: text
+  map_layer: true
+  icon: "🛰️"

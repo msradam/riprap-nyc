@@ -42,7 +42,6 @@ from urllib.parse import quote
 
 import httpx
 
-
 # ---- 20-query suite -------------------------------------------------------
 
 # Each query carries:

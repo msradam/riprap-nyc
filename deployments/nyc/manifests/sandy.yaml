@@ -1,0 +1,45 @@
+id: sandy
+type: baked
+title: NYC Sandy Inundation Zone (2012 empirical extent)
+stone: cornerstone
+adapter: python_call
+
+spatial:
+  scope: point
+  crs: EPSG:4326
+
+config:
+  module: app.flood_layers.sandy_inundation
+  function: inside_raster
+  args:
+    - {source: pt_2263}
+  # inside_raster returns False if outside, True if inside — both valid.
+  # Only None would indicate failure, but the function never returns None;
+  # passthrough is the safe mode so booleans aren't reinterpreted as offline.
+  on_none: passthrough
+
+trace_summary:
+  inside: __value__   # special: the whole pebble value (not a dict key)
+
+provenance:
+  source_name: NYC Open Data — Sandy Inundation Zone
+  source_url: https://data.cityofnewyork.us/Environment/Sandy-Inundation-Zone/uyj8-7rv5
+  license: NYC Open Data Terms of Use
+  doc_id: sandy_inundation
+  citation: NYC Sandy Inundation Zone (NYC OpenData 5xsi-dfpx, empirical 2012 extent)
+
+narration:
+  short: This address is inside the empirical 2012 Hurricane Sandy inundation zone.
+  template: >-
+    NYC's empirical 2012 Hurricane Sandy inundation footprint
+    {inside_phrasing} this address.
+
+fallback:
+  on_offline: skip
+  message: Sandy raster + GeoJSON both unavailable.
+
+display:
+  order: 10
+  kind: stat
+  map_layer: true
+  icon: "🌊"

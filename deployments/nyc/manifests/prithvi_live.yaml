@@ -1,0 +1,55 @@
+id: prithvi_live
+type: model
+title: Prithvi-EO 2.0 NYC-Pluvial — live Sentinel-2 water segmentation
+stone: touchstone
+adapter: python_call
+
+spatial:
+  scope: point
+  crs: EPSG:4326
+
+config:
+  module: app.flood_layers.prithvi_live
+  function: fetch
+  args:
+    - {source: lat}
+    - {source: lon}
+  # fetch() always returns a dict shaped {ok: bool, ...}. When the model
+  # endpoint or STAC search fails, ok=False and `skipped`/`err` carry the
+  # reason. The pebble keeps the dict as the value; downstream callers
+  # already handle ok=False. The legacy fn never returns None.
+  on_none: passthrough
+
+trace_summary:
+  scene_date: item_datetime
+  cloud_cover: cloud_cover
+  pct_water_500m: pct_water_within_500m
+  pct_water_5km: pct_water_full
+
+provenance:
+  source_name: Prithvi-EO 2.0 NYC-Pluvial — Sentinel-2 L2A live inference
+  source_url: https://huggingface.co/msradam/Prithvi-EO-2.0-NYC-Pluvial
+  license: Apache-2.0
+  doc_id: prithvi_live
+  citation: >-
+    Prithvi-EO-2.0 NYC-Pluvial (msradam/Prithvi-EO-2.0-NYC-Pluvial,
+    Apache-2.0; fine-tuned on AMD Instinct MI300X). Per-query Sentinel-2
+    L2A from Microsoft Planetary Computer.
+
+narration:
+  short: Live Sentinel-2 water segmentation around this address (Prithvi-EO 2.0 NYC-Pluvial).
+
+# This is a model pebble. When inference is offline (no RunPod/Triton,
+# RIPRAP_PRITHVI_LIVE_ENABLE=0, deps missing, STAC unreachable), the
+# legacy function returns {ok: False, skipped/err: "..."} and the pebble
+# passes that through unchanged so the briefing layer can render the
+# "inference offline" stub without failing.
+fallback:
+  on_offline: skip
+  message: Prithvi-EO live inference offline.
+
+display:
+  order: 50
+  kind: text
+  map_layer: true
+  icon: "🛰️"

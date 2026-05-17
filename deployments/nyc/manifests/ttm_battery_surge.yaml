@@ -1,0 +1,45 @@
+id: ttm_battery_surge
+type: model
+title: Granite TTM r2 Battery Surge — 96 h hourly nowcast (fine-tune)
+stone: lodestone
+adapter: python_call
+
+spatial:
+  scope: point
+  crs: EPSG:4326
+
+config:
+  module: app.live.ttm_battery_surge
+  function: fetch
+  # fetch() takes no positional args — applies citywide to NYC harbor entrance.
+  args: []
+  on_none: passthrough
+
+trace_summary:
+  context_h: context_hours
+  horizon_h: horizon_hours
+  forecast_peak_m: forecast_peak_m
+  forecast_peak_hours_ahead: forecast_peak_hours_ahead
+  interesting: interesting
+
+provenance:
+  source_name: msradam/Granite-TTM-r2-Battery-Surge (fine-tune on AMD MI300X)
+  source_url: https://huggingface.co/msradam/Granite-TTM-r2-Battery-Surge
+  license: Apache-2.0
+  doc_id: ttm_battery_surge
+  citation: >-
+    Granite TTM r2 fine-tune (msradam/Granite-TTM-r2-Battery-Surge, Apache-2.0,
+    trained on AMD MI300X). 96 h hourly Battery storm-surge nowcast.
+
+narration:
+  short: Granite TTM r2 fine-tune nowcast of Battery storm-surge over the next 96 hours.
+
+fallback:
+  on_offline: skip
+  message: TTM Battery surge forecast offline.
+
+display:
+  order: 21
+  kind: chart
+  map_layer: false
+  icon: "📈"

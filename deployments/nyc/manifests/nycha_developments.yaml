@@ -1,0 +1,42 @@
+id: nycha_developments
+type: baked
+title: NYCHA developments exposed nearby
+stone: keystone
+adapter: python_call
+
+spatial:
+  scope: point
+  crs: EPSG:4326
+
+config:
+  module: app.registers.nycha
+  function: summary_for_point
+  args:
+    - {source: lat}
+    - {source: lon}
+  on_none: passthrough
+
+trace_summary:
+  n_developments: n_developments
+  n_inside_sandy_2012: n_inside_sandy_2012
+  n_in_dep_extreme_2080: n_in_dep_extreme_2080
+
+provenance:
+  source_name: NYCHA developments register
+  source_url: https://data.cityofnewyork.us/Housing-Development/Map-of-NYCHA-Developments/i9rv-hdr5
+  license: NYC Open Data Terms of Use
+  doc_id: nycha_development_exposure
+  citation: NYCHA public housing developments, cross-referenced with Sandy 2012 + DEP extreme 2080.
+
+narration:
+  short: NYCHA public housing developments within range of this address and their flood exposure.
+
+display:
+  order: 20
+  kind: list
+  map_layer: true
+  icon: "🏢"
+
+fallback:
+  on_offline: skip
+  message: NYCHA developments register unavailable.

@@ -1,0 +1,48 @@
+id: policy_corpus
+type: baked
+title: NYC flood-policy corpus — agency reports + plans
+stone: cornerstone
+adapter: local_corpus_with_ner
+
+spatial:
+  scope: point
+  crs: EPSG:4326
+
+config:
+  # Retrieval + NER are owned by the pebble. The static PDF corpus
+  # ships in `corpus/` and is embedded once at startup via app.rag.
+  # The calling Burr action passes `extras['query']` built from
+  # geocode + sandy + dep signals; if absent, the static template
+  # below is the deployment-default.
+  k: 3
+  min_score: 0.45
+  ner_threshold: 0.55
+  query_template: "flood risk, resilience plan, vulnerability, mitigation"
+
+trace_summary:
+  n_hits: n_hits
+  n_entities: n_entities
+
+provenance:
+  source_name: NYC flood-policy corpus (Comptroller, DEP, ConEd, MTA, NYCHA)
+  source_url: null
+  license: Mixed — see per-document citations
+  doc_id: policy_corpus
+  citation: >-
+    NYC flood-policy corpus retrieved by Granite-embedding similarity
+    search over Comptroller "Rain to Resilience" (2024), ConEd
+    Storm Hardening (2022), DEP Wastewater Resiliency Plan (2013),
+    MTA Resilience Plan (2025), NYCHA "Lessons from Sandy".
+
+narration:
+  short: NYC flood-policy passages and typed entities (agency, dollar amount, date, location) extracted from agency reports relevant to this address.
+
+display:
+  order: 60
+  kind: list
+  map_layer: false
+  icon: "📄"
+
+fallback:
+  on_offline: skip
+  message: Policy-corpus index unavailable (RAG embeddings or NER model offline).

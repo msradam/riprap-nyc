@@ -1,0 +1,38 @@
+# Stone metadata for the NYC deployment.
+#
+# A stone is a curatorial bundle of pebbles. Each pebble references one of
+# these stones via its `stone:` field. The frontend renders each stone as
+# a row of evidence cards (one card per pebble).
+#
+# The `order` field controls vertical order in the briefing UI:
+#   1. Cornerstone — what the ground / past says (hazard)
+#   2. Touchstone  — what's happening right now (live)
+#   3. Keystone    — what's exposed (assets)
+#   4. Lodestone   — what's coming (forecasts)
+#   5. Capstone    — the reconciled briefing (LLM synthesis)
+stones:
+  - id: cornerstone
+    name: Cornerstone
+    tagline: The Hazard Reader
+    description: Reads what NYC's ground remembers about flooding.
+    order: 1
+  - id: touchstone
+    name: Touchstone
+    tagline: The Live Observer
+    description: Watches the current state of the city's flood signals and EO.
+    order: 2
+  - id: keystone
+    name: Keystone
+    tagline: The Asset Register
+    description: Counts the public assets and built fabric exposed to the hazards.
+    order: 3
+  - id: lodestone
+    name: Lodestone
+    tagline: The Projector
+    description: Projects what's coming — alerts, surge, and recurrence forecasts.
+    order: 4
+  - id: capstone
+    name: Capstone
+    tagline: The Synthesiser
+    description: Writes the cited briefing — Granite 4.1 + Mellea rejection sampling.
+    order: 5

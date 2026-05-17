@@ -7,32 +7,34 @@ into a pure generator and feed it a synthetic event sequence.
 """
 from __future__ import annotations
 
+import os
 from pathlib import Path
-
-# main.py does heavy work at import (warm caches, mount FastAPI routes);
-# we only need its module-level constants. The cheapest path is to
-# re-derive _STEP_TO_STONE the same way main.py does — the dict is
-# tiny — and assert structurally that main.py still references each
-# expected step name, so a future drift fails this test.
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_step_to_stone_mapping_covers_known_steps():
-    src = (ROOT / "web" / "main.py").read_text()
-    # Smoke: every step name we expect is in the mapping.
-    for step in ("sandy_inundation", "dep_stormwater", "ida_hwm_2021",
-                 "prithvi_eo_v2", "microtopo_lidar",
-                 "mta_entrance_exposure", "nycha_development_exposure",
-                 "doe_school_exposure", "doh_hospital_exposure",
-                 "terramind_synthesis", "eo_chip_fetch",
-                 "terramind_buildings",
-                 "floodnet", "nyc311", "nws_obs", "noaa_tides",
-                 "prithvi_eo_live", "terramind_lulc",
-                 "nws_alerts", "ttm_forecast", "ttm_311_forecast",
-                 "floodnet_forecast", "ttm_battery_surge",
-                 "reconcile_granite41", "mellea_reconcile_address"):
-        assert f'"{step}"' in src, f"web/main.py missing step mapping {step!r}"
+    # The mapping is built at import from the NYC deployment's pebble
+    # manifests + legacy step aliases. Force the NYC deployment so the
+    # set is deterministic regardless of how the harness invokes us.
+    os.environ["RIPRAP_DEPLOYMENT"] = "deployments/nyc"
+    from web.main import _STEP_TO_STONE
+    missing = [
+        step for step in (
+            "sandy_inundation", "dep_stormwater", "ida_hwm_2021",
+            "prithvi_eo_v2", "microtopo_lidar",
+            "mta_entrance_exposure", "nycha_development_exposure",
+            "doe_school_exposure", "doh_hospital_exposure",
+            "terramind_synthesis", "eo_chip_fetch", "terramind_buildings",
+            "floodnet", "nyc311", "nws_obs", "noaa_tides",
+            "prithvi_eo_live", "terramind_lulc",
+            "nws_alerts", "ttm_forecast", "ttm_311_forecast",
+            "floodnet_forecast", "ttm_battery_surge",
+            "reconcile_granite41", "mellea_reconcile_address",
+        )
+        if step not in _STEP_TO_STONE
+    ]
+    assert not missing, f"_STEP_TO_STONE missing step mappings: {missing}"
 
 
 def _replay(events: list[dict]) -> list[tuple[str, dict]]:

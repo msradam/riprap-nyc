@@ -1,0 +1,58 @@
+id: ida_hwm
+type: baked
+title: Hurricane Ida 2021 — USGS high-water marks
+stone: cornerstone
+adapter: baked_vector
+shaper: ida_hwm   # produces legacy HWMSummary-vars() dict shape for downstream FSM/score/reconcile
+
+trace_summary:
+  n_within_800m: n_within_radius
+  max_height_above_gnd_ft: max_height_above_gnd_ft
+  nearest_m: nearest_dist_m
+
+spatial:
+  scope: point
+  crs: EPSG:4326
+
+config:
+  # Path is temporary until phase 7 moves data/ → deployments/nyc/data/.
+  path: ../../data/ida_2021_hwms_ny.geojson
+  query:
+    type: radius_point
+    radius_m: 800   # matches app/fsm.py step_ida_hwm + register_builder
+  feature_cap: 50
+  feature_properties:
+    - site_description
+    - elev_ft
+    - height_above_gnd
+  aggregations:
+    max_elev_ft:
+      op: max
+      field: elev_ft
+    max_height_above_gnd_ft:
+      op: max
+      field: height_above_gnd
+
+provenance:
+  source_name: USGS STN — Hurricane Ida 2021 (Event 312, NY)
+  source_url: https://stn.wim.usgs.gov/STNDataPortal/
+  license: USGS — public domain
+  doc_id: ida_hwm
+  citation: USGS STN Hurricane Ida 2021 high-water marks (Event 312, NY)
+
+narration:
+  short: Hurricane Ida (Sept 2021) empirical high-water marks observed near this location.
+  template: >-
+    USGS surveyed {n_within_radius} Hurricane Ida high-water mark(s) within
+    {radius_m} m of this location; the highest observed water elevation was
+    {max_elev_ft} ft.
+
+fallback:
+  on_offline: skip
+  message: Ida HWM data file unavailable.
+
+display:
+  order: 30
+  kind: list
+  map_layer: true
+  icon: "🌧️"

@@ -1,0 +1,46 @@
+id: ttm_forecast
+type: model
+title: Granite TTM r2 — Battery surge residual forecast (zero-shot)
+stone: lodestone
+adapter: python_call
+
+spatial:
+  scope: point
+  crs: EPSG:4326
+
+config:
+  module: app.live.ttm_forecast
+  function: summary_for_point
+  args:
+    - {source: lat}
+    - {source: lon}
+  on_none: passthrough
+
+trace_summary:
+  context: context_length
+  horizon: horizon_steps
+  forecast_peak_ft: forecast_peak_ft
+  forecast_peak_min_ahead: forecast_peak_minutes_ahead
+  interesting: interesting
+
+provenance:
+  source_name: IBM Granite TimeSeries TTM r2 — Battery storm-surge residual forecast
+  source_url: https://huggingface.co/ibm-granite/granite-timeseries-ttm-r2
+  license: Apache-2.0
+  doc_id: ttm_forecast
+  citation: >-
+    Granite TimeSeries TTM r2 (IBM Granite, Apache-2.0) zero-shot forecast on
+    NOAA CO-OPS Battery (8518750) storm-surge residual.
+
+narration:
+  short: Granite TTM r2 zero-shot forecast of Battery storm-surge residual, 9.6-hour horizon at 6-minute cadence.
+
+fallback:
+  on_offline: skip
+  message: TTM forecast offline.
+
+display:
+  order: 20
+  kind: chart
+  map_layer: false
+  icon: "📈"

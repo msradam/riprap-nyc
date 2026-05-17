@@ -1,0 +1,42 @@
+id: dep_extreme_2080
+type: baked
+title: NYC DEP Extreme Stormwater (3.66 in/hr, 2080 SLR)
+stone: cornerstone
+adapter: python_call
+shaper: dep_scenario
+
+spatial:
+  scope: point
+  crs: EPSG:4326
+
+config:
+  module: app.flood_layers.dep_stormwater
+  function: join_raster
+  args:
+    - {source: pt_2263}
+    - {const: dep_extreme_2080}
+  on_none: passthrough
+
+trace_summary:
+  depth_label: depth_label
+  depth_class: depth_class
+
+provenance:
+  source_name: NYC DEP Stormwater Flood Map — Extreme (3.66 in/hr, 2080 SLR)
+  source_url: https://www.nyc.gov/site/dep/environment/stormwater-flood-maps.page
+  license: NYC Open Data Terms of Use
+  doc_id: dep_extreme_2080
+  citation: NYC DEP Stormwater Flood Map — Extreme (3.66 in/hr, 2080 SLR)
+
+narration:
+  short: NYC DEP extreme stormwater scenario (2080 SLR) at this address.
+
+fallback:
+  on_offline: skip
+  message: DEP extreme 2080 raster + GDB both unavailable.
+
+display:
+  order: 21
+  kind: stat
+  map_layer: true
+  icon: "💧"

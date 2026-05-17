@@ -1,0 +1,44 @@
+id: noaa_tides
+type: live
+title: NOAA tide-gauge water level (nearest station)
+stone: touchstone
+adapter: python_call
+
+spatial:
+  scope: point
+  crs: EPSG:4326
+
+config:
+  module: app.context.noaa_tides
+  function: summary_for_point
+  args:
+    - {source: lat}
+    - {source: lon}
+  # summary_for_point() always returns a dict (errors via s["error"]),
+  # so passthrough is the safe mode.
+  on_none: passthrough
+
+trace_summary:
+  station: station_id
+  observed_ft_mllw: observed_ft_mllw
+  residual_ft: residual_ft
+
+provenance:
+  source_name: NOAA CO-OPS — tide gauge water level (nearest station)
+  source_url: https://tidesandcurrents.noaa.gov/
+  license: U.S. Public Domain
+  doc_id: noaa_tides
+  citation: NOAA CO-OPS tide-gauge water level observations, nearest station to address.
+
+narration:
+  short: Recent NOAA tide-gauge water-level reading at the nearest station to this address.
+
+fallback:
+  on_offline: skip
+  message: NOAA tidesandcurrents endpoint unreachable.
+
+display:
+  order: 40
+  kind: stat
+  map_layer: false
+  icon: "🌊"

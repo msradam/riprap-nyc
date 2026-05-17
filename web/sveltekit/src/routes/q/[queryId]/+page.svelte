@@ -22,6 +22,7 @@
   import type { TraceNode } from '$lib/types/trace';
   import { tierForStep } from '$lib/types/tier';
   import { briefingState, persistSnapshot } from '$lib/stores/briefingState.svelte';
+  import { pebbleManifest } from '$lib/stores/pebbleManifest.svelte';
   import { openAgentStream, type PlanInfo, type FinalResult } from '$lib/client/agentStream';
   import { parseBriefing, citationFromMeta } from '$lib/client/parseBriefing';
   import {
@@ -422,6 +423,9 @@
 
   onMount(() => {
     briefingState.reset();
+    // Manifest fetch is idempotent (no-op after first call). cardAdapter
+    // reads the store to render BYOD pebbles via the templated path.
+    void pebbleManifest.load();
     if (!queryText()) return;
     runStartedAt = Date.now();
     // v0.4.5 — drive the AppHeader status pill from SSE events. The

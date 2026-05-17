@@ -1,0 +1,46 @@
+id: ttm_311_forecast
+type: model
+title: Granite TTM r2 — weekly 311 flood-complaint forecast at this address
+stone: lodestone
+adapter: python_call
+
+spatial:
+  scope: point
+  crs: EPSG:4326
+
+config:
+  module: app.live.ttm_forecast
+  function: weekly_311_forecast_for_point
+  args:
+    - {source: lat}
+    - {source: lon}
+  on_none: passthrough
+
+trace_summary:
+  history_total: history_total_complaints
+  history_recent_mean: history_recent_3mo_mean
+  forecast_mean: forecast_mean_per_week
+  forecast_peak: forecast_peak_per_week
+  accelerating: accelerating
+
+provenance:
+  source_name: IBM Granite TimeSeries TTM r2 — 311 flood-complaint forecast
+  source_url: https://huggingface.co/ibm-granite/granite-timeseries-ttm-r2
+  license: Apache-2.0
+  doc_id: ttm_311_forecast
+  citation: >-
+    Granite TimeSeries TTM r2 (IBM Granite, Apache-2.0) zero-shot forecast on
+    weekly NYC 311 flood-complaint counts at the queried address (200 m radius).
+
+narration:
+  short: 4-week forecast of NYC 311 flood-complaint volume at this address.
+
+fallback:
+  on_offline: skip
+  message: TTM 311 forecast offline.
+
+display:
+  order: 30
+  kind: chart
+  map_layer: false
+  icon: "📈"

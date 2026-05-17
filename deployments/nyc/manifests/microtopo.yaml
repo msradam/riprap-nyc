@@ -1,0 +1,42 @@
+id: microtopo
+type: baked
+title: LiDAR / DEM-derived micro-topography
+stone: cornerstone
+adapter: python_call
+
+spatial:
+  scope: point
+  crs: EPSG:4326
+
+config:
+  module: app.context.microtopo
+  function: microtopo_at
+  args:
+    - {source: lat}
+    - {source: lon}
+  on_none: offline
+
+trace_summary:
+  elev_m: point_elev_m
+  pct_200m: rel_elev_pct_200m
+  relief_m: basin_relief_m
+
+provenance:
+  source_name: USGS 3DEP 30 m DEM (precomputed citywide GeoTIFF, WGS84)
+  source_url: https://www.usgs.gov/3d-elevation-program
+  license: USGS — public domain
+  doc_id: microtopo
+  citation: USGS 3DEP 30 m DEM (precomputed citywide GeoTIFF, WGS84)
+
+narration:
+  short: LiDAR / DEM-derived micro-topography (elevation percentile, basin relief) at this address.
+
+fallback:
+  on_offline: skip
+  message: DEM unavailable.
+
+display:
+  order: 50
+  kind: text
+  map_layer: false
+  icon: "⛰️"

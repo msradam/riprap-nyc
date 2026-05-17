@@ -1,0 +1,42 @@
+id: doh_hospitals
+type: baked
+title: NYC DOH hospitals exposed nearby
+stone: keystone
+adapter: python_call
+
+spatial:
+  scope: point
+  crs: EPSG:4326
+
+config:
+  module: app.registers.doh_hospitals
+  function: summary_for_point
+  args:
+    - {source: lat}
+    - {source: lon}
+  on_none: passthrough
+
+trace_summary:
+  n_hospitals: n_hospitals
+  n_inside_sandy_2012: n_inside_sandy_2012
+  n_in_dep_extreme_2080: n_in_dep_extreme_2080
+
+provenance:
+  source_name: NYC DOH — hospitals register
+  source_url: https://data.cityofnewyork.us/Health/Hospitals/u3ic-3hcp
+  license: NYC Open Data Terms of Use
+  doc_id: doh_hospital_exposure
+  citation: NYC DOH hospitals, cross-referenced with Sandy 2012 + DEP extreme 2080.
+
+narration:
+  short: NYC DOH-licensed hospitals within range of this address and their flood exposure.
+
+display:
+  order: 40
+  kind: list
+  map_layer: true
+  icon: "🏥"
+
+fallback:
+  on_offline: skip
+  message: DOH hospitals register unavailable.

@@ -1,0 +1,35 @@
+id: npcc4_slr
+type: baked
+title: NPCC4 (2024) sea-level rise projections
+stone: lodestone
+adapter: python_call
+
+spatial:
+  scope: point
+  crs: EPSG:4326
+
+config:
+  module: app.context.npcc4_slr
+  function: get_projections
+  args: []
+  on_none: passthrough
+
+provenance:
+  source_name: NPCC4 — New York City Panel on Climate Change (2024)
+  source_url: https://www.nyas.org/programs/nyc-panel-on-climate-change/
+  license: NYC Open Data Terms of Use
+  doc_id: npcc4_slr
+  citation: NPCC4 (2024) sea-level rise projections at The Battery.
+
+narration:
+  short: NYC Panel on Climate Change (2024) sea-level rise projections — Battery, NY.
+
+display:
+  order: 50
+  kind: stat
+  map_layer: false
+  icon: "🌊"
+
+fallback:
+  on_offline: error
+  message: NPCC4 SLR table missing.

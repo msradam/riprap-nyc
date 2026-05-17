@@ -1,0 +1,42 @@
+id: doe_schools
+type: baked
+title: NYC DOE schools exposed nearby
+stone: keystone
+adapter: python_call
+
+spatial:
+  scope: point
+  crs: EPSG:4326
+
+config:
+  module: app.registers.doe_schools
+  function: summary_for_point
+  args:
+    - {source: lat}
+    - {source: lon}
+  on_none: passthrough
+
+trace_summary:
+  n_schools: n_schools
+  n_inside_sandy_2012: n_inside_sandy_2012
+  n_in_dep_extreme_2080: n_in_dep_extreme_2080
+
+provenance:
+  source_name: NYC DOE — schools register
+  source_url: https://data.cityofnewyork.us/Education/2019-2020-School-Locations/wg9x-4ke6
+  license: NYC Open Data Terms of Use
+  doc_id: doe_school_exposure
+  citation: NYC DOE schools, cross-referenced with Sandy 2012 + DEP extreme 2080.
+
+narration:
+  short: NYC DOE schools within range of this address and their flood exposure.
+
+display:
+  order: 30
+  kind: list
+  map_layer: true
+  icon: "🏫"
+
+fallback:
+  on_offline: skip
+  message: DOE schools register unavailable.

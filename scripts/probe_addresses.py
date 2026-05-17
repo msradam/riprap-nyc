@@ -106,24 +106,34 @@ class RunResult:
 
 
 # Mapping mirrors web/sveltekit/src/lib/client/cardAdapter.ts:stoneForStep.
-# Kept here so the probe doesn't need to read the bundled JS.
+# Recognizes both legacy step names (e.g. "sandy_inundation") and the new
+# manifest-driven pebble ids the Burr app emits ("sandy", per
+# deployments/nyc/manifests/sandy.yaml). Keep both as the legacy
+# intent modules stay reachable via RIPRAP_USE_BURR_APP=0.
 def _stone_for_step(step: str) -> str | None:
     n = (step or "").lower()
-    if n in {"sandy_inundation", "dep_stormwater", "ida_hwm_2021",
-             "prithvi_eo_v2", "microtopo_lidar"}:
+    if n in {"sandy_inundation", "sandy",
+             "dep_stormwater",
+             "dep_extreme_2080", "dep_moderate_2050", "dep_moderate_current",
+             "ida_hwm_2021", "ida_hwm",
+             "prithvi_eo_v2", "prithvi_water",
+             "microtopo_lidar", "microtopo"}:
         return "cornerstone"
-    if n in {"mta_entrance_exposure", "nycha_development_exposure",
-             "doe_school_exposure", "doh_hospital_exposure",
+    if n in {"mta_entrance_exposure", "mta_entrances",
+             "nycha_development_exposure", "nycha_developments",
+             "doe_school_exposure", "doe_schools",
+             "doh_hospital_exposure", "doh_hospitals",
              "terramind_synthesis", "terramind_buildings", "eo_chip_fetch"}:
         return "keystone"
     if n in {"floodnet", "nyc311", "nws_obs", "noaa_tides",
-             "prithvi_eo_live", "terramind_lulc"}:
+             "prithvi_eo_live", "prithvi_live", "terramind_lulc"}:
         return "touchstone"
     if n in {"nws_alerts", "ttm_forecast", "ttm_311_forecast",
              "floodnet_forecast", "ttm_battery_surge"}:
         return "lodestone"
     if n.startswith("reconcile") or n.startswith("mellea") or \
-            n in {"rag_granite_embedding", "gliner_extract"}:
+            n in {"rag_granite_embedding", "gliner_extract",
+                  "assemble_legacy_state"}:
         return "capstone"
     return None
 
