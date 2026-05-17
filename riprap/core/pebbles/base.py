@@ -55,6 +55,11 @@ class Pebble(Protocol):
     manifest: PebbleManifest
     deployment_root: Path
 
+    @property
+    def id(self) -> str: ...
+    @property
+    def stone(self) -> str: ...
+
     def fetch(self, query: SpatialQuery) -> PebbleResult: ...
 
 

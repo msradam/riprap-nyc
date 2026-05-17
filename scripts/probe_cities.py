@@ -76,7 +76,7 @@ def _run_one(probe: dict[str, Any]) -> dict[str, Any]:
 
     for modname in [
         m for m in list(sys.modules)
-        if m.startswith("riprap.") or m.startswith("app.") or m == "riprap"
+        if m.startswith(("riprap.", "app.")) or m == "riprap"
     ]:
         sys.modules.pop(modname, None)
 

@@ -154,7 +154,7 @@ async def stream_query(session: aiohttp.ClientSession, query_obj: dict, base: st
                                     result["error"] = "done without final event"
                             return result
 
-    except asyncio.TimeoutError:
+    except TimeoutError:
         result["status"] = "TIMEOUT"
     except Exception as exc:
         result["status"] = "ERROR"

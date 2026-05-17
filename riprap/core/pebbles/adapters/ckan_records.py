@@ -36,25 +36,72 @@ adapter-agnostic):
 """
 from __future__ import annotations
 
-import math
 from collections import Counter
 from typing import Any
 from urllib.parse import quote
 
 import httpx
 
+from riprap.core.pebbles._geo import bbox_from_radius, haversine_m
 from riprap.core.pebbles._http import fetch_url_json
 from riprap.core.pebbles.base import BasePebble, PebbleResult, SpatialQuery
 
 
-def _haversine_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-    r = 6_371_000.0
-    p1 = math.radians(lat1)
-    p2 = math.radians(lat2)
-    dp = math.radians(lat2 - lat1)
-    dl = math.radians(lon2 - lon1)
-    a = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
-    return 2 * r * math.asin(math.sqrt(a))
+def _build_sql(
+    resource_id: str,
+    bbox: tuple[float, float, float, float],
+    lat_field: str,
+    lon_field: str,
+    extra_where: str | None,
+    order: str | None,
+    limit: int,
+) -> str:
+    lat_min, lat_max, lon_min, lon_max = bbox
+    where = (
+        f'"{lat_field}" BETWEEN {lat_min} AND {lat_max} '
+        f'AND "{lon_field}" BETWEEN {lon_min} AND {lon_max}'
+    )
+    if extra_where:
+        where += f" AND ({extra_where})"
+    sql = f'SELECT * FROM "{resource_id}" WHERE {where}'
+    if order:
+        sql += f" ORDER BY {order}"
+    sql += f" LIMIT {limit}"
+    return sql
+
+
+def _refine_haversine(
+    records: list[dict],
+    query: SpatialQuery,
+    lat_field: str,
+    lon_field: str,
+    radius_m: int,
+) -> list[dict]:
+    """Filter SQL bbox hits down to ones actually inside the radius circle.
+    Drops rows whose lat/lon don't parse as floats."""
+    out: list[dict] = []
+    for r in records:
+        try:
+            rlat = float(r.get(lat_field))
+            rlon = float(r.get(lon_field))
+        except (TypeError, ValueError):
+            continue
+        if haversine_m(query.lat, query.lon, rlat, rlon) <= radius_m:
+            out.append(r)
+    return out
+
+
+def _shape_sample(
+    records: list[dict], sample_fields: list[str], sample_cap: int,
+) -> list[dict]:
+    if not sample_fields:
+        return records[:sample_cap]
+    return [{k: r.get(k) for k in sample_fields} for r in records[:sample_cap]]
+
+
+def _top_by(records: list[dict], field: str, top_n: int = 5) -> list[dict]:
+    counter = Counter(str(r.get(field) or "?").strip() or "?" for r in records)
+    return [{"value": v, "count": c} for v, c in counter.most_common(top_n)]
 
 
 class CKANRecordsPebble(BasePebble):
@@ -76,36 +123,21 @@ class CKANRecordsPebble(BasePebble):
         lat_field = cfg.get("lat_field", "latitude")
         lon_field = cfg.get("lon_field", "longitude")
         radius_m = int(cfg.get("radius_m", 500))
-        limit = int(cfg.get("limit", 500))
-        sample_fields = cfg.get("sample_fields") or []
-        count_by = cfg.get("count_by_field")
-        extra_where = cfg.get("extra_where")
-        order = cfg.get("order")
-        cache_ttl_s = int(cfg.get("cache_ttl_s", 600))
 
-        dlat = radius_m / 111_320.0
-        dlon = radius_m / (111_320.0 * max(math.cos(math.radians(query.lat)), 1e-6))
-        lat_min = query.lat - dlat
-        lat_max = query.lat + dlat
-        lon_min = query.lon - dlon
-        lon_max = query.lon + dlon
-
-        where = (
-            f'"{lat_field}" BETWEEN {lat_min} AND {lat_max} '
-            f'AND "{lon_field}" BETWEEN {lon_min} AND {lon_max}'
+        sql = _build_sql(
+            resource_id=resource_id,
+            bbox=bbox_from_radius(query.lat, query.lon, radius_m),
+            lat_field=lat_field, lon_field=lon_field,
+            extra_where=cfg.get("extra_where"),
+            order=cfg.get("order"),
+            limit=int(cfg.get("limit", 500)),
         )
-        if extra_where:
-            where += f" AND ({extra_where})"
-
-        sql = f'SELECT * FROM "{resource_id}" WHERE {where}'
-        if order:
-            sql += f" ORDER BY {order}"
-        sql += f" LIMIT {limit}"
-
         url = f"{ckan_base}/api/3/action/datastore_search_sql?sql={quote(sql)}"
 
         try:
-            data = fetch_url_json(url, cache_ttl_s=cache_ttl_s, timeout_s=20.0)
+            data = fetch_url_json(
+                url, cache_ttl_s=int(cfg.get("cache_ttl_s", 600)), timeout_s=20.0,
+            )
         except httpx.HTTPError as e:
             return PebbleResult(
                 pebble_id=self.id, value=None, offline=True,
@@ -123,38 +155,21 @@ class CKANRecordsPebble(BasePebble):
                 error=f"ckan_records: CKAN error: {(data or {}).get('error')}",
             )
 
-        records = (data.get("result") or {}).get("records") or []
-
-        refined: list[dict] = []
-        for r in records:
-            try:
-                rlat = float(r.get(lat_field))
-                rlon = float(r.get(lon_field))
-            except (TypeError, ValueError):
-                continue
-            if _haversine_m(query.lat, query.lon, rlat, rlon) <= radius_m:
-                refined.append(r)
-
-        n = len(refined)
-        sample_cap = int(cfg.get("sample_cap", 5))
-        sample: list[dict] = []
-        for r in refined[:sample_cap]:
-            if sample_fields:
-                sample.append({k: r.get(k) for k in sample_fields})
-            else:
-                sample.append(r)
+        refined = _refine_haversine(
+            (data.get("result") or {}).get("records") or [],
+            query, lat_field, lon_field, radius_m,
+        )
 
         value: dict[str, Any] = {
-            "n_records": n,
+            "n_records": len(refined),
             "radius_m": radius_m,
-            "sample": sample,
+            "sample": _shape_sample(
+                refined, cfg.get("sample_fields") or [],
+                int(cfg.get("sample_cap", 5)),
+            ),
         }
-
+        count_by = cfg.get("count_by_field")
         if count_by:
-            counter = Counter(
-                str(r.get(count_by) or "?").strip() or "?" for r in refined
-            )
-            top = [{"value": v, "count": c} for v, c in counter.most_common(5)]
-            value[f"top_by_{count_by}"] = top
+            value[f"top_by_{count_by}"] = _top_by(refined, count_by)
 
         return PebbleResult(pebble_id=self.id, value=value)

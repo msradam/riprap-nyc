@@ -84,20 +84,34 @@ def geocode(text: str, limit: int = 5) -> list[GeocodeHit]:
         return []
 
 def geocode_nominatim(text: str) -> GeocodeHit | None:
-    """National OSM Nominatim fallback."""
+    """National OSM Nominatim fallback.
+
+    Uses geopy's Nominatim client, which enforces the OSM Nominatim
+    Usage Policy: a non-default User-Agent (required), and the 1 req/s
+    rate limit (we apply it explicitly via RateLimiter — geopy doesn't
+    rate-limit by default).
+    See https://operations.osmfoundation.org/policies/nominatim/
+    """
+    from geopy.extra.rate_limiter import RateLimiter  # noqa: PLC0415
+    from geopy.geocoders import Nominatim  # noqa: PLC0415
+
+    geocoder = Nominatim(user_agent=NOMINATIM_UA, timeout=10)
+    geocode_call = RateLimiter(
+        geocoder.geocode, min_delay_seconds=1.0, swallow_exceptions=False
+    )
     try:
-        r = httpx.get(NOMINATIM_URL, params={
-            "q": text, "format": "jsonv2", "addressdetails": "1",
-            "limit": 1, "countrycodes": "us",
-        }, headers={"User-Agent": NOMINATIM_UA}, timeout=10)
-        r.raise_for_status()
-        rows = r.json()
-    except Exception as e:
+        location = geocode_call(
+            text,
+            addressdetails=True,
+            country_codes="us",
+            exactly_one=True,
+        )
+    except Exception as e:  # noqa: BLE001 — log + None per the rest of this module
         log.warning("Nominatim fetch failed: %r", e)
         return None
-    if not rows:
+    if location is None:
         return None
-    row = rows[0]
+    row = location.raw  # the same dict the JSON API returns
     addr = row.get("address") or {}
     
     # Try to map Nominatim borough/county back to NYC standard
@@ -111,9 +125,9 @@ def geocode_nominatim(text: str) -> GeocodeHit | None:
     return GeocodeHit(
         address=row.get("display_name") or text,
         borough=boro,
-        lat=float(row["lat"]),
-        lon=float(row["lon"]),
-        bbl=None, # Nominatim doesn't have BBLs
+        lat=location.latitude,
+        lon=location.longitude,
+        bbl=None,  # Nominatim doesn't have BBLs
         bin=None,
         raw={"source": "nominatim", **row},
     )

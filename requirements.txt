@@ -14,6 +14,10 @@ shapely>=2.0
 pyproj>=3.6
 fiona>=1.10
 rasterio>=1.4
+# geopy: Nominatim client used as the national-fallback geocoder when
+# the query names a non-NYC place. Enforces the OSM Nominatim Usage
+# Policy (specific User-Agent + 1 req/sec rate limit via RateLimiter).
+geopy>=2.4
 
 # Data
 pandas>=2.2

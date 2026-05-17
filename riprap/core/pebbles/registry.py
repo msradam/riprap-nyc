@@ -75,7 +75,7 @@ def _instantiate(
     """Load and instantiate one pebble from a manifest yaml. `manifest_dir`
     None for base-deployment pebbles (relative paths resolve to deployment_root)
     or set to the manifest's parent for BYOD pebbles."""
-    with open(yaml_path) as f:
+    with yaml_path.open() as f:
         raw = yaml.safe_load(f)
     manifest = _MANIFEST_ADAPTER.validate_python(raw)
     adapter_cls = ADAPTERS.get(manifest.adapter)
