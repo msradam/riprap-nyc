@@ -200,7 +200,7 @@ def main() -> int:
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
-    print(f"== probe_benchmarks ==")
+    print("== probe_benchmarks ==")
     print(f"  base : {args.base}")
     print(f"  queries: {len(args.queries)}")
 

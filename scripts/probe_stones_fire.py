@@ -113,7 +113,7 @@ def main() -> int:
     p.add_argument("--timeout", type=float, default=360.0)
     args = p.parse_args()
 
-    print(f"== probe_stones_fire ==")
+    print("== probe_stones_fire ==")
     print(f"  base : {args.base}")
     print(f"  query: {args.query}\n")
 
@@ -171,7 +171,7 @@ def main() -> int:
             failures.append(f"expected nvidia_l4 in emissions; got {hw_keys}")
 
     # ---- print summary
-    print(f"-- step events --")
+    print("-- step events --")
     for s in ("Cornerstone", "Keystone", "Touchstone", "Lodestone", "Capstone"):
         steps = [p.get("step") for p in fired[s]]
         print(f"  {s:11s} fired={len(fired[s]):2d}  {steps}")
@@ -184,7 +184,7 @@ def main() -> int:
             print(f"  {p.get('step'):28s} {err[:140]}")
 
     if final and (em := final.get("emissions")):
-        print(f"\n-- emissions --")
+        print("\n-- emissions --")
         print(f"  n_calls       = {em.get('n_calls')}")
         print(f"  n_measured    = {em.get('n_measured')}")
         print(f"  total_wh      = {em.get('total_wh')}")

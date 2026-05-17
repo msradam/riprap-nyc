@@ -346,7 +346,8 @@ def _try_remote(adapter_name: str, modality_chips: dict) -> dict | None:
         if bounds and pred_b64 and pred_shape:
             try:
                 from app.context._polygonize import (
-                    polygonize_binary_mask, polygonize_class_raster,
+                    polygonize_binary_mask,
+                    polygonize_class_raster,
                 )
                 if adapter_name == "buildings":
                     polys = polygonize_binary_mask(

@@ -111,18 +111,22 @@ Four ways to use Riprap, in increasing order of self-host:
 
 ### 1. Try the live demo
 
-The hosted Space runs the full pipeline. Type any NYC address.
-
 <https://lablab-ai-amd-developer-hackathon-riprap-nyc.hf.space>
 
-The hackathon submission was originally built against an AMD Instinct
-MI300X via the AMD Developer Cloud, where the three NYC-specialised
-fine-tunes were trained. For the hackathon-period demo, inference now
-serves from an NVIDIA L4 Hugging Face Space (`msradam/riprap-vllm`)
-co-hosting vLLM + the EO model stack — see
-[`docs/DEPLOY.md`](docs/DEPLOY.md). Setting
+The hosted UI Space is live; the SvelteKit shell + the deterministic
+data probes (Sandy, DEP, NOAA, FloodNet, 311, NPCC4, …) work fully.
+The GPU inference Space (`msradam/riprap-vllm`) that backs the
+Granite 4.1 reconciler is **currently paused** post-hackathon, so the
+briefing surfaces a graceful "inference offline" shape in place of
+the LLM-reconciled prose. Methodology, evidence cards, and citations
+all still render.
+
+For the full LLM happy-path, run locally (path 3 or 4 below) and
+point at either Ollama (CPU) or your own vLLM endpoint. The hackathon
+submission originally trained the three NYC-specialised fine-tunes
+on an AMD Instinct MI300X via the AMD Developer Cloud; setting
 `RIPRAP_HARDWARE_LABEL=AMD MI300X` on a redeploy swaps the energy
-ledger back to MI300X figures.
+ledger back to MI300X figures. See [`docs/DEPLOY.md`](docs/DEPLOY.md).
 
 ### 2. Run locally with Docker
 

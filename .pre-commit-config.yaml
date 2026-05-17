@@ -3,27 +3,31 @@
 #
 # These are the same checks CI runs on every PR, surfaced locally so
 # contributors don't burn a CI cycle on a trailing-whitespace miss.
+#
+# The `exclude:` regex on the whitespace + EOF hooks keeps them away
+# from upstream-stable artifacts (GIS fixtures, vendored CSS/fonts,
+# built SvelteKit, frozen test snapshots, research notebooks).
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
       - id: trailing-whitespace
-        exclude: ^(web/sveltekit/build/|experiments/|outputs/|.*\.svg$)
+        exclude: '^(data/|tests/integration/results/|tests/(probe_50_results|queries_50)\.json$|web/sveltekit/build/|web/static/(dist|vendor)/|experiments/|outputs/|corpus/|examples/byod/.*\.csv$)'
       - id: end-of-file-fixer
-        exclude: ^(web/sveltekit/build/|experiments/|outputs/|.*\.(svg|png|jpg|pdf)$)
+        exclude: '^(data/|tests/integration/results/|tests/(probe_50_results|queries_50)\.json$|web/sveltekit/build/|web/static/(dist|vendor)/|experiments/|outputs/|corpus/|examples/byod/.*\.csv$)'
       - id: check-yaml
-        exclude: ^(web/sveltekit/|experiments/)
+        exclude: '^(web/sveltekit/|experiments/)'
       - id: check-toml
       - id: check-merge-conflict
       - id: check-added-large-files
         args: ["--maxkb=2000"]
-        exclude: ^(data/|examples/byod/|assets/)
+        exclude: '^(data/|examples/byod/|assets/|corpus/)'
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.8.4
     hooks:
       - id: ruff
         args: [--fix]
-        files: ^(riprap|app|web|scripts|tests|load)/
-        exclude: ^(experiments/|web/sveltekit/build/)
+        files: '^(riprap|app|web|scripts|tests|load)/'
+        exclude: '^(experiments/|web/sveltekit/build/|web/static/)'

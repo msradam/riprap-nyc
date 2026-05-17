@@ -113,7 +113,7 @@ def geocode_nominatim(text: str) -> GeocodeHit | None:
         return None
     row = location.raw  # the same dict the JSON API returns
     addr = row.get("address") or {}
-    
+
     # Try to map Nominatim borough/county back to NYC standard
     boro = addr.get("suburb") or addr.get("city_district") or addr.get("county")
     if boro and "Kings" in boro: boro = "Brooklyn"

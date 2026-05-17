@@ -15,14 +15,13 @@ the implementation.
 See `docs/briefing-standards.md` and `app/context/entity_extract.py`
 for the rationale and the new model lineage.
 """
+# Keep the historical MODEL_NAME export available — some scripts log it.
 from app.context.entity_extract import (  # noqa: F401
     DEFAULT_THRESHOLD,
     ENTITY_LABELS,
+    MODEL_NAME,  # noqa: F401
     Extraction,
     extract_for_chunk,
     extract_for_rag_hits,
     warm,
 )
-
-# Keep the historical MODEL_NAME export available — some scripts log it.
-from app.context.entity_extract import MODEL_NAME  # noqa: F401

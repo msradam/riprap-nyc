@@ -47,7 +47,7 @@ def nyc_grid(res_ft: float = RES_FT):
 def burn(gdf, value_col_or_const, out_path, transform, width, height):
     if isinstance(value_col_or_const, str):
         shapes = ((geom, int(val)) for geom, val
-                  in zip(gdf.geometry, gdf[value_col_or_const]))
+                  in zip(gdf.geometry, gdf[value_col_or_const], strict=False))
     else:
         v = int(value_col_or_const)
         shapes = ((geom, v) for geom in gdf.geometry)
