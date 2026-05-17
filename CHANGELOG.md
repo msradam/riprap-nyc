@@ -4,6 +4,74 @@ All notable changes to Riprap. The hackathon submission tag is
 `v0.5.0` (build 2026-05-07); subsequent dates record polish work
 that landed on the hackathon-period production deploys.
 
+## [Unreleased] — 2026-05-17 (Sunday, rebrand + BYOD + PDF route)
+
+### Added — rebrand surface (Claude Design handoff)
+- **New positioning copy across the marketing surface.** Hero H1 cycles
+  through "A climate-exposure briefing for {New York City | Chicago |
+  Seattle | San Francisco | Boston}." in federal-blue italic; deck
+  names the four primary source families (FEMA / NOAA / USGS / city
+  open data) so the trust-strip claim is foreshadowed inline. Browser
+  title + meta description rewritten for any-US-place framing.
+- **Dynamic header chip.** `/api/deployment` returns active deployment
+  `{name, city, hazard}` from `stones.yaml`'s optional new
+  `deployment:` block (with sensible deployment-dir-name fallback —
+  `nyc → NYC`, `sf → SF`, `heat → NYC + "Heat-exposure briefing"`,
+  etc.). `AppHeader` reads it through a Svelte 5 store; chip pill
+  swaps as you change `RIPRAP_DEPLOYMENT`.
+- **Six new trust components** (per civic-tech compliance registers
+  USWDS · GOV.UK Design System · Section 508 · WCAG 2.2 AA · Plain
+  Writing Act 2010):
+  - `PhaseBanner.svelte` — open-beta banner, GOV.UK pattern
+  - `UseBand.svelte` — responsible-use disclaimer + non-affiliation
+  - `SourceStrip.svelte` — trust-signal counts (23 · 9 · 5 · 3)
+  - `StandardsStrip.svelte` — compliance badges
+  - `CityPicker.svelte` — five-city pill row, jumps to canonical
+    anchor addresses that probe_cities.py exercises in CI
+  - `SkipLink.svelte` — USWDS-canonical "Skip to main content"
+- **BYOD client-side dialog** (`ByodDialog.svelte` + `client/byod.ts`
+  + `stores/byodRegistry.svelte.ts`). Three-section workflow: file
+  drop → adapter auto-detection → pebble mapping. Files stay on the
+  user's machine; manifest persisted to IndexedDB via idb-keyval.
+  Parsers: PapaParse for CSV, native JSON for `.json` / `.geojson`,
+  js-yaml for `.yaml` / `.yml`.
+- **Server-side PDF route** at `/api/print` via WeasyPrint
+  (`app/print_pdf.py`). POST briefing JSON, get back a tagged PDF
+  with cover · briefing · citations · verification stamp. SHA-256
+  document hash on the stamp page lets two reviewers verify
+  bit-for-bit equivalence. The header "export PDF" button now POSTs
+  the cached `PrintSnapshot` from localStorage and opens the PDF in
+  a new tab via a blob URL (replacing the legacy
+  `/print/<queryId>` print-stylesheet path).
+
+### Changed
+- **Deleted `LandPreview.svelte`** — its "Briefing excerpt" pane
+  carried synthetic numbers ("1% AE flood zone", "4.7 ft Sandy HWM",
+  "14 nuisance floods since 2023") dressed in real-looking citation
+  chrome on a page whose standards strip badges `✓ Plain Writing Act`.
+  Removed. `LandStones` below is the structural explainer for "what
+  you'll get back" and contains no fabricated data.
+- **`LandStones` taglines** rewritten hazard- and city-agnostic
+  (was NYC-specific: "what NYC's ground remembers", "MTA · NYCHA
+  · DOE · DOH · PLUTO"; now: "what the ground remembers", "Transit
+  entrances · public housing · schools · hospitals · whatever asset
+  registers a jurisdiction publishes").
+- **Provenance correctness fixes.** `floodnet.yaml` license
+  `CC-BY-NC-4.0` → `CC-BY-NC-SA 4.0` (ShareAlike was missing; FloodNet
+  data terms require it). `npcc4_slr.yaml` license
+  `NYC Open Data Terms of Use` → `CC-BY-NC 4.0 (Annals of the New
+  York Academy of Sciences)` with parent DOI `10.1111/nyas.15116` in
+  the citation string.
+- **AppFooter disclaimer reworded** from "does not predict damage"
+  to "is a reference dossier, not a stamped engineering memo, risk
+  score, or disclosure." Lists explicit out-of-scope uses (real-estate
+  transactions, mortgage / insurance, personal property decisions).
+- README adds a **"What this is. What this isn't."** block naming the
+  user types Riprap is for (resilience consultants, ASTM E1527-21 BER
+  addenda preparers, journalists, agency analysts) and explicitly NOT
+  for (drainage / hydraulic design, residents — defer to FloodHelpNY,
+  mortgage / insurance underwriting, real-estate transactions).
+
 ## [Unreleased] — 2026-05-16 (Saturday, post-hackathon OSS polish)
 
 ### Added
