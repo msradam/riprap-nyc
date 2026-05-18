@@ -171,29 +171,68 @@ def _looks_non_nyc(text: str) -> bool:
 
 
 def geocode_one(text: str) -> GeocodeHit | None:
-    """Dynamic geocoder with failover.
+    """Dynamic geocoder — Nominatim first, NYC Geosearch as enrichment.
 
-    NYC Geosearch is the primary because it gives BBL/BIN identifiers
-    needed by NYC-flood pebbles. National OSM Nominatim is the fallback
-    when the address clearly names a non-NYC place, when Geosearch
-    returns nothing, or when its top match falls outside the NYC bbox.
+    Previous order had NYC Geosearch as the primary and Nominatim as a
+    fallback. That gave NYC Geosearch's aggressive fuzzy-match free
+    rein over every query — typos like "189 Atantic Avnue, Broklyn"
+    silently became "189 McKinley Avenue, Brooklyn", and bare ZIPs
+    like "11201" became "11201 70 Road, Forest Hills". Both wrong,
+    both impossible for the user to notice without comparing rendered
+    address to input.
+
+    The cleaner shape: Nominatim is the canonical resolver (it
+    handles typos by failing honestly, parses ZIPs as regions, works
+    uniformly across every shipped city). NYC Geosearch is only
+    called when Nominatim resolves to a NYC point — and only to
+    enrich the hit with BBL / BIN identifiers the NYC-specific
+    pebbles need (NYCHA / MTA / DOE / DOH joins). When Nominatim
+    fails or returns non-NYC, we never touch Geosearch.
     """
-    if _looks_non_nyc(text):
-        log.info("geocode_one: query %r names a non-NYC place; skipping Geosearch", text)
-        return geocode_nominatim(text)
+    primary = geocode_nominatim(text)
+    if primary is None:
+        return None
+    # Enrich with NYC Geosearch when the resolved point is inside the
+    # NYC bbox. Geosearch may add bbl/bin/borough refinements we
+    # otherwise lose. If Geosearch returns nothing or a hit that
+    # disagrees on coordinates (>500 m apart), trust Nominatim.
+    in_nyc = (primary.lat is not None and primary.lon is not None
+              and NYC_BBOX[0] <= primary.lat <= NYC_BBOX[2]
+              and NYC_BBOX[1] <= primary.lon <= NYC_BBOX[3])
+    if not in_nyc:
+        return primary
+    try:
+        hits = geocode(text)
+    except Exception:  # noqa: BLE001 — enrichment is best-effort
+        return primary
+    if not hits:
+        return primary
+    # Match-or-skip: only adopt Geosearch's identifiers if it agrees
+    # with Nominatim's geometry. Avoids the old fuzzy-match drift.
+    for h in hits:
+        if h.lat is None or h.lon is None:
+            continue
+        if _haversine_km(primary.lat, primary.lon, h.lat, h.lon) > 0.5:
+            continue
+        # Geosearch confirms — keep Nominatim's address+coords, take
+        # Geosearch's BBL/BIN/borough refinements where missing.
+        return GeocodeHit(
+            address=primary.address,
+            borough=primary.borough or h.borough,
+            lat=primary.lat,
+            lon=primary.lon,
+            bbl=h.bbl or primary.bbl,
+            bin=h.bin or primary.bin,
+            raw={**primary.raw, "geosearch_enrichment": True},
+        )
+    return primary
 
-    hits = geocode(text)
-    hint = _detect_borough(text)
 
-    if hint:
-        in_boro = [h for h in hits if h.borough and h.borough.lower() == hint.lower()]
-        if in_boro:
-            return in_boro[0]
-
-    if hits:
-        top = hits[0]
-        if top.lat and 40.4 <= top.lat <= 41.0:  # Broad NYC check
-            return top
-
-    log.info("Falling back to Nominatim for %r", text)
-    return geocode_nominatim(text)
+def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Great-circle distance, kilometres."""
+    from math import asin, cos, radians, sin, sqrt
+    r = 6371.0
+    dlat = radians(lat2 - lat1)
+    dlon = radians(lon2 - lon1)
+    a = sin(dlat / 2) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2) ** 2
+    return 2 * r * asin(sqrt(a))
