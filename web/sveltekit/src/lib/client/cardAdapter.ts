@@ -852,8 +852,25 @@ function buildTemplated(m: PebbleManifest, value: unknown): Card | null {
   }
   if (variant === 'scalars') {
     const scalars: NonNullable<Card['scalars']> = [];
+    // Fields that are metadata, not user-facing measurements: drop
+    // them from the scalar grid (they're noise — station_id is in
+    // the card title, station_lat/lon are implied by station_name +
+    // distance_km, version/cache fields don't help a reader). The
+    // Chicago Lake Michigan card was rendering with only lat/lon
+    // because the observed/predicted values came back null and the
+    // junk fields took over.
+    const SCALAR_IGNORE = new Set([
+      'station_lat', 'station_lon', 'station_id',
+      'aoi_radius_m', 'radius_m', 'cache_age_s',
+      // Back-compat alias of observed_ft (the datum-aware key) the
+      // noaa_tides adapter keeps for legacy LLM-citation paths; if
+      // both are present (Boston, Chicago) the card would show the
+      // same value twice.
+      'observed_ft_mllw', 'predicted_ft_mllw',
+    ]);
     if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
       for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+        if (SCALAR_IGNORE.has(k)) continue;
         if (typeof v === 'number' && Number.isFinite(v)) {
           scalars.push({ value: `${v}`, label: k });
         }
@@ -864,8 +881,17 @@ function buildTemplated(m: PebbleManifest, value: unknown): Card | null {
       scalars.push({ value: value ? 'yes' : 'no', label: m.title });
     }
     if (!scalars.length) {
+      // No real measurement scalars. Look for an `error` string the
+      // pebble may have surfaced and render that as the headline so
+      // the user knows the source was unreachable — not silent.
+      const errStr = (typeof value === 'object' && value !== null
+        ? (value as Record<string, unknown>).error
+        : null);
       return { ...base, variant: 'headline',
-               headline: String(value), subhead: m.narration.short ?? undefined };
+               headline: typeof errStr === 'string'
+                 ? `Source unavailable — ${errStr.split('\n')[0].slice(0, 80)}`
+                 : (m.fallback.message ?? 'No measurements'),
+               subhead: m.narration.short ?? undefined };
     }
     return { ...base, scalars };
   }

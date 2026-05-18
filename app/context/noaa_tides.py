@@ -77,10 +77,24 @@ def _nearest_station(lat: float, lon: float):
     return min(STATIONS, key=lambda s: _haversine_km(lat, lon, s[2], s[3]))
 
 
+# Great Lakes stations (NOAA CO-OPS lake gauges) don't support the
+# MLLW tidal datum — Great Lakes elevations reference IGLD (the
+# International Great Lakes Datum). Hitting the API with datum=MLLW
+# against Calumet Harbor (9087044) etc. returns HTTP 400, so the
+# Chicago Lake Michigan card silently came up null. Map each station
+# to its native datum.
+_GREAT_LAKES_STATIONS = {"9087044"}  # Calumet Harbor, IL — extend as we ship more lake gauges
+
+
+def _datum_for(station_id: str) -> str:
+    return "IGLD" if station_id in _GREAT_LAKES_STATIONS else "MLLW"
+
+
 def _fetch(station_id: str, product: str) -> dict:
     r = httpx.get(URL, params={
         "date": "latest", "station": station_id, "product": product,
-        "datum": "MLLW", "units": "english", "time_zone": "lst_ldt",
+        "datum": _datum_for(station_id),
+        "units": "english", "time_zone": "lst_ldt",
         "format": "json",
     }, timeout=8.0)
     r.raise_for_status()
@@ -93,16 +107,22 @@ def reading_at(lat: float, lon: float) -> TideReading:
     out = TideReading(station_id=sid, station_name=name, distance_km=dist_km,
                       observed_ft=None, predicted_ft=None, residual_ft=None,
                       obs_time=None)
+    is_great_lakes = sid in _GREAT_LAKES_STATIONS
     try:
         obs = _fetch(sid, "water_level").get("data") or []
-        pred = _fetch(sid, "predictions").get("predictions") or []
         if obs:
             out.observed_ft = round(float(obs[0]["v"]), 2)
             out.obs_time = obs[0].get("t")
-        if pred:
-            out.predicted_ft = round(float(pred[0]["v"]), 2)
-        if out.observed_ft is not None and out.predicted_ft is not None:
-            out.residual_ft = round(out.observed_ft - out.predicted_ft, 2)
+        # Great Lakes stations don't publish tide predictions
+        # (there are no astronomical tides on a lake — just wind,
+        # ice, and seasonal water-level fluctuation). Skip the
+        # predictions fetch to avoid a 400 on every Chicago run.
+        if not is_great_lakes:
+            pred = _fetch(sid, "predictions").get("predictions") or []
+            if pred:
+                out.predicted_ft = round(float(pred[0]["v"]), 2)
+            if out.observed_ft is not None and out.predicted_ft is not None:
+                out.residual_ft = round(out.observed_ft - out.predicted_ft, 2)
     except Exception as e:
         out.error = str(e)
     return out
@@ -112,12 +132,19 @@ def summary_for_point(lat: float, lon: float) -> dict:
     r = reading_at(lat, lon)
     # Look up station coords for the map marker.
     sta = next((s for s in STATIONS if s[0] == r.station_id), None)
+    datum = _datum_for(r.station_id)
     return {
         "station_id": r.station_id,
         "station_name": r.station_name,
         "station_lat": sta[2] if sta else None,
         "station_lon": sta[3] if sta else None,
         "distance_km": r.distance_km,
+        "datum": datum,          # MLLW (tidal) | IGLD (Great Lakes)
+        "observed_ft": r.observed_ft,
+        # Back-compat alias: the legacy field name baked the tidal
+        # datum into the key. Keep it for callers (frontend + LLM
+        # citations) that haven't switched to the datum-agnostic
+        # `observed_ft` + `datum` pair yet.
         "observed_ft_mllw": r.observed_ft,
         "predicted_ft_mllw": r.predicted_ft,
         "residual_ft": r.residual_ft,
