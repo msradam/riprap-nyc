@@ -1081,11 +1081,30 @@ async def api_agent_stream(q: str):
             from app.intents import live_now as i_live
             from app.intents import neighborhood as i_nbhd
             from app.intents import single_address as i_addr
-            from app.planner import plan as run_planner
+            from app.planner import Plan, plan as run_planner
 
             def _on_plan_token(delta: str):
                 out_q.put({"kind": "plan_token", "delta": delta})
-            p = run_planner(q, on_token=_on_plan_token)
+            # Honor RIPRAP_RECONCILER_TIER=no_llm for planning too.
+            # Without this, the SSE path always calls Granite via
+            # Ollama, which classified question-form queries like
+            # "What is the flood risk in Brooklyn?" as neighborhood
+            # intent — routing to the NYC-only legacy code path
+            # regardless of address. The heuristic planner defaults
+            # to single_address, which then goes through the Burr
+            # app with per-query deployment routing.
+            tier = os.environ.get("RIPRAP_RECONCILER_TIER", "llm").lower()
+            if tier in ("no_llm", "templated"):
+                p = Plan(
+                    intent="single_address",
+                    targets=[{"type": "address", "text": q}],
+                    specialists=[],
+                    rationale="Heuristic match: single_address (no-LLM planner).",
+                )
+                out_q.put({"kind": "plan_token",
+                           "delta": "[heuristic planner — no LLM call]"})
+            else:
+                p = run_planner(q, on_token=_on_plan_token)
 
             def _warmup_llm():
                 try:

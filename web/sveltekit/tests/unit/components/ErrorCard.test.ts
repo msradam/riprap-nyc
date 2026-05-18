@@ -72,13 +72,15 @@ describe('ErrorCard cross-city × all states: zero NYC needles', () => {
 });
 
 describe('ErrorCard out-of-coverage uses neutral fallback', () => {
-  it('ELSEWHERE / geocoder uses the neutral-deployment city string', () => {
+  it('ELSEWHERE / geocoder drops the "in X" suffix (no city resolved)', () => {
     seedForCity(ELSEWHERE);
     const { container } = render(ErrorCard, { props: { state: 'geocoder' } });
     const text = container.textContent ?? '';
-    // The out-of-coverage chip sets city='Not in any shipped deployment'.
-    // The geocoder message should interpolate that without hard-coding NYC.
-    expect(text).toContain('Not in any shipped deployment');
+    // The neutral / unknown deployment state used to render as "in
+    // Not in any shipped deployment." — reads like a parse error.
+    // Now the suffix is dropped entirely.
+    expect(text).toContain("couldn't resolve");
+    expect(text).not.toContain('Not in any shipped deployment');
     expect(text).not.toContain('NYC');
   });
 });
