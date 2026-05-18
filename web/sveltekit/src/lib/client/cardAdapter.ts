@@ -955,11 +955,28 @@ function buildTemplated(m: PebbleManifest, value: unknown): Card | null {
           return typeof val === 'number' || typeof val === 'string' ? val : '—';
         }),
       );
+      // Humanize the column headers so the card reads "Case title"
+      // instead of "case_title". The raw API field names are kept on
+      // the underlying data; only the rendered header swaps.
+      const HEADER_LABELS: Record<string, string> = {
+        // Boston Analyze CKAN — 311
+        case_title: 'Case', reason: 'Reason', type: 'Type',
+        open_dt: 'Opened', neighborhood: 'Neighborhood',
+        // Chicago Socrata — 311
+        sr_type: 'Type', sr_short_code: 'Code',
+        status: 'Status', created_date: 'Opened',
+        // SF Socrata — 311
+        service_name: 'Service', service_subtype: 'Subtype',
+        status_description: 'Status',
+        requested_datetime: 'Opened',
+        analysis_neighborhood: 'Neighborhood',
+      };
+      const prettyCols = cols.map((c) => HEADER_LABELS[c] ?? c);
       const n = v?.n_records ?? sample.length;
       const nLabel = v?.n_truncated ? `${n}+` : String(n);
       const rad = v?.radius_m;
       return {
-        ...base, columns: cols, rows,
+        ...base, columns: prettyCols, rows,
         sub: rad
           ? `${nLabel} record${n === 1 ? '' : 's'} within ${rad} m`
           : `${nLabel} record${n === 1 ? '' : 's'}`,

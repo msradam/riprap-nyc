@@ -95,7 +95,16 @@
   </div>
 
   {#each STONE_ORDER as stone (stone)}
-    <details class="layers-group region-{stone}" open>
+    <!--
+      Stones with no map layers (Boston/Chicago/SF Cornerstone +
+      Keystone + Lodestone, Seattle most of them) collapse by default
+      so the user isn't presented with 4 expanded "no map layers"
+      rows. Stones with at least one layer (or Capstone which always
+      shows its "not a map layer" line) stay open so the layers are
+      immediately visible.
+    -->
+    <details class="layers-group region-{stone}"
+             open={tally(stone) > 0 || stone === 'capstone'}>
       <summary>
         <span class="layers-caret" aria-hidden="true">▾</span>
         <span class="layers-stone-name">{STONE_META[stone].name}</span>
