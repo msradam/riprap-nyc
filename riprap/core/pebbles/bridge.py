@@ -39,7 +39,12 @@ def get_registry(deployment: str | None = None) -> Registry:
     Per-query callers pass `deployment` from `state.get("deployment")`;
     each deployment's registry is loaded once and cached.
     """
-    if deployment and deployment != "__none__":
+    # Out-of-coverage sentinel → federal: when no city covers a point,
+    # we still want NWS / NOAA-level (federal) pebbles to fire, so map
+    # the sentinel to the federal deployment's registry.
+    if deployment == "__none__":
+        deployment = "federal"
+    if deployment:
         cached = _REGISTRIES.get(deployment)
         if cached is not None:
             return cached

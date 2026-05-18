@@ -49,7 +49,13 @@ def _pebbles_for(
 
     from riprap.core.pebbles.deployments import deployment_by_name  # noqa: PLC0415
     if deployment == "__none__":
-        return []
+        # Out-of-coverage of every spatially-routed deployment. We
+        # should still fire FEDERAL pebbles (NWS alerts, NWS obs) for
+        # any in-CONUS point — those are national in scope and the
+        # user expects an "active alerts" surface even in Albuquerque.
+        # The per-pebble `fires_at` filter below catches out-of-CONUS
+        # points (e.g. Tokyo) regardless.
+        deployment = "federal"
     if deployment is None:
         deployment = os.environ.get("RIPRAP_DEPLOYMENT", "deployments/nyc")
     # Resolve: short name like 'nyc' → repo deployments/nyc; otherwise

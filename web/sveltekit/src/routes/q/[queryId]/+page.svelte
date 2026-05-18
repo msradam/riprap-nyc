@@ -340,8 +340,17 @@
     }
     const seed: Record<string, Citation> = {};
     if (finalResult?.citations) {
-      finalResult.citations.forEach((c, i) => {
-        seed[c.doc_id] = citationFromMeta(i + 1, c.doc_id, {
+      // Tolerate both citation shapes the reconciler may emit:
+      //   - LLM tier:        Array<{ doc_id, source, ... }>
+      //   - Templated tier:  Record<docId, citation>   (keyed by id)
+      // Without this guard the templated path threw
+      // `citations.forEach is not a function` on every no-LLM render.
+      const citationsList: typeof finalResult.citations = Array.isArray(finalResult.citations)
+        ? finalResult.citations
+        : (Object.values(finalResult.citations) as typeof finalResult.citations);
+      citationsList.forEach((c, i) => {
+        const docId = c.doc_id ?? (c as unknown as { id?: string }).id ?? `c${i + 1}`;
+        seed[docId] = citationFromMeta(i + 1, docId, {
           source: c.source,
           title: c.title,
           url: c.url,

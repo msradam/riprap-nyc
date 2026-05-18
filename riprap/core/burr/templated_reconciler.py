@@ -36,11 +36,26 @@ from riprap.core.pebbles import load_registry
 from riprap.core.pebbles.registry import Registry
 
 
-def _registry() -> Registry:
-    """Same registry the rest of the app uses; cached after first call
-    through the bridge's module-level singleton."""
+def _registry(deployment_hint: str | None = None) -> Registry:
+    """Return the pebble registry for the routed deployment.
+
+    `deployment_hint` is the short deployment name set by
+    `select_deployment` and passed in via the action's state read.
+    Without it the reconciler would fall back to RIPRAP_DEPLOYMENT
+    (defaulting to NYC), which leaks the NYC `policy_corpus`
+    narration into Boston / Chicago / SF / Seattle briefings.
+    """
     import os
     from pathlib import Path
+    # `__none__` (out-of-coverage) falls back to federal so the
+    # reconciler still produces a paragraph from the NWS pebbles.
+    if deployment_hint == "__none__":
+        deployment_hint = "federal"
+    if deployment_hint:
+        from riprap.core.pebbles.deployments import deployment_by_name
+        dep = deployment_by_name(deployment_hint)
+        if dep is not None:
+            return load_registry(dep.root)
     deployment = os.environ.get("RIPRAP_DEPLOYMENT", "deployments/nyc")
     p = Path(deployment)
     if not p.is_absolute():
@@ -222,7 +237,7 @@ def _compose_briefing(state: State, registry: Registry) -> tuple[str, list[dict]
 
 @action(
     reads=[
-        "geocode", "intent",
+        "geocode", "intent", "deployment",
         # Cornerstone
         "sandy", "dep", "ida_hwm", "prithvi_water", "microtopo",
         "dep_extreme_2080", "dep_moderate_2050", "dep_moderate_current",
@@ -255,7 +270,11 @@ def reconcile_templated(state: State) -> State:
         "elapsed_s": 0.0,
     }
     try:
-        registry = _registry()
+        # Read the routed deployment from state — set by
+        # `select_deployment` after geocode. Without this the reconciler
+        # uses the env-var default (usually NYC) and leaks NYC pebble
+        # narrations into Boston/Chicago/SF/Seattle briefings.
+        registry = _registry(state.get("deployment"))
         paragraph, citations = _compose_briefing(state, registry)
         rec["result"] = {
             "n_chars": len(paragraph),
