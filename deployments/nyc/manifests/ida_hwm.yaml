@@ -43,18 +43,15 @@ provenance:
 
 narration:
   short: Hurricane Ida (Sept 2021) empirical high-water marks observed near this location.
-  template: >-
-    USGS surveyed {n_within_radius} Hurricane Ida high-water mark(s) within
-    {radius_m} m of this location; the highest observed water elevation was
-    {max_elev_ft} ft.
+  template: "{narrative}"
 
 fallback:
   on_offline: skip
   message: Ida HWM data file unavailable.
 
 display:
-  variant: tabular
+  variant: headline
   order: 30
-  kind: list
+  kind: text
   map_layer: true
   icon: "🌧️"

@@ -31,14 +31,15 @@ provenance:
 
 narration:
   short: NYC DEP moderate stormwater scenario (2050 SLR) at this address.
+  template: "{narrative}"
 
 fallback:
   on_offline: skip
   message: DEP moderate 2050 raster + GDB both unavailable.
 
 display:
-  variant: tabular
+  variant: headline
   order: 22
-  kind: stat
+  kind: text
   map_layer: true
   icon: "💧"

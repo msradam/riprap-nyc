@@ -225,6 +225,15 @@ def _summarize(history_df, forecast_arr) -> dict[str, Any]:
         "forecast_peak_hours_ahead": peak_h_ahead,
         "forecast_peak_time_utc": peak_time.isoformat(timespec="minutes"),
         "forecast_array_m": [round(float(v), 4) for v in fc.tolist()],
+        # Type-keyed bespoke renderer reads these for the
+        # fine-tune footer. Constants because the model card is
+        # fixed for this pebble — the same shape can appear in any
+        # future fine-tuned forecast pebble.
+        "hf_model_card": f"huggingface.co/{REPO}",
+        "rmse_m": 0.157,
+        "skill_vs_persistence": "-35% vs persistence",
+        "hardware_badge": "MI300X",
+        "spatial_note": f"regional · {STATION_NAME}, not point-of-query",
     }
 
 

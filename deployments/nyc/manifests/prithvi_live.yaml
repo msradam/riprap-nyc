@@ -39,6 +39,7 @@ provenance:
 
 narration:
   short: Live Sentinel-2 water segmentation around this address (Prithvi-EO 2.0 NYC-Pluvial).
+  template: "{narrative}"
 
 # This is a model pebble. When inference is offline (no RunPod/Triton,
 # RIPRAP_PRITHVI_LIVE_ENABLE=0, deps missing, STAC unreachable), the

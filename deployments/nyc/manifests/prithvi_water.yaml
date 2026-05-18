@@ -34,6 +34,7 @@ provenance:
 
 narration:
   short: Prithvi-EO satellite-derived Ida pre/post flood inundation polygons near this address.
+  template: "{narrative}"
 
 fallback:
   on_offline: skip

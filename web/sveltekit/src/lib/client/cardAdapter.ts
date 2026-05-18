@@ -219,75 +219,6 @@ function obj(v: unknown): Record<string, unknown> | null {
 // template can phrase inside-vs-outside correctly. The templated
 // path renders the card.
 
-function buildDep(state: Final): Card | null {
-  const dep = obj(state.dep);
-  if (!dep) return null;
-  const rows: (string | number)[][] = [];
-  for (const [scen, info] of Object.entries(dep)) {
-    const i = obj(info);
-    if (!i) continue;
-    const cls = num(i.depth_class) ?? 0;
-    if (cls <= 0) continue;
-    rows.push([scen.replace('dep_', ''), str(i.depth_label) ?? '—', `class ${cls}`]);
-  }
-  if (!rows.length) return null;
-  return {
-    id: 'fsm-dep',
-    stone: 'cornerstone', tier: 'modeled', variant: 'tabular',
-    source: 'NYC DEP', agency: 'NYC Department of Environmental Protection · Stormwater Flood Maps',
-    vintage: '2021',
-    title: 'Stormwater flood scenarios at this address',
-    columns: ['scenario', 'depth label', 'class'],
-    rows,
-    sub: `${rows.length} scenario${rows.length === 1 ? '' : 's'} place this lot in modeled flooding`,
-    docId: 'dep_stormwater', citeId: 'dep', mapLayer: 'stormwater',
-  };
-}
-
-function buildIdaHwm(state: Final): Card | null {
-  const ida = obj(state.ida_hwm);
-  if (!ida) return null;
-  const n = num(ida.n_within_radius);
-  if (!n || n <= 0) return null;
-  const rows: (string | number)[][] = [];
-  rows.push(['count', `${n}`, `${num(ida.radius_m) ?? 800} m radius`]);
-  if (num(ida.max_height_above_gnd_ft) != null) {
-    rows.push(['max above gnd', `${ida.max_height_above_gnd_ft} ft`, '—']);
-  }
-  if (num(ida.nearest_dist_m) != null) {
-    rows.push(['nearest', str(ida.nearest_site) ?? 'HWM', `${ida.nearest_dist_m} m`]);
-  }
-  return {
-    id: 'fsm-ida-hwm',
-    stone: 'cornerstone', tier: 'empirical', variant: 'tabular',
-    source: 'USGS', agency: 'USGS STN Hurricane Ida 2021 high-water marks (Event 312)',
-    vintage: '2021-09',
-    title: 'Hurricane Ida 2021 high-water marks nearby',
-    columns: ['field', 'value', 'context'],
-    rows,
-    docId: 'ida_hwm', citeId: 'ida_hwm', mapLayer: 'hwm',
-  };
-}
-
-function buildPrithviWater(state: Final): Card | null {
-  const pw = obj(state.prithvi_water);
-  if (!pw) return null;
-  const dist = num(pw.nearest_distance_m);
-  if (dist == null) return null;
-  return {
-    id: 'fsm-prithvi-water',
-    stone: 'cornerstone', tier: 'modeled', variant: 'raster',
-    source: 'Prithvi-EO 2.0', agency: 'IBM/NASA Prithvi-EO 2.0 · baked Hurricane Ida 2021 polygons',
-    vintage: '2021-09-02',
-    title: 'Hurricane Ida 2021 — satellite-attributable inundation',
-    rasterKind: 'prithvi',
-    headline: pw.inside_water_polygon ? 'Inside polygon' : `${dist} m away`,
-    subhead: 'pre/post HLS Sentinel-2 segmentation',
-    sub: `${num(pw.n_polygons_within_500m) ?? 0} distinct polygons within 500 m`,
-    docId: 'prithvi_water', citeId: 'prithvi_water', mapLayer: 'prithvi',
-  };
-}
-
 function buildMicrotopo(state: Final): Card | null {
   const mt = obj(state.microtopo);
   if (!mt) return null;
@@ -418,27 +349,6 @@ function buildTerramindBuildings(state: Final): Card | null {
   };
 }
 
-function buildFloodnet(state: Final): Card | null {
-  const fn = obj(state.floodnet);
-  if (!fn || (num(fn.n_sensors) ?? 0) <= 0) return null;
-  const events = num(fn.n_flood_events_3y) ?? 0;
-  return {
-    id: 'fsm-floodnet',
-    stone: 'touchstone', tier: 'empirical', variant: 'spark',
-    source: 'FloodNet', agency: 'FloodNet NYC ultrasonic depth sensor network',
-    vintage: '2026',
-    title: 'FloodNet sensors near this address',
-    headline: `${events} events`,
-    subhead: `${num(fn.n_sensors) ?? 0} sensors · last 3 y`,
-    spark: Array.from({ length: 24 }, (_, i) =>
-      Math.max(0, Math.round((events / 24) * 1.4 * Math.exp(-Math.pow((i - 14) / 4, 2)) +
-                              (events / 24)))
-    ),
-    sparkSub: 'Above-curb depth events ≥ 2 cm. Synthetic monthly distribution; raw deployment-id history is in the audit panel.',
-    docId: 'floodnet', citeId: 'floodnet', mapLayer: 'floodnet',
-  };
-}
-
 function buildNyc311(state: Final): Card | null {
   const n = obj(state.nyc311);
   if (!n) return null;
@@ -465,82 +375,6 @@ function buildNyc311(state: Final): Card | null {
     histogram: hist,
     sparkSub: `Within ${num(n.radius_m) ?? 200} m · ${num(n.years) ?? 5} y window. Filtered to flood-relevant descriptors.`,
     docId: 'nyc311', citeId: 'nyc311', mapLayer: 'complaints',
-  };
-}
-
-function buildNwsObs(state: Final): Card | null {
-  const obs = obj(state.nws_obs);
-  if (!obs || obs.error || obs.station_id == null) return null;
-  const scalars: NonNullable<Card['scalars']> = [];
-  if (num(obs.precip_last_hour_mm) != null) scalars.push({ value: `${obs.precip_last_hour_mm} mm`, label: 'precip · 1h' });
-  if (num(obs.precip_last_6h_mm) != null) scalars.push({ value: `${obs.precip_last_6h_mm} mm`, label: 'precip · 6h' });
-  // Most of the time precip fields are null (no recent rain). Don't
-  // drop the card — surface the temperature + the fact that no
-  // precip was recorded. The user still wants to see "we asked NWS
-  // and the answer was no rain", not a missing card.
-  if (num(obs.temp_c) != null) scalars.push({ value: `${obs.temp_c} °C`, label: 'temp' });
-  if (!scalars.length) {
-    // The station replied with truly nothing usable — surface a
-    // headline so the pebble's provenance still appears.
-    return {
-      id: 'fsm-nws-obs',
-      stone: 'touchstone', tier: 'empirical', variant: 'headline',
-      source: 'NWS', agency: `NWS ASOS station ${str(obs.station_id) ?? '?'}`,
-      vintage: str(obs.obs_time)?.slice(0, 10) ?? RIPRAP_VINTAGE,
-      title: 'Nearest hourly observation',
-      headline: 'No usable observation at this hour',
-      sub: `Nearest METAR: ${str(obs.station_name) ?? '?'} (${num(obs.distance_km) ?? '?'} km).`,
-      docId: 'nws_obs', citeId: 'nws_obs', mapLayer: 'nws',
-    };
-  }
-  return {
-    id: 'fsm-nws-obs',
-    stone: 'touchstone', tier: 'empirical', variant: 'scalars',
-    source: 'NWS', agency: `NWS ASOS station ${str(obs.station_id) ?? '?'}`,
-    vintage: str(obs.obs_time)?.slice(0, 10) ?? RIPRAP_VINTAGE,
-    title: 'Recent precipitation',
-    scalars,
-    sub: `Nearest hourly METAR: ${str(obs.station_name) ?? '?'} (${num(obs.distance_km) ?? '?'} km).`,
-    docId: 'nws_obs', citeId: 'nws_obs', mapLayer: 'nws',
-  };
-}
-
-function buildNoaaTides(state: Final): Card | null {
-  const t = obj(state.noaa_tides);
-  if (!t || t.error || num(t.observed_ft_mllw) == null) return null;
-  const scalars: NonNullable<Card['scalars']> = [
-    { value: `${t.observed_ft_mllw} ft`, label: 'observed (MLLW)' },
-  ];
-  if (num(t.predicted_ft_mllw) != null) scalars.push({ value: `${t.predicted_ft_mllw} ft`, label: 'predicted' });
-  if (num(t.residual_ft) != null) scalars.push({ value: `${t.residual_ft} ft`, label: 'residual' });
-  return {
-    id: 'fsm-noaa',
-    stone: 'touchstone', tier: 'empirical', variant: 'scalars',
-    source: 'NOAA CO-OPS', agency: `NOAA tide gauge ${str(t.station_name) ?? str(t.station_id) ?? '?'}`,
-    vintage: str(t.obs_time)?.slice(0, 10) ?? RIPRAP_VINTAGE,
-    title: 'Live water level (nearest tide gauge)',
-    scalars,
-    sub: 'Residual = observed − astronomical tide; positive residual is wind / surge component.',
-    docId: 'noaa_tides', citeId: 'noaa_tides', mapLayer: 'noaa',
-  };
-}
-
-function buildPrithviLive(state: Final): Card | null {
-  const p = obj(state.prithvi_live);
-  if (!p?.ok) return null;
-  const sceneDate = str(p.item_datetime)?.slice(0, 10);
-  return {
-    id: 'fsm-prithvi-live',
-    stone: 'touchstone', tier: 'modeled', variant: 'raster-pred',
-    source: 'Prithvi-NYC-Pluvial', agency: 'NASA-IBM Prithvi v2 · NYC fine-tune',
-    vintage: sceneDate ? `${sceneDate} · Sentinel-2` : 'Sentinel-2',
-    title: 'Pluvial flood prediction · Prithvi-NYC-Pluvial',
-    rasterKind: 'prithvi',
-    headline: `${num(p.pct_water_within_500m) ?? 0}% flooded`,
-    subhead: `water within 500 m · cloud ${num(p.cloud_cover) ?? '?'}%`,
-    sub: 'Test flood IoU 0.5979 on held-out NYC chips. Model interpretation, not a measurement.',
-    illustrative: true,
-    docId: 'prithvi_live', citeId: 'prithvi_live', mapLayer: 'prithvi-pluvial',
   };
 }
 
@@ -592,93 +426,192 @@ function buildTerramindLulc(state: Final): Card | null {
   };
 }
 
-function buildTtmForecast(state: Final): Card | null {
-  const t = obj(state.ttm_forecast);
-  if (!t?.available || !t.interesting) return null;
-  const peak = num(t.forecast_peak_ft);
-  const ahead = num(t.forecast_peak_minutes_ahead);
-  if (peak == null || ahead == null) return null;
-  return {
-    id: 'fsm-ttm-fc',
-    stone: 'lodestone', tier: 'modeled', variant: 'timeseries',
-    source: 'Granite TTM r2 (zero-shot)', agency: 'IBM Granite-TimeSeries · regional',
-    vintage: RIPRAP_VINTAGE,
-    title: 'Storm surge nowcast at The Battery — 9.6 h horizon (regional)',
-    timeseries: { hours: 96, peak: { x: 38, y: 47 }, peakLabel: `${peak} ft @ +${Math.round(ahead/60)}h` },
-    headline: `${peak} ft`,
-    subhead: 'peak surge residual · 9.6h horizon · 6-min cadence',
-    sub: 'Regional disclosure. Distinct from the fine-tuned Battery surge nowcast.',
-    spatialNote: 'regional · Battery, not point-of-query',
-    docId: 'ttm_forecast', citeId: 'ttm_forecast',
-  };
-}
+// ─── Type-keyed bespoke variant renderers ─────────────────────────
+//
+// The framework move (per the user's "type-specific, not city-specific"
+// note): bespoke builders are kept for value shapes that earn rich
+// rendering — forecasts, ML rasters, asset registers, lulc class
+// breakdowns — but each builder is keyed by VALUE SHAPE / display
+// variant, not by a hardcoded pebble id. Any pebble that emits the
+// expected shape and declares the right `display.variant` gets the
+// same bespoke card.
+//
+// Below: `buildTimeseriesForecast` unifies the previous
+// buildTtmForecast + buildTtmBatterySurge. The pebble's value shape
+// declares the unit and horizon ("ft" + minutes vs "cm" + hours,
+// derived from which `forecast_peak_*` keys are present). The
+// manifest's display.variant ('timeseries' | 'timeseries-ft') picks
+// the chrome (fine-tune footer for `timeseries-ft`). Future TTM /
+// forecast / surge pebbles use this same renderer — drop the
+// curated id-keyed builders.
 
-function buildTtmBatterySurge(state: Final): Card | null {
-  const t = obj(state.ttm_battery_surge);
-  if (!t?.available || !t.interesting) return null;
-  const peak = num(t.forecast_peak_m);
-  const ahead = num(t.forecast_peak_hours_ahead);
-  if (peak == null || ahead == null) return null;
-  return {
-    id: 'fsm-ttm-batt',
-    stone: 'lodestone', tier: 'modeled', variant: 'timeseries-ft',
-    source: 'msradam/Granite-TTM-r2-Battery-Surge',
-    agency: 'Granite TTM r2 · NYC-specialized fine-tune',
-    vintage: RIPRAP_VINTAGE,
-    title: 'Storm surge nowcast at The Battery — 96 h horizon (NYC-specialized fine-tune)',
-    timeseries: {
+type ForecastValue = {
+  available?: boolean;
+  interesting?: boolean;
+  accelerating?: boolean;
+  // Surge — zero-shot (ft / minutes) and fine-tune (m / hours).
+  forecast_peak_ft?: number;
+  forecast_peak_minutes_ahead?: number;
+  forecast_peak_m?: number;
+  forecast_peak_hours_ahead?: number;
+  // 311 weekly forecast — per-day peak, day offset.
+  forecast_peak_day?: number;
+  forecast_peak_day_offset?: number;
+  forecast_weekly_equivalent?: number;
+  // FloodNet sensor — per-day-value peak, day offset.
+  forecast_peak_day_value?: number;
+  forecast_28d_expected_events?: number;
+  history_recent_28d_events?: number;
+  // Fine-tune footer fields (only on timeseries-ft variant).
+  rmse_m?: number;
+  hf_model_card?: string;
+  skill_vs_persistence?: string;
+  hardware_badge?: string;
+  spatial_note?: string;
+};
+
+function buildTimeseriesForecast(m: PebbleManifest, value: unknown): Card | null {
+  const t = value as ForecastValue | null;
+  if (!t || !t.available) return null;
+  // `interesting` is the explicit-hide gate (surge floor); `accelerating`
+  // is informational only. If neither is present, default to showing the
+  // card — every available forecast should surface.
+  if (t.interesting === false) return null;
+  // Detect unit from which fields the adapter populated. Each branch is
+  // its own pebble-family contract:
+  //   ft + minutes_ahead       → surge (zero-shot)
+  //   m + hours_ahead          → surge (fine-tune, cm display)
+  //   peak_day + day_offset    → weekly cadence (311 forecasts)
+  //   peak_day_value + offset  → daily cadence (FloodNet sensor)
+  let peakLabel: string;
+  let headline: string;
+  let timeseries: NonNullable<Card['timeseries']>;
+  let subhead: string;
+  if (num(t.forecast_peak_ft) != null && num(t.forecast_peak_minutes_ahead) != null) {
+    const peak = num(t.forecast_peak_ft)!;
+    const ahead = num(t.forecast_peak_minutes_ahead)!;
+    peakLabel = `${peak} ft @ +${Math.round(ahead / 60)}h`;
+    headline = `${peak} ft`;
+    timeseries = { hours: 96, peak: { x: 38, y: 47 }, peakLabel };
+    subhead = m.narration.short ?? 'peak surge residual';
+  } else if (num(t.forecast_peak_m) != null
+             && num(t.forecast_peak_hours_ahead) != null) {
+    const peak = num(t.forecast_peak_m)!;
+    const ahead = num(t.forecast_peak_hours_ahead)!;
+    peakLabel = `${(peak * 100).toFixed(0)} cm @ +${ahead}h`;
+    headline = `${(peak * 100).toFixed(0)} cm`;
+    timeseries = {
       hours: 96,
       peak: { x: ahead, y: Math.round(peak * 100) },
-      peakLabel: `${(peak * 100).toFixed(0)} cm @ +${ahead}h`,
-    },
-    headline: `${(peak * 100).toFixed(0)} cm`,
-    subhead: `peak surge · 96h horizon · hourly cadence`,
-    sub: 'Fine-tuned on NYC tide-gauge history. Hourly cadence; applies city-wide via NOAA station 8518750.',
-    spatialNote: 'regional · The Battery, not point-of-query',
-    docId: 'ttm_battery', citeId: 'ttm_battery',
-    // v0.4.5 §5 — fine-tuned-model footer chrome
-    hfModelCard: 'huggingface.co/msradam/Granite-TTM-r2-Battery-Surge',
-    rmse: '0.157 m',
-    skillVsPersistence: '−35% vs persistence',
-    hardwareBadge: 'MI300X',
+      peakLabel,
+    };
+    subhead = m.narration.short ?? 'peak surge';
+  } else if (num(t.forecast_peak_day) != null
+             && num(t.forecast_peak_day_offset) != null) {
+    const peak = num(t.forecast_peak_day)!;
+    const offset = num(t.forecast_peak_day_offset)!;
+    const weekly = num(t.forecast_weekly_equivalent);
+    peakLabel = `${peak.toFixed(2)}/day @ +${offset}d`;
+    headline = weekly != null
+      ? `${weekly.toFixed(1)}/wk`
+      : `${peak.toFixed(2)}/day`;
+    timeseries = { hours: 96, peak: { x: offset, y: peak }, peakLabel };
+    subhead = m.narration.short ?? 'forecast peak';
+  } else if (num(t.forecast_peak_day_value) != null
+             && num(t.forecast_peak_day_offset) != null) {
+    const peak = num(t.forecast_peak_day_value)!;
+    const offset = num(t.forecast_peak_day_offset)!;
+    const expected = num(t.forecast_28d_expected_events);
+    peakLabel = `${peak.toFixed(2)}/day @ +${offset}d`;
+    headline = expected != null
+      ? `${expected.toFixed(1)} events`
+      : `${peak.toFixed(2)}/day`;
+    timeseries = { hours: 96, peak: { x: offset, y: peak }, peakLabel };
+    subhead = m.narration.short ?? 'sensor forecast peak';
+  } else {
+    return null;
+  }
+  const variant: CardVariant =
+    (m.display.variant === 'timeseries-ft' || m.display.variant === 'timeseries')
+      ? m.display.variant
+      : 'timeseries';
+  const tier = (m.tier ?? 'modeled') as Card['tier'];
+  const source = m.provenance.source_name.split(/[—-]/)[0].trim();
+  return {
+    id: `fsm-${m.id.replace(/_/g, '-')}`,
+    stone: m.stone, tier, variant,
+    source, agency: m.provenance.source_name,
+    vintage: m.provenance.last_updated?.toString() ?? RIPRAP_VINTAGE,
+    title: m.title,
+    timeseries,
+    headline,
+    subhead,
+    sub: m.narration.template ?? undefined,
+    spatialNote: t.spatial_note,
+    docId: m.provenance.doc_id ?? m.id,
+    citeId: m.provenance.doc_id ?? m.id,
+    // Fine-tune footer: only when the variant is timeseries-ft AND
+    // the manifest's provenance carries an HF model card url. Each
+    // fine-tuned pebble's adapter emits rmse_m / skill_vs_persistence
+    // / hardware_badge alongside the forecast — same shape across
+    // any future model-specialised forecast pebble.
+    hfModelCard: variant === 'timeseries-ft' ? t.hf_model_card : undefined,
+    rmse: variant === 'timeseries-ft' && num(t.rmse_m) != null
+      ? `${num(t.rmse_m)!.toFixed(3)} m` : undefined,
+    skillVsPersistence: variant === 'timeseries-ft' ? t.skill_vs_persistence : undefined,
+    hardwareBadge: variant === 'timeseries-ft' ? t.hardware_badge : undefined,
   };
 }
 
-function buildNwsAlerts(state: Final): Card | null {
-  const a = obj(state.nws_alerts);
-  if (!a) return null;
-  const n = num(a.n_active) ?? 0;
-  if (n <= 0) {
-    // "Zero active alerts" is itself useful information — render a
-    // minimal card so the user sees the NWS feed was queried and
-    // came back clean. The previous behaviour dropped the card
-    // silently, which is identical to "we never asked NWS".
-    return {
-      id: 'fsm-nws-alerts',
-      stone: 'lodestone', tier: 'modeled', variant: 'headline',
-      source: 'NWS', agency: 'NWS Public Alerts API · flood-relevant filter',
-      vintage: RIPRAP_VINTAGE,
-      title: 'No active alerts',
-      headline: 'No flood / coastal / wind alerts active for this point',
-      sub: 'Live NWS feed. This is a cleared all-clear, not a missing query.',
-      docId: 'nws_alerts', citeId: 'nws_alerts',
-    };
-  }
-  const alerts = Array.isArray(a.alerts) ? (a.alerts as Record<string, unknown>[]) : [];
+// ── Type-keyed raster card renderer ─────────────────────────────
+//
+// Pebbles that declare `display.variant: raster` or `raster-pred`
+// and emit a normalized value shape:
+//   { headline_value, subhead_text, narrative, raster_kind, illustrative,
+//     ok?: bool }
+// All raster pebbles (prithvi_water, prithvi_live, future flood-mask
+// models) flow through here — no per-pebble id check.
+type RasterValue = {
+  ok?: boolean;
+  available?: boolean;
+  headline_value?: string;
+  subhead_text?: string;
+  narrative?: string;
+  raster_kind?: string;
+  illustrative?: boolean;
+  spatial_note?: string;
+};
+
+function buildRasterCard(m: PebbleManifest, value: unknown): Card | null {
+  const t = value as RasterValue | null;
+  if (!t) return null;
+  // Both shapes used: raster-pred (model) sets `ok`; raster (baked)
+  // doesn't gate. Drop only when an explicit ok=false is present
+  // (the inference-offline case).
+  if (t.ok === false || t.available === false) return null;
+  const headline = t.headline_value;
+  if (!headline) return null;  // adapter didn't emit the contract shape
+  const variant: CardVariant =
+    (m.display.variant === 'raster' || m.display.variant === 'raster-pred')
+      ? m.display.variant
+      : 'raster';
+  const tier = (m.tier ?? 'modeled') as Card['tier'];
+  const source = m.provenance.source_name.split(/[—-]/)[0].trim();
   return {
-    id: 'fsm-nws-alerts',
-    stone: 'lodestone', tier: 'modeled', variant: 'tabular',
-    source: 'NWS', agency: 'NWS Public Alerts API · flood-relevant filter',
-    vintage: RIPRAP_VINTAGE,
-    title: `${n} active flood-relevant alert${n === 1 ? '' : 's'}`,
-    columns: ['event', 'severity', 'expires'],
-    rows: alerts.slice(0, 4).map((al) => [
-      str(al.event) ?? '?',
-      str(al.severity) ?? '?',
-      (str(al.expires) ?? '').slice(0, 16),
-    ]),
-    sub: 'Live NWS feed. If a FLOOD or FLASH FLOOD WARNING is in this list, foreground it.',
-    docId: 'nws_alerts', citeId: 'nws_alerts',
+    id: `fsm-${m.id.replace(/_/g, '-')}`,
+    stone: m.stone, tier, variant,
+    source, agency: m.provenance.source_name,
+    vintage: m.provenance.last_updated?.toString() ?? RIPRAP_VINTAGE,
+    title: m.title,
+    rasterKind: (t.raster_kind ?? 'prithvi') as 'prithvi' | 'buildings' | 'lulc',
+    headline,
+    subhead: t.subhead_text,
+    sub: t.narrative,
+    illustrative: t.illustrative ?? false,
+    spatialNote: t.spatial_note,
+    docId: m.provenance.doc_id ?? m.id,
+    citeId: m.provenance.doc_id ?? m.id,
+    mapLayer: m.display.map_layer ? m.id : null,
   };
 }
 
@@ -879,13 +812,12 @@ const SPECIAL_BUILT_IDS = new Set<string>([
   // lake_michigan_water_level, nws_obs, nws_alerts — all now flow
   // through the templated path using `{narrative}` placeholders
   // computed in each pebble's Python adapter.
-  'dep_extreme_2080', 'dep_moderate_2050', 'dep_moderate_current',
-  'ida_hwm', 'prithvi_water', 'microtopo',
+  'microtopo',
   // Touchstone
-  'floodnet', 'nyc311', 'prithvi_live',
-  // Lodestone
-  'ttm_forecast', 'ttm_battery_surge', 'ttm_311_forecast',
-  'floodnet_forecast',
+  'nyc311',
+  // Lodestone — all four forecast pebbles (ttm_forecast, ttm_battery_surge,
+  // ttm_311_forecast, floodnet_forecast) now flow through the type-keyed
+  // buildTimeseriesForecast renderer below (display.variant + value shape).
   // Keystone — the four asset-class registers are rendered together
   // by buildRegisters() as a single `register`-variant card, not four
   // separate cards. Listing them here keeps the templated pass from
@@ -1110,24 +1042,30 @@ export function adaptFinalToFindings(
     // intent still uses a curated builder for now — that path
     // (app/intents/neighborhood.py) is NYC-specific by design.
     isNeighborhood ? buildSandyNta(f) : null,
-    isNeighborhood ? buildDepNta(f) : buildDep(f),
-    buildIdaHwm(f),
-    buildPrithviWater(f),
+    // DEP stormwater: address path goes through the templated loop
+    // (3 manifests, each emits {narrative} via the dep_scenario
+    // shaper); neighborhood path keeps the NYC-specific composite
+    // builder.
+    isNeighborhood ? buildDepNta(f) : null,
+    // ida_hwm now flows through the templated headline path
+    // (manifest narration.template + ida_hwm shaper's {narrative}).
+    // prithvi_water + prithvi_live dispatch via buildRasterCard in the
+    // templated loop below (display.variant: raster / raster-pred).
     isNeighborhood ? buildMicrotopoNta(f) : buildMicrotopo(f),
     // Keystone
     buildRegisters(f),
     buildTerramindBuildings(f),
     // Touchstone
-    buildFloodnet(f),
+    // floodnet now flows through the templated scalars path
+    // (n_sensors + n_flood_events_3y + {narrative} from the adapter).
     isNeighborhood ? buildNyc311Nta(f) : buildNyc311(f),
     // nws_obs, noaa_tides flow through the templated path now
     // (each pebble's adapter emits a {narrative} the manifest's
     // narration.template renders verbatim).
-    buildPrithviLive(f),
     buildTerramindLulc(f),
     // Lodestone — nws_alerts also migrated to templated path.
-    buildTtmForecast(f),
-    buildTtmBatterySurge(f),
+    // ttm_forecast + ttm_battery_surge dispatch via buildTimeseriesForecast
+    // in the templated loop below (display.variant: timeseries[-ft]).
     // Capstone (only once we have something to summarise)
     hasFinal ? buildCapstoneMeta((final ?? { paragraph: '' }) as FinalResult, wallSeconds) : null,
   ];
@@ -1142,7 +1080,17 @@ export function adaptFinalToFindings(
     for (const m of pebbleManifest.byStone[stone.id] ?? []) {
       if (SPECIAL_BUILT_IDS.has(m.id)) continue;
       const value = (f as Record<string, unknown>)[m.id];
-      const card = buildTemplated(m, value);
+      // Type-keyed bespoke variant dispatch — match by display.variant,
+      // never by pebble id. Future ML/forecast pebbles get the same
+      // bespoke chrome just by declaring the variant + emitting the
+      // expected value shape.
+      let card: Card | null = null;
+      if (m.display.variant === 'timeseries' || m.display.variant === 'timeseries-ft') {
+        card = buildTimeseriesForecast(m, value);
+      } else if (m.display.variant === 'raster' || m.display.variant === 'raster-pred') {
+        card = buildRasterCard(m, value);
+      }
+      if (!card) card = buildTemplated(m, value);
       if (card) templatedCards.push(card);
     }
   }

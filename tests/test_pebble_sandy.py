@@ -2,8 +2,8 @@
 sandy_inundation.inside_raster).
 
 Verifies that:
-  - the pebble returns a bool for a point inside NYC,
-  - the bool matches what legacy inside_raster() returns on the same point.
+  - the pebble returns the boolean_zone-shaper dict for a point inside NYC,
+  - `inside` matches what legacy inside_raster() returns on the same point.
 """
 from __future__ import annotations
 
@@ -27,5 +27,8 @@ def test_sandy_pebble_matches_legacy_inside_raster():
     reg = load_registry("deployments/nyc")
     result = reg.get("sandy").fetch(SpatialQuery(lat=TEST_LAT, lon=TEST_LON))
     assert result.error is None, result.error
-    assert isinstance(result.value, bool)
-    assert result.value == legacy
+    # boolean_zone shaper wraps the raw bool in a phrasing-bearing dict
+    # the manifest's narration.template renders verbatim.
+    assert isinstance(result.value, dict)
+    assert result.value["inside"] == bool(legacy)
+    assert result.value["inside_or_outside"] in ("inside", "outside")

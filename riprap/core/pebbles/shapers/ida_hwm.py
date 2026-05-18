@@ -36,16 +36,50 @@ def shape(value: dict | None, manifest=None) -> dict | None:
             "distance_m": feat["distance_m"],
         })
 
+    n = value["n_within_radius"]
+    radius = value["radius_m"]
+    max_elev = _round(aggs.get("max_elev_ft"), 2)
+    max_above = _round(aggs.get("max_height_above_gnd_ft"), 2)
+    nearest_dist = _round((nearest or {}).get("distance_m"), 0)
+    nearest_site = nearest_props.get("site_description")
+    # Templatable narrative for the manifest's narration.template.
+    # Two shapes: the affirmative case ("we found N marks…") and the
+    # honest-negative case ("no marks within radius — the nearest is X").
+    # The latter matches the NWS "no active alerts" all-clear card; users
+    # see Riprap asked the question and the answer was reassuring.
+    if n and n > 0:
+        bits = [f"USGS surveyed {n} Hurricane Ida high-water mark(s) within"
+                f" {radius} m of this address"]
+        if max_elev is not None:
+            bits.append(f"; the highest observed water elevation was {max_elev} ft")
+        if max_above is not None:
+            bits.append(f" (up to {max_above} ft above ground)")
+        if nearest_site and nearest_dist is not None:
+            bits.append(
+                f". Nearest mark: {nearest_site} ({int(nearest_dist)} m away)"
+            )
+        narrative = "".join(bits) + "."
+    else:
+        narrative = (
+            f"No Hurricane Ida (Sept 2021) high-water marks were surveyed "
+            f"within {radius} m of this address."
+        )
+        if nearest_site and nearest_dist is not None:
+            narrative += (
+                f" Nearest USGS-surveyed mark: {nearest_site} "
+                f"({int(nearest_dist)} m away)."
+            )
     return {
-        "n_within_radius": value["n_within_radius"],
-        "radius_m": value["radius_m"],
-        "max_elev_ft": _round(aggs.get("max_elev_ft"), 2),
-        "max_height_above_gnd_ft": _round(aggs.get("max_height_above_gnd_ft"), 2),
-        "nearest_dist_m": _round((nearest or {}).get("distance_m"), 0),
-        "nearest_site": nearest_props.get("site_description"),
+        "n_within_radius": n,
+        "radius_m": radius,
+        "max_elev_ft": max_elev,
+        "max_height_above_gnd_ft": max_above,
+        "nearest_dist_m": nearest_dist,
+        "nearest_site": nearest_site,
         "nearest_elev_ft": nearest_props.get("elev_ft"),
         "sample_sites": sample_sites,
         "points": points,
+        "narrative": narrative,
     }
 
 

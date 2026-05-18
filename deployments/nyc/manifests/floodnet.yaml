@@ -37,14 +37,15 @@ provenance:
 
 narration:
   short: FloodNet sensors and historical flood events near this address.
+  template: "{narrative}"
 
 fallback:
   on_offline: skip
   message: FloodNet GraphQL endpoint unreachable.
 
 display:
-  variant: spark
+  variant: scalars
   order: 10
-  kind: list
+  kind: stat
   map_layer: true
   icon: "📡"

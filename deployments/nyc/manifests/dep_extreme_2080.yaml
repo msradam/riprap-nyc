@@ -31,14 +31,15 @@ provenance:
 
 narration:
   short: NYC DEP extreme stormwater scenario (2080 SLR) at this address.
+  template: "{narrative}"
 
 fallback:
   on_offline: skip
   message: DEP extreme 2080 raster + GDB both unavailable.
 
 display:
-  variant: tabular
+  variant: headline
   order: 21
-  kind: stat
+  kind: text
   map_layer: true
   icon: "💧"

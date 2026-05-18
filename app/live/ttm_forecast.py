@@ -317,6 +317,11 @@ def summary_for_point(lat: float, lon: float) -> dict:
         "forecast_peak_minutes_ahead": fc_peak_minutes_ahead,
         "forecast_peak_time_utc": fc_peak_time.isoformat(timespec="minutes") + "Z",
         "threshold_ft": MIN_INTERESTING_RESIDUAL_FT,
+        # Type-keyed renderer reads this for the spatial-note row.
+        # No fine-tune footer on the zero-shot variant — the
+        # display.variant: timeseries (vs timeseries-ft) is the
+        # signal that suppresses the model-card chrome.
+        "spatial_note": f"regional · {sname}, not point-of-query",
     }
 
 

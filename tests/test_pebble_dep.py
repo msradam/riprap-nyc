@@ -35,8 +35,15 @@ def test_dep_pebble_matches_legacy(registry, scenario):
 
     result = registry.get(scenario).fetch(SpatialQuery(lat=TEST_LAT, lon=TEST_LON))
     assert result.error is None, result.error
+    # The dep_scenario shaper returns None for class=0 (no flooding in
+    # this scenario) so the templated card drops silently. For class>0
+    # the dict layout is unchanged.
+    if legacy_cls <= 0:
+        assert result.value is None
+        return
     assert isinstance(result.value, dict)
     assert result.value["depth_class"] == legacy_cls
     assert "depth_label" in result.value
     assert "citation" in result.value
+    assert "narrative" in result.value
     assert result.value["citation"].startswith("NYC DEP Stormwater Flood Map")

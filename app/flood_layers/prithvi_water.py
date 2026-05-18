@@ -46,6 +46,15 @@ class PrithviSummary:
     n_polygons_within_500m: int
     scene_id: str
     scene_date: str
+    # Normalized rendering fields the type-keyed raster card reads.
+    # Same shape across every raster pebble (prithvi_water, prithvi_live,
+    # terramind buildings, future flood-mask models) so the renderer is
+    # purely value-shape driven.
+    headline_value: str = ""
+    subhead_text: str = ""
+    narrative: str = ""
+    raster_kind: str = "prithvi"
+    illustrative: bool = False
 
 
 def _haversine_m(lat1, lon1, lat2, lon2):
@@ -111,10 +120,28 @@ def summary_for_point(lat: float, lon: float) -> PrithviSummary | None:
         sid = meta.get("scene_id") or ", ".join(meta.get("scene_ids", []) or ["unknown"])
         sdate = meta.get("scene_date") or ", ".join(meta.get("scene_dates", []) or ["unknown"])
 
+    headline = ("Inside polygon" if inside
+                else (f"{nearest_m} m away" if nearest_m is not None
+                      else "No polygons nearby"))
+    narrative = (
+        f"Prithvi-EO satellite-derived Hurricane Ida (Sept 2021) inundation: "
+        f"this address {'sits inside' if inside else 'is outside'} the "
+        f"empirical post-event water polygon"
+    )
+    if nearest_m is not None and not inside:
+        narrative += f" (nearest mask {nearest_m} m away)"
+    if within_500m:
+        narrative += f"; {within_500m} distinct flood polygons within 500 m"
+    narrative += "."
     return PrithviSummary(
         inside_water_polygon=inside,
         nearest_distance_m=nearest_m,
         n_polygons_within_500m=within_500m,
         scene_id=sid,
         scene_date=sdate,
+        headline_value=headline,
+        subhead_text="pre/post HLS Sentinel-2 segmentation",
+        narrative=narrative,
+        raster_kind="prithvi",
+        illustrative=False,
     )

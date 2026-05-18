@@ -31,14 +31,15 @@ provenance:
 
 narration:
   short: NYC DEP moderate stormwater scenario at this address — current SLR baseline, near-term horizon.
+  template: "{narrative}"
 
 fallback:
   on_offline: skip
   message: DEP moderate current raster + GDB both unavailable.
 
 display:
-  variant: tabular
+  variant: headline
   order: 23
-  kind: stat
+  kind: text
   map_layer: true
   icon: "💧"

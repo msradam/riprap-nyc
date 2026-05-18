@@ -513,6 +513,21 @@ def _fetch_inner(lat: float, lon: float, timeout_s: float) -> dict[str, Any]:
         circle = (yy - cy) ** 2 + (xx - cx) ** 2 <= radius_px ** 2
         pct_500 = float(100.0 * pred[circle].mean()) if circle.sum() else 0.0
         polygons_geojson = _polygonize_mask(pred, ref_da, epsg)
+        # Normalized rendering fields for the type-keyed raster card.
+        # Same shape across every raster-pred pebble — the renderer
+        # reads headline_value / subhead_text / narrative / raster_kind
+        # without knowing which model produced them.
+        pct_500_round = round(pct_500, 1)
+        scene_date = str(item.datetime)[:10] if item.datetime else None
+        narrative = (
+            f"Prithvi-EO 2.0 NYC-Pluvial live segmentation: "
+            f"{pct_500_round}% water within 500 m of this address."
+        )
+        if scene_date:
+            narrative += f" Sentinel-2 scene from {scene_date}"
+            if cc is not None:
+                narrative += f" ({round(cc, 1)}% cloud cover)"
+            narrative += "."
         return {
             "ok": True,
             "item_id": item.id,
@@ -523,6 +538,14 @@ def _fetch_inner(lat: float, lon: float, timeout_s: float) -> dict[str, Any]:
             "polygons_geojson": polygons_geojson,
             "compute": "local",
             "elapsed_s": round(time.time() - t0, 2),
+            "headline_value": f"{pct_500_round}% flooded",
+            "subhead_text": (
+                f"water within 500 m · cloud {round(cc, 1)}%"
+                if cc is not None else "water within 500 m"
+            ),
+            "narrative": narrative,
+            "raster_kind": "prithvi",
+            "illustrative": True,
         }
     except Exception as e:
         log.exception("prithvi_live: fetch failed")

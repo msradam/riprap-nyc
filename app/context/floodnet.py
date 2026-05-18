@@ -139,10 +139,32 @@ def summary_for_point(lat: float, lon: float, radius_m: float = 600) -> dict:
         by_dep.setdefault(e.deployment_id, []).append(e)
     peak = max((e for e in events if e.max_depth_mm is not None),
                key=lambda e: e.max_depth_mm or 0, default=None)
+    n_sensors = len(sensors)
+    n_events = len(events)
+    # Templatable narrative for the manifest's narration.template.
+    # Honest negative ("0 sensors within range") still useful — same
+    # contract as the NWS / ida_hwm all-clear cards.
+    if n_sensors == 0:
+        narrative = (
+            f"No FloodNet sensors deployed within {int(radius_m)} m of "
+            f"this address."
+        )
+    else:
+        narrative = (
+            f"{n_sensors} FloodNet community sensor(s) within "
+            f"{int(radius_m)} m have logged {n_events} above-curb flood "
+            f"event(s) in the last 3 years."
+        )
+        if peak is not None and peak.max_depth_mm is not None:
+            narrative += (
+                f" Peak depth recorded by these sensors: "
+                f"{peak.max_depth_mm} mm."
+            )
     return {
-        "n_sensors": len(sensors),
+        "n_sensors": n_sensors,
         "sensors": [vars(s) for s in sensors],
-        "n_flood_events_3y": len(events),
+        "n_flood_events_3y": n_events,
         "n_sensors_with_events": len(by_dep),
         "peak_event": vars(peak) if peak else None,
+        "narrative": narrative,
     }
