@@ -870,22 +870,58 @@ function buildTemplated(m: PebbleManifest, value: unknown): Card | null {
     return { ...base, scalars };
   }
   if (variant === 'tabular') {
-    const v = value as { features?: { properties?: Record<string, unknown>; distance_m?: number }[] };
+    const v = value as {
+      features?: { properties?: Record<string, unknown>; distance_m?: number }[];
+      // socrata / ckan-records adapters: summary-shape with n_records +
+      // a sample[] of plain row objects + top_by_*
+      sample?: Record<string, unknown>[];
+      n_records?: number;
+      radius_m?: number;
+    };
+    // Path A — GeoJSON-style features
     const feats = Array.isArray(v?.features) ? v.features : [];
-    if (!feats.length) return null;
-    // Pick all property keys present in the first row for columns.
-    const cols = Object.keys(feats[0]?.properties ?? {});
-    const rows: (string | number)[][] = [];
-    for (const f of feats.slice(0, 8)) {
-      const row: (string | number)[] = [];
-      for (const c of cols) {
-        const val = f.properties?.[c];
-        row.push(typeof val === 'number' || typeof val === 'string' ? val : '—');
+    if (feats.length) {
+      const cols = Object.keys(feats[0]?.properties ?? {});
+      const rows: (string | number)[][] = [];
+      for (const f of feats.slice(0, 8)) {
+        const row: (string | number)[] = [];
+        for (const c of cols) {
+          const val = f.properties?.[c];
+          row.push(typeof val === 'number' || typeof val === 'string' ? val : '—');
+        }
+        rows.push(row);
       }
-      rows.push(row);
+      return { ...base, columns: cols.length ? cols : ['feature'], rows,
+               sub: `${feats.length} feature${feats.length === 1 ? '' : 's'} within range` };
     }
-    return { ...base, columns: cols.length ? cols : ['feature'], rows,
-             sub: `${feats.length} feature${feats.length === 1 ? '' : 's'} within range` };
+    // Path B — socrata / ckan-records summary shape (city_311 pebbles).
+    // Boston / Chicago / SF emit { n_records, sample, top_by_reason }.
+    // Without this branch the card silently returned null, so users
+    // saw "Boston 311 received 283 records" in the briefing paragraph
+    // but no card under the Touchstone Stone.
+    const sample = Array.isArray(v?.sample) ? v.sample : [];
+    if (sample.length) {
+      const cols = Object.keys(sample[0]);
+      const rows: (string | number)[][] = sample.slice(0, 8).map((row) =>
+        cols.map((c) => {
+          const val = row[c];
+          return typeof val === 'number' || typeof val === 'string' ? val : '—';
+        }),
+      );
+      const n = v?.n_records ?? sample.length;
+      const rad = v?.radius_m;
+      return {
+        ...base, columns: cols, rows,
+        sub: rad
+          ? `${n} record${n === 1 ? '' : 's'} within ${rad} m`
+          : `${n} record${n === 1 ? '' : 's'}`,
+      };
+    }
+    // True empty — render a "no data" headline so the pebble is still
+    // visible with its provenance, not silently missing.
+    return { ...base, variant: 'headline',
+             headline: m.fallback.message ?? 'No records within range',
+             subhead: m.narration.short ?? undefined };
   }
   // meta fallback (chart pebbles without a special builder)
   const metaRows: { k: string; v: string }[] = [];
