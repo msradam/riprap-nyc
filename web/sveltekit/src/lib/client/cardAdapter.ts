@@ -738,6 +738,11 @@ function buildCapstoneMeta(final: FinalResult, wallSeconds?: number): Card {
   // shape). Earlier UI types used `{ passed, failed, attempts }`; we
   // accept both so cards keep rendering across backend versions.
   const m = (final.mellea ?? {}) as Record<string, unknown>;
+  // The templated reconciler (no-LLM tier) emits tier='templated' +
+  // n_attempts=0 + empty requirements lists. Mellea grounding doesn't
+  // run at all in that mode, so "0/4 passed grounding checks" reads
+  // like a failure when it's actually "no LLM, no grounding loop".
+  const isTemplated = (m.tier === 'templated');
   const passedArr = Array.isArray(m.requirements_passed)
     ? (m.requirements_passed as unknown[])
     : Array.isArray(m.passed) ? (m.passed as unknown[]) : [];
@@ -754,16 +759,29 @@ function buildCapstoneMeta(final: FinalResult, wallSeconds?: number): Card {
     : (typeof m.attempts === 'number' ? (m.attempts as number) : 0));
   const rerollsField = typeof m.rerolls === 'number' ? (m.rerolls as number) : null;
   const rerolls = rerollsField ?? Math.max(0, attempts - 1);
-  const cites = final.citations?.length ?? 0;
+  // final.citations may be a Record<docId, citation> in templated tier
+  // or an Array in LLM tier; length accordingly.
+  const citesContainer = final.citations as unknown;
+  const cites = Array.isArray(citesContainer)
+    ? citesContainer.length
+    : (citesContainer && typeof citesContainer === 'object'
+        ? Object.keys(citesContainer as Record<string, unknown>).length : 0);
   return {
     id: 'fsm-capstone-meta',
     stone: 'capstone', tier: 'modeled', variant: 'meta',
-    source: 'Mellea', agency: 'Capstone synthesis · Granite 4.1 + Mellea grounding check',
+    source: isTemplated ? 'Templated' : 'Mellea',
+    agency: isTemplated
+      ? 'Capstone synthesis · templated tier (no LLM, no grounding loop)'
+      : 'Capstone synthesis · Granite 4.1 + Mellea grounding check',
     vintage: RIPRAP_VINTAGE,
     title: 'Briefing reconciliation',
     metaRows: [
-      { k: 'mellea reroll',      v: `${rerolls} reroll${rerolls === 1 ? '' : 's'}` },
-      { k: 'grounding checks',   v: `${passed}/${totalChecks} passed` },
+      { k: isTemplated ? 'tier' : 'mellea reroll',
+        v: isTemplated ? 'templated · deterministic'
+                       : `${rerolls} reroll${rerolls === 1 ? '' : 's'}` },
+      { k: 'grounding checks',
+        v: isTemplated ? 'n/a — no LLM loop'
+                       : `${passed}/${totalChecks} passed` },
       { k: 'citations resolved', v: `${cites}` },
       { k: 'wall-clock',         v: wallSeconds != null ? `${wallSeconds.toFixed(1)} s` : '—' },
     ],

@@ -53,6 +53,14 @@ export function citationFromMeta(
   docId: string,
   meta?: Partial<Pick<Citation, 'source' | 'title' | 'url' | 'vintage' | 'retrieved'>>
 ): Citation {
+  // Most live-API pebbles don't have a baked `last_updated` date in
+  // their manifest because the data IS live — the timestamp is the
+  // moment of fetch. When vintage is null/blank, fall back to "live"
+  // so the citation chip reads "v. live" instead of "v." (which
+  // looked like a parse error in the user's screenshots).
+  // Default the retrieved-at timestamp to the current ISO date so
+  // citation chips always tell the reader WHEN we pulled this.
+  const today = new Date().toISOString().slice(0, 10);
   return {
     id: docId,
     n,
@@ -61,8 +69,8 @@ export function citationFromMeta(
     title: meta?.title ?? docId,
     docId,
     url: meta?.url ?? '',
-    vintage: meta?.vintage ?? '',
-    retrieved: meta?.retrieved ?? ''
+    vintage: meta?.vintage || 'live',
+    retrieved: meta?.retrieved || today,
   };
 }
 
