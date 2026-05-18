@@ -8,6 +8,7 @@
   import type { Tier } from '$lib/types/tier';
   import type { ErrorKey } from '$lib/types/states';
   import TierGlyph from '$lib/components/glyphs/TierGlyph.svelte';
+  import { deployment } from '$lib/stores/deployment.svelte';
 
   interface Action {
     label: string;
@@ -40,12 +41,18 @@
     defaultActions: string[];
   }
 
-  const SPECS: Record<ErrorKey, Spec> = {
+  // City-name interpolation. The geocoder + all-silent messages
+  // referenced NYC / FloodNet NYC / Sandy by name; under a Boston
+  // chip those strings are misleading. Pull the city from
+  // deployment.current and use a neutral fallback when out-of-coverage.
+  let cityName = $derived(deployment.current?.city ?? 'a covered city');
+
+  const SPECS = $derived<Record<ErrorKey, Spec>>({
     geocoder: {
       eyebrow: 'Address not resolved',
-      headline: "We couldn't resolve that to a NYC address.",
+      headline: `We couldn't resolve that to an address in ${cityName}.`,
       body:
-        'Try a more specific street address — for example, "80 Pioneer Street, Brooklyn." Riprap covers the five boroughs only; international addresses, NJ addresses, and points outside NYC aren\'t supported.',
+        `Try a more specific street address. Riprap currently routes per-query to one of the shipped city deployments; international addresses and addresses outside every shipped deployment's bounding box aren't supported.`,
       tier: 'proxy',
       defaultActions: ['Use a sample query', 'Edit query']
     },
@@ -53,7 +60,7 @@
       eyebrow: 'Outside evidence coverage',
       headline: 'No specialists found evidence at this point.',
       body:
-        'The address resolved, but every flood-evidence specialist returned silent. This is rare and usually means parkland, water, or a point with no nearby 311, no FloodNet sensor, and no Sandy overlap. Try a nearby street address or expand to neighborhood-mode.',
+        `The address resolved, but every flood-evidence specialist returned silent. This is rare and usually means parkland, water, or a point with no nearby civic data. Try a nearby street address or expand to neighborhood-mode.`,
       tier: 'proxy',
       defaultActions: ['Try nearby address', 'Switch to neighborhood-mode']
     },
@@ -67,13 +74,13 @@
     },
     backend: {
       eyebrow: 'Backend unavailable',
-      headline: 'All routing targets exhausted.',
+      headline: 'Inference backend did not respond.',
       body:
-        "The inference backend (msradam/riprap-vllm, NVIDIA L4) didn't respond. This usually clears within 5 minutes during a deploy window. The hardware-pill in the header is currently red.",
+        "The configured inference backend didn't respond within the routing budget. This usually clears within a few minutes during a deploy window. The hardware-pill in the header reflects the current state.",
       tier: 'proxy',
       defaultActions: ['Retry now', 'Switch backend']
     }
-  };
+  });
 
   let spec = $derived(SPECS[state]);
   let resolvedActions = $derived<Action[]>(

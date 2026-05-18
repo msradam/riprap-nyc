@@ -83,9 +83,13 @@ class PebbleManifestStore {
    *  Used to short-circuit re-fetch when re-navigating to a query in
    *  the same city. */
   loadedFor = $state<string | null>(null);
+  /** True once loadForDeployment() has been called for this query.
+   *  Prevents a slow boot-time load() from overwriting the per-query
+   *  manifest if the two fetches race. */
+  private lockedForQuery = false;
 
   async load(): Promise<void> {
-    if (this.loaded) return;
+    if (this.loaded || this.lockedForQuery) return;
     await this._fetchInto(null);
   }
 
@@ -95,23 +99,51 @@ class PebbleManifestStore {
    *  the SSE stream emits the `deployment` event. No-op when the same
    *  deployment is already loaded.
    *
-   *  Falls through to the boot manifest when name is null
-   *  (out-of-coverage) so the page still has something to render. */
+   *  When `name` is null (out-of-coverage) we explicitly CLEAR the
+   *  scaffold instead of falling through to the boot manifest — a
+   *  null name signals "no shipped deployment covers this query",
+   *  and rendering NYC's scaffold under that chip is the very leak
+   *  this routing was supposed to fix. */
   async loadForDeployment(name: string | null): Promise<void> {
+    this.lockedForQuery = true;  // claim ownership against load() races
+    if (name === null) {
+      this.byId = {};
+      this.stones = this.stones.length ? this.stones : [];
+      this.byStone = {};
+      this.loaded = true;
+      this.loadedFor = null;
+      this.error = null;
+      return;
+    }
     if (this.loadedFor === name && this.loaded) return;
     await this._fetchInto(name);
   }
 
   /** Internal: fetch /api/pebbles with optional ?deployment=<name> and
-   *  overwrite the store. Keeps load semantics in one place. */
+   *  overwrite the store. Keeps load semantics in one place.
+   *
+   *  Re-checks `lockedForQuery` after the await so a boot-time fetch
+   *  that was in flight when loadForDeployment() landed can't clobber
+   *  the per-query manifest with the boot one. The race is real and
+   *  the page integration test would otherwise see NYC ghost pebbles
+   *  rendered for a Boston query. */
   private async _fetchInto(name: string | null): Promise<void> {
+    // Snapshot whether this is the per-query call vs the boot call.
+    // If lockedForQuery is true and name is null, this is the racing
+    // boot call from load() that fired before the lock was set — skip.
+    if (name === null && this.lockedForQuery) return;
     const url = name
       ? '/api/pebbles?deployment=' + encodeURIComponent(name)
       : '/api/pebbles';
     try {
       const r = await fetch(url);
+      // Re-check the lock after the await — loadForDeployment may
+      // have landed during the network round-trip.
+      if (name === null && this.lockedForQuery) return;
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const data: PebbleManifestResponse = await r.json();
+      // And re-check once more after the body read for the same reason.
+      if (name === null && this.lockedForQuery) return;
       const byId: Record<string, PebbleManifest> = {};
       const byStone: Record<string, PebbleManifest[]> = {};
       for (const p of data.pebbles) {

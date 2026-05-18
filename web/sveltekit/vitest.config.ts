@@ -47,6 +47,9 @@ export default defineConfig({
       '$app/navigation': resolve(__dirname, 'src/.tests-shim/app/navigation.ts'),
       '$app/stores': resolve(__dirname, 'src/.tests-shim/app/state.svelte.ts'),
       $app: resolve(__dirname, 'src/.tests-shim/app'),
+      // happy-dom has no canvas; maplibre-gl crashes. Stub at the
+      // module level so RipMap.svelte can mount without throwing.
+      'maplibre-gl': resolve(__dirname, 'tests/unit/mocks/maplibre-gl.ts'),
     },
     conditions: ['browser']
   },

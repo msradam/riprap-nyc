@@ -22,13 +22,24 @@ class DeploymentStore {
   current = $state<Deployment | null>(null);
   loaded = $state(false);
   error = $state<string | null>(null);
+  /** True once setForQuery() has been called for THIS query. Prevents
+   *  a slow boot-time load() from overwriting the per-query value if
+   *  the two fetches race — without this, page loads where the SSE
+   *  handshake resolved before /api/deployment did would still end
+   *  up with the boot deployment in the store. */
+  private lockedForQuery = false;
 
-  /** Load the server's boot-time deployment. Idempotent. */
+  /** Load the server's boot-time deployment. Idempotent. Respects
+   *  the per-query lock so a slow boot fetch can't clobber a chip
+   *  the SSE handshake already pivoted. */
   async load(): Promise<void> {
-    if (this.loaded) return;
+    if (this.loaded || this.lockedForQuery) return;
     try {
       const r = await fetch('/api/deployment');
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      // Recheck the lock after the await — setForQuery() may have
+      // landed during the fetch.
+      if (this.lockedForQuery) return;
       this.current = (await r.json()) as Deployment;
       this.loaded = true;
     } catch (e) {
@@ -45,6 +56,7 @@ class DeploymentStore {
    *  When name is null (out-of-coverage), falls back to a neutral
    *  chip rather than claiming a city we don't have. */
   async setForQuery(name: string | null): Promise<void> {
+    this.lockedForQuery = true;  // claim ownership against load() races
     if (!name) {
       this.current = {
         name: 'unknown',
@@ -54,7 +66,7 @@ class DeploymentStore {
       this.loaded = true;
       return;
     }
-    if (this.current?.name === name) return;
+    if (this.current?.name === name && this.loaded) return;
     try {
       const r = await fetch('/api/deployment?deployment=' + encodeURIComponent(name));
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
