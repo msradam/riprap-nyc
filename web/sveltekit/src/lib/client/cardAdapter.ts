@@ -453,7 +453,25 @@ function buildNwsObs(state: Final): Card | null {
   const scalars: NonNullable<Card['scalars']> = [];
   if (num(obs.precip_last_hour_mm) != null) scalars.push({ value: `${obs.precip_last_hour_mm} mm`, label: 'precip · 1h' });
   if (num(obs.precip_last_6h_mm) != null) scalars.push({ value: `${obs.precip_last_6h_mm} mm`, label: 'precip · 6h' });
-  if (!scalars.length) return null;
+  // Most of the time precip fields are null (no recent rain). Don't
+  // drop the card — surface the temperature + the fact that no
+  // precip was recorded. The user still wants to see "we asked NWS
+  // and the answer was no rain", not a missing card.
+  if (num(obs.temp_c) != null) scalars.push({ value: `${obs.temp_c} °C`, label: 'temp' });
+  if (!scalars.length) {
+    // The station replied with truly nothing usable — surface a
+    // headline so the pebble's provenance still appears.
+    return {
+      id: 'fsm-nws-obs',
+      stone: 'touchstone', tier: 'empirical', variant: 'headline',
+      source: 'NWS', agency: `NWS ASOS station ${str(obs.station_id) ?? '?'}`,
+      vintage: str(obs.obs_time)?.slice(0, 10) ?? RIPRAP_VINTAGE,
+      title: 'Nearest hourly observation',
+      headline: 'No usable observation at this hour',
+      sub: `Nearest METAR: ${str(obs.station_name) ?? '?'} (${num(obs.distance_km) ?? '?'} km).`,
+      docId: 'nws_obs', citeId: 'nws_obs', mapLayer: 'nws',
+    };
+  }
   return {
     id: 'fsm-nws-obs',
     stone: 'touchstone', tier: 'empirical', variant: 'scalars',
@@ -609,7 +627,22 @@ function buildNwsAlerts(state: Final): Card | null {
   const a = obj(state.nws_alerts);
   if (!a) return null;
   const n = num(a.n_active) ?? 0;
-  if (n <= 0) return null;
+  if (n <= 0) {
+    // "Zero active alerts" is itself useful information — render a
+    // minimal card so the user sees the NWS feed was queried and
+    // came back clean. The previous behaviour dropped the card
+    // silently, which is identical to "we never asked NWS".
+    return {
+      id: 'fsm-nws-alerts',
+      stone: 'lodestone', tier: 'modeled', variant: 'headline',
+      source: 'NWS', agency: 'NWS Public Alerts API · flood-relevant filter',
+      vintage: RIPRAP_VINTAGE,
+      title: 'No active alerts',
+      headline: 'No flood / coastal / wind alerts active for this point',
+      sub: 'Live NWS feed. This is a cleared all-clear, not a missing query.',
+      docId: 'nws_alerts', citeId: 'nws_alerts',
+    };
+  }
   const alerts = Array.isArray(a.alerts) ? (a.alerts as Record<string, unknown>[]) : [];
   return {
     id: 'fsm-nws-alerts',

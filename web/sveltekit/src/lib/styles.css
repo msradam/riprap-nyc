@@ -152,7 +152,10 @@
   font-weight: 500;
   color: var(--ink-tertiary);
   letter-spacing: 0.04em;
-  text-transform: uppercase;
+  /* No text-transform — preserve the user's input casing so
+     "1 Marina Park Drive" doesn't read as "1 MARINA PARK DRIVE".
+     The plain-writing readability of the address sub-line was
+     worse than the typographic uniformity it claimed to enforce. */
 }
 
 /* ── Briefing prose ──────────────────────────────────────── */

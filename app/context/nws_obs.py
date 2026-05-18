@@ -34,6 +34,17 @@ STATIONS = [
     ("KSWF", "Newburgh-Stewart, NY",     41.5042, -74.1048),
     ("KPOU", "Poughkeepsie, NY",         41.6262, -73.8842),
     ("KALB", "Albany Intl, NY",          42.7475, -73.8025),
+    # Other shipped deployments — without these a Boston query
+    # returns Albany NY at 230km. Same NYC-bias bug as the NOAA
+    # tide-gauge list before the round-4 fix.
+    ("KBOS", "Boston Logan, MA",         42.3606, -71.0097),
+    ("KBED", "Hanscom Field, MA",        42.4699, -71.2890),
+    ("KORD", "Chicago O'Hare, IL",       41.9786, -87.9048),
+    ("KMDW", "Chicago Midway, IL",       41.7868, -87.7522),
+    ("KSEA", "Seattle-Tacoma, WA",       47.4502, -122.3088),
+    ("KBFI", "Boeing Field, WA",         47.5300, -122.3019),
+    ("KSFO", "San Francisco Intl, CA",   37.6213, -122.3790),
+    ("KOAK", "Oakland Intl, CA",         37.7213, -122.2208),
 ]
 
 
