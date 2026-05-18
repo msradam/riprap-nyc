@@ -107,8 +107,14 @@ class PebbleManifestStore {
   async loadForDeployment(name: string | null): Promise<void> {
     this.lockedForQuery = true;  // claim ownership against load() races
     if (name === null) {
+      // Out-of-coverage: clear EVERYTHING, including stones[]. Keeping
+      // stale stones[] left behind the previous deployment's Stone
+      // descriptions ("Reads what NYC's ground remembers about
+      // flooding") under an Albuquerque chip — caught by the
+      // pages.spec.ts no-leak assertion. Cleared scaffold = MapLegend /
+      // StoneRegion fall back to the city-agnostic STONE_META.tag.
       this.byId = {};
-      this.stones = this.stones.length ? this.stones : [];
+      this.stones = [];
       this.byStone = {};
       this.loaded = true;
       this.loadedFor = null;

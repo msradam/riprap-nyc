@@ -90,9 +90,9 @@ class StoneRegistry:
 # need explicit casing the simple `.title()` can't produce.
 _CITY_FALLBACK = {
     "nyc": "NYC",
-    "sf": "SF",
-    "la": "LA",
-    "dc": "DC",
+    "sf": "San Francisco",
+    "la": "Los Angeles",
+    "dc": "Washington, DC",
     "heat": "NYC",  # heat + air are NYC-scoped hazards
     "air": "NYC",
     "pi": "NYC",
