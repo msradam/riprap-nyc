@@ -19,7 +19,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, waitFor } from '@testing-library/svelte';
 import { tick } from 'svelte';
 import Page from '../../src/routes/q/[queryId]/+page.svelte';
-import { resetStores } from './helpers/stores';
+import { resetStores, seedForCity } from './helpers/stores';
 import { briefingState } from '$lib/stores/briefingState.svelte';
 import { deployment } from '$lib/stores/deployment.svelte';
 import { pebbleManifest } from '$lib/stores/pebbleManifest.svelte';
@@ -212,6 +212,49 @@ describe('/q/[queryId] no-deployment (out-of-coverage) lifecycle', () => {
     expect(text).not.toMatch(/\bNYC\b/);
     for (const needle of NYC_LEAK_NEEDLES) {
       expect(text, `ELSEWHERE page leaked NYC needle "${needle}"`).not.toContain(needle);
+    }
+  });
+});
+
+describe('/q/[queryId] SSE error BEFORE the deployment handshake', () => {
+  it('clears the boot NYC scaffold so the error card stands alone', async () => {
+    // Pre-seed boot NYC into both stores (mirror what AppHeader's
+    // $effect + the page's onMount pebbleManifest.load() would do
+    // on first render — they fire BEFORE any SSE event lands).
+    resetStores();
+    seedForCity(NYC);
+    // Boot fall-through reality: load() with no deployment arg
+    // leaves loadedFor=null even though stones[]/byStone is NYC.
+    pebbleManifest.loadedFor = null;
+    expect(pebbleManifest.loadedFor).toBeNull();
+    expect(deployment.current?.name).toBe('nyc');
+
+    const { container } = render(Page);
+    const es = getMockEventSource();
+    await tick();
+
+    // Backend dies before geocode / deployment events ever fire.
+    es.emit('hello', { query: '600 4th Avenue, Seattle, WA' });
+    es.emit('error', { err: 'SSE connection error: 503 Service Unavailable' });
+
+    // Wait for the scaffold-clear to land.
+    await waitFor(
+      () => expect(pebbleManifest.byId).toEqual({}),
+      { timeout: 1000 },
+    );
+    expect(pebbleManifest.stones).toEqual([]);
+
+    // The chip should also be neutralized — it WAS NYC before the
+    // error, but with the deployment handshake never completing the
+    // page must not claim it's an NYC briefing.
+    expect(deployment.current?.name).not.toBe('nyc');
+
+    // The rendered DOM no longer carries NYC needles.
+    const text = container.textContent ?? '';
+    for (const needle of NYC_LEAK_NEEDLES) {
+      expect(text,
+        `pre-handshake error left NYC needle "${needle}" in the rendered page`,
+      ).not.toContain(needle);
     }
   });
 });

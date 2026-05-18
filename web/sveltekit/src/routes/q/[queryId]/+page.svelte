@@ -47,6 +47,12 @@
   let attemptMax = $state<number>(2);
   let firstTokenSeen = $state(false);
   let geocodeSucceeded = $state(false);
+  // True once the SSE handshake has emitted its `deployment` event,
+  // i.e. pebbleManifest and `deployment` store now reflect the
+  // routed-to city. False = the page is still on the server's boot
+  // (NYC) scaffold; an error in this state must clear the scaffold
+  // rather than leave NYC ghost rows visible.
+  let deploymentResolved = $state(false);
   /** Last attempt's draft, dimmed below the reroll banner per v0.4.2 §11. */
   let priorDraft = $state<string>('');
   let errorState = $state<ErrorKey | null>(null);
@@ -460,6 +466,7 @@
           deployment.setForQuery(name),
           pebbleManifest.loadForDeployment(name),
         ]);
+        deploymentResolved = true;
       },
       onStep: (s) => {
         // Drive the header status pill — show the current step name and
@@ -678,6 +685,17 @@
           errorState = 'backend';
         }
         briefingState.markError(err);
+        // If the SSE failed BEFORE the `deployment` event ever fired,
+        // the page is still holding the server's boot-time pebble
+        // scaffold (NYC default) — which renders as "□ not invoked"
+        // ghost rows for every NYC pebble under a query that may
+        // not be in NYC at all. Clear the scaffold + neutralize the
+        // chip so the user sees the error card without the
+        // misleading NYC pebble roster underneath it.
+        if (!deploymentResolved) {
+          void pebbleManifest.loadForDeployment(null);
+          void deployment.setForQuery(null);
+        }
       },
       onDone: () => {
         streamDone = true;
