@@ -24,26 +24,39 @@ import { briefingState } from '$lib/stores/briefingState.svelte';
 import { deployment } from '$lib/stores/deployment.svelte';
 import { pebbleManifest } from '$lib/stores/pebbleManifest.svelte';
 import {
-  installMockEventSource, getMockEventSource, scriptBostonRun,
+  installMockEventSource, getMockEventSource, scriptBostonRun, scriptCityRun,
 } from './helpers/sse';
-import { BOSTON, NYC, NYC_LEAK_NEEDLES } from './fixtures/cities';
+import {
+  ALL_CITIES, BOSTON, NYC, CHICAGO, SEATTLE, SF, ELSEWHERE,
+  NYC_LEAK_NEEDLES, type CityFixture,
+} from './fixtures/cities';
 
-/** Build a fetch mock that returns the right /api/* shape per URL. */
-function fetchMockForBoston(): typeof fetch {
+/** Build a fetch mock that routes `?deployment=<name>` requests to the
+ *  right CityFixture. No-arg /api/* returns the boot deployment (NYC,
+ *  matching the server's default). */
+function fetchMockForCities(boot: CityFixture = NYC): typeof fetch {
+  const fixturesByName = new Map<string, CityFixture>(
+    ALL_CITIES.map((c) => [c.key, c]),
+  );
   return vi.fn(async (input: RequestInfo | URL) => {
     const url = typeof input === 'string' ? input : input.toString();
-    if (url.includes('/api/deployment?deployment=boston')) {
-      return new Response(JSON.stringify(BOSTON.deployment), { status: 200 });
-    }
-    if (url.includes('/api/pebbles?deployment=boston')) {
-      return new Response(JSON.stringify(BOSTON.manifest), { status: 200 });
+    const depMatch = url.match(/[?&]deployment=([^&]+)/);
+    if (depMatch) {
+      const name = decodeURIComponent(depMatch[1]);
+      const fixture = fixturesByName.get(name);
+      if (!fixture) return new Response('{}', { status: 404 });
+      if (url.includes('/api/deployment')) {
+        return new Response(JSON.stringify(fixture.deployment), { status: 200 });
+      }
+      if (url.includes('/api/pebbles')) {
+        return new Response(JSON.stringify(fixture.manifest), { status: 200 });
+      }
     }
     if (url.endsWith('/api/deployment')) {
-      // Boot-time fetch returns NYC (server default)
-      return new Response(JSON.stringify(NYC.deployment), { status: 200 });
+      return new Response(JSON.stringify(boot.deployment), { status: 200 });
     }
     if (url.endsWith('/api/pebbles')) {
-      return new Response(JSON.stringify(NYC.manifest), { status: 200 });
+      return new Response(JSON.stringify(boot.manifest), { status: 200 });
     }
     return new Response('{}', { status: 503 });
   }) as unknown as typeof fetch;
@@ -52,7 +65,7 @@ function fetchMockForBoston(): typeof fetch {
 beforeEach(() => {
   resetStores();
   installMockEventSource();
-  globalThis.fetch = fetchMockForBoston();
+  globalThis.fetch = fetchMockForCities();
 });
 
 describe('/q/[queryId] full-page SSE lifecycle for Boston', () => {
@@ -113,6 +126,60 @@ describe('/q/[queryId] full-page SSE lifecycle for Boston', () => {
     expect(text).not.toContain('Outside evidence coverage');
     expect(text).not.toContain('No specialists found evidence');
   });
+});
+
+describe('/q/[queryId] full-page SSE × all shipped cities — no cross-city leakage', () => {
+  for (const city of [NYC, BOSTON, CHICAGO, SEATTLE, SF]) {
+    it(`${city.key} run: chip + scaffold settle, only city-appropriate content`, async () => {
+      const { container } = render(Page);
+      const es = getMockEventSource();
+      await tick();
+
+      const pebbleIds = city.manifest.pebbles.map((p) => p.id);
+      await scriptCityRun(es, {
+        name: city.key,
+        city: city.deployment.city,
+        state: null,
+        address: city.geocode.address,
+        lat: city.geocode.lat,
+        lon: city.geocode.lon,
+        pebbles: pebbleIds,
+        paragraph: `Templated paragraph for ${city.deployment.city}.`,
+      });
+
+      await waitFor(
+        () => expect(deployment.current?.name).toBe(city.key),
+        { timeout: 1000 },
+      );
+      await waitFor(
+        () => expect(pebbleManifest.loadedFor).toBe(city.key),
+        { timeout: 1000 },
+      );
+      expect(briefingState.phase).toBe('done');
+
+      const text = container.textContent ?? '';
+
+      // The routed-to city name appears somewhere on the page.
+      expect(text,
+        `${city.key} run page is missing the deployment city '${city.deployment.city}'`,
+      ).toContain(city.deployment.city);
+
+      // For non-NYC cities, zero NYC needles anywhere.
+      if (city.key !== 'nyc') {
+        const leaked = NYC_LEAK_NEEDLES.filter((n) => text.includes(n));
+        expect(leaked,
+          `${city.key} run leaked NYC needles: ${leaked.join(', ')}`,
+        ).toEqual([]);
+        expect(text,
+          `${city.key} run still contains literal "NYC" somewhere`,
+        ).not.toMatch(/\bNYC\b/);
+      }
+
+      // Every city should NOT render the "Outside evidence coverage"
+      // error card when its templated paragraph arrived.
+      expect(text).not.toContain('Outside evidence coverage');
+    });
+  }
 });
 
 describe('/q/[queryId] no-deployment (out-of-coverage) lifecycle', () => {

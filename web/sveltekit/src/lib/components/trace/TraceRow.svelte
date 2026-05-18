@@ -11,6 +11,9 @@
   }
 
   let { node, depth = 0, defaultOpen = false }: Props = $props();
+  // svelte-ignore state_referenced_locally — `defaultOpen` is a
+  // one-shot initial-value prop; once the row mounts, `open` is
+  // user-controlled via the expand toggle.
   let open = $state(defaultOpen);
   let copied = $state(false);
   let hasChildren = $derived(!!node.children?.length);

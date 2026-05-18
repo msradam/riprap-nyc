@@ -958,14 +958,6 @@
     color: var(--ink-secondary);
     flex-wrap: wrap;
   }
-  .generating-status .meta {
-    display: block;
-    width: 100%;
-    margin-top: 4px;
-    font-size: 11px;
-    color: var(--ink-tertiary);
-    line-height: 1.5;
-  }
   .pulse {
     width: 8px;
     height: 8px;

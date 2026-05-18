@@ -13,6 +13,10 @@
 
   let { blocks, citations: cites, streaming = false, replayKey = 0 }: Props = $props();
 
+  // svelte-ignore state_referenced_locally — `blocks.length` is read
+  // once for the initial value; the $effect below keeps visibleCount
+  // synced after that (either by snapping to full count when not
+  // streaming, or by stepping through during animated reveal).
   let visibleCount = $state(blocks.length);
   let prefersReducedMotion = $state(false);
 

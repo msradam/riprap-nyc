@@ -78,20 +78,46 @@ export function getMockEventSource(): MockEventSource {
 
 /** Convenience: drive a clean Boston run through the SSE handshake. */
 export async function scriptBostonRun(es: MockEventSource): Promise<void> {
-  // Match the order the backend emits in web/main.py
-  es.emit('hello', { query: 'Boston query' });
-  es.emit('plan', { intent: 'single_address',
-                    targets: [{ type: 'address', text: 'Boston' }],
-                    specialists: ['nws_obs', 'water_level'], rationale: '' });
-  es.emit('step', { kind: 'step', step: 'geocode', ok: true, elapsed_s: 0.2,
-                    result: { address: 'Boston City Hall',
-                              lat: 42.36, lon: -71.06 } });
-  es.emit('deployment', { name: 'boston', city: 'Boston', state: 'MA' });
-  es.emit('step', { kind: 'step', step: 'nws_obs', ok: true });
-  es.emit('step', { kind: 'step', step: 'water_level', ok: true });
-  es.emit('final', { paragraph: 'Boston templated paragraph.',
-                     intent: 'single_address',
-                     mellea: { passed: [], failed: [], attempts: 0 },
-                     citations: [] });
+  await scriptCityRun(es, {
+    name: 'boston', city: 'Boston', state: 'MA',
+    address: 'Boston City Hall',
+    lat: 42.36, lon: -71.06,
+    pebbles: ['nws_obs', 'water_level', 'boston_311'],
+    paragraph: 'Boston templated paragraph.',
+  });
+}
+
+/** Drive any city through the SSE handshake. */
+export async function scriptCityRun(
+  es: MockEventSource,
+  spec: {
+    name: string | null; city: string | null; state: string | null;
+    address: string; lat: number; lon: number;
+    pebbles: string[]; paragraph: string;
+  },
+): Promise<void> {
+  es.emit('hello', { query: spec.address });
+  es.emit('plan', {
+    intent: 'single_address',
+    targets: [{ type: 'address', text: spec.address }],
+    specialists: spec.pebbles, rationale: '',
+  });
+  es.emit('step', {
+    kind: 'step', step: 'geocode', ok: true, elapsed_s: 0.2,
+    result: { address: spec.address, lat: spec.lat, lon: spec.lon },
+  });
+  es.emit('deployment', {
+    name: spec.name ?? '__none__',
+    city: spec.city, state: spec.state,
+  });
+  for (const pid of spec.pebbles) {
+    es.emit('step', { kind: 'step', step: pid, ok: true });
+  }
+  es.emit('final', {
+    paragraph: spec.paragraph,
+    intent: 'single_address',
+    mellea: { passed: [], failed: [], attempts: 0 },
+    citations: [],
+  });
   es.emit('done', {});
 }
