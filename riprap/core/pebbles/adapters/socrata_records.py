@@ -111,8 +111,16 @@ class SocrataRecordsPebble(BasePebble):
             else:
                 sample.append(r)
 
+        # Honest cap surfacing: the Socrata API truncates at $limit;
+        # when n equals the configured cap, the briefing should say
+        # "200+ records" not "200 records" since there may be more we
+        # didn't fetch. Surface as a boolean so the UI can append the
+        # "+" suffix and the narration can distinguish exact from
+        # truncated counts.
+        limit_was_hit = n >= limit
         value: dict[str, Any] = {
             "n_records": n,
+            "n_truncated": limit_was_hit,
             "radius_m": radius_m,
             "sample": sample,
         }

@@ -106,7 +106,17 @@ def _sentence_for(pebble_id: str, value: Any, manifest) -> str | None:
     body: str | None = None
     if template and isinstance(value, dict):
         try:
-            body = _format_template(template, value).strip()
+            # Honest count when the upstream SQL LIMIT capped the
+            # result — render "200+" instead of "200" in the
+            # narration. The adapter sets n_truncated; we transform
+            # the value the template formatter sees so the existing
+            # `{n_records}` placeholder gets the suffix automatically.
+            value_for_template: dict = dict(value)
+            if value_for_template.get("n_truncated") is True:
+                n_raw = value_for_template.get("n_records")
+                if isinstance(n_raw, int):
+                    value_for_template["n_records"] = f"{n_raw}+"
+            body = _format_template(template, value_for_template).strip()
         except _MissingTemplateField:
             # Template has a field the pebble didn't populate this run
             # (offline / partial). Fall back to the generic `short`.
@@ -212,11 +222,21 @@ def _compose_briefing(state: State, registry: Registry) -> tuple[str, list[dict]
             doc_id = pebble.manifest.provenance.doc_id or pid
             if doc_id not in seen_docs:
                 seen_docs.add(doc_id)
+                prov = pebble.manifest.provenance
+                # Shape must match the frontend Citation contract in
+                # agentStream.ts (doc_id / source / title / url /
+                # vintage). The old `{id, label, href, citation}` shape
+                # rendered "v." with blank vintage in the citation
+                # chip — caught by real-query Playwright scrutiny.
                 citations.append({
-                    "id": doc_id,
-                    "label": pebble.manifest.provenance.source_name,
-                    "href": pebble.manifest.provenance.source_url,
-                    "citation": pebble.manifest.provenance.citation,
+                    "doc_id": doc_id,
+                    "source": prov.source_name,
+                    "title": prov.citation or pebble.manifest.title,
+                    "url": prov.source_url,
+                    "vintage": (
+                        prov.last_updated.isoformat()
+                        if prov.last_updated else None
+                    ),
                 })
         return out
 
@@ -296,7 +316,7 @@ def reconcile_templated(state: State) -> State:
                 "requirements_total": 0,
                 "tier": "templated",
             },
-            citations={c["id"]: c for c in citations},
+            citations={c["doc_id"]: c for c in citations},
             trace=trace,
         )
     except Exception as e:  # noqa: BLE001 — surfaced via trace

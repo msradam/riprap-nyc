@@ -873,9 +873,12 @@ function buildTemplated(m: PebbleManifest, value: unknown): Card | null {
     const v = value as {
       features?: { properties?: Record<string, unknown>; distance_m?: number }[];
       // socrata / ckan-records adapters: summary-shape with n_records +
-      // a sample[] of plain row objects + top_by_*
+      // a sample[] of plain row objects + top_by_*.
+      // n_truncated=true means n_records hit the SQL LIMIT cap, so
+      // the real count is >= n_records — render as "N+ records".
       sample?: Record<string, unknown>[];
       n_records?: number;
+      n_truncated?: boolean;
       radius_m?: number;
     };
     // Path A — GeoJSON-style features
@@ -909,12 +912,13 @@ function buildTemplated(m: PebbleManifest, value: unknown): Card | null {
         }),
       );
       const n = v?.n_records ?? sample.length;
+      const nLabel = v?.n_truncated ? `${n}+` : String(n);
       const rad = v?.radius_m;
       return {
         ...base, columns: cols, rows,
         sub: rad
-          ? `${n} record${n === 1 ? '' : 's'} within ${rad} m`
-          : `${n} record${n === 1 ? '' : 's'}`,
+          ? `${nLabel} record${n === 1 ? '' : 's'} within ${rad} m`
+          : `${nLabel} record${n === 1 ? '' : 's'}`,
       };
     }
     // True empty — render a "no data" headline so the pebble is still

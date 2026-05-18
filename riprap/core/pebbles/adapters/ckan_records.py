@@ -123,6 +123,7 @@ class CKANRecordsPebble(BasePebble):
         lat_field = cfg.get("lat_field", "latitude")
         lon_field = cfg.get("lon_field", "longitude")
         radius_m = int(cfg.get("radius_m", 500))
+        sql_limit = int(cfg.get("limit", 500))
 
         sql = _build_sql(
             resource_id=resource_id,
@@ -130,7 +131,7 @@ class CKANRecordsPebble(BasePebble):
             lat_field=lat_field, lon_field=lon_field,
             extra_where=cfg.get("extra_where"),
             order=cfg.get("order"),
-            limit=int(cfg.get("limit", 500)),
+            limit=sql_limit,
         )
         url = f"{ckan_base}/api/3/action/datastore_search_sql?sql={quote(sql)}"
 
@@ -155,13 +156,18 @@ class CKANRecordsPebble(BasePebble):
                 error=f"ckan_records: CKAN error: {(data or {}).get('error')}",
             )
 
+        raw_rows = (data.get("result") or {}).get("records") or []
         refined = _refine_haversine(
-            (data.get("result") or {}).get("records") or [],
-            query, lat_field, lon_field, radius_m,
+            raw_rows, query, lat_field, lon_field, radius_m,
         )
 
+        # When the SQL LIMIT capped the upstream pull, we don't know
+        # the true count — surface as `n_truncated` so the briefing
+        # narration + the card sub-line can show "N+ records" instead
+        # of falsely claiming exact count "N".
         value: dict[str, Any] = {
             "n_records": len(refined),
+            "n_truncated": len(raw_rows) >= sql_limit,
             "radius_m": radius_m,
             "sample": _shape_sample(
                 refined, cfg.get("sample_fields") or [],
