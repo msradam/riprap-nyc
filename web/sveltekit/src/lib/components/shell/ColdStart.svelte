@@ -88,7 +88,7 @@
     <ul class="cold-start-stones">
       <li>
         <span class="stone-dot" style="background: var(--stone-cornerstone);" aria-hidden="true"></span>
-        <em>Cornerstone</em> remembers — what NYC's ground remembers.
+        <em>Cornerstone</em> remembers — what the ground remembers.
       </li>
       <li>
         <span class="stone-dot" style="background: var(--stone-keystone);" aria-hidden="true"></span>

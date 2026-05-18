@@ -25,8 +25,14 @@ export const STONE_ORDER: StoneKey[] = [
 
 export type StoneMeta = { name: string; role: string; tag: string };
 
+// Stone taglines — kept city-agnostic here since they're the *fallback*
+// when a deployment's stones.yaml description hasn't loaded yet (or is
+// empty in the out-of-coverage state). The city-specific phrasing —
+// "Reads what Boston remembers about flooding…" — comes from
+// pebbleManifest.stones[].description, applied by StoneRegion and
+// MapLegend so a per-query render reflects the routed deployment.
 export const STONE_META: Record<StoneKey, StoneMeta> = {
-  cornerstone: { name: 'Cornerstone', role: 'the hazard reader',  tag: "what NYC's ground remembers" },
+  cornerstone: { name: 'Cornerstone', role: 'the hazard reader',  tag: "what the ground remembers" },
   keystone:    { name: 'Keystone',    role: 'the asset register', tag: "what's exposed" },
   touchstone:  { name: 'Touchstone',  role: 'the live observer',  tag: "what's happening now" },
   lodestone:   { name: 'Lodestone',   role: 'the projector',      tag: "what's coming" },

@@ -23,7 +23,7 @@ import {
   NYC_MANIFEST, BOSTON_MANIFEST,
   NYC_ONLY_IDS,
   NYC_FINAL, BOSTON_FINAL,
-} from './fixtures';
+} from './fixtures/cardAdapter';
 
 /**
  * Drop the manifest store into a deterministic state for one test.
