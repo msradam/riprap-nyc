@@ -182,7 +182,14 @@ def geocode_target(state: State) -> State:
             "bin": h.bin,
         }
         rec["ok"] = True
-        rec["result"] = {"address": h.address, "borough": h.borough}
+        # The UI reads lat/lon out of this trace `result` to drive its
+        # `geocodeSucceeded` flag (without them the /q/[queryId] page
+        # falls through to the catch-all "Resolving address…" branch
+        # forever, even after the briefing finishes).
+        rec["result"] = {
+            "address": h.address, "borough": h.borough,
+            "lat": h.lat, "lon": h.lon,
+        }
         trace.append(rec)
         return state.update(geocode=gdict, lat=h.lat, lon=h.lon, trace=trace)
     except Exception as e:  # noqa: BLE001

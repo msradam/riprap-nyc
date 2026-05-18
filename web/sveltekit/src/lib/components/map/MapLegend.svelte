@@ -4,6 +4,7 @@
   import TierBadge from '$lib/components/glyphs/TierBadge.svelte';
   import type { StoneKey } from '$lib/types/card';
   import { STONE_META, STONE_ORDER } from '$lib/types/card';
+  import { pebbleManifest } from '$lib/stores/pebbleManifest.svelte';
 
   /** v0.4.5 §7 — LAYERS panel restructured to mirror Findings Stones.
    *
@@ -38,29 +39,32 @@
     wired: boolean;
   };
 
-  const STONE_LAYERS: Record<StoneKey, LayerRow[]> = {
-    cornerstone: [
-      { label: 'Sandy Inundation Zone (2012)', source: 'NYC OEM',  tier: 'empirical', wired: true  },
-      { label: 'FEMA / DEP scenarios',         source: 'FEMA · NYC DEP', tier: 'modeled',   wired: true  },
-      { label: 'Ida HWM points (2021)',        source: 'USGS STN', tier: 'empirical', wired: true  },
-      { label: 'Microtopography (HAND/TWI)',   source: 'USGS 3DEP', tier: 'proxy',     wired: false },
-    ],
-    keystone: [
-      { label: 'MTA subway entrances',         source: 'MTA Open Data',     tier: 'empirical', wired: true  },
-      { label: 'NYCHA developments',           source: 'NYC OD phvi-damg',   tier: 'empirical', wired: true  },
-      { label: 'DOE schools',                  source: 'NYC DOE Locations',  tier: 'empirical', wired: true  },
-      { label: 'DOH hospitals',                source: 'NYS DOH vn5v-hh5r',  tier: 'empirical', wired: true  },
-      { label: 'TerraMind Buildings (current)', source: 'msradam/TerraMind-NYC-Adapters', tier: 'synthetic', wired: true  },
-    ],
-    touchstone: [
-      { label: '311 flood complaints',           source: 'NYC 311',  tier: 'proxy',     wired: false },
-      { label: 'FloodNet sensors',               source: 'FloodNet NYC', tier: 'proxy',     wired: true  },
-      { label: 'TerraMind LULC (current)',       source: 'msradam/TerraMind-NYC-Adapters', tier: 'synthetic', wired: true  },
-      { label: 'Prithvi-NYC-Pluvial flood pred.', source: 'msradam/Prithvi-EO-2.0-NYC-Pluvial', tier: 'modeled', wired: true  },
-    ],
-    lodestone: [],   // intentional — surfaced as the explicit absence row
-    capstone:  [],   // not a map layer; surfaced as "not a map layer"
-  };
+  /** v0.6 — layer catalog is now derived from the loaded
+   *  pebbleManifest so a Boston query sees Boston's layers, not the
+   *  hardcoded NYC list (which previously rendered "Sandy Inundation
+   *  Zone", "Ida HWM points", "MTA subway entrances", etc. under a
+   *  Boston chip — a real bug surfaced by the user's screenshot).
+   *  Pebbles flagged `display.map_layer: true` in their manifest
+   *  become rows under their declared Stone. Pebbles without the
+   *  flag are intentionally hidden — they have data but no geometry. */
+  const stoneLayers = $derived.by<Record<StoneKey, LayerRow[]>>(() => {
+    const empty: Record<StoneKey, LayerRow[]> = {
+      cornerstone: [], keystone: [], touchstone: [], lodestone: [], capstone: [],
+    };
+    for (const stone of STONE_ORDER) {
+      const pebbles = pebbleManifest.byStone[stone] ?? [];
+      for (const p of pebbles) {
+        if (!p.display.map_layer) continue;
+        empty[stone].push({
+          label: p.title,
+          source: p.provenance.source_name,
+          tier: (p.tier ?? 'modeled') as Tier,
+          wired: true,
+        });
+      }
+    }
+    return empty;
+  });
 
   /** Resolve a row's ON state from the master tier toggle. */
   function isOn(row: LayerRow): boolean {
@@ -68,7 +72,7 @@
   }
 
   function tally(stone: StoneKey): number {
-    return STONE_LAYERS[stone].length;
+    return stoneLayers[stone].length;
   }
 
   // Active tier toggles — rendered as small chips at the bottom of the
@@ -95,22 +99,25 @@
       <summary>
         <span class="layers-caret" aria-hidden="true">▾</span>
         <span class="layers-stone-name">{STONE_META[stone].name}</span>
-        <span class="layers-stone-tag">— {STONE_META[stone].tag}</span>
+        <span class="layers-stone-tag">— {
+          pebbleManifest.stones.find((s) => s.id === stone)?.description
+            ?? STONE_META[stone].tag
+        }</span>
         {#if tally(stone) > 0}
           <span class="layers-count">{tally(stone)}</span>
         {/if}
       </summary>
       <ul class="layers-list">
-        {#if stone === 'lodestone'}
-          <li class="layers-row layers-row-empty">
-            <span class="layers-empty-text">no map layers — see Findings cards</span>
-          </li>
-        {:else if stone === 'capstone'}
+        {#if stone === 'capstone'}
           <li class="layers-row layers-row-empty">
             <span class="layers-empty-text">not a map layer</span>
           </li>
+        {:else if stoneLayers[stone].length === 0}
+          <li class="layers-row layers-row-empty">
+            <span class="layers-empty-text">no map layers — see Findings cards</span>
+          </li>
         {:else}
-          {#each STONE_LAYERS[stone] as row, i (i)}
+          {#each stoneLayers[stone] as row, i (i)}
             <li class="layers-row" class:dim={!row.wired}>
               <span class="layers-glyph" aria-hidden="true">
                 <TierGlyph tier={row.tier} size={11} color="var(--tier-{row.tier})" />

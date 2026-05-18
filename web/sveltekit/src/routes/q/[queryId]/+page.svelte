@@ -676,7 +676,13 @@
           runWallSeconds = (Date.now() - runStartedAt) / 1000;
         }
         // v0.4.2 §12 all-silent: stream finished but no briefing emerged.
-        if (!firstTokenSeen && !errorState && geocodeSucceeded) {
+        // `!firstTokenSeen` alone over-fires in no-LLM templated mode —
+        // the templated reconciler doesn't stream tokens but DOES
+        // produce a paragraph in the `final` event. Treat the run as
+        // successful when EITHER tokens streamed OR a non-empty
+        // paragraph arrived; only "neither" is genuinely all-silent.
+        const haveParagraph = !!finalResult?.paragraph?.trim();
+        if (!firstTokenSeen && !haveParagraph && !errorState && geocodeSucceeded) {
           errorState = 'all-silent';
         }
         // Gate the export-PDF action: only enable when we have a real

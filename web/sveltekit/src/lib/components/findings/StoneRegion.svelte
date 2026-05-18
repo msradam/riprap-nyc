@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Card, Density, ProvenanceMode, StoneKey, StoneTrace } from '$lib/types/card';
   import { STONE_META, STONE_ORDER } from '$lib/types/card';
+  import { pebbleManifest } from '$lib/stores/pebbleManifest.svelte';
   import FindingCard from './FindingCard.svelte';
   import StoneTally from './StoneTally.svelte';
   import ProvenanceTrace from './ProvenanceTrace.svelte';
@@ -30,6 +31,15 @@
   }: Props = $props();
 
   let meta = $derived(STONE_META[stone]);
+  // The deployment's stones.yaml `description` is the city-specific
+  // tagline ("Reads what Boston remembers about flooding…"). Fall back
+  // to the hardcoded NYC-flavoured STONE_META tag only if the manifest
+  // hasn't loaded yet — that keeps the per-query chip honest instead
+  // of saying "what NYC's ground remembers" under a Boston chip.
+  let manifestStone = $derived(
+    pebbleManifest.stones.find((s) => s.id === stone)
+  );
+  let tagText = $derived(manifestStone?.description || meta.tag);
   let stoneNum = $derived(`${STONE_ORDER.indexOf(stone) + 1}`.padStart(2, '0'));
   let isCapstone = $derived(stone === 'capstone');
 
@@ -68,7 +78,7 @@
       <span class="region-num">{stoneNum}</span>
       <h3 id={`region-h-${stone}`} class="region-name">{meta.name}</h3>
       <span class="region-role">· {meta.role}</span>
-      <span class="region-tag">{meta.tag}</span>
+      <span class="region-tag">{tagText}</span>
     </div>
     <StoneTally cardCount={cards.length} members={trace.members} />
   </header>
