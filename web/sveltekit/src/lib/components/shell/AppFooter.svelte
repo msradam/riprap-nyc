@@ -16,7 +16,9 @@
       not designed for personal property decisions, real-estate transactions, or
       mortgage / insurance underwriting.{#if showNycResources}
         For residents, see
+        <!-- nyc-leak-ok: links gated on showNycResources (deployment === 'nyc') -->
         <a href="https://www.floodhelpny.org">FloodHelpNY</a>
+        <!-- nyc-leak-ok: same gate as the FloodHelpNY link above -->
         · <a href="https://www.floodnet.nyc">FloodNet NYC</a>.{/if}
     </p>
     <p class="app-footer-build">
