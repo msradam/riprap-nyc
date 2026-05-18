@@ -4,6 +4,12 @@ title: NYC Sandy Inundation Zone (2012 empirical extent)
 stone: cornerstone
 tier: empirical
 adapter: python_call
+# Wrap the bare bool the inside_raster function returns into a
+# templatable dict so narration.template can phrase the outcome
+# correctly for inside vs. outside. Without this, the templated
+# reconciler can only fall back to narration.short — which can
+# describe one outcome but not the other.
+shaper: boolean_zone
 
 spatial:
   scope: point
@@ -30,10 +36,8 @@ provenance:
   citation: NYC Sandy Inundation Zone (NYC OpenData 5xsi-dfpx, empirical 2012 extent)
 
 narration:
-  short: This address is inside the empirical 2012 Hurricane Sandy inundation zone.
-  template: >-
-    NYC's empirical 2012 Hurricane Sandy inundation footprint
-    {inside_phrasing} this address.
+  short: This address is within the empirical 2012 Hurricane Sandy inundation footprint.
+  template: This address {inside_phrasing} the empirical 2012 Hurricane Sandy inundation footprint (NYC OEM).
 
 fallback:
   on_offline: skip

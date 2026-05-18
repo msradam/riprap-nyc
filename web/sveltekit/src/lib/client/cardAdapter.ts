@@ -27,6 +27,34 @@ import { pebbleManifest, type PebbleManifest } from '$lib/stores/pebbleManifest.
  *  back to the Riprap publication date. */
 const RIPRAP_VINTAGE = '2026-05';
 
+/**
+ * Format a pebble's `narration.template` against its value dict.
+ * Mirrors the backend templated_reconciler's _format_template logic
+ * — strict placeholder substitution, returns null when any required
+ * field is missing or null so the caller can fall back to
+ * narration.short rather than emit a "{field?}" literal.
+ *
+ * Numbers / booleans are coerced to string; objects raise "missing".
+ * Empty / null fields raise "missing" too — without this, a sandy
+ * card for an outside address would print "NYC's footprint  this
+ * address" with a doubled space where {inside_phrasing} silently
+ * resolved to "".
+ */
+function formatTemplate(template: string, value: unknown): string | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const v = value as Record<string, unknown>;
+  let missing = false;
+  const out = template.replace(/\{(\w+)\}/g, (_, key: string) => {
+    const x = v[key];
+    if (x === undefined || x === null || x === '') {
+      missing = true;
+      return '';
+    }
+    return String(x);
+  });
+  return missing ? null : out.trim();
+}
+
 /** Map the FSM trace's TraceStatus into the v0.4.5 5-state SpecialistStatus.
  *  Crucial split: a specialist that "returned no data" is `silent_by_design`,
  *  not `errored`. The FSM marks both as `silent` in the trace; we
@@ -182,21 +210,14 @@ function obj(v: unknown): Record<string, unknown> | null {
     ? (v as Record<string, unknown>) : null;
 }
 
-function buildSandy(state: Final, geocode: Record<string, unknown> | null): Card | null {
-  if (state.sandy !== true) return null;
-  const addr = geocode && str(geocode.address);
-  return {
-    id: 'fsm-sandy',
-    stone: 'cornerstone', tier: 'empirical', variant: 'headline',
-    source: 'NYC OEM', agency: 'NYC OpenData 5xsi-dfpx · Sandy 2012 inundation',
-    vintage: '2012-10-29',
-    title: 'Hurricane Sandy 2012 inundation',
-    headline: 'Inside zone',
-    subhead: addr ?? 'address inside the empirical 2012 extent',
-    body: 'Address sits within the empirical Hurricane Sandy 2012 inundation extent. This is a historical fact, not a model prediction.',
-    docId: 'sandy', citeId: 'sandy', mapLayer: 'sandy',
-  };
-}
+// buildSandy was a curated builder that hardcoded the NYC-specific
+// "Hurricane Sandy 2012 inundation" phrasing in the UI. The
+// architecture (location-agnostic pebbles → stones, location-
+// specific content from each pebble's manifest) wants this in
+// deployments/nyc/manifests/sandy.yaml's narration.template
+// instead. The `boolean_zone` shaper wraps the bare bool so the
+// template can phrase inside-vs-outside correctly. The templated
+// path renders the card.
 
 function buildDep(state: Final): Card | null {
   const dep = obj(state.dep);
@@ -852,8 +873,11 @@ const KIND_TO_VARIANT: Record<PebbleManifest['display']['kind'], CardVariant | n
 /** Set of pebble ids that already have a special builder above. The
  *  templated pass skips these; they appear via the curated path. */
 const SPECIAL_BUILT_IDS = new Set<string>([
-  // Cornerstone
-  'sandy', 'dep_extreme_2080', 'dep_moderate_2050', 'dep_moderate_current',
+  // Cornerstone — sandy was here; now flows through templated +
+  // boolean_zone shaper (see deployments/nyc/manifests/sandy.yaml).
+  // Migration in progress: each pebble drops out of this set as its
+  // manifest gains a usable narration.template + shaper.
+  'dep_extreme_2080', 'dep_moderate_2050', 'dep_moderate_current',
   'ida_hwm', 'prithvi_water', 'microtopo',
   // Touchstone
   'floodnet', 'nyc311', 'nws_obs', 'noaa_tides', 'prithvi_live',
@@ -896,10 +920,20 @@ function buildTemplated(m: PebbleManifest, value: unknown): Card | null {
              subhead: m.narration.short ?? undefined };
   }
   if (variant === 'headline') {
+    // Format manifest.narration.template against the pebble value
+    // (the shaper's job is to ensure value carries the placeholders
+    // — sandy's `boolean_zone` shaper emits inside_phrasing /
+    // inside / outside_phrasing for the template to consume).
+    // Mirrors the backend templated_reconciler's _format_template
+    // — if a placeholder is missing, fall back to narration.short.
+    const formatted = m.narration.template
+      ? formatTemplate(m.narration.template, value)
+      : null;
     return { ...base,
              headline: m.narration.short ?? m.title,
-             body: (typeof value === 'string') ? value
-                 : (m.narration.template ?? undefined) };
+             body: formatted
+                 ?? (typeof value === 'string' ? value
+                     : (m.narration.template ?? undefined)) };
   }
   if (variant === 'scalars') {
     const scalars: NonNullable<Card['scalars']> = [];
@@ -1054,7 +1088,11 @@ export function adaptFinalToFindings(
   const isNeighborhood = str(f.intent) === 'neighborhood';
   const cards: (Card | null)[] = [
     // Cornerstone
-    isNeighborhood ? buildSandyNta(f) : buildSandy(f, geocode),
+    // sandy now flows through the templated path via its manifest's
+    // narration.template + the `boolean_zone` shaper. Neighborhood
+    // intent still uses a curated builder for now — that path
+    // (app/intents/neighborhood.py) is NYC-specific by design.
+    isNeighborhood ? buildSandyNta(f) : null,
     isNeighborhood ? buildDepNta(f) : buildDep(f),
     buildIdaHwm(f),
     buildPrithviWater(f),
