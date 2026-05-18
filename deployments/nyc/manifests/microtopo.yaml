@@ -31,6 +31,7 @@ provenance:
 
 narration:
   short: LiDAR / DEM-derived micro-topography (elevation percentile, basin relief) at this address.
+  template: "{narrative}"
 
 fallback:
   on_offline: skip
@@ -39,6 +40,6 @@ fallback:
 display:
   variant: scalars
   order: 50
-  kind: text
+  kind: stat
   map_layer: false
   icon: "⛰️"

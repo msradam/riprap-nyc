@@ -38,7 +38,8 @@ def test_cornerstone_fans_out_all_pebbles():
 
     # At least the file-backed pebbles should have produced non-None
     # values for an NYC address. (ida_hwm and sandy use baked data.)
-    assert final["sandy"] in (True, False)  # bool
+    # Sandy now uses the boolean_zone shaper → dict {inside, ...} not bare bool.
+    assert isinstance(final["sandy"], dict) and "inside" in final["sandy"]
     assert final["ida_hwm"] is not None and isinstance(final["ida_hwm"], dict)
     assert final["microtopo"] is not None and isinstance(final["microtopo"], dict)
 

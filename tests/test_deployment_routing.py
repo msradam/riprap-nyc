@@ -86,11 +86,17 @@ def test_stones_pebbles_for_filters_by_deployment():
     assert "sandy" not in boston_cornerstone
 
 
-def test_pebbles_for_none_sentinel_returns_empty():
-    """Out-of-coverage sentinel produces zero pebbles."""
+def test_pebbles_for_none_sentinel_returns_federal_only():
+    """Out-of-coverage sentinel produces only federal pebbles —
+    city-specific ones (sandy, dep_*, nyc311) are dropped, but the
+    federal pebbles (nws_obs, nws_alerts) that resolve any CONUS
+    lat/lon still fire so the briefing has something to report."""
     from riprap.core.burr.stones import _pebbles_for
     assert _pebbles_for("cornerstone", "__none__") == []
-    assert _pebbles_for("touchstone", "__none__") == []
+    # touchstone has nws_obs from the federal manifest.
+    assert _pebbles_for("touchstone", "__none__") == ["nws_obs"]
+    # lodestone has nws_alerts from the federal manifest.
+    assert "nws_alerts" in _pebbles_for("lodestone", "__none__")
 
 
 def test_federal_pebbles_auto_merge_into_every_city():

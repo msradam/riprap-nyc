@@ -219,118 +219,6 @@ function obj(v: unknown): Record<string, unknown> | null {
 // template can phrase inside-vs-outside correctly. The templated
 // path renders the card.
 
-function buildMicrotopo(state: Final): Card | null {
-  const mt = obj(state.microtopo);
-  if (!mt) return null;
-  const elev = num(mt.point_elev_m);
-  if (elev == null) return null;
-  const scalars = [
-    { value: `${elev.toFixed(1)} m`, label: 'elevation' },
-  ];
-  if (num(mt.hand_m) != null) scalars.push({ value: `${(mt.hand_m as number).toFixed(1)} m`, label: 'HAND' });
-  if (num(mt.twi) != null) scalars.push({ value: `${(mt.twi as number).toFixed(1)}`, label: 'TWI' });
-  if (num(mt.rel_elev_pct_200m) != null) scalars.push({ value: `${mt.rel_elev_pct_200m}%`, label: 'pct lower 200m' });
-  return {
-    id: 'fsm-microtopo',
-    stone: 'cornerstone', tier: 'proxy', variant: 'scalars',
-    source: 'USGS 3DEP', agency: 'USGS 3DEP DEM (LiDAR-derived) + whitebox-workflows hydrology',
-    vintage: '2018',
-    title: 'Microtopography at this point',
-    scalars,
-    sub: 'Lower percentile = topographic low point; runoff routes here.',
-    docId: 'microtopo', citeId: 'microtopo',
-  };
-}
-
-/** Per-asset register. Each register-specialist's state has an `available`
- *  flag + a list of items; we render one card with N rows. */
-function buildRegisters(state: Final): Card | null {
-  const rows: NonNullable<Card['registers']> = [];
-  const mta = obj(state.mta_entrances);
-  if (mta?.available && Array.isArray(mta.entrances)) {
-    for (const e of (mta.entrances as Record<string, unknown>[]).slice(0, 4)) {
-      rows.push({
-        reg: 'MTA', tier: 'empirical',
-        label: str(e.station_name) ?? str(e.entrance_id) ?? 'entrance',
-        detail: `${num(e.distance_m) ?? '—'} m · ${str(e.daytime_routes) ?? ''}`.trim(),
-        sourceId: str(e.station_id) ?? 'MTA',
-        note: null,
-      });
-    }
-  } else if (mta && mta.available === false) {
-    rows.push({
-      reg: 'MTA', tier: 'empirical', label: null, detail: null, sourceId: null,
-      note: 'no subway entrances within 1.0 mi (silent)',
-    });
-  }
-
-  const nycha = obj(state.nycha_developments);
-  if (nycha?.available && Array.isArray(nycha.developments)) {
-    for (const d of (nycha.developments as Record<string, unknown>[]).slice(0, 3)) {
-      rows.push({
-        reg: 'NYCHA', tier: 'empirical',
-        label: str(d.development) ?? 'development',
-        detail: `${num(d.distance_m) ?? '—'} m · ${str(d.borough) ?? ''}`.trim(),
-        sourceId: str(d.tds_num) ?? null,
-        note: null,
-      });
-    }
-  } else if (nycha && nycha.available === false) {
-    rows.push({
-      reg: 'NYCHA', tier: 'empirical', label: null, detail: null, sourceId: null,
-      note: 'no NYCHA developments within 1.0 mi (silent)',
-    });
-  }
-
-  const doe = obj(state.doe_schools);
-  if (doe?.available && Array.isArray(doe.schools)) {
-    for (const s of (doe.schools as Record<string, unknown>[]).slice(0, 3)) {
-      rows.push({
-        reg: 'DOE', tier: 'empirical',
-        label: str(s.loc_name) ?? 'school',
-        detail: `${num(s.distance_m) ?? '—'} m · ${str(s.borough) ?? ''}`.trim(),
-        sourceId: str(s.loc_code) ?? null,
-        note: null,
-      });
-    }
-  } else if (doe && doe.available === false) {
-    rows.push({
-      reg: 'DOE', tier: 'empirical', label: null, detail: null, sourceId: null,
-      note: 'no schools within 1.0 mi (silent)',
-    });
-  }
-
-  const doh = obj(state.doh_hospitals);
-  if (doh?.available && Array.isArray(doh.hospitals)) {
-    for (const h of (doh.hospitals as Record<string, unknown>[]).slice(0, 3)) {
-      rows.push({
-        reg: 'DOH', tier: 'empirical',
-        label: str(h.facility_name) ?? 'hospital',
-        detail: `${num(h.distance_m) ?? '—'} m · ${str(h.borough) ?? ''}`.trim(),
-        sourceId: str(h.fac_id) ?? null,
-        note: null,
-      });
-    }
-  } else if (doh && doh.available === false) {
-    rows.push({
-      reg: 'DOH', tier: 'empirical', label: null, detail: null, sourceId: null,
-      note: 'no acute-care hospital within 1.0 mi (silent)',
-    });
-  }
-
-  if (!rows.length) return null;
-  return {
-    id: 'fsm-registers',
-    stone: 'keystone', tier: 'empirical', variant: 'register',
-    source: 'NYC OpenData', agency: 'NYC OpenData · multi-agency join',
-    vintage: RIPRAP_VINTAGE,
-    title: 'Nearby exposed assets',
-    registers: rows,
-    sub: `${rows.filter((r) => r.label).length} of ${rows.length} registers fired · joined within 1.0 mi`,
-    docId: 'registers', citeId: 'registers', mapLayer: 'registers',
-  };
-}
-
 function buildTerramindBuildings(state: Final): Card | null {
   const tmb = obj(state.terramind_buildings);
   if (!tmb?.ok) return null;
@@ -346,35 +234,6 @@ function buildTerramindBuildings(state: Final): Card | null {
     sub: `${num(tmb.n_building_components) ?? 0} distinct components · test mIoU 0.5511`,
     illustrative: true,
     docId: 'tm_buildings', citeId: 'tm_buildings', mapLayer: 'buildings',
-  };
-}
-
-function buildNyc311(state: Final): Card | null {
-  const n = obj(state.nyc311);
-  if (!n) return null;
-  const total = num(n.n) ?? 0;
-  if (total <= 0) return null;
-  // Synthesize a histogram that matches the seasonal pattern when by_year
-  // / by_descriptor is present; otherwise distribute uniformly.
-  const byYear = obj(n.by_year);
-  const byDescriptor = obj(n.by_descriptor);
-  const hist = byYear
-    ? Object.values(byYear).map((v) => num(v) ?? 0)
-    : Array.from({ length: 12 }, () => Math.round(total / 12));
-  const top = byDescriptor
-    ? Object.entries(byDescriptor).sort((a, b) => (num(b[1]) ?? 0) - (num(a[1]) ?? 0))[0]?.[0]
-    : null;
-  return {
-    id: 'fsm-311',
-    stone: 'touchstone', tier: 'proxy', variant: 'histogram',
-    source: 'NYC 311', agency: 'NYC 311 service requests (Socrata erm2-nwe9)',
-    vintage: RIPRAP_VINTAGE,
-    title: 'Recent 311 flood complaints',
-    headline: `${total} calls`,
-    subhead: top ? `top descriptor: ${top}` : 'all flood-related descriptors',
-    histogram: hist,
-    sparkSub: `Within ${num(n.radius_m) ?? 200} m · ${num(n.years) ?? 5} y window. Filtered to flood-relevant descriptors.`,
-    docId: 'nyc311', citeId: 'nyc311', mapLayer: 'complaints',
   };
 }
 
@@ -560,6 +419,174 @@ function buildTimeseriesForecast(m: PebbleManifest, value: unknown): Card | null
       ? `${num(t.rmse_m)!.toFixed(3)} m` : undefined,
     skillVsPersistence: variant === 'timeseries-ft' ? t.skill_vs_persistence : undefined,
     hardwareBadge: variant === 'timeseries-ft' ? t.hardware_badge : undefined,
+  };
+}
+
+// ── Type-keyed composite register card renderer ─────────────────
+//
+// Multi-pebble dispatch: when several pebbles in the same stone
+// declare `display.variant: register`, this renderer collects rows
+// from ALL of them into a single card (vs one card per pebble).
+//
+// Per-pebble item-extraction heuristic: the adapter emits its rows
+// under whichever field name fits the asset class (entrances /
+// developments / schools / hospitals / items / features). The
+// renderer scans known field names; an explicit `items` array
+// always wins so future BYOD registers don't need a heuristic.
+//
+// `reg` label comes from the manifest icon or the first capitalized
+// token of the title — no per-id hardcoding.
+type RegisterItem = Record<string, unknown>;
+type RegisterValue = {
+  available?: boolean;
+  items?: RegisterItem[];
+  entrances?: RegisterItem[];
+  developments?: RegisterItem[];
+  schools?: RegisterItem[];
+  hospitals?: RegisterItem[];
+  features?: RegisterItem[];
+};
+
+function _itemsFromRegisterValue(v: RegisterValue): RegisterItem[] {
+  if (Array.isArray(v.items)) return v.items;
+  if (Array.isArray(v.entrances)) return v.entrances;
+  if (Array.isArray(v.developments)) return v.developments;
+  if (Array.isArray(v.schools)) return v.schools;
+  if (Array.isArray(v.hospitals)) return v.hospitals;
+  if (Array.isArray(v.features)) return v.features;
+  return [];
+}
+
+function _regLabelFromManifest(m: PebbleManifest): string {
+  // Prefer a short SOURCE acronym from the manifest's source_name
+  // ("MTA — subway/rail entrances register" → "MTA"); else fall back
+  // to first capitalized token of the title.
+  const src = m.provenance.source_name;
+  const dashIdx = Math.min(...['—', '-', ':'].map(c => {
+    const i = src.indexOf(c);
+    return i < 0 ? Number.MAX_SAFE_INTEGER : i;
+  }));
+  const head = (dashIdx < Number.MAX_SAFE_INTEGER ? src.slice(0, dashIdx) : src).trim();
+  // If the head is short enough (≤6 chars) use it; else first word.
+  if (head.length > 0 && head.length <= 6) return head.toUpperCase();
+  return (head.split(/\s+/)[0] || m.id).toUpperCase().slice(0, 6);
+}
+
+function _itemRow(reg: string, item: RegisterItem): NonNullable<Card['registers']>[number] {
+  const label = (str(item.station_name) ?? str(item.development)
+                ?? str(item.loc_name) ?? str(item.facility_name)
+                ?? str(item.label) ?? str(item.name) ?? 'item');
+  const distance = num(item.distance_m);
+  const detail_bits: string[] = [];
+  if (distance != null) detail_bits.push(`${distance} m`);
+  const borough = str(item.borough);
+  const routes = str(item.daytime_routes);
+  if (routes) detail_bits.push(routes);
+  else if (borough) detail_bits.push(borough);
+  const sourceId = (str(item.station_id) ?? str(item.tds_num)
+                    ?? str(item.loc_code) ?? str(item.fac_id)
+                    ?? str(item.source_id) ?? null);
+  return {
+    reg, tier: 'empirical',
+    label, detail: detail_bits.join(' · ') || null,
+    sourceId, note: null,
+  };
+}
+
+function buildRegisterComposite(
+  registerManifests: PebbleManifest[],
+  state: Final,
+): Card | null {
+  if (!registerManifests.length) return null;
+  const rows: NonNullable<Card['registers']> = [];
+  const docIds: string[] = [];
+  const agencies: string[] = [];
+  // Per-pebble cap so one super-dense register doesn't dominate.
+  const PER_PEBBLE_CAP = 4;
+  for (const m of registerManifests) {
+    const v = (state as Record<string, unknown>)[m.id] as RegisterValue | undefined;
+    if (!v) continue;
+    const reg = _regLabelFromManifest(m);
+    const items = _itemsFromRegisterValue(v);
+    if (v.available === false || items.length === 0) {
+      rows.push({
+        reg, tier: 'empirical',
+        label: null, detail: null, sourceId: null,
+        note: (m.fallback.message ?? `no ${reg} items in range (silent)`),
+      });
+      continue;
+    }
+    for (const it of items.slice(0, PER_PEBBLE_CAP)) {
+      rows.push(_itemRow(reg, it));
+    }
+    const doc = m.provenance.doc_id ?? m.id;
+    docIds.push(doc);
+    agencies.push(m.provenance.source_name);
+  }
+  if (!rows.length) return null;
+  const fired = rows.filter(r => r.label).length;
+  return {
+    id: 'fsm-registers',
+    stone: 'keystone', tier: 'empirical', variant: 'register',
+    source: 'Civic OpenData', agency: `${agencies.length} register${agencies.length === 1 ? '' : 's'} · multi-agency join`,
+    vintage: RIPRAP_VINTAGE,
+    title: 'Nearby exposed assets',
+    registers: rows,
+    sub: `${fired} of ${rows.length} register rows have items · joined within range`,
+    docId: docIds[0] ?? 'registers',
+    citeId: 'registers',
+    mapLayer: 'registers',
+  };
+}
+
+// ── Type-keyed histogram card renderer ──────────────────────────
+//
+// Pebbles that declare `display.variant: histogram` and emit a
+// normalized value shape:
+//   { n, histogram: number[], headline_value, subhead_text, narrative,
+//     radius_m?, years? }
+// nyc311 is the canonical case; future "count me over time" pebbles
+// (e.g. boston 311 trended, sea-level rise count series) get the same
+// bespoke chrome by declaring the variant + emitting the shape.
+type HistogramValue = {
+  n?: number;
+  histogram?: number[];
+  headline_value?: string;
+  subhead_text?: string;
+  narrative?: string;
+  radius_m?: number;
+  years?: number;
+};
+
+function buildHistogramCard(m: PebbleManifest, value: unknown): Card | null {
+  const t = value as HistogramValue | null;
+  if (!t) return null;
+  const n = num(t.n) ?? 0;
+  // Honest negative ("0 calls") still surfaces — same all-clear contract
+  // as the NWS / ida_hwm cards. The narrative explains the zero.
+  const hist = Array.isArray(t.histogram) ? t.histogram : [];
+  const headline = t.headline_value ?? `${n} calls`;
+  const radius = num(t.radius_m);
+  const years = num(t.years);
+  const sparkSub = (radius != null && years != null)
+    ? `Within ${radius} m · ${years} y window. Filtered to flood-relevant descriptors.`
+    : undefined;
+  const tier = (m.tier ?? 'proxy') as Card['tier'];
+  const source = m.provenance.source_name.split(/[—-]/)[0].trim();
+  return {
+    id: `fsm-${m.id.replace(/_/g, '-')}`,
+    stone: m.stone, tier, variant: 'histogram',
+    source, agency: m.provenance.source_name,
+    vintage: m.provenance.last_updated?.toString() ?? RIPRAP_VINTAGE,
+    title: m.title,
+    headline,
+    subhead: t.subhead_text,
+    histogram: hist.length ? hist : Array.from({ length: 12 }, () => Math.round(n / 12)),
+    sparkSub,
+    sub: t.narrative,
+    docId: m.provenance.doc_id ?? m.id,
+    citeId: m.provenance.doc_id ?? m.id,
+    mapLayer: m.display.map_layer ? m.id : null,
   };
 }
 
@@ -812,17 +839,16 @@ const SPECIAL_BUILT_IDS = new Set<string>([
   // lake_michigan_water_level, nws_obs, nws_alerts — all now flow
   // through the templated path using `{narrative}` placeholders
   // computed in each pebble's Python adapter.
-  'microtopo',
+  // microtopo migrated to templated scalars path
+  // (manifest narration.template + adapter {narrative} field).
   // Touchstone
-  'nyc311',
+  // nyc311 dispatched via buildHistogramCard (display.variant: histogram).
   // Lodestone — all four forecast pebbles (ttm_forecast, ttm_battery_surge,
   // ttm_311_forecast, floodnet_forecast) now flow through the type-keyed
   // buildTimeseriesForecast renderer below (display.variant + value shape).
-  // Keystone — the four asset-class registers are rendered together
-  // by buildRegisters() as a single `register`-variant card, not four
-  // separate cards. Listing them here keeps the templated pass from
-  // emitting duplicates.
-  'mta_entrances', 'nycha_developments', 'doe_schools', 'doh_hospitals',
+  // Keystone — the four register pebbles now dispatch via
+  // buildRegisterComposite (multi-pebble, variant: register). Drop
+  // from this set so they participate in the type-keyed dispatch.
 ]);
 
 function buildTemplated(m: PebbleManifest, value: unknown): Card | null {
@@ -1051,14 +1077,21 @@ export function adaptFinalToFindings(
     // (manifest narration.template + ida_hwm shaper's {narrative}).
     // prithvi_water + prithvi_live dispatch via buildRasterCard in the
     // templated loop below (display.variant: raster / raster-pred).
-    isNeighborhood ? buildMicrotopoNta(f) : buildMicrotopo(f),
+    // microtopo: address path now flows through templated scalars
+    // (Microtopo dataclass emits {narrative}); NTA path stays curated.
+    isNeighborhood ? buildMicrotopoNta(f) : null,
     // Keystone
-    buildRegisters(f),
+    // registers (mta_entrances, nycha_developments, doe_schools,
+    // doh_hospitals) dispatch via buildRegisterComposite in the
+    // templated loop below (multi-pebble dispatch on variant: register).
     buildTerramindBuildings(f),
     // Touchstone
     // floodnet now flows through the templated scalars path
     // (n_sensors + n_flood_events_3y + {narrative} from the adapter).
-    isNeighborhood ? buildNyc311Nta(f) : buildNyc311(f),
+    // nyc311 (address path) dispatches via buildHistogramCard in the
+    // templated loop below (display.variant: histogram); NTA path
+    // stays curated for now.
+    isNeighborhood ? buildNyc311Nta(f) : null,
     // nws_obs, noaa_tides flow through the templated path now
     // (each pebble's adapter emits a {narrative} the manifest's
     // narration.template renders verbatim).
@@ -1076,19 +1109,32 @@ export function adaptFinalToFindings(
   // curated special-builder card. New BYOD pebbles defined only in YAML
   // appear here automatically.
   const templatedCards: Card[] = [];
+  const handledIds = new Set<string>();
   for (const stone of pebbleManifest.stones) {
+    // Multi-pebble composite dispatch: collect all variant: register
+    // pebbles in this stone, render once via buildRegisterComposite.
+    // Each register pebble is marked handled so the per-pebble loop
+    // below skips it.
+    const registerMs = (pebbleManifest.byStone[stone.id] ?? [])
+      .filter(m => m.display.variant === 'register'
+                   && !SPECIAL_BUILT_IDS.has(m.id));
+    if (registerMs.length) {
+      const composite = buildRegisterComposite(registerMs, f);
+      if (composite) templatedCards.push(composite);
+      for (const m of registerMs) handledIds.add(m.id);
+    }
+    // Per-pebble loop — single-pebble bespoke variants + the generic
+    // templated fallback. Type-keyed dispatch by display.variant.
     for (const m of pebbleManifest.byStone[stone.id] ?? []) {
-      if (SPECIAL_BUILT_IDS.has(m.id)) continue;
+      if (SPECIAL_BUILT_IDS.has(m.id) || handledIds.has(m.id)) continue;
       const value = (f as Record<string, unknown>)[m.id];
-      // Type-keyed bespoke variant dispatch — match by display.variant,
-      // never by pebble id. Future ML/forecast pebbles get the same
-      // bespoke chrome just by declaring the variant + emitting the
-      // expected value shape.
       let card: Card | null = null;
       if (m.display.variant === 'timeseries' || m.display.variant === 'timeseries-ft') {
         card = buildTimeseriesForecast(m, value);
       } else if (m.display.variant === 'raster' || m.display.variant === 'raster-pred') {
         card = buildRasterCard(m, value);
+      } else if (m.display.variant === 'histogram') {
+        card = buildHistogramCard(m, value);
       }
       if (!card) card = buildTemplated(m, value);
       if (card) templatedCards.push(card);

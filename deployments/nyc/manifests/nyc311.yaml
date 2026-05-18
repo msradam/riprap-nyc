@@ -32,6 +32,7 @@ provenance:
 
 narration:
   short: NYC 311 flood-related complaints filed near this address over the past 5 years.
+  template: "{narrative}"
 
 fallback:
   on_offline: skip

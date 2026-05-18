@@ -145,12 +145,30 @@ def _summarize(cs: list[Complaint], years: int, radius_m: float | None) -> dict:
         for c in cs[:60]
         if c.lat is not None and c.lon is not None
     ]
+    n = len(cs)
+    by_year_sorted = dict(sorted(by_year.items()))
+    by_descriptor_top = dict(by_descriptor.most_common(6))
+    top_descriptor = next(iter(by_descriptor_top), None) if by_descriptor_top else None
+    radius_str = f"{radius_m:.0f} m" if radius_m else "the NTA"
+    if n == 0:
+        narrative = (
+            f"No NYC 311 flood-related complaints filed within {radius_str} "
+            f"of this location in the last {years} years."
+        )
+    else:
+        narrative = (
+            f"{n} NYC 311 flood-related complaint{'s' if n != 1 else ''} "
+            f"filed within {radius_str} of this location in the last "
+            f"{years} years."
+        )
+        if top_descriptor:
+            narrative += f" Most common descriptor: {top_descriptor}."
     return {
-        "n": len(cs),
+        "n": n,
         "radius_m": radius_m,
         "years": years,
-        "by_year": dict(sorted(by_year.items())),
-        "by_descriptor": dict(by_descriptor.most_common(6)),
+        "by_year": by_year_sorted,
+        "by_descriptor": by_descriptor_top,
         "most_recent": [
             {"date": c.created_date[:10],
              "descriptor": c.descriptor,
@@ -158,4 +176,12 @@ def _summarize(cs: list[Complaint], years: int, radius_m: float | None) -> dict:
             for c in cs[:5]
         ],
         "points": points,
+        # Normalized rendering fields the type-keyed histogram renderer
+        # reads. `histogram` is the array the chart draws; `headline_value`
+        # is the bold figure; `subhead_text` is the descriptor caption.
+        "headline_value": f"{n} call{'s' if n != 1 else ''}",
+        "subhead_text": (f"top descriptor: {top_descriptor}"
+                         if top_descriptor else "all flood-related descriptors"),
+        "narrative": narrative,
+        "histogram": list(by_year_sorted.values()) or [],
     }

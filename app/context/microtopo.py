@@ -54,6 +54,8 @@ class Microtopo:
     # Hydrology indices computed on the same DEM (whitebox-workflows)
     twi: float | None = None              # Topographic Wetness Index, ln(SCA / tan(slope))
     hand_m: float | None = None           # Height Above Nearest Drainage (m)
+    # Templatable narrative the manifest's narration.template renders.
+    narrative: str = ""
 
 
 def _percentile_in_window(arr: np.ndarray, iy: int, ix: int, point_val: float,
@@ -193,17 +195,31 @@ def microtopo_at(lat: float, lon: float, radius_m: int = 750) -> Microtopo | Non
         v = float(hand_arr[row, col])
         hand_v = round(v, 2) if np.isfinite(v) else None
 
+    elev = round(point_elev, 2)
+    pct_200_r = round(pct_200, 1)
+    relief = round(aoi_max - point_elev, 2)
+    bits = [f"Elevation {elev} m"]
+    bits.append(f"; this point sits at the {pct_200_r}th percentile of "
+                f"elevation within a 200 m window (lower percentile = "
+                f"topographic low)")
+    if hand_v is not None:
+        bits.append(f"; HAND {hand_v} m above nearest drainage")
+    if twi_v is not None:
+        bits.append(f"; TWI {twi_v}")
+    bits.append(f". Local basin relief: {relief} m.")
+    narrative = "".join(bits)
     return Microtopo(
-        point_elev_m=round(point_elev, 2),
+        point_elev_m=elev,
         rel_elev_pct_750m=round(pct_750, 1),
-        rel_elev_pct_200m=round(pct_200, 1),
-        basin_relief_m=round(aoi_max - point_elev, 2),
+        rel_elev_pct_200m=pct_200_r,
+        basin_relief_m=relief,
         aoi_min_m=round(aoi_min, 2),
         aoi_max_m=round(aoi_max, 2),
         aoi_radius_m=radius_m,
         resolution_m=int(round(res_m)),
         twi=twi_v,
         hand_m=hand_v,
+        narrative=narrative,
     )
 
 
