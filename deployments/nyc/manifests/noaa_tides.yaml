@@ -33,6 +33,7 @@ provenance:
 
 narration:
   short: Recent NOAA tide-gauge water-level reading at the nearest station to this address.
+  template: "{narrative}"
 
 fallback:
   on_offline: skip

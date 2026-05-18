@@ -63,9 +63,28 @@ def summary_for_point(lat: float, lon: float) -> dict:
     try:
         active = alerts_at(lat, lon)
     except Exception as e:
-        return {"n_active": 0, "alerts": [], "error": str(e)}
+        return {"n_active": 0, "alerts": [], "narrative": None, "error": str(e)}
+    n = len(active)
+    if n == 0:
+        narrative = "No active NWS flood / coastal / wind alerts at this point."
+    elif n == 1:
+        narrative = (
+            f"1 active NWS alert at this point: "
+            f"{active[0].get('event', 'unnamed event')} "
+            f"({active[0].get('severity', '?')})."
+        )
+    else:
+        narrative = (
+            f"{n} active NWS alerts at this point: "
+            + ", ".join(
+                f"{a.get('event', 'unnamed')} ({a.get('severity', '?')})"
+                for a in active[:3]
+            )
+            + ("…" if n > 3 else ".")
+        )
     return {
-        "n_active": len(active),
+        "n_active": n,
         "alerts": active,
+        "narrative": narrative,
         "error": None,
     }

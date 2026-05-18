@@ -35,6 +35,7 @@ provenance:
 
 narration:
   short: Currently active NWS alerts intersecting this address.
+  template: "{narrative}"
 
 fallback:
   on_offline: skip

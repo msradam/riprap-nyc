@@ -37,6 +37,7 @@ provenance:
 
 narration:
   short: Most recent National Weather Service hourly observation at the nearest METAR station.
+  template: "{narrative}"
 
 fallback:
   on_offline: skip

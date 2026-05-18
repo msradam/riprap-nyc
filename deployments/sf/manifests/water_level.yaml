@@ -33,6 +33,7 @@ provenance:
 
 narration:
   short: Recent NOAA water-level reading at the nearest station to this address.
+  template: "{narrative}"
 
 display:
   order: 40

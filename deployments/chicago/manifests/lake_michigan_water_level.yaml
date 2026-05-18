@@ -34,6 +34,7 @@ provenance:
 
 narration:
   short: Recent NOAA water-level reading at the nearest Lake Michigan station to this address.
+  template: "{narrative}"
 
 display:
   order: 40

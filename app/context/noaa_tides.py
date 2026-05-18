@@ -133,6 +133,20 @@ def summary_for_point(lat: float, lon: float) -> dict:
     # Look up station coords for the map marker.
     sta = next((s for s in STATIONS if s[0] == r.station_id), None)
     datum = _datum_for(r.station_id)
+    # Build a templatable narrative the manifest's narration.template
+    # consumes — keeps location-specific phrasing here in the pebble's
+    # adapter (not in the UI codebase). Returns None when the fetch
+    # failed entirely; the manifest's `narration.short` then takes over.
+    narrative: str | None = None
+    if r.observed_ft is not None:
+        bits = [f"Latest reading at {r.station_name}: "
+                f"{r.observed_ft} ft above {datum}"]
+        if r.predicted_ft is not None and r.residual_ft is not None:
+            sign = "+" if r.residual_ft >= 0 else ""
+            bits.append(f" ({sign}{r.residual_ft} ft vs predicted tide)")
+        if r.obs_time:
+            bits.append(f", observed {r.obs_time}")
+        narrative = "".join(bits) + "."
     return {
         "station_id": r.station_id,
         "station_name": r.station_name,
@@ -149,5 +163,6 @@ def summary_for_point(lat: float, lon: float) -> dict:
         "predicted_ft_mllw": r.predicted_ft,
         "residual_ft": r.residual_ft,
         "obs_time": r.obs_time,
+        "narrative": narrative,
         "error": r.error,
     }

@@ -106,6 +106,29 @@ def obs_at(lat: float, lon: float) -> Obs:
 
 def summary_for_point(lat: float, lon: float) -> dict:
     o = obs_at(lat, lon)
+    # Templatable narrative the manifest's narration.template renders.
+    # None when the fetch failed entirely; narration.short takes over.
+    narrative: str | None = None
+    if o.station_name and (o.temp_c is not None
+                           or o.precip_last_hour_mm is not None
+                           or o.precip_last_6h_mm is not None):
+        bits = [f"Latest METAR at {o.station_name}"]
+        if o.distance_km is not None:
+            bits.append(f" ({o.distance_km:.1f} km away)")
+        bits.append(":")
+        if o.temp_c is not None:
+            bits.append(f" {o.temp_c}°C")
+        p1 = o.precip_last_hour_mm
+        p6 = o.precip_last_6h_mm
+        if p1 is not None and p1 > 0:
+            bits.append(f", {p1} mm precip in the last hour")
+        elif p6 is not None and p6 > 0:
+            bits.append(f", {p6} mm precip in the last 6 hours")
+        elif p1 == 0 or p6 == 0:
+            bits.append(", no recent precipitation")
+        if o.obs_time:
+            bits.append(f" (obs {o.obs_time[:16]})")
+        narrative = "".join(bits) + "."
     return {
         "station_id": o.station_id,
         "station_name": o.station_name,
@@ -115,5 +138,6 @@ def summary_for_point(lat: float, lon: float) -> dict:
         "precip_last_hour_mm": o.precip_last_hour_mm,
         "precip_last_3h_mm": o.precip_last_3h_mm,
         "precip_last_6h_mm": o.precip_last_6h_mm,
+        "narrative": narrative,
         "error": o.error,
     }

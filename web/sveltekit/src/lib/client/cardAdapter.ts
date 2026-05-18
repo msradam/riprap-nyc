@@ -873,16 +873,18 @@ const KIND_TO_VARIANT: Record<PebbleManifest['display']['kind'], CardVariant | n
 /** Set of pebble ids that already have a special builder above. The
  *  templated pass skips these; they appear via the curated path. */
 const SPECIAL_BUILT_IDS = new Set<string>([
-  // Cornerstone — sandy was here; now flows through templated +
-  // boolean_zone shaper (see deployments/nyc/manifests/sandy.yaml).
   // Migration in progress: each pebble drops out of this set as its
-  // manifest gains a usable narration.template + shaper.
+  // manifest gains a usable narration.template + (if needed) a
+  // shaper. Migrated so far: sandy, noaa_tides, water_level,
+  // lake_michigan_water_level, nws_obs, nws_alerts — all now flow
+  // through the templated path using `{narrative}` placeholders
+  // computed in each pebble's Python adapter.
   'dep_extreme_2080', 'dep_moderate_2050', 'dep_moderate_current',
   'ida_hwm', 'prithvi_water', 'microtopo',
   // Touchstone
-  'floodnet', 'nyc311', 'nws_obs', 'noaa_tides', 'prithvi_live',
+  'floodnet', 'nyc311', 'prithvi_live',
   // Lodestone
-  'nws_alerts', 'ttm_forecast', 'ttm_battery_surge', 'ttm_311_forecast',
+  'ttm_forecast', 'ttm_battery_surge', 'ttm_311_forecast',
   'floodnet_forecast',
   // Keystone — the four asset-class registers are rendered together
   // by buildRegisters() as a single `register`-variant card, not four
@@ -978,7 +980,15 @@ function buildTemplated(m: PebbleManifest, value: unknown): Card | null {
                  : (m.fallback.message ?? 'No measurements'),
                subhead: m.narration.short ?? undefined };
     }
-    return { ...base, scalars };
+    // If the manifest carries a narration.template with the
+    // pebble-adapter-built `{narrative}` (or any other placeholder
+    // the value supplies), format it as the card's `sub` line so
+    // the user reads both the scalar grid AND a sentence-level
+    // summary the LLM-citation path also consumes.
+    const narrative = m.narration.template
+      ? formatTemplate(m.narration.template, value)
+      : null;
+    return { ...base, scalars, sub: narrative ?? undefined };
   }
   if (variant === 'tabular') {
     const v = value as {
@@ -1049,11 +1059,18 @@ function buildTemplated(m: PebbleManifest, value: unknown): Card | null {
           : `${nLabel} record${n === 1 ? '' : 's'}`,
       };
     }
-    // True empty — render a "no data" headline so the pebble is still
-    // visible with its provenance, not silently missing.
+    // No features and no sample — fall back to the pebble's
+    // narration.template formatted against the value (e.g. nws_alerts
+    // returns {n_active: 0, alerts: [], narrative: "No active NWS..."};
+    // the narrative is the human-readable card body). If the template
+    // also can't format, render the manifest's fallback message.
+    const tabularNarrative = m.narration.template
+      ? formatTemplate(m.narration.template, value)
+      : null;
     return { ...base, variant: 'headline',
-             headline: m.fallback.message ?? 'No records within range',
-             subhead: m.narration.short ?? undefined };
+             headline: tabularNarrative
+               ?? m.fallback.message ?? 'No records within range',
+             subhead: tabularNarrative ? undefined : (m.narration.short ?? undefined) };
   }
   // meta fallback (chart pebbles without a special builder)
   const metaRows: { k: string; v: string }[] = [];
@@ -1103,12 +1120,12 @@ export function adaptFinalToFindings(
     // Touchstone
     buildFloodnet(f),
     isNeighborhood ? buildNyc311Nta(f) : buildNyc311(f),
-    buildNwsObs(f),
-    buildNoaaTides(f),
+    // nws_obs, noaa_tides flow through the templated path now
+    // (each pebble's adapter emits a {narrative} the manifest's
+    // narration.template renders verbatim).
     buildPrithviLive(f),
     buildTerramindLulc(f),
-    // Lodestone
-    buildNwsAlerts(f),
+    // Lodestone — nws_alerts also migrated to templated path.
     buildTtmForecast(f),
     buildTtmBatterySurge(f),
     // Capstone (only once we have something to summarise)
